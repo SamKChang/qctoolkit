@@ -171,6 +171,7 @@ class out(object):
   def __init__(self, qmout):
     self.info = ''
     self.getEt(qmout)
+    #self.getSteps(qmout)
 
   def getEt(self, name):
     out = sys.stdout if re.match('stdout',name)\
@@ -179,6 +180,7 @@ class out(object):
     done = False
     finished = False
   
+    scf_p = re.compile('^ *[0-9]*  [0-9]\.[0-9]{3}E-[0-9]{2}   .*')
     Et_cpmd = re.compile('.*TOTAL ENERGY = *([-0-9\.]*)')
     done_cpmd = re.compile(' \* *FINAL RESULTS *\*')
     qmInfo = re.compile('.*qmInfo.*')
@@ -189,14 +191,16 @@ class out(object):
       line = out.readline()
       if not line: break
 
-      # if match CPMD
-      if re.match(qmInfo, line):
+      if (re.match(scf_p, line)):
+        data = [float(x) for x in line.split()]
+        self.SCFStep = int(data[0])
+      elif re.match(qmInfo, line):
         tmp1 = re.sub(info_head, '', line)
         tmp2 = re.sub(info_tail, '', tmp1)
         self.info = tmp2
-      if (re.match(done_cpmd,line)):
+      elif (re.match(done_cpmd,line)):
         done = True,
-      if (re.match(Et_cpmd, line)) and done:
+      elif (re.match(Et_cpmd, line)) and done:
         self.Et = float(Et_cpmd.match(line).group(1))
         finished = True
         
@@ -206,16 +210,15 @@ class out(object):
     out.close()
 
 
-  def SCFSteps(self):
+  def getSteps(self, name):
     # CPMD format
-    if re.match("^cpmd$", self.program):
-      scf_p = \
-        re.compile('^ *[0-9]*  [0-9]\.[0-9]{3}E-[0-9]{2}   .*')
-      out = open(self.file_name, 'r')
-      while True:
-        line = out.readline()
-        if not line: break
-        if (re.match(scf_p, line)):
-          data = [float(x) for x in line.split()]
-          SCFStep = int(data[0])
-    return SCFStep
+    scf_p = \
+      re.compile('^ *[0-9]*  [0-9]\.[0-9]{3}E-[0-9]{2}   .*')
+    out = open(name, 'r')
+    while True:
+      line = out.readline()
+      if not line: break
+      if (re.match(scf_p, line)):
+        data = [float(x) for x in line.split()]
+        self.SCFStep = int(data[0])
+    #return SCFStep

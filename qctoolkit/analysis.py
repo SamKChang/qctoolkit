@@ -28,6 +28,7 @@ class QMResults(object):
     self.out_dir = glob.glob(self.path + "/" + self.pattern)
     #self.out_dir = next(os.walk(path))[1]
     #self.out_dir.sort()
+    self.results = {}
     self.Et = {}
     self.data = np.atleast_2d(np.array([]))
     if self.path+'inp' in self.out_dir: 
@@ -42,18 +43,18 @@ class QMResults(object):
             # save data of each process in the queue
             data = qmio.QMOut(out, self.program)
             Et_queue.put(
-              {re.sub(self.path + "/", "", out) : data.Et}
+              {re.sub(self.path + "/", "", out) : 
+               np.array([data.Et, data.SCFStep])}
             )
   
       def chunks(l, n):
         for i in xrange(0, len(l), n):
           yield l[i:i+n]
   
-      job_chunk = list(\
-                    chunks(self.out_dir, \
-                           len(self.out_dir)/mp.cpu_count()\
-                    )\
-                  )
+      job_chunk = list(chunks(
+                    self.out_dir, 
+                    len(self.out_dir)/mp.cpu_count()
+                  ))
   
       jobs = []
       queue = mp.Queue()
@@ -66,7 +67,7 @@ class QMResults(object):
       for process in job_chunk:
         for result in process:
           # append data from queue to hash
-          self.Et.update(queue.get())
+          self.results.update(queue.get())
       for process in jobs:
         # wait for each process to finish
         process.join()
@@ -76,15 +77,21 @@ class QMResults(object):
       def read_out_dir(out_path):
         for out in glob.glob(out_path + '/*.out'):
           data = qmio.QMOut(out, self.program)
-          self.Et[re.sub(self.path + "/", "", out)] = data.Et
+          self.results.update({
+            re.sub(self.path + "/", "", out) :
+            np.array([data.Et, data.SCFStep])
+          })
+          #data.Et
   
       # Serial verision
-      self.Et = {}
       for results in self.out_dir:
         read_out_dir(results)
 
     # reture sorted hash as default
-    self.Et = cl.OrderedDict(sorted(self.Et.items()))
+    self.results = cl.OrderedDict(sorted(self.results.iteritems()))
+    self.Et = cl.OrderedDict(sorted({
+                k : v[0] for k, v in self.results.iteritems()
+              }.iteritems()))
 
   def sum(self):
     return sum(self.Et.itervalues())
@@ -109,32 +116,55 @@ class QMResults(object):
                   for k,v in self.Et.iteritems()}
       self.unit = 'kcal'
 
+  def setStep(self, step):
+    for key in self.results.keys():
+      if self.results[key][1] > step:
+        del self.Et[key]
+        del self.results[key]
+
   def rmKey(self, pattern):
     p1 = re.compile(pattern)
+    self.results = {
+      re.sub(p1, '', k) : v for k, v in self.results.iteritems()
+    }
     self.Et = {
       re.sub(p1, '', k) : v for k, v in self.Et.iteritems()
     }
     
   def exKey(self, pattern):
     p1 = re.compile(pattern)
+    self.results = {
+      p1.match(k).group(1) : v for k, v in self.results.iteritems()
+    }
     self.Et = {
       p1.match(k).group(1) : v for k, v in self.Et.iteritems()
     }
 
   def subtract(self, other_result):
-    #out = copy.deepcopy(self)
+    out = copy.deepcopy(self)
     for key in self.Et:
       if key in other_result.Et:
-        self.Et[key] = self.Et[key] - other_result.Et[key]
+        out.Et[key] = self.Et[key] - other_result.Et[key]
+        out.results[key][0] = \
+          self.results[key][0] \
+         -other_result.results[key][0]
+        out.results[key][1] = max(
+                                out.results[key][1],
+                                other_result.results[key][1])
       else:
-        del self.Et[key]
-    #return out
+        del out.Et[key]
+    return out
 
   def subtract_constant(self, const):
-    #out = copy.deepcopy(self)
-    self.Et = { k : float(v)-float(const)\
+    out = copy.deepcopy(self)
+    out.Et = { k : float(v)-float(const)\
                 for k, v in self.Et.iteritems()}
-    #return out
+    for key in out.results:
+      out.results[key] = np.array([
+        self.results[key][0] - float(const),
+        self.results[key][1]
+      ])
+    return out
 
   def npdata(self):
     try:
@@ -154,11 +184,16 @@ class QMResults(object):
     return self.data
 
   # print total energy in plan text form
-  def plotEt(self, out_file):
+  def write(self, value, out_file):
     out = sys.stdout if re.match('stdout', out_file) else\
           open(out_file, "w")
-    for key in sorted(self.Et):
-      print >> out, "%s\t%s" % (key, self.Et[key])
+    if re.match(re.compile('^E$'), value):
+      for key in self.Et:
+        print >> out, "%s\t%s" % (key, self.Et[key])
+    else:
+      print "other"
+      for key in self.results:
+        print >> out, "%s\t%s" % (key, self.results[key])
 
 class ScatterPlot(QMResults):
   def __init__(self, QMOut_pred, QMOut_true):

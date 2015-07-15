@@ -78,7 +78,7 @@ class QMOut(object):
     self.Ehartree = self.out.Et
     self.info = self.out.info
     self.Et = self.Ehartree
-    #self.getSteps(qmout)
+    self.SCFStep = self.out.SCFStep
 
   def Ha2ev(self):
     self.Et = self.Ehartree * 27.211396132
