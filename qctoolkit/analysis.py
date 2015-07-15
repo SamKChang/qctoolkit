@@ -132,7 +132,8 @@ class QMResults(object):
 
   def subtract_constant(self, const):
     #out = copy.deepcopy(self)
-    self.Et = { k : float(v)-float(const) for k, v in self.Et.iteritems()}
+    self.Et = { k : float(v)-float(const)\
+                for k, v in self.Et.iteritems()}
     #return out
 
   def npdata(self):
@@ -209,6 +210,9 @@ class ScatterPlot(QMResults):
     ax.set_xlabel(self.pred.name, fontsize=20)
     ax.set_ylabel(self.true.name, fontsize=20)
     ax.tick_params(labelsize=15)
+
+  def draw(self):
+    plt.draw()
 
   def show(self):
     plt.show()
