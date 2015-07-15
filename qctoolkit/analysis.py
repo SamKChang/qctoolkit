@@ -211,9 +211,6 @@ class ScatterPlot(QMResults):
     ax.set_ylabel(self.true.name, fontsize=20)
     ax.tick_params(labelsize=15)
 
-  def draw(self):
-    plt.draw()
-
   def show(self):
     plt.show()
 
