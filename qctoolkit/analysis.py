@@ -203,7 +203,7 @@ class ScatterPlot(QMResults):
       markeredgewidth = 1,
       markerfacecolor = 'none'
     )
-    ax.plot(x, y2, 'k--',
+    ax.plot(x, y2, 'b--',
       linewidth = 1.5
     )
     ax.set_xlabel(self.pred.name, fontsize=20)

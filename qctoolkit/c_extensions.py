@@ -6,7 +6,7 @@ import glob, os, re
 
 #print glob.glob('../build/lib*/')
 lib_path = re.sub(
-             'c\_extensions\.pyc', 
+             'c_extensions\.pyc', 
              '', 
              os.path.realpath(__file__))
 #lib_path = glob.glob('../build/lib*/')[0]
