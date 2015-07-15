@@ -1,0 +1,9 @@
+build/
+dist/
+qctoolkit.egg-info/
+fileList.txt
+**.swp
+**.pyc
+qctoolkit/test/
+**.sh
+qctoolkit/projects/initialize.py
