@@ -212,41 +212,70 @@ class QMData(pd.DataFrame):
       return self * 23.061
 
 class ScatterPlot(object):
-  def __init__(self, QMOut_pred, QMOut_true):
-    self.pred = QMOut_pred
-    self.true = QMOut_true
-    self.data = []
-    self.list = []
-    match = False
-    for key in self.pred.Et:
-      if key in self.true.Et:
-        self.list.append(key)
-        new_point = [self.pred.Et[key], self.true.Et[key]]
-        self.data.append(new_point)
-        match = True
-    self.data = np.array([self.data])[0]
-    if match:
-      x = self.data[:,0]
-      y = self.data[:,1]
-      self.fit = np.polyfit(x, y, 1)
-      self.y_fit = self.fit[0]*x + self.fit[1]
-      diff = abs(y-self.y_fit)
-      self.MAE = sum(diff)/len(diff)
-      self.RMSE = np.sqrt(sum(np.square(diff))/len(diff))
-      #print self.MAE, self.RMSE, self.list
-    else:
-      sys.exit("ERROR from analysis.py->ScatterPlot: "+\
-               "data keys not matched"
-              )
+  def __init__(self, QMData_pred, QMData_true):
+    # restructure data
+    self._pred = pd.DataFrame(QMData_pred)
+    self._pred.columns = ['Epred', 's']
+    self._true = pd.DataFrame(QMData_true)
+    self._true.columns = ['Etrue', 'step']
+    self._step = 500
+
+    # select only both valid and small steps
+    self.scatter = pd.concat([self._pred, self._true], axis=1)
+    self.scatter = self.scatter[np.isfinite(self.scatter['Epred'])]
+    self.scatter = self.scatter[np.isfinite(self.scatter['Etrue'])]
+    self.scatter = self.scatter[self.scatter.step < self._step]
+    del self.scatter['s']
+
+    # construct linear regression
+    self._x = self.scatter['Epred'].values
+    self._y = self.scatter['Etrue'].values
+    self.fit = np.polyfit(self._x, self._y, 1)
+    self._y_fit = self.fit[0]*self._x + self.fit[1]
+
+    # plot data
+    self.data = np.array([self._x, self._y, self._y_fit]).T
+    self._diff = abs(self._y - self._y_fit)
+    self.MAE = sum(self._diff)/len(self._diff)
+    self.RMSE = np.sqrt(sum(np.square(self._diff))/len(self._diff))
+    self.xlabel = '$E_{pred}$'
+    self.ylabel = '$E_{true}$'
+
+#    self.data = []
+#    self.list = []
+#    match = False
+#    for key in self.pred.Et:
+#      if key in self.true.Et:
+#        self.list.append(key)
+#        new_point = [self.pred.Et[key], self.true.Et[key]]
+#        self.data.append(new_point)
+#        match = True
+#    self.data = np.array([self.data])[0]
+#    if match:
+#      x = self.data[:,0]
+#      y = self.data[:,1]
+#      self.fit = np.polyfit(x, y, 1)
+#      self.y_fit = self.fit[0]*x + self.fit[1]
+#      diff = abs(y-self.y_fit)
+#      self.MAE = sum(diff)/len(diff)
+#      self.RMSE = np.sqrt(sum(np.square(diff))/len(diff))
+#      #print self.MAE, self.RMSE, self.list
+#    else:
+#      sys.exit("ERROR from analysis.py->ScatterPlot: "+\
+#               "data keys not matched"
+#              )
+    print self.scatter
 
   def plot(self):
-    plot_data = np.hstack([
-      self.data, np.transpose(np.atleast_2d(self.y_fit))
-    ])
+    plot_data = self.data
+#    plot_data = np.hstack([
+#      self.data, np.transpose(np.atleast_2d(self.y_fit))
+#    ])
     plot_data = plot_data[plot_data[:,0].argsort()]
     x = plot_data[:,0]
     y1 = plot_data[:,1]
     y2 = plot_data[:,2]
+    print x, y1, y2
 
     self.fig = plt.figure(figsize=(9, 8))
     ax = self.fig.add_subplot(1,1,1, adjustable='box', aspect=1)
@@ -258,8 +287,8 @@ class ScatterPlot(object):
     ax.plot(x, y2, 'r--',
       linewidth = 1.5
     )
-    ax.set_xlabel(self.pred.name, fontsize=20)
-    ax.set_ylabel(self.true.name, fontsize=20)
+    ax.set_xlabel(self.xlabel, fontsize=20)
+    ax.set_ylabel(self.ylabel, fontsize=20)
     ax.tick_params(labelsize=15)
 
   def show(self):
