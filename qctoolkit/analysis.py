@@ -241,36 +241,8 @@ class ScatterPlot(object):
     self.xlabel = '$E_{pred}$'
     self.ylabel = '$E_{true}$'
 
-#    self.data = []
-#    self.list = []
-#    match = False
-#    for key in self.pred.Et:
-#      if key in self.true.Et:
-#        self.list.append(key)
-#        new_point = [self.pred.Et[key], self.true.Et[key]]
-#        self.data.append(new_point)
-#        match = True
-#    self.data = np.array([self.data])[0]
-#    if match:
-#      x = self.data[:,0]
-#      y = self.data[:,1]
-#      self.fit = np.polyfit(x, y, 1)
-#      self.y_fit = self.fit[0]*x + self.fit[1]
-#      diff = abs(y-self.y_fit)
-#      self.MAE = sum(diff)/len(diff)
-#      self.RMSE = np.sqrt(sum(np.square(diff))/len(diff))
-#      #print self.MAE, self.RMSE, self.list
-#    else:
-#      sys.exit("ERROR from analysis.py->ScatterPlot: "+\
-#               "data keys not matched"
-#              )
-    print self.scatter
-
   def plot(self):
     plot_data = self.data
-#    plot_data = np.hstack([
-#      self.data, np.transpose(np.atleast_2d(self.y_fit))
-#    ])
     plot_data = plot_data[plot_data[:,0].argsort()]
     x = plot_data[:,0]
     y1 = plot_data[:,1]
