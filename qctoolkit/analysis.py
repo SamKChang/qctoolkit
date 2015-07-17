@@ -5,11 +5,12 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 import multiprocessing as mp
 import collections as cl
+import pandas as pd
 
+# Construct dictionary of {file:results} for DataFrame
 class QMResults(object):
   def __init__(self, pathPattern):
-    self.name = ''
-    self.unit = 'hartree'
+    # ['path', 'program', 'parallelRead']
     self.path = re.sub('/$', '', pathPattern[0])
     self.pattern = pathPattern[1]
     self.program = pathPattern[2]
@@ -29,7 +30,6 @@ class QMResults(object):
     #self.out_dir = next(os.walk(path))[1]
     #self.out_dir.sort()
     self.results = {}
-    self.Et = {}
     self.data = np.atleast_2d(np.array([]))
     if self.path+'inp' in self.out_dir: 
       self.out_dir.remove(self.path + 'inp')
@@ -87,115 +87,131 @@ class QMResults(object):
       for results in self.out_dir:
         read_out_dir(results)
 
-    # reture sorted hash as default
-    self.results = cl.OrderedDict(sorted(self.results.iteritems()))
-    self.Et = cl.OrderedDict(sorted({
-                k : v[0] for k, v in self.results.iteritems()
-              }.iteritems()))
 
-  def sum(self):
-    return sum(self.Et.itervalues())
+# pandas DataFrame wrapper
+class QMData(pd.DataFrame):
+  def __init__(self, pathPattern):
+    _qr = QMResults(pathPattern).results
+    _qr = pd.DataFrame(_qr).T
+    _qr.index.name = 'file'
+    _qr.columns = ['E', 'step']
+    super(QMData, self).__init__(_qr)
+    self._unit = 'hartree'
 
+  ##########################
+  # extract regex of index #
+  ##########################
+  def extract(self, pattern):
+    self.index = self.index.to_series().astype(str)\
+                 .str.extract(pattern)
+
+  ####################################
+  # mathematical operations to index #
+  ####################################
+  def index_add(self, factor):
+    self.index = self.index.to_series().astype(float) + factor
+
+  def index_sub(self, factor):
+    self.index = self.index.to_series().astype(float) - factor
+
+  def index_mul(self, factor):
+    self.index = self.index.to_series().astype(float) * factor
+
+  def index_div(self, factor):
+    self.index = self.index.to_series().astype(float) / factor
+
+
+  #######################
+  #  OPERATOR OVERLOAD  #
+  #######################
+  def __add__(self, other):
+    _out = copy.deepcopy(self)
+    if isinstance(other, QMData):
+      _term1 = copy.deepcopy(pd.DataFrame(self))
+      _term2 = copy.deepcopy(pd.DataFrame(other))
+      _term2.columns = ['E2', 'step2']
+      _tmp = pd.concat([_term1, _term2], axis=1)\
+               [['step','step2']].max(axis=1)
+      _tmp.columns = ['step']
+      _out['step'] = _tmp
+      _term2.columns = ['E', 'step']
+      _term3 = _term1 + _term2
+      _out['E'] = _term3['E']
+    elif isinstance(other, float) or isinstance(other, int):
+      _out['E'] = self['E'] + other
+    return _out
+
+  def __sub__(self, other):
+    _out = copy.deepcopy(self)
+    if isinstance(other, QMData):
+      _term1 = copy.deepcopy(pd.DataFrame(self))
+      _term2 = copy.deepcopy(pd.DataFrame(other))
+      _term2.columns = ['E2', 'step2']
+      _tmp = pd.concat([_term1, _term2], axis=1)\
+               [['step','step2']].max(axis=1)
+      _tmp.columns = ['step']
+      _out['step'] = _tmp
+      _term2.columns = ['E', 'step']
+      _term3 = _term1 - _term2
+      _out['E'] = _term3['E']
+    elif isinstance(other, float) or isinstance(other, int):
+      _out['E'] = self['E'] - other
+    return _out
+
+  def __mul__(self, other):
+    _out = copy.deepcopy(self)
+    if isinstance(other, QMData):
+      _term1 = copy.deepcopy(pd.DataFrame(self))
+      _term2 = copy.deepcopy(pd.DataFrame(other))
+      _term2.columns = ['E2', 'step2']
+      _tmp = pd.concat([_term1, _term2], axis=1)\
+               [['step','step2']].max(axis=1)
+      _tmp.columns = ['step']
+      _out['step'] = _tmp
+      _term2.columns = ['E', 'step']
+      _term3 = _term1 * _term2
+      _out['E'] = _term3['E']
+    elif isinstance(other, float) or isinstance(other, int):
+      _out['E'] = self['E'] * other
+    return _out
+
+  def __div__(self, other):
+    _out = copy.deepcopy(self)
+    if isinstance(other, QMData):
+      _term1 = copy.deepcopy(pd.DataFrame(self))
+      _term2 = copy.deepcopy(pd.DataFrame(other))
+      _term2.columns = ['E2', 'step2']
+      _tmp = pd.concat([_term1, _term2], axis=1)\
+               [['step','step2']].max(axis=1)
+      _tmp.columns = ['step']
+      _out['step'] = _tmp
+      _term2.columns = ['E', 'step']
+      _term3 = _term1 / _term2
+      _out['E'] = _term3['E']
+    elif isinstance(other, float) or isinstance(other, int):
+      _out['E'] = self['E'] / float(other)
+    return _out
+
+  ###################
+  # unit conversion #
+  ###################
   def ev(self):
-    if re.match('hartree', self.unit):
-      self.Et = { k : float(v) * 27.21138505\
-                  for k,v in self.Et.iteritems()}
-      self.unit = 'ev'
-    elif re.match('kcal', self.unit):
-      self.Et = { k : float(v) * 0.0433634\
-                  for k,v in self.Et.iteritems()}
-      self.unit = 'ev'
+    if re.match('hartree', self._unit):
+      self._unit = 'ev'
+      return self * 27.21138505
+    elif re.match('kcal', self._unit):
+      self._unit = 'ev'
+      return self * 0.0433634
 
   def kcal(self):
-    if re.match('hartree', self.unit):
-      self.Et = { k : float(v) * 627.509469\
-                  for k,v in self.Et.iteritems()}
-      self.unit = 'kcal'
-    elif re.match('ev', self.unit):
-      self.Et = { k : float(v) * 23.061\
-                  for k,v in self.Et.iteritems()}
-      self.unit = 'kcal'
+    if re.match('hartree', self._unit):
+      self._unit = 'kcal'
+      return self * 627.509469
+    elif re.match('ev', self._unit):
+      self._unit = 'kcal'
+      return self * 23.061
 
-  def setStep(self, step):
-    for key in self.results.keys():
-      if self.results[key][1] > step:
-        del self.Et[key]
-        del self.results[key]
-
-  def rmKey(self, pattern):
-    p1 = re.compile(pattern)
-    self.results = {
-      re.sub(p1, '', k) : v for k, v in self.results.iteritems()
-    }
-    self.Et = {
-      re.sub(p1, '', k) : v for k, v in self.Et.iteritems()
-    }
-    
-  def exKey(self, pattern):
-    p1 = re.compile(pattern)
-    self.results = {
-      p1.match(k).group(1) : v for k, v in self.results.iteritems()
-    }
-    self.Et = {
-      p1.match(k).group(1) : v for k, v in self.Et.iteritems()
-    }
-
-  def subtract(self, other_result):
-    out = copy.deepcopy(self)
-    for key in self.Et:
-      if key in other_result.Et:
-        out.Et[key] = self.Et[key] - other_result.Et[key]
-        out.results[key][0] = \
-          self.results[key][0] \
-         -other_result.results[key][0]
-        out.results[key][1] = max(
-                                out.results[key][1],
-                                other_result.results[key][1])
-      else:
-        del out.Et[key]
-    return out
-
-  def subtract_constant(self, const):
-    out = copy.deepcopy(self)
-    out.Et = { k : float(v)-float(const)\
-                for k, v in self.Et.iteritems()}
-    for key in out.results:
-      out.results[key] = np.array([
-        self.results[key][0] - float(const),
-        self.results[key][1]
-      ])
-    return out
-
-  def npdata(self):
-    try:
-      out = np.transpose(np.vstack([
-        np.fromiter(self.Et.iterkeys(), dtype=float),
-        np.fromiter(self.Et.itervalues(), dtype=float)
-      ]))
-      self.data = out[out[:,0].argsort()]
-    except ValueError:
-      #sys.exit("value error, not numeric")
-      i=1
-      results = []
-      for v in self.Et.itervalues():
-        results.append([i, v])
-        i += 1
-      self.data = np.array(results)
-    return self.data
-
-  # print total energy in plan text form
-  def write(self, value, out_file):
-    out = sys.stdout if re.match('stdout', out_file) else\
-          open(out_file, "w")
-    if re.match(re.compile('^E$'), value):
-      for key in self.Et:
-        print >> out, "%s\t%s" % (key, self.Et[key])
-    else:
-      print "other"
-      for key in self.results:
-        print >> out, "%s\t%s" % (key, self.results[key])
-
-class ScatterPlot(QMResults):
+class ScatterPlot(object):
   def __init__(self, QMOut_pred, QMOut_true):
     self.pred = QMOut_pred
     self.true = QMOut_true
@@ -253,6 +269,6 @@ class ScatterPlot(QMResults):
     self.fig.savefig(out_file)
     
 
-class DensityPlot(QMResults):
+class DensityPlot(object):
   def __init__(self, path):
     self.out_dir = QMResults(path)

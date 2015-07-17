@@ -82,29 +82,13 @@ by a hash symbol as a convention for comments.
 
 * QMResults([path, pattern, program, parallel]) 
   # general objects contain many QM results for analysis
- - *name* # string for matplotlib data name in LaTeX math mode
- - *unit* # for energy unit conversion
  - *path* # root path of folder containing multiple QM results
    **NOTE**: back slash at the end of string MUST BE REMOVED
  - *pattern* # unix shell file pattern
- - *Et* # dictionary of {file\_name:Et}
- - *data* # numpy numerical matrix data. 
-   Need to be converted from *Et*
- - sum(): # sum up all valeus of Et
+* QMData([path, pattern, program, parallel])
+  # pandas DataFrame wrapper
  - ev(): # convert Et to eV
  - kcal(): # convert Et to kcal/mol
- - rmKey(pattern): # remove regular expression pattern from 
-   key of Et
- - exKey(grouped\_pattern): # extract group(1) of grouped\_pattern
-   from key of Et
- - subtract(other\_QMResults): # for every matching key
-   subtract other\_QMResults.Et[key] from Et.[key]
- - subtract\_constant(constant): # linearly subtract constant
-   from values of Et
- - npdata(): # convert Et to numerical numpy matrix. 
-   If keys are not converted to numerical values,
-   serial numbers are assigned
- - plotEt('out\_file'): # write Et to out\_file or stdout
 * ScatterPlot(QMResults\_predicted, QMResults\_true)
  - *pred* # QMResults\_predicted
  - *true* # QMResults\_true

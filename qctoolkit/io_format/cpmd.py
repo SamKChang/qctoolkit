@@ -170,6 +170,8 @@ class inp(setting.QMSetting):
 class out(object):
   def __init__(self, qmout):
     self.info = ''
+    self.Et = np.nan
+    self.SCFStep = np.nan
     self.getEt(qmout)
     #self.getSteps(qmout)
 
@@ -207,6 +209,7 @@ class out(object):
     if not finished:
       self.Ehartree = 0
       self.status = 'not finished'
+      self.Et = np.nan
     out.close()
 
 
