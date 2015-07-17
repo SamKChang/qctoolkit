@@ -96,7 +96,7 @@ class QMData(pd.DataFrame):
     _qr.index.name = 'file'
     _qr.columns = ['E', 'step']
     super(QMData, self).__init__(_qr)
-    self.unit = 'hartree'
+    self._unit = 'hartree'
 
   ##########################
   # extract regex of index #
@@ -196,19 +196,19 @@ class QMData(pd.DataFrame):
   # unit conversion #
   ###################
   def ev(self):
-    if re.match('hartree', self.unit):
-      self.unit = 'ev'
+    if re.match('hartree', self._unit):
+      self._unit = 'ev'
       return self * 27.21138505
-    elif re.match('kcal', self.unit):
-      self.unit = 'ev'
+    elif re.match('kcal', self._unit):
+      self._unit = 'ev'
       return self * 0.0433634
 
   def kcal(self):
-    if re.match('hartree', self.unit):
-      self.unit = 'kcal'
+    if re.match('hartree', self._unit):
+      self._unit = 'kcal'
       return self * 627.509469
-    elif re.match('ev', self.unit):
-      self.unit = 'kcal'
+    elif re.match('ev', self._unit):
+      self._unit = 'kcal'
       return self * 23.061
 
 class ScatterPlot(object):
