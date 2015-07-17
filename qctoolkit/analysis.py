@@ -238,8 +238,8 @@ class ScatterPlot(object):
     self._diff = abs(self._y - self._y_fit)
     self.MAE = sum(self._diff)/len(self._diff)
     self.RMSE = np.sqrt(sum(np.square(self._diff))/len(self._diff))
-    self.xlabel = '$E_{pred}$'
-    self.ylabel = '$E_{true}$'
+    self.xlabel = '$E_{pred}$ [' + self.unit + ']'
+    self.ylabel = '$E_{true}$ [' + self.unit + ']'
 
   def plot(self):
     plot_data = self.data
