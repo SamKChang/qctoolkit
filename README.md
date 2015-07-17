@@ -24,7 +24,8 @@ integrated to python enviroment with minimal reloading of packages.
   package. This can be installed by
 ```wget https://bootstrap.pypa.io/ez_setup.py -O - | sudo python```
   with superuser priviledge
-* The package depends on [NumPy](http://www.numpy.org/) 
+* The package depends on [NumPy](http://www.numpy.org/),
+  [pandas](http://pandas.pydata.org/), 
   and [matplotlib](http://matplotlib.org/). 
 * To install: ```sudo python setup.py install```
 * To remove:  Manually remove all system files. List of files can 
@@ -32,8 +33,9 @@ be obtained by the --record flag during install
 ```sudo python setup.py install --record fileList.txt```All files
 
 **Dependent Python packages**:
-* numpy
-* matplotlib
+* numpy 1.9.2
+* pandas 0.16.2
+* matplotlib 1.4.3
 * matplotlib.pyplot
 * sys, re, os, glob, multiprocessing, copy, collections
 
