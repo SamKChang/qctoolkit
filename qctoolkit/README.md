@@ -30,9 +30,8 @@ Methods are followed by semicolon.
 Short description of the class/attribute/method are followed
 by a hash symbol as a convention for comments.
 
-#### General I/O format
 
-### qctoolkit
+### qctoolkit - General I/O format
 
 ##### geometry.py
 
@@ -108,7 +107,7 @@ by a hash symbol as a convention for comments.
  - Z2n(Z): # atomic number to atom\_type
  - n2Z('atom\_type'): # atom\_type to atomic number
 
-### qctoolkit/io\_format
+### qctoolkit/io\_format - QM interface
 
 ##### setting.py
 
