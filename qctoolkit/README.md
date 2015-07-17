@@ -118,7 +118,7 @@ by a hash symbol as a convention for comments.
 * inp
 * out
 
-### qctoolkit/src
+### qctoolkit/src - Pure C extension
 
 ### Project list:
 For each project, there are specially tailored data structure.
