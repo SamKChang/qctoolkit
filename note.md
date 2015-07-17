@@ -15,7 +15,21 @@ git push -u --force origin master
   - create a branch: `git branch <new branch>`
   - switch working branch: `git checkout <target branch>`
   - merge a branch: 
-    fist switch to master branch and `git merge <branch to merge>`
+    fist switch to master branch and `git merge <branch to merge>`.
+    From GitHub website, Step 1: 
+    From your project repository, bring in the changes and test.
+`
+git fetch origin
+git checkout -b pandas origin/pandas
+git merge master
+`
+    Step 2:
+    Merge the changes and update on GitHub.
+`
+git checkout master
+git merge --no-ff pandas
+git push origin master
+`
   - delet a branch: `git branch -d <branch to delete>`
 * Remove remote files but keep the local ones:
   `git rm --cached -r <file>`
