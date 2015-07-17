@@ -275,7 +275,6 @@ class ScatterPlot(object):
     x = plot_data[:,0]
     y1 = plot_data[:,1]
     y2 = plot_data[:,2]
-    print x, y1, y2
 
     self.fig = plt.figure(figsize=(9, 8))
     ax = self.fig.add_subplot(1,1,1, adjustable='box', aspect=1)
