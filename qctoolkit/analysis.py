@@ -90,13 +90,13 @@ class QMResults(object):
 
 # pandas DataFrame wrapper
 class QMData(pd.DataFrame):
-  def __init__(self, pathPattern):
+  def __init__(self, pathPattern, **kwargs):
     _qr = QMResults(pathPattern).results
     _qr = pd.DataFrame(_qr).T
     _qr.index.name = 'file'
     _qr.columns = ['E', 'step']
-    super(QMData, self).__init__(_qr)
-    self.unit = 'Ha'
+    super(QMData, self).__init__(_qr, **kwargs)
+    #self.E_unit = 'Ha'
 
   ##########################
   # extract regex of index #
@@ -196,23 +196,27 @@ class QMData(pd.DataFrame):
   # unit conversion #
   ###################
   def ev(self):
-    if re.match('Ha', self.unit):
-      self.unit = 'eV'
-      return self * 27.21138505
-    elif re.match('kcal/mol', self.unit):
-      self.unit = 'eV'
-      return self * 0.0433634
+    return self * 27.21138505
+    # attribute passing is not yet implemented
+    #if re.match('Ha', self.E_unit):
+    #  self.E_unit = 'eV'
+    #  return self * 27.21138505
+    #elif re.match('kcal/mol', self.E_unit):
+    #  self.E_unit = 'eV'
+    #  return self * 0.0433634
 
   def kcal(self):
-    if re.match('Ha', self.unit):
-      self.unit = 'kcal/mol'
-      return self * 627.509469
-    elif re.match('eV', self.unit):
-      self.unit = 'kcal/mol'
-      return self * 23.061
+    return self * 627.509469
+    #  return self * 27.21138505
+    #if re.match('Ha', self.E_unit):
+    #  self.E_unit = 'kcal/mol'
+    #  return self * 627.509469
+    #elif re.match('eV', self.E_unit):
+    #  self.E_unit = 'kcal/mol'
+    #  return self * 23.061
 
 class ScatterPlot(object):
-  def __init__(self, QMData_pred, QMData_true):
+  def __init__(self, QMData_pred, QMData_true, unit):
     # restructure data
     self._pred = pd.DataFrame(QMData_pred)
     self._pred.columns = ['Epred', 's']
@@ -238,8 +242,8 @@ class ScatterPlot(object):
     self._diff = abs(self._y - self._y_fit)
     self.MAE = sum(self._diff)/len(self._diff)
     self.RMSE = np.sqrt(sum(np.square(self._diff))/len(self._diff))
-    self.xlabel = '$E_{pred}$ [' + self.unit + ']'
-    self.ylabel = '$E_{true}$ [' + self.unit + ']'
+    self.xlabel = '$E_{pred}$ [' + unit + ']'
+    self.ylabel = '$E_{true}$ [' + unit + ']'
 
   def plot(self):
     plot_data = self.data
