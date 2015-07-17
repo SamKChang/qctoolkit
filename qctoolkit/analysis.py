@@ -7,11 +7,10 @@ import multiprocessing as mp
 import collections as cl
 import pandas as pd
 
+# Construct dictionary of {file:results} for DataFrame
 class QMResults(object):
   def __init__(self, pathPattern):
     # ['path', 'program', 'parallelRead']
-    self.name = ''
-    self.unit = 'hartree'
     self.path = re.sub('/$', '', pathPattern[0])
     self.pattern = pathPattern[1]
     self.program = pathPattern[2]
@@ -31,7 +30,6 @@ class QMResults(object):
     #self.out_dir = next(os.walk(path))[1]
     #self.out_dir.sort()
     self.results = {}
-    self.Et = {}
     self.data = np.atleast_2d(np.array([]))
     if self.path+'inp' in self.out_dir: 
       self.out_dir.remove(self.path + 'inp')
@@ -90,15 +88,37 @@ class QMResults(object):
         read_out_dir(results)
 
 
-# pandas wrapper
+# pandas DataFrame wrapper
 class QMData(pd.DataFrame):
   def __init__(self, pathPattern):
     _qr = QMResults(pathPattern).results
     _qr = pd.DataFrame(_qr).T
-    _qr.reset_index(level=0, inplace=True)
-    _qr.columns = ['file', 'E', 'step']
+    _qr.index.name = 'file'
+    _qr.columns = ['E', 'step']
     super(QMData, self).__init__(_qr)
     self.unit = 'hartree'
+
+  ##########################
+  # extract regex of index #
+  ##########################
+  def extract(self, pattern):
+    self.index = self.index.to_series().astype(str)\
+                 .str.extract(pattern)
+
+  ####################################
+  # mathematical operations to index #
+  ####################################
+  def index_add(self, factor):
+    self.index = self.index.to_series().astype(float) + factor
+
+  def index_sub(self, factor):
+    self.index = self.index.to_series().astype(float) - factor
+
+  def index_mul(self, factor):
+    self.index = self.index.to_series().astype(float) * factor
+
+  def index_div(self, factor):
+    self.index = self.index.to_series().astype(float) / factor
 
 
   #######################
@@ -107,13 +127,16 @@ class QMData(pd.DataFrame):
   def __add__(self, other):
     _out = copy.deepcopy(self)
     if isinstance(other, QMData):
-      _old = copy.deepcopy(pd.DataFrame(self))
-      _new = copy.deepcopy(pd.DataFrame(other))
-      _new.columns = ['file2', 'E2', 'step2']
-      _tmp = pd.concat([_old, _new], axis=1)\
+      _term1 = copy.deepcopy(pd.DataFrame(self))
+      _term2 = copy.deepcopy(pd.DataFrame(other))
+      _term2.columns = ['E2', 'step2']
+      _tmp = pd.concat([_term1, _term2], axis=1)\
                [['step','step2']].max(axis=1)
-      _out[['step']] = _tmp
-      _out['E'] = self['E'] + other['E']
+      _tmp.columns = ['step']
+      _out['step'] = _tmp
+      _term2.columns = ['E', 'step']
+      _term3 = _term1 + _term2
+      _out['E'] = _term3['E']
     elif isinstance(other, float) or isinstance(other, int):
       _out['E'] = self['E'] + other
     return _out
@@ -121,13 +144,16 @@ class QMData(pd.DataFrame):
   def __sub__(self, other):
     _out = copy.deepcopy(self)
     if isinstance(other, QMData):
-      _old = copy.deepcopy(pd.DataFrame(self))
-      _new = copy.deepcopy(pd.DataFrame(other))
-      _new.columns = ['file2', 'E2', 'step2']
-      _tmp = pd.concat([_old, _new], axis=1)\
+      _term1 = copy.deepcopy(pd.DataFrame(self))
+      _term2 = copy.deepcopy(pd.DataFrame(other))
+      _term2.columns = ['E2', 'step2']
+      _tmp = pd.concat([_term1, _term2], axis=1)\
                [['step','step2']].max(axis=1)
-      _out[['step']] = _tmp
-      _out['E'] = self['E'] - other['E']
+      _tmp.columns = ['step']
+      _out['step'] = _tmp
+      _term2.columns = ['E', 'step']
+      _term3 = _term1 - _term2
+      _out['E'] = _term3['E']
     elif isinstance(other, float) or isinstance(other, int):
       _out['E'] = self['E'] - other
     return _out
@@ -135,13 +161,16 @@ class QMData(pd.DataFrame):
   def __mul__(self, other):
     _out = copy.deepcopy(self)
     if isinstance(other, QMData):
-      _old = copy.deepcopy(pd.DataFrame(self))
-      _new = copy.deepcopy(pd.DataFrame(other))
-      _new.columns = ['file2', 'E2', 'step2']
-      _tmp = pd.concat([_old, _new], axis=1)\
+      _term1 = copy.deepcopy(pd.DataFrame(self))
+      _term2 = copy.deepcopy(pd.DataFrame(other))
+      _term2.columns = ['E2', 'step2']
+      _tmp = pd.concat([_term1, _term2], axis=1)\
                [['step','step2']].max(axis=1)
-      _out[['step']] = _tmp
-      _out['E'] = self['E'] * other['E']
+      _tmp.columns = ['step']
+      _out['step'] = _tmp
+      _term2.columns = ['E', 'step']
+      _term3 = _term1 * _term2
+      _out['E'] = _term3['E']
     elif isinstance(other, float) or isinstance(other, int):
       _out['E'] = self['E'] * other
     return _out
@@ -149,17 +178,23 @@ class QMData(pd.DataFrame):
   def __div__(self, other):
     _out = copy.deepcopy(self)
     if isinstance(other, QMData):
-      _old = copy.deepcopy(pd.DataFrame(self))
-      _new = copy.deepcopy(pd.DataFrame(other))
-      _new.columns = ['file2', 'E2', 'step2']
-      _tmp = pd.concat([_old, _new], axis=1)\
+      _term1 = copy.deepcopy(pd.DataFrame(self))
+      _term2 = copy.deepcopy(pd.DataFrame(other))
+      _term2.columns = ['E2', 'step2']
+      _tmp = pd.concat([_term1, _term2], axis=1)\
                [['step','step2']].max(axis=1)
-      _out[['step']] = _tmp
-      _out['E'] = self['E'] / other['E']
+      _tmp.columns = ['step']
+      _out['step'] = _tmp
+      _term2.columns = ['E', 'step']
+      _term3 = _term1 / _term2
+      _out['E'] = _term3['E']
     elif isinstance(other, float) or isinstance(other, int):
       _out['E'] = self['E'] / float(other)
     return _out
 
+  ###################
+  # unit conversion #
+  ###################
   def ev(self):
     if re.match('hartree', self.unit):
       self.unit = 'ev'
