@@ -3,12 +3,104 @@
 # QM programs include: 
 #  CPMD, Gaussian, NwChem, espresso, gamess
 
-import re, sys
+import re, sys, copy
 import geometry
 import numpy as np
 import utilities as ut
-#import setting
 from qctoolkit.io_format import *
+import qctoolkit.read_cube as rq
+
+class CUBE(object):
+  def __init__(self, cube_file):
+    self.data, self.zcoord, self.grid = rq.read_cube(cube_file)
+    self.structure = geometry.Molecule()
+    if(self.grid[0,0] > 0):
+      self.structure.R = self.zcoord[:,1:4]*0.529177249
+      self.unit = 'Bohr'
+    else:
+      self.structure.R = self.zcoord[:,1:4]
+      self.unit = 'Angstrom'
+    self.structure.Z = self.zcoord[:,0]
+    self.structure.N = len(self.zcoord)
+
+  def integrate(self, flag):
+    self._O = self.grid[0,1:4]
+    self._vx = self.grid[1,1:4]
+    self._vy = self.grid[2,1:4]
+    self._vz = self.grid[3,1:4]
+    self._dV = np.linalg.norm(self._vx - self._O)\
+              *np.linalg.norm(self._vy - self._O)\
+              *np.linalg.norm(self._vz - self._O)
+    if flag==1:
+      return np.sum(np.ravel(self.data)) * self._dV
+    elif flag==2:
+      return np.sum(np.ravel(self.data**2)) * self._dV
+
+  def plot(self, axis):
+    pass
+
+  def contour(self, axis, level):
+    pass
+
+  def __add__(self, other):
+    if isinstance(other, CUBE):
+      _grid = self.grid - other.grid
+      if(abs(sum(sum(_grid))) < 10**-7 ):
+        _out = copy.deepcopy(self)
+        _out.data = self.data + other.data
+        return _out
+      else:
+        sys.exit("ERROR from qmio.py->CUBE: " +\
+                 "grid mesh does not match")
+    else:
+      _out = copy.deepcopy(self)
+      _out.data = _out.data + other
+      return _out
+
+  def __sub__(self, other):
+    if isinstance(other, CUBE):
+      _grid = self.grid - other.grid
+      if(abs(sum(sum(_grid))) < 10**-7 ):
+        _out = copy.deepcopy(self)
+        _out.data = self.data - other.data
+        return _out
+      else:
+        sys.exit("ERROR from qmio.py->CUBE: " +\
+                 "grid mesh does not match")
+    else:
+      _out = copy.deepcopy(self)
+      _out.data = _out.data - other
+      return _out
+
+  def __mul__(self, other):
+    if isinstance(other, CUBE):
+      _grid = self.grid - other.grid
+      if(abs(sum(sum(_grid))) < 10**-7 ):
+        _out = copy.deepcopy(self)
+        _out.data = np.multiply(self.data, other.data)
+        return _out
+      else:
+        sys.exit("ERROR from qmio.py->CUBE: " +\
+                 "grid mesh does not match")
+    else:
+      _out = copy.deepcopy(self)
+      _out.data = _out.data * other
+      return _out
+
+  def __div__(self, other):
+    if isinstance(other, CUBE):
+      _grid = self.grid - other.grid
+      if(abs(sum(sum(_grid))) < 10**-7 ):
+        _out = copy.deepcopy(self)
+        _out.data = np.divide(self.data, other.data)
+        return _out
+      else:
+        sys.exit("ERROR from qmio.py->CUBE: " +\
+                 "grid mesh does not match")
+    else:
+      _out = copy.deepcopy(self)
+      _out.data = _out.data / other
+      return _out
 
 class QMInp(setting.QMSetting):
   def __init__(self, structure_inp, program, info):

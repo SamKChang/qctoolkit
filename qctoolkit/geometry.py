@@ -108,6 +108,10 @@ class Molecule(object):
 
     out=sys.stdout if re.match("stdout",name) else open(name,"w")
 
+    if len(self.type_list) != self.N:
+      tlist = np.vectorize(ut.Z2n)
+      self.type_list = tlist(self.Z)
+
     print >>out, str(self.N)+"\n"
     for I in xrange(0, self.N):
       print >>out, self.type_list[I]+" ",
