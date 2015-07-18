@@ -1,8 +1,10 @@
 from setuptools import setup
 from distutils.core import Extension
 
-module1 = Extension('demo',
+module1 = Extension(name = 'qctoolkit.demo',
                     sources = ['qctoolkit/src/demo.c'])
+readcube_mod = Extension(name = "qctoolkit.read_cube", 
+                    sources = ['qctoolkit/src/readcubemodule.c'])
 
 setup(name='qctoolkit',
   version='0.1',
@@ -17,5 +19,5 @@ setup(name='qctoolkit',
     'qctoolkit.io_format',
     'qctoolkit'
   ],
-  ext_modules = [module1]
+  ext_modules = [module1, readcube_mod]
 )

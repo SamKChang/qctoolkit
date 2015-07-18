@@ -43,7 +43,7 @@ Python Note
 * Profiling: python -m cProfile -s time toAnalyse.py <args> 
 from [here]
 (http://stackoverflow.com/questions/582336/how-can-you-profile-a-python-script)
-* Default installation path: /usr/lib/python2.7/dist-packages/
+* Default installation path: /usr/local/lib/python2.7/dist-packages/
 <package_system>/<package_name>
 **Note:** dynamic library of extensions will be compiled to 
 /usr/lib/python2.7/dist-packages/<package_system>/<module_name>

@@ -4,20 +4,19 @@ from numpy.ctypeslib import ndpointer
 import ctypes
 import glob, os, re
 
-#print glob.glob('../build/lib*/')
+# general path to c_extension.pyc script
 lib_path = re.sub(
              'c_extensions\.pyc', 
              '', 
              os.path.realpath(__file__))
-#lib_path = glob.glob('../build/lib*/')[0]
-#demo_path = os.path.join(lib_path, "demo.so")
-lib = ctypes.cdll.LoadLibrary(lib_path + "../demo.so")
-fun = lib.cfun
-fun.restype = None
-fun.argtypes = [ndpointer(ctypes.c_double, flags="C_CONTIGUOUS"),
-                ctypes.c_size_t,
-                ndpointer(ctypes.c_double, flags="C_CONTIGUOUS")]
 
-def wrap_fun(indata, outdata):
+lib_demo = ctypes.cdll.LoadLibrary(lib_path + "../demo.so")
+fun_demo = lib_demo.cfun
+fun_demo.restype = None
+fun_demo.argtypes = [ndpointer(ctypes.c_double, flags="C_CONTIGUOUS"),
+                     ctypes.c_size_t,
+                     ndpointer(ctypes.c_double, flags="C_CONTIGUOUS")]
+
+def democ(indata, outdata):
     assert indata.size == outdata.size
-    fun(indata, indata.size, outdata)
+    fun_demo(indata, indata.size, outdata)
