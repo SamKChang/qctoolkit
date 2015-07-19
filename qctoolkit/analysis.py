@@ -9,36 +9,25 @@ import pandas as pd
 
 # Construct dictionary of {file:results} for DataFrame
 class QMResults(object):
-  #def __init__(self, pathPattern):
-  def __init__(self, path, pattern, program, threads):
-    # ['path', 'program', 'parallelRead']
+  def __init__(self, path, pattern, program, **kwargs):
     self.path = re.sub('/$', '', path)
     self.pattern = pattern
     self.program = program
-    self.threads = int(threads)
-#    if len(pathPattern)>3:
-#      flag = re.compile('(True|False)')
-#      if re.match(flag, pathPattern[3]):
-#        self.parallel = pathPattern[3]
-#      else:
-#        sys.exit("Error from analysis.py->QMResults: '" +\
-#                 pathPattern[3] + "' is not a boolean variable "+\
-#                 "for parallel setup. Please choose either " +\
-#                 "'True' or 'False'. 'False is default'"
-#                )
-#    else:
-#      self.parallel = False
+    if 'threads' in kwargs:
+      self.threads = int(kwargs['threads'])
+    else:
+      self.threads = 1
+
     self.out_dir = glob.glob(self.path + "/" + self.pattern)
-    #self.out_dir = next(os.walk(path))[1]
-    #self.out_dir.sort()
+    print "Reading output file in " +\
+          self.path + "/" + self.pattern
     self.results = {}
     self.data = np.atleast_2d(np.array([]))
     if self.path+'inp' in self.out_dir: 
       self.out_dir.remove(self.path + 'inp')
 
-#    if self.parallel:
-      # parallel with minimal fork
-      # queue is necessary for shared data
+    # parallel with minimal fork
+    # queue is necessary for shared data
     def read_out_dir(out_path, Et_queue):
       for folder in out_path:
         for out in glob.glob(folder + '/*.out'):
@@ -53,7 +42,6 @@ class QMResults(object):
       for i in xrange(0, len(l), n):
         yield l[i:i+n]
 
-#                   len(self.out_dir)/mp.cpu_count()
     job_chunk = list(chunks(
                   self.out_dir, 
                   len(self.out_dir)/self.threads
@@ -74,22 +62,6 @@ class QMResults(object):
     for process in jobs:
       # wait for each process to finish
       process.join()
-      
-#    else:
-#      # Serial verision
-#      def read_out_dir(out_path):
-#        for out in glob.glob(out_path + '/*.out'):
-#          data = qmio.QMOut(out, self.program)
-#          self.results.update({
-#            re.sub(self.path + "/", "", out) :
-#            np.array([data.Et, data.SCFStep])
-#          })
-#          #data.Et
-  
-      # Serial verision
-#      for results in self.out_dir:
-#        read_out_dir(results)
-
 
 # pandas DataFrame wrapper
 class QMData(pd.DataFrame):
@@ -101,7 +73,7 @@ class QMData(pd.DataFrame):
     _qr = QMResults(arg_path, 
                     arg_pattern, 
                     arg_prog,
-                    arg_threads).results
+                    threads=arg_threads).results
     _qr = pd.DataFrame(_qr).T
     _qr.index.name = 'file'
     _qr.columns = ['E', 'step']
@@ -205,25 +177,12 @@ class QMData(pd.DataFrame):
   ###################
   # unit conversion #
   ###################
+  # NOTE: energy MUST be read in as Hartree
   def ev(self):
     return self * 27.21138505
-    # attribute passing is not yet implemented
-    #if re.match('Ha', self.E_unit):
-    #  self.E_unit = 'eV'
-    #  return self * 27.21138505
-    #elif re.match('kcal/mol', self.E_unit):
-    #  self.E_unit = 'eV'
-    #  return self * 0.0433634
 
   def kcal(self):
     return self * 627.509469
-    #  return self * 27.21138505
-    #if re.match('Ha', self.E_unit):
-    #  self.E_unit = 'kcal/mol'
-    #  return self * 627.509469
-    #elif re.match('eV', self.E_unit):
-    #  self.E_unit = 'kcal/mol'
-    #  return self * 23.061
 
 class ScatterPlot(object):
   def __init__(self, QMData_pred, QMData_true, unit):
@@ -286,7 +245,6 @@ class ScatterPlot(object):
 
   def save(self, out_file):
     self.fig.savefig(out_file)
-    
 
 class DensityPlot(object):
   def __init__(self, path):
