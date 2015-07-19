@@ -9,23 +9,25 @@ import pandas as pd
 
 # Construct dictionary of {file:results} for DataFrame
 class QMResults(object):
-  def __init__(self, pathPattern):
+  #def __init__(self, pathPattern):
+  def __init__(self, path, pattern, program, threads):
     # ['path', 'program', 'parallelRead']
-    self.path = re.sub('/$', '', pathPattern[0])
-    self.pattern = pathPattern[1]
-    self.program = pathPattern[2]
-    if len(pathPattern)>3:
-      flag = re.compile('(True|False)')
-      if re.match(flag, pathPattern[3]):
-        self.parallel = pathPattern[3]
-      else:
-        sys.exit("Error from analysis.py->QMResults: '" +\
-                 pathPattern[3] + "' is not a boolean variable "+\
-                 "for parallel setup. Please choose either " +\
-                 "'True' or 'False'. 'False is default'"
-                )
-    else:
-      self.parallel = False
+    self.path = re.sub('/$', '', path)
+    self.pattern = pattern
+    self.program = program
+    self.threads = int(threads)
+#    if len(pathPattern)>3:
+#      flag = re.compile('(True|False)')
+#      if re.match(flag, pathPattern[3]):
+#        self.parallel = pathPattern[3]
+#      else:
+#        sys.exit("Error from analysis.py->QMResults: '" +\
+#                 pathPattern[3] + "' is not a boolean variable "+\
+#                 "for parallel setup. Please choose either " +\
+#                 "'True' or 'False'. 'False is default'"
+#                )
+#    else:
+#      self.parallel = False
     self.out_dir = glob.glob(self.path + "/" + self.pattern)
     #self.out_dir = next(os.walk(path))[1]
     #self.out_dir.sort()
@@ -34,68 +36,76 @@ class QMResults(object):
     if self.path+'inp' in self.out_dir: 
       self.out_dir.remove(self.path + 'inp')
 
-    if self.parallel:
+#    if self.parallel:
       # parallel with minimal fork
       # queue is necessary for shared data
-      def read_out_dir(out_path, Et_queue):
-        for folder in out_path:
-          for out in glob.glob(folder + '/*.out'):
-            # save data of each process in the queue
-            data = qmio.QMOut(out, self.program)
-            Et_queue.put(
-              {re.sub(self.path + "/", "", out) : 
-               np.array([data.Et, data.SCFStep])}
-            )
-  
-      def chunks(l, n):
-        for i in xrange(0, len(l), n):
-          yield l[i:i+n]
-  
-      job_chunk = list(chunks(
-                    self.out_dir, 
-                    len(self.out_dir)/mp.cpu_count()
-                  ))
-  
-      jobs = []
-      queue = mp.Queue()
-      for result in job_chunk:
-        p = mp.Process(target=read_out_dir,\
-          args=(result,queue))
-        jobs.append(p)
-        # start multiprocess
-        p.start()
-      for process in job_chunk:
-        for result in process:
-          # append data from queue to hash
-          self.results.update(queue.get())
-      for process in jobs:
-        # wait for each process to finish
-        process.join()
-      
-    else:
-      # Serial verision
-      def read_out_dir(out_path):
-        for out in glob.glob(out_path + '/*.out'):
+    def read_out_dir(out_path, Et_queue):
+      for folder in out_path:
+        for out in glob.glob(folder + '/*.out'):
+          # save data of each process in the queue
           data = qmio.QMOut(out, self.program)
-          self.results.update({
-            re.sub(self.path + "/", "", out) :
-            np.array([data.Et, data.SCFStep])
-          })
-          #data.Et
+          Et_queue.put(
+            {re.sub(self.path + "/", "", out) : 
+             np.array([data.Et, data.SCFStep])}
+          )
+
+    def chunks(l, n):
+      for i in xrange(0, len(l), n):
+        yield l[i:i+n]
+
+#                   len(self.out_dir)/mp.cpu_count()
+    job_chunk = list(chunks(
+                  self.out_dir, 
+                  len(self.out_dir)/self.threads
+                ))
+
+    jobs = []
+    queue = mp.Queue()
+    for result in job_chunk:
+      p = mp.Process(target=read_out_dir,\
+        args=(result,queue))
+      jobs.append(p)
+      # start multiprocess
+      p.start()
+    for process in job_chunk:
+      for result in process:
+        # append data from queue to hash
+        self.results.update(queue.get())
+    for process in jobs:
+      # wait for each process to finish
+      process.join()
+      
+#    else:
+#      # Serial verision
+#      def read_out_dir(out_path):
+#        for out in glob.glob(out_path + '/*.out'):
+#          data = qmio.QMOut(out, self.program)
+#          self.results.update({
+#            re.sub(self.path + "/", "", out) :
+#            np.array([data.Et, data.SCFStep])
+#          })
+#          #data.Et
   
       # Serial verision
-      for results in self.out_dir:
-        read_out_dir(results)
+#      for results in self.out_dir:
+#        read_out_dir(results)
 
 
 # pandas DataFrame wrapper
 class QMData(pd.DataFrame):
-  def __init__(self, pathPattern, **kwargs):
-    _qr = QMResults(pathPattern).results
+  def __init__(self, arg_path, arg_pattern, arg_prog, **kwargs):
+    if 'threads' in kwargs:
+      arg_threads = kwargs['threads']
+    else:
+      arg_threads = 1
+    _qr = QMResults(arg_path, 
+                    arg_pattern, 
+                    arg_prog,
+                    arg_threads).results
     _qr = pd.DataFrame(_qr).T
     _qr.index.name = 'file'
     _qr.columns = ['E', 'step']
-    super(QMData, self).__init__(_qr, **kwargs)
+    super(QMData, self).__init__(_qr)
     #self.E_unit = 'Ha'
 
   ##########################
@@ -234,6 +244,11 @@ class ScatterPlot(object):
     # construct linear regression
     self._x = self.scatter['Epred'].values
     self._y = self.scatter['Etrue'].values
+    if len(self._x) == 0:
+      sys.exit("ERROR from analysis.py->ScatterPlot: " +\
+               "Empty data array! file name matched? " +\
+               "use QMData.extract('regexPatter')"
+              )
     self.fit = np.polyfit(self._x, self._y, 1)
     self._y_fit = self.fit[0]*self._x + self.fit[1]
 
