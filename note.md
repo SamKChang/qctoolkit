@@ -48,3 +48,4 @@ from [here]
 **Note:** dynamic library of extensions will be compiled to 
 /usr/lib/python2.7/dist-packages/<package_system>/<module_name>
 * python package manager "pip" can be installed by ```sudo apt-get install python-pip```. Other packages can be installed through pip via ```sudo pip install numpy``` or upgrade via ```sudo pip install --upgrade numpy```
+* setup script for multipole extention can use cythonize for both C code and cython code
