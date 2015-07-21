@@ -58,9 +58,12 @@ Python module of Open Babel
  - install python module with pip via ```sudo pip install openbabel```
 
 ### Technical Notes
-* To build molecule from atomic number and coordinates:
+* To build molecules from atomic number and coordinates
 ```
-mol = openbabel.OBMol() # create openbabel empty molecule object
+import openbabel as ob
+import pybel as pb
+
+mol = ob.OBMol() # create openbabel empty molecule object
 for atom in atoms: 
   # loop through every atom's atomic number and coordinates
   new_atom = mol.NewAtom()  # empty atom object
@@ -68,4 +71,7 @@ for atom in atoms:
   new_atom.SetVector(x, y, z)
 
 mol.ConnectTheDots() # find connectivity
+
+for frag in mol.Separate():
+  print pb.Molecule(frag).write("xyz")
 ```
