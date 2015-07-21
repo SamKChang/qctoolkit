@@ -56,3 +56,16 @@ Python module of Open Babel
 * Installation
  - compile openbabel with python\_binding enabled: ```cmake source/path/to/openbabel -DPYTHON_BINDINGS=ON```
  - install python module with pip via ```sudo pip install openbabel```
+
+### Technical Notes
+* To build molecule from atomic number and coordinates:
+```
+mol = openbabel.OBMol() # create openbabel empty molecule object
+for atom in atoms: 
+  # loop through every atom's atomic number and coordinates
+  new_atom = mol.NewAtom()  # empty atom object
+  new_atom.SetAtomicNum(Z)
+  new_atom.SetVector(x, y, z)
+
+mol.ConnectTheDots() # find connectivity
+```
