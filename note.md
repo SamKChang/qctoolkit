@@ -49,3 +49,10 @@ from [here]
 /usr/lib/python2.7/dist-packages/<package_system>/<module_name>
 * python package manager "pip" can be installed by ```sudo apt-get install python-pip```. Other packages can be installed through pip via ```sudo pip install numpy``` or upgrade via ```sudo pip install --upgrade numpy```
 * setup script for multipole extention can use cythonize for both C code and cython code
+
+
+Python module of Open Babel
+===========================
+* Installation
+ - compile openbabel with python\_binding enabled: ```cmake source/path/to/openbabel -DPYTHON_BINDINGS=ON```
+ - install python module with pip via ```sudo pip install openbabel```

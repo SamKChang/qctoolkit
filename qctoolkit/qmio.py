@@ -102,7 +102,7 @@ class CUBE(object):
       _out.data = _out.data / other
       return _out
 
-class QMInp(setting.QMSetting):
+class QMInp(object):
   def __init__(self, structure_inp, program, info):
     self.program = program
     self.info = info
@@ -159,6 +159,10 @@ class QMInp(setting.QMSetting):
 
   def write(self, name):
     self.inp.write(name)
+
+  def periodic(self):
+    self.inp.setting.isolated = False
+    self.inp.set_center = False
 
 class QMOut(object):
   def __init__(self, qmout, program):

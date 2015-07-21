@@ -4,14 +4,13 @@ I/O format of QM packages
 This folder contains I/O formats of some commonly used QM codes.
 New format can be implemented.
 
-##### setting.py
+##### cpmd.py
 
-* QMSetting() # general settings
+* Setting
  - *theory* = "PBE"
  - *mode* = "single\_point"
  - *maxstep* = 10000
  - *save\_density* = False
-* QMSetting() # plane wave settings
  - *cutoff* = 100 
  - *margin* = 5 
  - *center* = np.array([0, 0, 0]) 
@@ -21,9 +20,6 @@ New format can be implemented.
  - *mesh* = 0 
  - *kmesh* = [1,1,1]
  - *ks\_states* = 0
-
-##### cpmd.py
-
 * inp(structureFile, info) # info field is requied
  - *setting* = QMSetting()
  - *set\_center* = False
