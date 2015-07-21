@@ -59,7 +59,7 @@ Python module of Open Babel
 
 ### Technical Notes
 * To build molecules from atomic number and coordinates
-```
+```python
 import openbabel as ob
 import pybel as pb
 
