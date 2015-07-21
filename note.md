@@ -67,8 +67,8 @@ mol = ob.OBMol() # create openbabel empty molecule object
 for atom in atoms: 
   # loop through every atom's atomic number and coordinates
   new_atom = mol.NewAtom()  # empty atom object
-  new_atom.SetAtomicNum(Z)
-  new_atom.SetVector(x, y, z)
+  new_atom.SetAtomicNum(atom.Z)
+  new_atom.SetVector(atom.x, atom.y, atom.z)
 
 mol.ConnectTheDots() # find connectivity
 
