@@ -140,9 +140,9 @@ class QMInp(object):
     self.inp.setting.mode = mode
     self.inp.set_mode = True
 
-  def setChargeMultiplicity(self, charge, multiplicity):
+  def setChargeMultiplicity(self, charge, multiplicity, **kargs):
     self.inp.structure.charge = charge
-    self.inp.structure.setMultiplicity(multiplicity)
+    self.inp.structure.setMultiplicity(multiplicity, **kargs)
 
   def setTheory(self, theory):
     self.inp.setting.theory = theory
@@ -150,6 +150,9 @@ class QMInp(object):
   def setSCFStep(self, step):
     self.inp.setting.maxstep = step
     self.inp.set_step = True
+
+  def setInitRandom(self):
+    self.inp.set_init_random = True
 
   def restart(self):
     self.inp.restart = True

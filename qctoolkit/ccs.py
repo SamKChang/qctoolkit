@@ -32,26 +32,63 @@ class MoleculeSpan(object):
     while True:
       line = param.readline()
       if not line: break
+      line = re.sub(re.compile("#.*"),'', line)
       if re.match(mutation_flag, line.lower()):
         while not re.match(end_flag, line):
           line = param.readline().rstrip()
+          line = re.sub(re.compile("#.*"),'', line)
           try:
-            mlist = map(int, re.sub(re.compile("->.*"), "", line)\
-                            .split(","))
-            tlist = map(int, re.sub(re.compile(".*->"), "", line)\
-                             .split(","))
+            mlist_str =  re.sub(re.compile("->.*"), "", line)\
+                         .split(",")
+            tlist_str =  re.sub(re.compile(".*->"), "", line)\
+                         .split(",")
+            mlist = []
+            tlist = []
+            for m in mlist_str:
+              if re.match(re.compile(".*:.*"), m):
+                rangeList = map(int, m.split(":"))
+                mmin = rangeList[0]
+                mmax = rangeList[1] + 1
+                mlist.extend(range(mmin,mmax))
+              else:
+                mlist.append(int(m))
+            for t in tlist_str:
+              if re.match(re.compile(".*:.*"), t):
+                rangeList = map(int, t.split(":"))
+                tmin = rangeList[0]
+                tmax = rangeList[1] + 1
+                tlist.extend(range(tmin,tmax))
+              else:
+                tlist.append(int(t))
             self.mutation_list.append(mlist)
             self.mutation_target.append(tlist)
           except ValueError:
             pass
+        MList = self.mutation_list
+        _flatten = [item for sublist in MList for item in sublist]
+        vlen = np.vectorize(len)
+        # wired numpy.int32 bug for equal length sublist
+        try:
+          lenList = vlen(MList)
+        except TypeError:
+          lenList = [len(MList[0]) for i in range(len(MList))]
+        print "===== CCS REPORT ===="
+        print "mutation indices: ",
+        print MList
+        print "target atomic numbers: ",
+        print self.mutation_target
+        print "length of mutation vector:", 
+        print len(_flatten), "<=>", lenList, "\n\n"
       elif re.match(stretching_flag, line.lower()):
         while not re.match(end_flag, line):
           line = param.readline().rstrip()
+          line = re.sub(re.compile("#.*"),'', line)
           if re.match(direction_flag, line):
             dlist = map(int, re.sub(re.compile(".*:"),
                                     "", line).split(","))
             self.stretching_direction.append(dlist)
             line = param.readline().rstrip()
+            line = re.sub(re.compile("#.*"),'', line)
             try:
               slist = map(int, re.sub(re.compile("->.*"),\
                                       "", line).split(","))
@@ -65,15 +102,18 @@ class MoleculeSpan(object):
       elif re.match(rotation_flag, line.lower()):
         while not re.match(end_flag, line):
           line = param.readline()
+          line = re.sub(re.compile("#.*"),'', line)
           if re.match(center_flag, line):
             center = int(re.sub(re.compile(".*:"),
                                 "", line))
             self.rotation_center.append(center)
             line = param.readline().rstrip()
+            line = re.sub(re.compile("#.*"),'', line)
             axis = map(int, re.sub(re.compile(".*:"),
                                    "", line).split(","))
             self.rotation_axis.append(axis)
             line = param.readline().rstrip()
+            line = re.sub(re.compile("#.*"),'', line)
             try:
               rolist = map(int, re.sub(re.compile("->.*"),\
                                        "", line).split(","))
@@ -97,7 +137,8 @@ class MoleculeSpan(object):
     for m in xrange(len(mutation)):
       for i in xrange(len(mutation[m])):
         index = self.mutation_list[m][i] - 1
-        target = self.mutation_target[m][mutation[m][i]]
+        #target = self.mutation_target[m][mutation[m][i]]
+        target = mutation[m][i]
         out.Z[index] = target
     return out
   def _stretch(self, stretching):

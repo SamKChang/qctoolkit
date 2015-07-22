@@ -19,6 +19,13 @@ class Molecule(object):
     # index of different atoms
     self.index = 0
 
+  def __add__(self, other):
+    out = Molecule()
+    out.N = self.N + other.N
+    out.R = np.vstack([self.R, other.R])
+    out.Z = np.hstack([self.Z, other.Z])
+    return out
+
   def center(self, center_coord):
     center_matrix = np.kron(
       np.transpose(np.atleast_2d(np.ones(self.N))),
@@ -29,17 +36,18 @@ class Molecule(object):
   def setCenterFrame(self, center_coord, frame_vector):
     print "not implemented yet"
 
-  def setMultiplicity(self, m):
+  def setMultiplicity(self, m, **kargs):
     self.multiplicity = m
-    if not (m % 2 != (np.sum(self.Z) + self.charge) % 2):
-      ve = np.vectorize(ut.n2ve)
-      nve = sum(ve(self.type_list)) - self.charge
-      sys.exit("ERROR from geometry.py->" + \
-               "Molecule.setMultiplicity: " + \
-               "charge %d " % self.charge + \
-               "and multiplicity %d " % m + \
-               "with %d valence electrons " % nve +\
-               "are not compatible")
+    if not ('forced' in kargs and kargs['forced']):
+      if not (m % 2 != (np.sum(self.Z) + self.charge) % 2):
+        ve = np.vectorize(ut.n2ve)
+        nve = sum(ve(self.type_list)) - self.charge
+        sys.exit("ERROR from geometry.py->" + \
+                 "Molecule.setMultiplicity: " + \
+                 "charge %d " % self.charge + \
+                 "and multiplicity %d " % m + \
+                 "with %d valence electrons " % nve +\
+                 "are not compatible")
 
   def rotate(self, u, angle):
     print "not yet implemented"	

@@ -1,5 +1,38 @@
 from math import pi ,sin, cos
+import geometry as qg
+import openbabel as ob
 import numpy as np
+
+def qt2ob(qtmol):
+  mol = ob.OBMol()
+  for atom in xrange(qtmol.N):
+    new_atom = mol.NewAtom()
+    new_atom.SetAtomicNum(qtmol.Z[atom])
+    new_atom.SetVector(qtmol.R[atom][0], 
+                       qtmol.R[atom][1], 
+                       qtmol.R[atom][2])
+  mol.ConnectTheDots()
+  return mol
+
+def ob2qt(obmol):
+  mol = qg.Molecule()
+  mol.N = obmol.NumAtoms()
+
+  _Z = []
+  _coordX = []
+  _coordY = []
+  _coordZ = []
+
+  for atom in ob.OBMolAtomIter(obmol):
+    _Z.append(atom.GetAtomicNum())
+    _coordX.append(atom.GetVector().GetX())
+    _coordY.append(atom.GetVector().GetY())
+    _coordZ.append(atom.GetVector().GetZ())
+
+  mol.Z = np.array(_Z)
+  mol.R = np.vstack([_coordX, _coordY, _coordZ]).T
+
+  return mol
 
 def R(theta, u):
   return np.array(

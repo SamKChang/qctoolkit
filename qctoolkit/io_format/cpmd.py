@@ -29,6 +29,7 @@ class inp(object):
     self.set_margin = False
     self.set_mode = False
     self.set_step = False
+    self.set_init_random = False
     self.debug = False
     self.restart = False
 
@@ -78,6 +79,9 @@ class inp(object):
     if self.debug:
       print >>inp, " BENCHMARK"
       print >>inp, "  1 0 0 0 0 0 0 0 0 0 "
+
+    if self.set_init_random:
+      print >>inp, " INITIALIZE WAVEFUNCTION RANDOM"
 
     if not self.set_mode:
       print >>inp, " OPTIMIZE WAVEFUNCTION"
