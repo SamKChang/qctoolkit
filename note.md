@@ -78,5 +78,5 @@ for frag in mol.Separate():
 **NOTE**: Memory must be properly freeed. 
 Otherwise return stack/heap/segfault error
 * Openbabel routine: `OBMol.DeletAtom` takes index from 1 to N
-* Openbabel routine: `OBMol.DeletBond` takes index from 0 to N+1
+* Openbabel routine: `OBMol.DeletBond` takes index from 0 to N-1
 
