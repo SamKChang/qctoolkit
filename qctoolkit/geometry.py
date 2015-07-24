@@ -19,6 +19,9 @@ class Molecule(object):
     # index of different atoms
     self.index = 0
 
+#  def have_bond(self, type_a, type_b):
+#    obmol = ut.qt2ob(self)
+
   def __add__(self, other):
     out = Molecule()
     out.N = self.N + other.N

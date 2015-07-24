@@ -79,4 +79,10 @@ for frag in mol.Separate():
 Otherwise return stack/heap/segfault error
 * Openbabel routine: `OBMol.DeletAtom` takes index from 1 to N
 * Openbabel routine: `OBMol.DeletBond` takes index from 0 to N-1
-
+* It seems (unkown reason!?) better to initialize data type before iteration, e.g.
+```python
+bond = ob.OBBond()
+for i in range(obmol.NumBonds()):
+  bond = obmol.GetBond(i)
+```
+Otherwise get stack/heap/segfault error

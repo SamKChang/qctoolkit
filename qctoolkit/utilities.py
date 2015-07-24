@@ -4,6 +4,15 @@ import openbabel as ob
 import numpy as np
 import gc
 
+def have_bond(obmol, type_a, type_b):
+  bond = ob.OBBond()
+  for i in range(obmol.NumBonds()):
+    print type_a + "-" + type_b
+    bond = obmol.GetBond(i)
+
+  return True
+  del bond
+
 def qt2ob(qtmol):
   mol = ob.OBMol()
   for atom in xrange(qtmol.N):
@@ -13,12 +22,14 @@ def qt2ob(qtmol):
                        qtmol.R[atom][1], 
                        qtmol.R[atom][2])
   mol.ConnectTheDots()
-  del qtmol
   return mol
+  #del qtmol
 
 def ob2qt(obmol):
   mol = qg.Molecule()
   mol.N = obmol.NumAtoms()
+  atom = ob.OBAtom()
+  bond = ob.OBBond()
 
   _Z = []
   _coordX = []
@@ -32,9 +43,9 @@ def ob2qt(obmol):
     _coordY.append(atom.GetVector().GetY())
     _coordZ.append(atom.GetVector().GetZ())
   for i in range(obmol.NumBonds()):
-    bond = obmol.GetBond(1)
-    if bond is not None:
-      obmol.DeleteBond(bond)
+    bond = obmol.GetBond(0)
+    #if bond is not None:
+    obmol.DeleteBond(bond)
   for i in range(1, obmol.NumAtoms()+1):
     atom = obmol.GetAtom(1)
     obmol.DeleteAtom(atom)
@@ -44,6 +55,8 @@ def ob2qt(obmol):
   mol.R = np.vstack([_coordX, _coordY, _coordZ]).T
 
   return mol
+
+  del _coordX, _coordY, coordZ, _Z, mol
 
 def R(theta, u):
   return np.array(
