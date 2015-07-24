@@ -160,8 +160,8 @@ class QMInp(object):
   def debug(self):
     self.inp.debug = True
 
-  def write(self, name):
-    self.inp.write(name)
+  def write(self, name, **kwargs):
+    self.inp.write(name, **kwargs)
 
   def periodic(self):
     self.inp.setting.isolated = False

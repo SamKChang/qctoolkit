@@ -22,7 +22,7 @@ class Setting(object):
     self.ks_states = 0 
 
 class inp(object):
-  def __init__(self, structure_inp, info):
+  def __init__(self, structure_inp, info, **kwargs):
     self.setting = Setting()
     self.set_center = False
     self.set_celldm = False
@@ -43,9 +43,12 @@ class inp(object):
       print "unknown structure format"
     self.info = info
    
-  def PPStringDefault(self, atom_type):
-    return atom_type.title() + "_q" + str(ut.n2ve(atom_type))\
-           + "_" + self.setting.theory.lower() + ".psp"
+  def PPString(self, atom_type, **kwargs):
+    if atom_type.title() in kwargs:
+      return atom_type.title() + kwargs[atom_type.title()]
+    else:
+      return atom_type.title() + "_q" + str(ut.n2ve(atom_type))\
+             + "_" + self.setting.theory.lower() + ".psp"
 
   def symmetry(self):
     a = self.setting.celldm[3]
@@ -59,7 +62,7 @@ class inp(object):
       return '  TRICLINIC'
 
   # CPMD input format
-  def write(self, name):
+  def write(self, name, **kwargs):
     inp= sys.stdout if re.match("stdout", name) else open(name,"w")
 
     isolated = False
@@ -177,7 +180,7 @@ class inp(object):
   
     # loop through all atom types
     self.structure.sort()
-    PP = self.PPStringDefault
+    PP = self.PPString
     type_index = self.structure.index
     type_list = self.structure.type_list
     atom_list = self.atom_list
@@ -188,7 +191,8 @@ class inp(object):
         print >>inp, "*" + atom_list[key]
       else:
         print >>inp, "*" + \
-                PP(self.structure.type_list[type_index[atom_type]])
+                PP(self.structure.type_list[type_index[atom_type]],
+                   **kwargs)
       print >>inp, " LMAX=F\n" + "  " + str(type_n)
       for I in\
         xrange(type_index[atom_type],type_index[atom_type+1]):

@@ -72,6 +72,16 @@ class Molecule(object):
     index_a = np.insert(self.Z, 0, 0)
     index_b = np.insert(self.Z, len(self.Z), 0)
     self.index = np.where((index_a != index_b))[0]
+
+  def sort_coord(self, **kwargs):
+    if 'order' in kwargs:
+      order = kwargs['order']
+    else:
+      order = [0,1,2]
+    ind = np.lexsort((self.R[:,order[2]],\
+                      self.R[:,order[1]],\
+                      self.R[:,order[0]]))
+    self.R = self.R[ind]
     
     
 #    self.Z = data[:,1:4]

@@ -72,13 +72,14 @@ class MoleculeSpan(object):
           lenList = vlen(MList)
         except TypeError:
           lenList = [len(MList[0]) for i in range(len(MList))]
-        print "===== CCS REPORT ===="
-        print "mutation indices: ",
+        print "===== CCS REPORT ====="
+        print "\033[92m mutation indices: \033[0m",
         print MList
-        print "target atomic numbers: ",
+        print "\033[92m target atomic numbers: \033[0m",
         print self.mutation_target
-        print "length of mutation vector:", 
-        print len(_flatten), "<=>", lenList, "\n\n"
+        print "\033[92m length of mutation vector: \033[0m", 
+        print len(_flatten), "<=>", lenList
+        print "========= END ========\n"
       elif re.match(stretching_flag, line.lower()):
         while not re.match(end_flag, line):
           line = param.readline().rstrip()
@@ -124,6 +125,8 @@ class MoleculeSpan(object):
             except ValueError:
               pass
 
+  # !!TODO!!
+  # interface between mutation and other operations is necessary!
   def generate(self, **kwargs):
     if 'mutation' in kwargs:
       return self._mutate(kwargs['mutation'])

@@ -2,6 +2,7 @@ from math import pi ,sin, cos
 import geometry as qg
 import openbabel as ob
 import numpy as np
+import gc
 
 def qt2ob(qtmol):
   mol = ob.OBMol()
@@ -12,6 +13,7 @@ def qt2ob(qtmol):
                        qtmol.R[atom][1], 
                        qtmol.R[atom][2])
   mol.ConnectTheDots()
+  del qtmol
   return mol
 
 def ob2qt(obmol):
@@ -23,11 +25,20 @@ def ob2qt(obmol):
   _coordY = []
   _coordZ = []
 
-  for atom in ob.OBMolAtomIter(obmol):
+  for i in range(1, obmol.NumAtoms()+1):
+    atom = obmol.GetAtom(i)
     _Z.append(atom.GetAtomicNum())
     _coordX.append(atom.GetVector().GetX())
     _coordY.append(atom.GetVector().GetY())
     _coordZ.append(atom.GetVector().GetZ())
+  for i in range(obmol.NumBonds()):
+    bond = obmol.GetBond(1)
+    if bond is not None:
+      obmol.DeleteBond(bond)
+  for i in range(1, obmol.NumAtoms()+1):
+    atom = obmol.GetAtom(1)
+    obmol.DeleteAtom(atom)
+  del obmol
 
   mol.Z = np.array(_Z)
   mol.R = np.vstack([_coordX, _coordY, _coordZ]).T
