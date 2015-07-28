@@ -6,5 +6,5 @@ fileList.txt
 **.pyc
 qctoolkit/test/
 **.sh
-!qctuulkit/tools/*.sh
+!qctoolkit/tools/*.sha
 qctoolkit/projects/initialize.py
