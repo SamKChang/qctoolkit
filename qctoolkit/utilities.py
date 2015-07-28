@@ -1,5 +1,85 @@
 from math import pi ,sin, cos
+import geometry as qg
+import openbabel as ob
 import numpy as np
+import gc
+
+class bcolors:
+  HEADER = '\033[95m'
+  OKBLUE = '\033[94m'
+  OKGREEN = '\033[92m'
+  WARNING = '\033[93m'
+  FAIL = '\033[91m'
+  ENDC = '\033[0m'
+  BOLD = '\033[1m'
+  UNDERLINE = '\033[4m'
+
+#def have_bond(obmol, type_a, type_b):
+#  result = False
+#  na1 = n2Z(type_a)
+#  nb1 = n2Z(type_b)
+#  na2 = n2Z(type_b)
+#  nb2 = n2Z(type_a)
+#  #bond = ob.OBBond()
+#  #atom_a = ob.OBAtom()
+#  #atom_b = ob.OBAtom()
+#  for i in range(obmol.NumBonds()):
+#    bond = obmol.GetBond(i)
+#    atom_a = bond.GetBeginAtom()
+#    atom_b = bond.GetBeginAtom()
+#    za = atom_a.GetAtomicNum()
+#    zb = atom_b.GetAtomicNum()
+#    if (za == na1 and zb == nb1) or (za == na2 and zb == nb2):
+#    #print type_a + "-" + type_b + "<=>" + str(za) + "-" + str(zb)
+#      result = True
+#
+#  return result
+#  del bond, atom_a, atom_b
+
+def qt2ob(qtmol):
+  mol = ob.OBMol()
+  for atom in xrange(qtmol.N):
+    new_atom = mol.NewAtom()
+    new_atom.SetAtomicNum(qtmol.Z[atom])
+    new_atom.SetVector(qtmol.R[atom][0], 
+                       qtmol.R[atom][1], 
+                       qtmol.R[atom][2])
+  mol.ConnectTheDots()
+  return mol
+  #del qtmol
+
+def ob2qt(obmol):
+  mol = qg.Molecule()
+  mol.N = obmol.NumAtoms()
+  atom = ob.OBAtom()
+  bond = ob.OBBond()
+
+  _Z = []
+  _coordX = []
+  _coordY = []
+  _coordZ = []
+
+  for i in range(1, obmol.NumAtoms()+1):
+    atom = obmol.GetAtom(i)
+    _Z.append(atom.GetAtomicNum())
+    _coordX.append(atom.GetVector().GetX())
+    _coordY.append(atom.GetVector().GetY())
+    _coordZ.append(atom.GetVector().GetZ())
+  for i in range(obmol.NumBonds()):
+    bond = obmol.GetBond(0)
+    #if bond is not None:
+    obmol.DeleteBond(bond)
+  for i in range(1, obmol.NumAtoms()+1):
+    atom = obmol.GetAtom(1)
+    obmol.DeleteAtom(atom)
+  del obmol
+
+  mol.Z = np.array(_Z)
+  mol.R = np.vstack([_coordX, _coordY, _coordZ]).T
+
+  return mol
+
+  del _coordX, _coordY, coordZ, _Z, mol
 
 def R(theta, u):
   return np.array(

@@ -1,16 +1,35 @@
 import qctoolkit, re, sys
-import setting
 import numpy as np
 from qctoolkit import utilities as ut
 
-class inp(setting.QMSetting):
-  def __init__(self, structure_inp, info):
-    self.setting = setting.QMSetting()
+class Setting(object): 
+  def __init__(self): 
+ 
+    self.theory = "PBE" 
+    self.mode = "single_point" 
+    self.maxstep = 1000 
+    self.save_density = False 
+ 
+    self.cutoff = 100 
+    self.margin = 5 
+    self.center = np.array([0,0,0]) 
+    self.celldm = [20,20,20,0,0,0] 
+    self.unit = "Angstrom" 
+    self.isolated = True
+    self.symmetry = "isolated" 
+    self.mesh = 0 
+    self.kmesh = [1,1,1] 
+    self.ks_states = 0 
+
+class inp(object):
+  def __init__(self, structure_inp, info, **kwargs):
+    self.setting = Setting()
     self.set_center = False
     self.set_celldm = False
     self.set_margin = False
     self.set_mode = False
     self.set_step = False
+    self.set_init_random = False
     self.debug = False
     self.restart = False
 
@@ -24,12 +43,26 @@ class inp(setting.QMSetting):
       print "unknown structure format"
     self.info = info
    
-  def PPStringDefault(self, atom_type):
-    return atom_type.title() + "_q" + str(ut.n2ve(atom_type))\
-           + "_" + self.setting.theory.lower() + ".psp"
+  def PPString(self, atom_type, **kwargs):
+    if atom_type.title() in kwargs:
+      return atom_type.title() + kwargs[atom_type.title()]
+    else:
+      return atom_type.title() + "_q" + str(ut.n2ve(atom_type))\
+             + "_" + self.setting.theory.lower() + ".psp"
+
+  def symmetry(self):
+    a = self.setting.celldm[3]
+    b = self.setting.celldm[4]
+    c = self.setting.celldm[5]
+    if self.setting.isolated:
+      return '  ISOLATED'
+    elif a==0 and b==0 and c==0:
+      return '  ORTHORHOMBIC'
+    elif a+b+c==0.5 and (a*b==0 or b*c==0 or c*a==0):
+      return '  TRICLINIC'
 
   # CPMD input format
-  def write(self, name):
+  def write(self, name, **kwargs):
     inp= sys.stdout if re.match("stdout", name) else open(name,"w")
 
     isolated = False
@@ -49,6 +82,9 @@ class inp(setting.QMSetting):
     if self.debug:
       print >>inp, " BENCHMARK"
       print >>inp, "  1 0 0 0 0 0 0 0 0 0 "
+
+    if self.set_init_random:
+      print >>inp, " INITIALIZE WAVEFUNCTION RANDOM"
 
     if not self.set_mode:
       print >>inp, " OPTIMIZE WAVEFUNCTION"
@@ -114,8 +150,8 @@ class inp(setting.QMSetting):
     print >>inp, ""
     print >>inp, "&SYSTEM"
     print >>inp, " SYMMETRY"
-    print >>inp, "  " + self.setting.symmetry.upper()
-    if isolated:
+    print >>inp, self.symmetry()
+    if self.setting.isolated:
       print >>inp, " POISSON SOLVER TUCKERMAN"
     if angstrom:
       print >>inp, " ANGSTROM"
@@ -144,7 +180,7 @@ class inp(setting.QMSetting):
   
     # loop through all atom types
     self.structure.sort()
-    PP = self.PPStringDefault
+    PP = self.PPString
     type_index = self.structure.index
     type_list = self.structure.type_list
     atom_list = self.atom_list
@@ -155,7 +191,8 @@ class inp(setting.QMSetting):
         print >>inp, "*" + atom_list[key]
       else:
         print >>inp, "*" + \
-                PP(self.structure.type_list[type_index[atom_type]])
+                PP(self.structure.type_list[type_index[atom_type]],
+                   **kwargs)
       print >>inp, " LMAX=F\n" + "  " + str(type_n)
       for I in\
         xrange(type_index[atom_type],type_index[atom_type+1]):
@@ -181,9 +218,12 @@ class out(object):
 
     done = False
     finished = False
+    converged = True
   
     scf_p = re.compile('^ *[0-9]*  [0-9]\.[0-9]{3}E-[0-9]{2}   .*')
     Et_cpmd = re.compile('.*TOTAL ENERGY = *([-0-9\.]*)')
+    convergence = re.compile('.*BUT NO CONVERGENCE.*')
+    soft_exit = re.compile('.*SOFT EXIT REQUEST.*')
     done_cpmd = re.compile(' \* *FINAL RESULTS *\*')
     qmInfo = re.compile('.*qmInfo.*')
     info_head = re.compile('.*qmInfo:')
@@ -196,13 +236,17 @@ class out(object):
       if (re.match(scf_p, line)):
         data = [float(x) for x in line.split()]
         self.SCFStep = int(data[0])
+      elif re.match(convergence, line) and self.SCFStep > 5:
+        converged = False
+      elif re.match(soft_exit, line):
+        converged = False
       elif re.match(qmInfo, line):
         tmp1 = re.sub(info_head, '', line)
         tmp2 = re.sub(info_tail, '', tmp1)
         self.info = tmp2
       elif (re.match(done_cpmd,line)):
         done = True,
-      elif (re.match(Et_cpmd, line)) and done:
+      elif (re.match(Et_cpmd, line)) and done and converged:
         self.Et = float(Et_cpmd.match(line).group(1))
         finished = True
         

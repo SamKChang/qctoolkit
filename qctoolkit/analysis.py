@@ -9,94 +9,76 @@ import pandas as pd
 
 # Construct dictionary of {file:results} for DataFrame
 class QMResults(object):
-  def __init__(self, pathPattern):
-    # ['path', 'program', 'parallelRead']
-    self.path = re.sub('/$', '', pathPattern[0])
-    self.pattern = pathPattern[1]
-    self.program = pathPattern[2]
-    if len(pathPattern)>3:
-      flag = re.compile('(True|False)')
-      if re.match(flag, pathPattern[3]):
-        self.parallel = pathPattern[3]
-      else:
-        sys.exit("Error from analysis.py->QMResults: '" +\
-                 pathPattern[3] + "' is not a boolean variable "+\
-                 "for parallel setup. Please choose either " +\
-                 "'True' or 'False'. 'False is default'"
-                )
+  def __init__(self, path, pattern, program, **kwargs):
+    self.path = re.sub('/$', '', path)
+    self.pattern = pattern
+    self.program = program
+    if 'threads' in kwargs:
+      self.threads = int(kwargs['threads'])
     else:
-      self.parallel = False
+      self.threads = 1
+
     self.out_dir = glob.glob(self.path + "/" + self.pattern)
-    #self.out_dir = next(os.walk(path))[1]
-    #self.out_dir.sort()
+    print "Reading output file in " +\
+          self.path + "/" + self.pattern
     self.results = {}
     self.data = np.atleast_2d(np.array([]))
     if self.path+'inp' in self.out_dir: 
       self.out_dir.remove(self.path + 'inp')
 
-    if self.parallel:
-      # parallel with minimal fork
-      # queue is necessary for shared data
-      def read_out_dir(out_path, Et_queue):
-        for folder in out_path:
-          for out in glob.glob(folder + '/*.out'):
-            # save data of each process in the queue
-            data = qmio.QMOut(out, self.program)
-            Et_queue.put(
-              {re.sub(self.path + "/", "", out) : 
-               np.array([data.Et, data.SCFStep])}
-            )
-  
-      def chunks(l, n):
-        for i in xrange(0, len(l), n):
-          yield l[i:i+n]
-  
-      job_chunk = list(chunks(
-                    self.out_dir, 
-                    len(self.out_dir)/mp.cpu_count()
-                  ))
-  
-      jobs = []
-      queue = mp.Queue()
-      for result in job_chunk:
-        p = mp.Process(target=read_out_dir,\
-          args=(result,queue))
-        jobs.append(p)
-        # start multiprocess
-        p.start()
-      for process in job_chunk:
-        for result in process:
-          # append data from queue to hash
-          self.results.update(queue.get())
-      for process in jobs:
-        # wait for each process to finish
-        process.join()
-      
-    else:
-      # Serial verision
-      def read_out_dir(out_path):
-        for out in glob.glob(out_path + '/*.out'):
+    # parallel with minimal fork
+    # queue is necessary for shared data
+    def read_out_dir(out_path, Et_queue):
+      for folder in out_path:
+        for out in glob.glob(folder + '/*.out'):
+          # save data of each process in the queue
           data = qmio.QMOut(out, self.program)
-          self.results.update({
-            re.sub(self.path + "/", "", out) :
-            np.array([data.Et, data.SCFStep])
-          })
-          #data.Et
-  
-      # Serial verision
-      for results in self.out_dir:
-        read_out_dir(results)
+          Et_queue.put(
+            {re.sub(self.path + "/", "", out) : 
+             np.array([data.Et, data.SCFStep])}
+          )
 
+    def chunks(l, n):
+      for i in xrange(0, len(l), n):
+        yield l[i:i+n]
+
+    job_chunk = list(chunks(
+                  self.out_dir, 
+                  len(self.out_dir)/self.threads
+                ))
+
+    jobs = []
+    queue = mp.Queue()
+    for result in job_chunk:
+      p = mp.Process(target=read_out_dir,\
+        args=(result,queue))
+      jobs.append(p)
+      # start multiprocess
+      p.start()
+    for process in job_chunk:
+      for result in process:
+        # append data from queue to hash
+        self.results.update(queue.get())
+    for process in jobs:
+      # wait for each process to finish
+      process.join()
 
 # pandas DataFrame wrapper
 class QMData(pd.DataFrame):
-  def __init__(self, pathPattern):
-    _qr = QMResults(pathPattern).results
+  def __init__(self, arg_path, arg_pattern, arg_prog, **kwargs):
+    if 'threads' in kwargs:
+      arg_threads = kwargs['threads']
+    else:
+      arg_threads = 1
+    _qr = QMResults(arg_path, 
+                    arg_pattern, 
+                    arg_prog,
+                    threads=arg_threads).results
     _qr = pd.DataFrame(_qr).T
     _qr.index.name = 'file'
     _qr.columns = ['E', 'step']
     super(QMData, self).__init__(_qr)
-    self._unit = 'hartree'
+    #self.E_unit = 'Ha'
 
   ##########################
   # extract regex of index #
@@ -195,54 +177,50 @@ class QMData(pd.DataFrame):
   ###################
   # unit conversion #
   ###################
+  # NOTE: energy MUST be read in as Hartree
   def ev(self):
-    if re.match('hartree', self._unit):
-      self._unit = 'ev'
-      return self * 27.21138505
-    elif re.match('kcal', self._unit):
-      self._unit = 'ev'
-      return self * 0.0433634
+    return self * 27.21138505
 
   def kcal(self):
-    if re.match('hartree', self._unit):
-      self._unit = 'kcal'
-      return self * 627.509469
-    elif re.match('ev', self._unit):
-      self._unit = 'kcal'
-      return self * 23.061
+    return self * 627.509469
 
 class ScatterPlot(object):
-  def __init__(self, QMOut_pred, QMOut_true):
-    self.pred = QMOut_pred
-    self.true = QMOut_true
-    self.data = []
-    self.list = []
-    match = False
-    for key in self.pred.Et:
-      if key in self.true.Et:
-        self.list.append(key)
-        new_point = [self.pred.Et[key], self.true.Et[key]]
-        self.data.append(new_point)
-        match = True
-    self.data = np.array([self.data])[0]
-    if match:
-      x = self.data[:,0]
-      y = self.data[:,1]
-      self.fit = np.polyfit(x, y, 1)
-      self.y_fit = self.fit[0]*x + self.fit[1]
-      diff = abs(y-self.y_fit)
-      self.MAE = sum(diff)/len(diff)
-      self.RMSE = np.sqrt(sum(np.square(diff))/len(diff))
-      #print self.MAE, self.RMSE, self.list
-    else:
-      sys.exit("ERROR from analysis.py->ScatterPlot: "+\
-               "data keys not matched"
+  def __init__(self, QMData_pred, QMData_true, unit):
+    # restructure data
+    self._pred = pd.DataFrame(QMData_pred)
+    self._pred.columns = ['Epred', 's']
+    self._true = pd.DataFrame(QMData_true)
+    self._true.columns = ['Etrue', 'step']
+    self._step = 500
+
+    # select only both valid and small steps
+    self.scatter = pd.concat([self._pred, self._true], axis=1)
+    self.scatter = self.scatter[np.isfinite(self.scatter['Epred'])]
+    self.scatter = self.scatter[np.isfinite(self.scatter['Etrue'])]
+    self.scatter = self.scatter[self.scatter.step < self._step]
+    del self.scatter['s']
+
+    # construct linear regression
+    self._x = self.scatter['Epred'].values
+    self._y = self.scatter['Etrue'].values
+    if len(self._x) == 0:
+      sys.exit("ERROR from analysis.py->ScatterPlot: " +\
+               "Empty data array! file name matched? " +\
+               "use QMData.extract('regexPatter')"
               )
+    self.fit = np.polyfit(self._x, self._y, 1)
+    self._y_fit = self.fit[0]*self._x + self.fit[1]
+
+    # plot data
+    self.data = np.array([self._x, self._y, self._y_fit]).T
+    self._diff = abs(self._y - self._y_fit)
+    self.MAE = sum(self._diff)/len(self._diff)
+    self.RMSE = np.sqrt(sum(np.square(self._diff))/len(self._diff))
+    self.xlabel = '$E_{pred}$ [' + unit + ']'
+    self.ylabel = '$E_{true}$ [' + unit + ']'
 
   def plot(self):
-    plot_data = np.hstack([
-      self.data, np.transpose(np.atleast_2d(self.y_fit))
-    ])
+    plot_data = self.data
     plot_data = plot_data[plot_data[:,0].argsort()]
     x = plot_data[:,0]
     y1 = plot_data[:,1]
@@ -258,8 +236,8 @@ class ScatterPlot(object):
     ax.plot(x, y2, 'r--',
       linewidth = 1.5
     )
-    ax.set_xlabel(self.pred.name, fontsize=20)
-    ax.set_ylabel(self.true.name, fontsize=20)
+    ax.set_xlabel(self.xlabel, fontsize=20)
+    ax.set_ylabel(self.ylabel, fontsize=20)
     ax.tick_params(labelsize=15)
 
   def show(self):
@@ -267,7 +245,6 @@ class ScatterPlot(object):
 
   def save(self, out_file):
     self.fig.savefig(out_file)
-    
 
 class DensityPlot(object):
   def __init__(self, path):

@@ -1,8 +1,14 @@
 from setuptools import setup
 from distutils.core import Extension
+from Cython.Build import cythonize
 
-module1 = Extension('demo',
-                    sources = ['qctoolkit/src/demo.c'])
+c_module = [Extension(name = 'qctoolkit.demo',
+              sources = ['qctoolkit/src/demo.c']),
+            Extension(name = "qctoolkit.read_cube", 
+              sources = ['qctoolkit/src/readcubemodule.c']),
+            Extension(name = 'qctoolkit.primesc',
+              sources = ['qctoolkit/src/primesc.pyx'])
+           ]
 
 setup(name='qctoolkit',
   version='0.1',
@@ -17,5 +23,5 @@ setup(name='qctoolkit',
     'qctoolkit.io_format',
     'qctoolkit'
   ],
-  ext_modules = [module1]
+  ext_modules = cythonize(c_module)
 )

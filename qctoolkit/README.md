@@ -30,7 +30,8 @@ Methods are followed by semicolon.
 Short description of the class/attribute/method are followed
 by a hash symbol as a convention for comments.
 
-#### General I/O format
+
+### qctoolkit - General I/O format
 
 ##### geometry.py
 
@@ -51,7 +52,8 @@ by a hash symbol as a convention for comments.
 
 ##### qmio.py
 
-* QMInp(structur\_inp, program, info)
+* QMInp(structur\_inp, program, info) 
+  # general interface for various QM code input
  - *program* # read from constructor input. 
    Used to determine input format
  - *info* # read from constructor input vector.
@@ -71,6 +73,7 @@ by a hash symbol as a convention for comments.
  - restart():
  - debug():
 * QMOut(output\_file, program)
+  # general interface for various QM code output
  - *program* # read from constructor input
  - *Ehartree* # total energy from output file in Hartree.
    By default, every unit is converted to Hartree
@@ -104,10 +107,22 @@ by a hash symbol as a convention for comments.
  - Z2n(Z): # atomic number to atom\_type
  - n2Z('atom\_type'): # atom\_type to atomic number
 
+### qctoolkit/io\_format - QM interface
+
+##### setting.py
+
+* QMSetting
+
+##### cpmd.py
+
+* inp
+* out
+
+### qctoolkit/src - Pure C extension
 
 ### Project list:
 For each project, there are specially tailored data structure.
 Here is the list
 
-#### p01\_AlGaAs:
+#### qctoolkit/projects/Basel/p01\_AlGaAs:
 AlGaAs prject for alchemical analysis of semiconductor crystals
