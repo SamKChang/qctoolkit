@@ -1,5 +1,6 @@
 from geometry import *
-import re, copy
+from utilities import *
+import re, copy, sys
 
 class MoleculeSpan(object):
   def __init__(self, xyz_file, parameter_file):
@@ -18,6 +19,31 @@ class MoleculeSpan(object):
     self.rotation_list = []
     self.rotation_range = []
     self.read_param(parameter_file)
+
+    MList = self.mutation_list
+    _flatten = [item for sublist in MList for item in sublist]
+    vlen = np.vectorize(len)
+    try:
+      lenList = vlen(MList)
+    except TypeError:
+      lenList = [len(MList[0]) for i in range(len(MList))]
+    print "===== CCS REPORT ====="
+    print "%sgenerating molecule:%s "\
+          % (bcolors.OKGREEN, bcolors.ENDC),
+    print xyz_file
+    print "%sccs parameter file:%s "\
+          % (bcolors.OKGREEN, bcolors.ENDC),
+    print parameter_file
+    print "%smutation indices:%s "\
+          % (bcolors.OKGREEN, bcolors.ENDC),
+    print self.mutation_list
+    print "%starget atomic numbers:%s "\
+          % (bcolors.OKGREEN, bcolors.ENDC),
+    print self.mutation_target
+    print "%slength of mutation vector:%s "\
+          % (bcolors.OKGREEN, bcolors.ENDC),
+    print len(_flatten), "<=>", lenList
+    print "========= END ========\n"
 
   def read_param(self, parameter_file):
     param = open(parameter_file, 'r')
@@ -72,14 +98,6 @@ class MoleculeSpan(object):
           lenList = vlen(MList)
         except TypeError:
           lenList = [len(MList[0]) for i in range(len(MList))]
-        print "===== CCS REPORT ====="
-        print "\033[92m mutation indices: \033[0m",
-        print MList
-        print "\033[92m target atomic numbers: \033[0m",
-        print self.mutation_target
-        print "\033[92m length of mutation vector: \033[0m", 
-        print len(_flatten), "<=>", lenList
-        print "========= END ========\n"
       elif re.match(stretching_flag, line.lower()):
         while not re.match(end_flag, line):
           line = param.readline().rstrip()
@@ -124,6 +142,7 @@ class MoleculeSpan(object):
               self.rotation_range.append(rglist)
             except ValueError:
               pass
+    param.close()
 
   # !!TODO!!
   # interface between mutation and other operations is necessary!

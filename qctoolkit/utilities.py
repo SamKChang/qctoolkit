@@ -4,14 +4,37 @@ import openbabel as ob
 import numpy as np
 import gc
 
-def have_bond(obmol, type_a, type_b):
-  bond = ob.OBBond()
-  for i in range(obmol.NumBonds()):
-    print type_a + "-" + type_b
-    bond = obmol.GetBond(i)
+class bcolors:
+  HEADER = '\033[95m'
+  OKBLUE = '\033[94m'
+  OKGREEN = '\033[92m'
+  WARNING = '\033[93m'
+  FAIL = '\033[91m'
+  ENDC = '\033[0m'
+  BOLD = '\033[1m'
+  UNDERLINE = '\033[4m'
 
-  return True
-  del bond
+#def have_bond(obmol, type_a, type_b):
+#  result = False
+#  na1 = n2Z(type_a)
+#  nb1 = n2Z(type_b)
+#  na2 = n2Z(type_b)
+#  nb2 = n2Z(type_a)
+#  #bond = ob.OBBond()
+#  #atom_a = ob.OBAtom()
+#  #atom_b = ob.OBAtom()
+#  for i in range(obmol.NumBonds()):
+#    bond = obmol.GetBond(i)
+#    atom_a = bond.GetBeginAtom()
+#    atom_b = bond.GetBeginAtom()
+#    za = atom_a.GetAtomicNum()
+#    zb = atom_b.GetAtomicNum()
+#    if (za == na1 and zb == nb1) or (za == na2 and zb == nb2):
+#    #print type_a + "-" + type_b + "<=>" + str(za) + "-" + str(zb)
+#      result = True
+#
+#  return result
+#  del bond, atom_a, atom_b
 
 def qt2ob(qtmol):
   mol = ob.OBMol()

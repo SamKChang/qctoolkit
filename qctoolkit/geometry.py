@@ -2,6 +2,7 @@ import numpy as np
 import utilities as ut
 import re
 import sys
+import copy
 
 class Molecule(object):
   def __init__(self):
@@ -18,6 +19,8 @@ class Molecule(object):
     self.multiplicity = 1
     # index of different atoms
     self.index = 0
+    self.bonds = {}
+    self.bond_types = {}
 
 #  def have_bond(self, type_a, type_b):
 #    obmol = ut.qt2ob(self)
@@ -28,6 +31,106 @@ class Molecule(object):
     out.R = np.vstack([self.R, other.R])
     out.Z = np.hstack([self.Z, other.Z])
     return out
+
+  def find_bonds(self):
+    itr = 0
+    for i in xrange(self.N):
+      for j in xrange(i+1, self.N):
+        d_ij = np.linalg.norm(self.R[i,:] - self.R[j,:])
+        if d_ij < 1.75:
+          if self.Z[i] < self.Z[j]:
+            atom_begin = self.Z[i]
+            atom_end = self.Z[j]
+            index_begin = i
+            index_end = j
+          else:
+            atom_begin = self.Z[j]
+            atom_end = self.Z[i]
+            index_begin = j
+            index_end = i
+          self.bonds[itr] = {'atom_begin'  : atom_begin,
+                             'index_begin' : index_begin,
+                             'atom_end'    : atom_end,
+                             'index_end'   : index_end,
+                             'length'      : d_ij}
+          type_begin = ut.Z2n(atom_begin)
+          type_end   = ut.Z2n(atom_end)
+          bond_type  = type_begin + "-" + type_end
+          if bond_type in self.bond_types:
+            self.bond_types[bond_type] += 1
+          else:
+            self.bond_types[bond_type] = 1
+          itr += 1
+
+  def remove_atom(self, index):
+    index -= 1
+    if index < self.N - 1:
+      out = copy.deepcopy(self)
+      out.N -= 1
+      out.R = np.delete(out.R, index, 0)
+      out.Z = np.delete(out.Z, index)
+      out.type_list = list(np.delete(out.type_list, index))
+      return out
+    else:
+      print "index:%d out of range, nothing has happend" % index+1
+
+
+  def have_bond(self, type_a, type_b):
+    result = False
+    if '0' not in self.bonds:
+      self.find_bonds()
+    if ut.n2Z(type_a) > ut.n2Z(type_b):
+      atom_begin = ut.n2Z(type_b)
+      atom_end = ut.n2Z(type_a)
+    else:
+      atom_begin = ut.n2Z(type_a)
+      atom_end = ut.n2Z(type_b)
+    for key in self.bonds:
+      if self.bonds[key]['atom_begin'] == atom_begin and \
+         self.bonds[key]['atom_end'] == atom_end:
+        print self.bonds[key]['atom_begin'],
+        print self.bonds[key]['atom_end']
+        result = True
+    return result
+#  def have_bond(self, type_a, type_b):
+#
+#    result = False
+#
+#    na1 = ut.n2Z(type_a)
+#    nb1 = ut.n2Z(type_b)
+#    na2 = ut.n2Z(type_b)
+#    nb2 = ut.n2Z(type_a)
+#    def _qt2ob(qtmol):
+#      mol = ob.OBMol()
+#      new_atom = ob.OBAtom()
+#      for atom in xrange(qtmol.N):
+#        new_atom = mol.NewAtom()
+#        new_atom.SetAtomicNum(qtmol.Z[atom])
+#        new_atom.SetVector(qtmol.R[atom][0],
+#                           qtmol.R[atom][1],
+#                           qtmol.R[atom][2])
+#      mol.ConnectTheDots()
+#      #print "yo"
+#      return mol
+#      del new_atom
+#      del mol
+#
+#    bond = ob.OBBond()
+#    atom_a = ob.OBAtom()
+#    atom_b = ob.OBAtom()
+#    obmol = _qt2ob(self)
+#
+#    for i in range(obmol.NumBonds()):
+#      bond = obmol.GetBond(i)
+#      atom_a = bond.GetBeginAtom()
+#      atom_b = bond.GetBeginAtom()
+#      za = atom_a.GetAtomicNum()
+#      zb = atom_b.GetAtomicNum()
+#      if (za == na1 and zb == nb1) or (za == na2 and zb == nb2):
+#        result = True
+#        #print "(%d,%d) or (%d,%d)" % (na1,nb1,na2,nb2)
+#    return result
+#    del bond, atom_a, atom_b
 
   def center(self, center_coord):
     center_matrix = np.kron(
