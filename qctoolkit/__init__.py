@@ -4,4 +4,5 @@ from analysis import *
 from qctoolkit.io_format import *
 from utilities import *
 from ccs import *
+from qmcalculations import *
 #from c_extensions import *

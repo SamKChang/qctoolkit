@@ -132,6 +132,10 @@ class QMInp(object):
     self.inp.setting.celldm = celldm
     self.inp.set_celldm = True
 
+  def setKmesh(self, kmesh):
+    self.inp.setting.kmesh = kmesh
+    self.inp.kpoints = True
+
   def setMargin(self, margin):
     self.inp.setting.margin = margin
     self.inp.set_margin = True

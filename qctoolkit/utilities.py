@@ -1,8 +1,12 @@
 from math import pi ,sin, cos
 import geometry as qg
-import openbabel as ob
+#import openbabel as ob
 import numpy as np
-import gc
+#import gc
+import fileinput
+import sys
+import inspect
+
 
 class bcolors:
   HEADER = '\033[95m'
@@ -13,6 +17,59 @@ class bcolors:
   ENDC = '\033[0m'
   BOLD = '\033[1m'
   UNDERLINE = '\033[4m'
+
+def exit(text):
+  frame = inspect.stack()[1]
+  module = inspect.getmodule(frame[0])
+  name = module.__name__
+  msg = bcolors.FAIL + bcolors.BOLD + name + bcolors.ENDC \
+        + bcolors.FAIL + ": " + text + bcolors.ENDC
+  sys.exit(msg)
+
+def warning(text):
+  msg = bcolors.WARNING + text + bcolors.ENDC
+  print msg
+
+def report(title, text):
+  msg = bcolors.OKGREEN + bcolors.BOLD + title + bcolors.ENDC\
+        + text
+  print msg
+
+def delete_next(target, pattern, line_number):
+  itr = 0
+  matched = False
+  for line in fileinput.input(target, inplace=1):
+    if pattern in line:
+      matched = True
+    if matched and itr < line_number and itr > 0:
+      itr += 1
+    else:
+      print line,
+
+def delete(target, pattern, line_number):
+  itr = 0
+  matched = False
+  for line in fileinput.input(target, inplace=1):
+    if pattern in line:
+      matched = True
+    if matched and itr < line_number:
+      itr += 1
+    else:
+      print line,
+
+def insert(target, pattern, text):
+  for line in fileinput.input(target, inplace=1):
+    print line,
+    if pattern in line:
+      print text
+
+def containing(target, pattern):
+  result = False
+  with open(target,"r") as ftarget:
+    for line in ftarget:
+      if pattern in line:
+        result = True
+  return result
 
 #def have_bond(obmol, type_a, type_b):
 #  result = False
@@ -36,50 +93,50 @@ class bcolors:
 #  return result
 #  del bond, atom_a, atom_b
 
-def qt2ob(qtmol):
-  mol = ob.OBMol()
-  for atom in xrange(qtmol.N):
-    new_atom = mol.NewAtom()
-    new_atom.SetAtomicNum(qtmol.Z[atom])
-    new_atom.SetVector(qtmol.R[atom][0], 
-                       qtmol.R[atom][1], 
-                       qtmol.R[atom][2])
-  mol.ConnectTheDots()
-  return mol
-  #del qtmol
-
-def ob2qt(obmol):
-  mol = qg.Molecule()
-  mol.N = obmol.NumAtoms()
-  atom = ob.OBAtom()
-  bond = ob.OBBond()
-
-  _Z = []
-  _coordX = []
-  _coordY = []
-  _coordZ = []
-
-  for i in range(1, obmol.NumAtoms()+1):
-    atom = obmol.GetAtom(i)
-    _Z.append(atom.GetAtomicNum())
-    _coordX.append(atom.GetVector().GetX())
-    _coordY.append(atom.GetVector().GetY())
-    _coordZ.append(atom.GetVector().GetZ())
-  for i in range(obmol.NumBonds()):
-    bond = obmol.GetBond(0)
-    #if bond is not None:
-    obmol.DeleteBond(bond)
-  for i in range(1, obmol.NumAtoms()+1):
-    atom = obmol.GetAtom(1)
-    obmol.DeleteAtom(atom)
-  del obmol
-
-  mol.Z = np.array(_Z)
-  mol.R = np.vstack([_coordX, _coordY, _coordZ]).T
-
-  return mol
-
-  del _coordX, _coordY, coordZ, _Z, mol
+#def qt2ob(qtmol):
+#  mol = ob.OBMol()
+#  for atom in xrange(qtmol.N):
+#    new_atom = mol.NewAtom()
+#    new_atom.SetAtomicNum(qtmol.Z[atom])
+#    new_atom.SetVector(qtmol.R[atom][0], 
+#                       qtmol.R[atom][1], 
+#                       qtmol.R[atom][2])
+#  mol.ConnectTheDots()
+#  return mol
+#  #del qtmol
+#
+#def ob2qt(obmol):
+#  mol = qg.Molecule()
+#  mol.N = obmol.NumAtoms()
+#  atom = ob.OBAtom()
+#  bond = ob.OBBond()
+#
+#  _Z = []
+#  _coordX = []
+#  _coordY = []
+#  _coordZ = []
+#
+#  for i in range(1, obmol.NumAtoms()+1):
+#    atom = obmol.GetAtom(i)
+#    _Z.append(atom.GetAtomicNum())
+#    _coordX.append(atom.GetVector().GetX())
+#    _coordY.append(atom.GetVector().GetY())
+#    _coordZ.append(atom.GetVector().GetZ())
+#  for i in range(obmol.NumBonds()):
+#    bond = obmol.GetBond(0)
+#    #if bond is not None:
+#    obmol.DeleteBond(bond)
+#  for i in range(1, obmol.NumAtoms()+1):
+#    atom = obmol.GetAtom(1)
+#    obmol.DeleteAtom(atom)
+#  del obmol
+#
+#  mol.Z = np.array(_Z)
+#  mol.R = np.vstack([_coordX, _coordY, _coordZ]).T
+#
+#  return mol
+#
+#  del _coordX, _coordY, coordZ, _Z, mol
 
 def R(theta, u):
   return np.array(
