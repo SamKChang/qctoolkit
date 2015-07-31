@@ -30,10 +30,19 @@ def warning(text):
   msg = bcolors.WARNING + text + bcolors.ENDC
   print msg
 
-def report(title, text):
-  msg = bcolors.OKGREEN + bcolors.BOLD + title + bcolors.ENDC\
-        + text
-  print msg
+def report(title, *texts):
+  msg = bcolors.OKGREEN + bcolors.BOLD + title+":" + bcolors.ENDC
+  print msg,
+  for info in texts:
+    print info,
+  print ""
+
+def status(title, *texts):
+  msg = bcolors.OKBLUE + bcolors.BOLD + title+":" + bcolors.ENDC
+  print msg,
+  for info in texts:
+    print info,
+  print ""
 
 def delete_next(target, pattern, line_number):
   itr = 0
