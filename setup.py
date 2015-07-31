@@ -21,6 +21,7 @@ setup(name='qctoolkit',
     'qctoolkit.projects.Basel',
     'qctoolkit.projects.Basel.p01_AlGaAs',
     'qctoolkit.io_format',
+    'qctoolkit.ccs',
     'qctoolkit'
   ],
   ext_modules = cythonize(c_module)

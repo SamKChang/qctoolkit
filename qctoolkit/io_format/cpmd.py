@@ -32,6 +32,7 @@ class inp(object):
     self.set_init_random = False
     self.debug = False
     self.restart = False
+    self.kpoints = False
 
     self.atom_list = {}
 
@@ -55,19 +56,22 @@ class inp(object):
     b = self.setting.celldm[4]
     c = self.setting.celldm[5]
     if self.setting.isolated:
+      self.setting.symmetry = 'isolated'
       return '  ISOLATED'
     elif a==0 and b==0 and c==0:
+      self.setting.symmetry = 'orthorhombic'
       return '  ORTHORHOMBIC'
     elif a+b+c==0.5 and (a*b==0 or b*c==0 or c*a==0):
+      self.setting.symmetry = 'triclinic'
       return '  TRICLINIC'
 
   # CPMD input format
   def write(self, name, **kwargs):
     inp= sys.stdout if re.match("stdout", name) else open(name,"w")
 
-    isolated = False
-    if re.match("ISOLATED", self.setting.symmetry.upper()):
-      isolated = True
+    #isolated = False
+    #if re.match("ISOLATED", self.setting.symmetry.upper()):
+    #  self.setting.isolated = True
   
     angstrom = False
     if re.match("ANGSTROM", self.setting.unit.upper()):
@@ -165,7 +169,7 @@ class inp(object):
       mesh.tolist()
       print >>inp, " MESH"
       print >>inp, "  " + " ".join(map(str,mesh))
-    if not isolated:
+    if not self.setting.isolated and self.kpoints:
       print >>inp, " KPOINTS MONKHORST-PACK"
       print >>inp, "  " + " ".join(map(str, self.setting.kmesh))
     if self.structure.charge:

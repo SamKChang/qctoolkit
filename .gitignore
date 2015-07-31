@@ -5,5 +5,8 @@ fileList.txt
 **.swp
 **.pyc
 qctoolkit/test/
-**.sh
+branchUpdate.sh
+initialize.sh
+install.sh
+masterUpdate.sh
 qctoolkit/projects/initialize.py
