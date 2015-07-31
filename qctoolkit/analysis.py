@@ -59,14 +59,14 @@ class QMResults(object):
       p.start()
       ut.report("reading output", "thead", itr, "started...")
       itr += 1
-    itr = 0
+    itr = 1
     for process in job_chunk:
       ut.report("collecting results", "from thread:", itr)
       for result in process:
         # append data from queue to hash
         self.results.update(queue.get())
       itr += 1
-    itr = 0
+    itr = 1
     for process in jobs:
       # wait for each process to finish
       ut.report("waiting", "from thread:", itr)
@@ -235,6 +235,12 @@ class ScatterPlot(object):
     y1 = plot_data[:,1]
     y2 = plot_data[:,2]
 
+    data_min = min(min(x), min(y1))
+    data_max = max(max(x), max(y1))
+    plot_min = data_min - (data_max-data_min)/20
+    plot_max = data_max + (data_max-data_min)/20
+    print plot_min, plot_max
+
     self.fig = plt.figure(figsize=(9, 8))
     ax = self.fig.add_subplot(1,1,1, adjustable='box', aspect=1)
     ax.plot(x, y1, 'ko', 
@@ -248,6 +254,7 @@ class ScatterPlot(object):
     ax.set_xlabel(self.xlabel, fontsize=20)
     ax.set_ylabel(self.ylabel, fontsize=20)
     ax.tick_params(labelsize=15)
+    ax.axis([plot_min, plot_max, plot_min, plot_max])
 
   def show(self):
     plt.show()
