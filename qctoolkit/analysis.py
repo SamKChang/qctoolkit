@@ -244,7 +244,7 @@ class ScatterPlot(object):
     print plot_min, plot_max
 
     self.fig = plt.figure(figsize=(9, 8))
-    ax = self.fig.add_subplot(1,1,1, adjustable='box', aspect=1)
+    ax = self.fig.add_subplot(1,1,1, adjustable='box')#, aspect=1)
     ax.plot(x, y1, 'ko', 
       markersize = 10,
       markeredgewidth = 1,
