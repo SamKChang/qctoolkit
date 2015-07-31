@@ -235,10 +235,10 @@ class ScatterPlot(object):
     y1 = plot_data[:,1]
     y2 = plot_data[:,2]
 
-    #data_min = min(min(x), min(y1))
-    #data_max = max(max(x), max(y1))
-    data_min = min(x)
-    data_max = max(x)
+    data_min = min(min(x), min(y1))
+    data_max = max(max(x), max(y1))
+    #data_min = min(x)
+    #data_max = max(x)
     plot_min = data_min - (data_max-data_min)/20
     plot_max = data_max + (data_max-data_min)/20
     print plot_min, plot_max
