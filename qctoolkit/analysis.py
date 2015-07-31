@@ -6,6 +6,7 @@ import matplotlib as mpl
 import multiprocessing as mp
 import collections as cl
 import pandas as pd
+import utilities as ut
 
 # Construct dictionary of {file:results} for DataFrame
 class QMResults(object):
@@ -48,6 +49,7 @@ class QMResults(object):
                 ))
 
     jobs = []
+    itr = 1
     queue = mp.Queue()
     for result in job_chunk:
       p = mp.Process(target=read_out_dir,\
@@ -55,12 +57,18 @@ class QMResults(object):
       jobs.append(p)
       # start multiprocess
       p.start()
+      ut.report("reading output", "thead", itr, "started...")
+      itr += 1
+    itr = 0
     for process in job_chunk:
+      ut.report("collecting results", "from thread:", itr)
       for result in process:
         # append data from queue to hash
         self.results.update(queue.get())
+      itr += 1
     for process in jobs:
       # wait for each process to finish
+      ut.report("waiting", "from thread:", itr)
       process.join()
 
 # pandas DataFrame wrapper
