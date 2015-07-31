@@ -66,6 +66,7 @@ class QMResults(object):
         # append data from queue to hash
         self.results.update(queue.get())
       itr += 1
+    itr = 0
     for process in jobs:
       # wait for each process to finish
       ut.report("waiting", "from thread:", itr)
