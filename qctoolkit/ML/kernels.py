@@ -1,0 +1,2 @@
+class GaussianKernel(object):
+  pass

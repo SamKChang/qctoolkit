@@ -6,7 +6,66 @@ import numpy as np
 import fileinput
 import sys
 import inspect
+import multiprocessing as mp
+import operator
 
+def parallelize(target_function, 
+                input_list, 
+                threads):
+
+  #############################################
+  # runing target function of a single thread #
+  #############################################
+  def run_jobs(q_in, q_out):
+    for inp in iter(q_in.get, None):
+      ind = inp[-1]    # index of job
+      args = inp[:-1]  # actual input sequence
+      if type(args[-1]) == dict: # check known args input
+        kwargs = args[-1]
+        args = args[:-1]  
+        out = target_function(*args, **kwargs)
+      else:
+        out = target_function(*args)
+      if out != None:
+        q_out.put([out, ind]) # output result with index
+      q_in.task_done()
+    q_in.task_done() # task done for 'None' for finished q_in
+  ###### end of single thread definition ######
+
+  # setup empty queue
+  output_stack = []
+  output = []
+  qinp = mp.JoinableQueue()
+  qout = mp.Queue()
+
+  # start process with empty queue
+  jobs = []
+  for thread in range(threads):
+    p =  mp.Process(target=run_jobs, args=(qinp, qout))
+    p.daemon = True # necessary for terminating finished thread
+    p.start()
+    jobs.append(p)
+
+  # put I/O data into queue for parallel processing
+  index = range(len(input_list))
+  for ind, inp in zip(index, input_list):
+    inp.append(ind) # append inp index
+    qinp.put(inp)   # put inp to input queue
+  qinp.join()       # wait for jobs to finish
+
+  # 'while not queue.empty' is NOT reliable
+  if not qout.empty():
+    for i in range(len(input_list)):
+      output_stack.append(qout.get())
+
+  if len(output_stack)>0:
+    # sort/restructure output according to input order
+    output_stack = sorted(output_stack, key=operator.itemgetter(1))
+    # loop though all input for corresponding output
+    for data_out in output_stack: 
+      # if output is list of class, in-line iteration doesn't work
+      output.append(data_out[0])
+    return output
 
 class bcolors:
   HEADER = '\033[95m'

@@ -6,6 +6,9 @@ c_module = [Extension(name = 'qctoolkit.demo',
               sources = ['qctoolkit/src/demo.c']),
             Extension(name = "qctoolkit.read_cube", 
               sources = ['qctoolkit/src/readcubemodule.c']),
+            Extension(name = "qctoolkit.coulomb_matrix", 
+              sources = ['qctoolkit/src/coulombmatrixmodule.c',
+                         'qctoolkit/src/utilities.c']),
             Extension(name = 'qctoolkit.primesc',
               sources = ['qctoolkit/src/primesc.pyx'])
            ]
@@ -22,6 +25,7 @@ setup(name='qctoolkit',
     'qctoolkit.projects.Basel.p01_AlGaAs',
     'qctoolkit.io_format',
     'qctoolkit.ccs',
+    'qctoolkit.ML',
     'qctoolkit'
   ],
   ext_modules = cythonize(c_module)
