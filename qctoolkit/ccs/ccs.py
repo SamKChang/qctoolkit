@@ -4,6 +4,13 @@ from qctoolkit import *
 import re, copy, sys
 from compiler.ast import flatten
 
+class MoleculeSpanXML(object):
+  def __init__(self, parameter_file, **kwargs):
+    if 'xyz' in kwargs:
+      self.structure = Molecule()
+      self.structure.read_xyz(kwargs['xyz'])
+      
+
 class MoleculeSpan(object):
   def __init__(self, xyz_file, parameter_file):
     self.structure = Molecule()
@@ -59,6 +66,10 @@ class MoleculeSpan(object):
     status("ccs coordinate", self.coor)
     print "========= END ========\n"
 
+
+  # !!!!! TODO !!!!! #
+  # 100 line of read_param can be replace by simple xml reader
+  # easier to maintain and extend
   def read_param(self, parameter_file):
     param = open(parameter_file, 'r')
 

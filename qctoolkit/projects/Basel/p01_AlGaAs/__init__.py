@@ -1,3 +1,6 @@
+from optimize import *
+
 __all__ = ['test2', 
-           'graphene'
+           'graphene',
+           'optimize'
           ]

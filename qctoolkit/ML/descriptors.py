@@ -18,7 +18,7 @@ class CoulombMatrix(object):
       self.name = re.sub('.*\/','',kwargs['xyz'])
       self.name = re.sub('\.xyz','',self.name)
     else:
-      qtk.exiat("CoulombMatrix: input mode is not specified")
+      qtk.exit("CoulombMatrix: input mode is not specified")
 
     # set row norm matrix
     NORM = np.vstack([sum(self.data), range(self.base_dim)]).T
@@ -30,6 +30,7 @@ class CoulombMatrix(object):
     sortRow=NORM[:,1].astype(int)
     # rearrange Coulomb matrix
     self.data = self.data[:,sortRow][sortRow]
+
   
   def getVector(self):
     return self.data.reshape(self.base_dim**2), self.name

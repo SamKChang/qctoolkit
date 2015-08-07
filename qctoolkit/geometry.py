@@ -193,7 +193,7 @@ class Molecule(object):
 #    self.Z = data[:,1:4]
 
   # read structrue from xyz
-  def read_xyz(self, name):
+  def read_xyz(self, name, **kwargs):
 
     # caution! not format check. 
     # correct xyz format is assumed
@@ -221,8 +221,9 @@ class Molecule(object):
     self.type_list = np.array(type_list)
     self.Z = np.array(Z)
 
-    if np.sum(self.Z) % 2 == 1 :
-      self.charge = -1
+    if 'set_charge' in kwargs and kwargs['set_charge']:
+      if np.sum(self.Z) % 2 == 1 :
+        self.charge = -1
 
 
     xyz_in.close()

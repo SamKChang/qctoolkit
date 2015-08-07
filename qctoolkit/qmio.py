@@ -103,14 +103,22 @@ class CUBE(object):
       return _out
 
 class QMInp(object):
-  def __init__(self, structure_inp, program, info):
+  def __init__(self, structure_inp, program, **kwargs):
     self.program = program
-    self.info = info
     self.atom_count = 0
+    if 'info' in kwargs:
+      self.info = kwargs['info']
+    else: 
+      self.info = structure_inp
+    if 'set_charge' in kwargs and kwargs['set_charge']:
+      self.set_charge = True
+    else:
+      self.set_charge = False
 
     # take inpur 'program' to choose corresponding format
     if re.match('cpmd', self.program):
-      self.inp = cpmd.inp(structure_inp, self.info)
+      self.inp = cpmd.inp(structure_inp, self.info, 
+                          set_charge=self.set_charge)
 
   def setAtom(self, atom_list, atom_string):
     for I in atom_list:
@@ -122,15 +130,15 @@ class QMInp(object):
 
   def setCorner(self, corner_coord):
     self.inp.structure.center(-np.array(corner_coord))
-    self.inp.set_center = True
+    self.inp.setting.set_center = True
 
   def setCenter(self, center_coord):
     self.inp.setting.center = center_coord
-    self.inp.set_center = True
+    self.inp.setting.set_center = True
 
   def setCelldm(self, celldm):
     self.inp.setting.celldm = celldm
-    self.inp.set_celldm = True
+    self.inp.setting.set_celldm = True
 
   def setKmesh(self, kmesh):
     self.inp.setting.kmesh = kmesh
@@ -138,11 +146,11 @@ class QMInp(object):
 
   def setMargin(self, margin):
     self.inp.setting.margin = margin
-    self.inp.set_margin = True
+    self.inp.setting.set_margin = True
 
   def setMode(self, mode):
     self.inp.setting.mode = mode
-    self.inp.set_mode = True
+    self.inp.setting.set_mode = True
 
   def setChargeMultiplicity(self, charge, multiplicity, **kargs):
     self.inp.structure.charge = charge
@@ -153,10 +161,10 @@ class QMInp(object):
 
   def setSCFStep(self, step):
     self.inp.setting.maxstep = step
-    self.inp.set_step = True
+    self.inp.setting.set_step = True
 
   def setInitRandom(self):
-    self.inp.set_init_random = True
+    self.inp.setting.set_init_random = True
 
   def restart(self):
     self.inp.restart = True
@@ -169,7 +177,7 @@ class QMInp(object):
 
   def periodic(self):
     self.inp.setting.isolated = False
-    self.inp.set_center = False
+    self.inp.setting.set_center = False
 
 class QMOut(object):
   def __init__(self, qmout, program):
@@ -189,5 +197,5 @@ class QMOut(object):
   def Ha2kcal(self):
     self.Et = self.Ehartree * 627.509469
 
-  def getEt(self, name):
-    out = open(name, 'r')
+  #def getEt(self, name):
+  #  out = open(name, 'r')

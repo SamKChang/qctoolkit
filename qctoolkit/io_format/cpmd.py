@@ -21,9 +21,6 @@ class Setting(object):
     self.kmesh = [1,1,1] 
     self.ks_states = 0 
 
-class inp(object):
-  def __init__(self, structure_inp, info, **kwargs):
-    self.setting = Setting()
     self.set_center = False
     self.set_celldm = False
     self.set_margin = False
@@ -34,6 +31,9 @@ class inp(object):
     self.restart = False
     self.kpoints = False
 
+class inp(object):
+  def __init__(self, structure_inp, info, **kwargs):
+    self.setting = Setting()
     self.atom_list = {}
 
     if structure_inp.endswith("xyz"):
@@ -83,14 +83,14 @@ class inp(object):
     print >>inp, ""
     print >>inp, "&CPMD"
 
-    if self.debug:
+    if self.setting.debug:
       print >>inp, " BENCHMARK"
       print >>inp, "  1 0 0 0 0 0 0 0 0 0 "
 
-    if self.set_init_random:
+    if self.setting.set_init_random:
       print >>inp, " INITIALIZE WAVEFUNCTION RANDOM"
 
-    if not self.set_mode:
+    if not self.setting.set_mode:
       print >>inp, " OPTIMIZE WAVEFUNCTION"
     elif re.match("GEOPT", self.setting.mode.upper()):
       print >>inp, " OPTIMIZE GEOMETRY"
@@ -107,12 +107,12 @@ class inp(object):
                " kseg"
               )
 
-    if self.restart:
+    if self.setting.restart:
       print >>inp, " RESTART WAVEFUNCTION"
 
-    if not self.set_center and self.set_margin:
+    if not self.setting.set_center and self.setting.set_margin:
       print >>inp, " CENTER MOLECULE OFF"
-      if not self.set_celldm:
+      if not self.setting.set_celldm:
         Rt = np.transpose(self.structure.R)
         for i in xrange(0, 3):
           self.setting.celldm[i] = (max(Rt[i]) - min(Rt[i]))\
@@ -125,16 +125,16 @@ class inp(object):
                  "celldm and margin " + \
                  "can NOT be set simultaneously.")
   
-    elif self.set_center and not self.set_margin:
+    elif self.setting.set_center and not self.setting.set_margin:
       self.structure.center(self.setting.center)
       print >>inp, " CENTER MOLECULE OFF"
 
-    elif self.set_center and self.set_margin:
+    elif self.setting.set_center and self.setting.set_margin:
       sys.exit("ERROR from io_format/cpmd.py->inp.write: " +\
                "center and margin " + \
                "can NOT be set simultaneously.")
 
-    if self.set_step:  
+    if self.setting.set_step:  
       print >>inp, " MAXITER"
       print >>inp, "  " + str(self.setting.maxstep)
 

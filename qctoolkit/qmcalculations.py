@@ -1,28 +1,39 @@
 import multiprocessing as mp
+import qmio as qio
 import glob, re, os, shutil
 import fileinput
 import subprocess as sp
 import utilities as ut
+import numpy as np
 
 # python interface to run QM code
 # all code dependent part should be wrapped here
 # inp is passed as relative path to the calling script path
 def QMRun(inp, program, **kwargs):
-  if 'threads_per_job' in kwargs:
-    _threads = kwargs['threads_per_job']
+  if 'threads' in kwargs:
+    _threads = kwargs['threads']
   else:
     _threads = 1
+  if 'QMReturn' in kwargs:
+    # return value of QMRun
+    # return = [list of properties to return]
+    _return = kwargs['QMReturn']
+    if 'cleanup' in kwargs and kwargs['cleanup']:
+      _delete = True
+    else:
+      _delete = False
+  else:
+    _return = False
 
   ###########################################
   # SYSTEM CALL SUBPROCESS: Running mpi job #
   ###########################################
   # switch to working directory for each calculation
   # MUST switch pack by calling 'os.chdir(cwd)' at the end
-  def compute(inp, qmexe, threads_per_job):
-    out = re.sub('\..*','.out', inp)
-    outfile = open(out, "w")
-    run = sp.Popen("mpirun -np %d %s %s"\
-                   % (threads_per_job, qmexe, inp), 
+  def compute(exestr, outpath, threads_per_job):
+    outfile = open(outpath, "w")
+    run = sp.Popen("mpirun -np %d %s"\
+                   % (threads_per_job, exestr), 
                    shell=True,
                    stdout=outfile)
     # wait each mpijob to finish before lauching another
@@ -38,7 +49,10 @@ def QMRun(inp, program, **kwargs):
   # will be copied to root/inp/foo/foo.inp
   # scratch files will be generated and cleaned at root/inp/fc
   if program == 'cpmd':
-    exe = 'cpmd.x'
+    if 'exe' in kwargs:
+      exe = kwargs['exe']
+    else:
+      exe = 'cpmd.x'
     cwd = os.getcwd()
     if 'save_restart' in kwargs:
       _save_restart = True
@@ -52,8 +66,11 @@ def QMRun(inp, program, **kwargs):
       outdir = re.sub('\/$','', kwargs['outdir']) + '/'
     else:
       outdir = './'
-    root = re.match(re.compile('(.*/)[^\/]*'),inp).group(1)\
-           + outdir
+    try:
+      root = re.match(re.compile('(.*/)[^\/]*'),inp).group(1)\
+             + outdir
+    except:
+      root = './' + outdir
     if 'alchemRef' in kwargs:
       _alchemRef = True
       inproot = "rst_" + re.sub('\.inp', '',re.sub('.*/', '', inp))
@@ -68,11 +85,11 @@ def QMRun(inp, program, **kwargs):
       os.makedirs(inpdir)
       shutil.copyfile(inp,inpname) # copy inp file to folder
     else:
-      ut.warning("folder '" + inpdir +\
-                 "' exist, nothing to be done")
+      return np.nan
+      ut.exit("folder '" + inpdir +\
+              "' exist, nothing to be done")
 
     if 'scr' in kwargs and kwargs['scr']:
-      print "scr YOOOO"
       _scr = True
       scrdir = kwargs['scr']
     else:
@@ -80,8 +97,7 @@ def QMRun(inp, program, **kwargs):
       scrdir = inpdir
 
     # RESTART file for alchemy
-    _alchemScan = False
-    if 'alchemScan' in kwargs:
+    if 'alchemScan' in kwargs and kwargs['alchemScan']:
       if not 'alchemRefPath' in kwargs:
         ut.exit("alchemical reference not set")
       elif not os.path.exists(kwargs['alchemRefPath']):
@@ -96,32 +112,41 @@ def QMRun(inp, program, **kwargs):
         rst_src = refpath + "/RESTART.1"
         rst_trg = inpdir + "/RESTART"
         os.link(rst_src, rst_trg)
+    else:
+      _alchemScan = False
 
     ####################################################
     # PROCESS INP FILES: according to calculation mode #
     ####################################################
+    # supress writing RESTART
+    if ('debug' in kwargs and kwargs['debug']) or _return:
+      ut.insert(inpname, 
+                "CPMD", 
+                " BENCHMARK\n  1 0 0 0 0 0 0 0 0 0")
+
     # alchemical prediction
     if _alchemScan:
-      ut.delete(inp,'MAXITER', 2)
-      ut.insert(inp,'MIRROR', ' MAXITER\n  1')
-      ut.delete(inp, 'RESTART', 1)
-      ut.insert(inp,'CPMD', ' RESTART WAVEFUNCTION')
+      ut.delete(inpname,'MAXITER', 2)
+      ut.insert(inpname,'MIRROR', ' MAXITER\n  1')
+      ut.delete(inpname, 'RESTART', 1)
+      ut.insert(inpname,'CPMD', ' RESTART WAVEFUNCTION')
 
     if _alchemRef:
-      ut.delete(inp, 'BENCHMARK', 2)
+      ut.delete(inpname, 'BENCHMARK', 2)
+      ut.delete(inpname, 'RESTART', 1)
 
     # big memory setup
     if 'bigmem' in kwargs:
       if kwargs['bigmem']:
-        ut.delete(inp, 'MEMORY BIG', 1)
-        ut.insert(inp, 'MIRROR', ' MEMORY BIG')
+        ut.delete(inpname, 'MEMORY BIG', 1)
+        ut.insert(inpname, 'MIRROR', ' MEMORY BIG')
       else:
-        ut.delete(inp, 'MEMORY BIG', 1)
+        ut.delete(inpname, 'MEMORY BIG', 1)
 
     # scratch path
     if _scr:
-      ut.delete(inp, 'FILEPATH', 2)
-      ut.insert(inp, 'CPMD', ' FILEPATH\n  %s' % scrdir)
+      ut.delete(inpname, 'FILEPATH', 2)
+      ut.insert(inpname, 'CPMD', ' FILEPATH\n  %s' % scrdir)
 
     # !!!! TODO !!!! #
     # scanning alchemical path
@@ -133,13 +158,29 @@ def QMRun(inp, program, **kwargs):
     ########## END OF PROCESSING INP FILES ##########
 
     os.chdir(inpdir)
-    compute(inproot + ".inp", exe, _threads)
+    exestr = "%s %s" % (exe, inproot + ".inp")
+    qmoutput = inproot + ".out"
+    compute(exestr, qmoutput, _threads)
+    if _return:
+      qio_out = qio.QMOut(qmoutput, program)
+    os.chdir(cwd)
+    if _delete:
+      shutil.rmtree(inpdir)
 
     # clean up files
     try:
       os.remove('LATEST')
+    except OSError:
+      pass
+    try:
       os.remove('GEOMETRY')
+    except OSError:
+      pass
+    try:
       os.remove('KPTS_GENERATION')
+    except OSError:
+      pass
+    try:
       os.remove('RESTART')
     except OSError:
       pass
@@ -147,9 +188,6 @@ def QMRun(inp, program, **kwargs):
       rst_list = glob.glob("RESTART*")
       for rfile in rst_list:
         os.remove(rfile)
-
-    os.chdir(cwd)
-
 
   # !!!!! TODO LIST !!!!! #
   #############################
@@ -177,6 +215,9 @@ def QMRun(inp, program, **kwargs):
   else: 
     ut.exit("ERROR! program '%s' not recognized" % program)
 
+  if _return:
+    return qio_out
+
 
 # collection of QM input files, run all in parallel
 # QM code independent implementation
@@ -188,6 +229,7 @@ class QMJobs(object):
     self._path = re.sub(re.compile('/$'), '', path)
     self._inps = sorted(glob.glob(self._path + "/" + pattern))
     self._program = program
+    self._alchemScan = False
 
     if 'bigmem' in kwargs:
       self._bigmem = kwargs['bigmem']
@@ -206,6 +248,11 @@ class QMJobs(object):
       self._scr = kwargs['scr']
     else:
       self._scr = False
+
+    if 'debug' in kwargs:
+      self._debug = kwargs['debug']
+    else:
+      self._debug = False
    
   # set alchemy scanning mode and define alchemical reference inp
   def setAlchemScan(self, **kwargs):
@@ -230,26 +277,30 @@ class QMJobs(object):
       _job_threads = 1
 
     if self._alchemScan:
-      if 'alchem_ref' in kwargs:
+      if 'alchemRef' in kwargs and kwargs['alchemRef']:
         QMRun(inp, self._program, 
+              debug = self._debug,
               scr=self._scr,
-              threads_per_job = _job_threads,
+              threads = _job_threads,
               save_restart=True,
               outdir='../',
               alchemRef=True)
       else:
         QMRun(inp, self._program, 
+              debug = self._debug,
               outdir='../',
-              threads_per_job = _job_threads,
+              threads = _job_threads,
               scr=self._scr,
               alchemRefPath=self._ref,
               alchemScan=True)
     else:
       QMRun(inp, self._program, 
+            debug = self._debug,
             outdir='../', 
-            threads_per_job = _job_threads,
+            threads = _job_threads,
             scr=self._scr)
-      
+
+  # BUGS!!!! JoinableQueue might be necessary!      
   #########################
   # MAIN PARALLEL ROUTINE #
   #########################
@@ -287,11 +338,11 @@ class QMJobs(object):
       ut.report("Alchemy scan", "running reference", 
                 self._ref, "with", self._threads, "cores")
       self.single_run(self._ref, 
-                      alchem_ref=True,
+                      alchemRef=True,
                       threads=self._threads)
       ut.report("Alchemy scan", "reference calculation done")
 
-    jobs = []
+    #jobs = []
     inp_queue = mp.Queue()
     for inp in self._inps: # construct inp queue
       inp_queue.put(inp)
@@ -300,7 +351,7 @@ class QMJobs(object):
       p = mp.Process(target=run_jobs,\
           args=(inp_queue, ))
       p.start()
-      jobs.append(p)
-    for process in jobs: # wait for all jobs to finish
-      process.join()    
+    #  jobs.append(p)
+    #for process in jobs: # wait for all jobs to finish
+    #  process.join()    
   ####### END OF MAIN PARALLEL ROUTIN #######
