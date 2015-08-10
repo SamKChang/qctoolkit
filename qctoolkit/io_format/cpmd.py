@@ -1,49 +1,100 @@
-import qctoolkit, re, sys
+import qctoolkit, re, sys, os
 import numpy as np
 from qctoolkit import utilities as ut
 
 class Setting(object): 
   def __init__(self): 
+    """
+    input setup should be manipulated here 
+    to provide general interface for other program
+    seperate setting is for flexibility of switching
+    different input struture
+    """
  
+    # default settings
     self.theory = "PBE" 
     self.mode = "single_point" 
     self.maxstep = 1000 
     self.save_density = False 
  
+    self.charge = 'auto'
+    self.multiplicity = 'auto'
     self.cutoff = 100 
     self.margin = 5 
     self.center = np.array([0,0,0]) 
     self.celldm = [20,20,20,0,0,0] 
     self.unit = "Angstrom" 
-    self.isolated = True
     self.symmetry = "isolated" 
     self.mesh = 0 
     self.kmesh = [1,1,1] 
     self.ks_states = 0 
+    self.convergence = 1.0E-5
+    self.scale = [1,1,1]
 
+    self.set_multiplicity = False
+    self.set_charge = False
     self.set_center = False
     self.set_celldm = False
     self.set_margin = False
     self.set_mode = False
     self.set_step = False
     self.set_init_random = False
+    self.set_scale = False
+    self.set_convergence = False
     self.debug = False
     self.restart = False
     self.kpoints = False
+    self.isolated = True
+
+# put to setting? #
+  def q_symmetry(self):
+    a = self.celldm[3]
+    b = self.celldm[4]
+    c = self.celldm[5]
+    if self.isolated:
+      self.symmetry = 'isolated'
+      return '  ISOLATED'
+    elif a==0 and b==0 and c==0:
+      self.symmetry = 'orthorhombic'
+      return '  ORTHORHOMBIC'
+    elif a+b+c==0.5 and (a*b==0 or b*c==0 or c*a==0):
+      self.symmetry = 'triclinic'
+      return '  TRICLINIC'
 
 class inp(object):
   def __init__(self, structure_inp, info, **kwargs):
     self.setting = Setting()
     self.atom_list = {}
-
-    if structure_inp.endswith("xyz"):
-      self.name = re.sub(".xyz", "", structure_inp)
-      self.structure = qctoolkit.geometry.Molecule()
-      self.structure.read_xyz(structure_inp)
-    else:
-      print "unknown structure format"
+    self.structure = qctoolkit.geometry.Molecule()
+    self.structure.read(structure_inp, **kwargs)
+    if self.structure.scale:
+      self.setting.scale = self.structure.scale
+      self.setting.set_scale = True
+      self.setting.isolated = False
+    if self.structure.celldm:
+      self.setting.celldm = self.structure.celldm
+      self.setting.set_celldm = True
+      self.setting.isolated = False
     self.info = info
+
+  def load_structure(self, new_structure, **kwargs):
+    self.structure.read(new_structure, **kwargs)
+    if self.setting.set_multiplicity:
+      _multiplicity = self.setting.multiplicity
+    else:
+      _multiplicity = 'auto'
+    if self.setting.set_charge:
+      _charge = self.setting.charge
+    else:
+      _charge = 'auto'
+
+    print self.setting.set_multiplicity
+    print _charge, _multiplicity
+    self.structure.setChargeMultiplicity(_charge,
+                                         _multiplicity,
+                                         **kwargs)
    
+  # set atom pseudopotential string
   def PPString(self, atom_type, **kwargs):
     if atom_type.title() in kwargs:
       return atom_type.title() + kwargs[atom_type.title()]
@@ -51,23 +102,18 @@ class inp(object):
       return atom_type.title() + "_q" + str(ut.n2ve(atom_type))\
              + "_" + self.setting.theory.lower() + ".psp"
 
-  def symmetry(self):
-    a = self.setting.celldm[3]
-    b = self.setting.celldm[4]
-    c = self.setting.celldm[5]
-    if self.setting.isolated:
-      self.setting.symmetry = 'isolated'
-      return '  ISOLATED'
-    elif a==0 and b==0 and c==0:
-      self.setting.symmetry = 'orthorhombic'
-      return '  ORTHORHOMBIC'
-    elif a+b+c==0.5 and (a*b==0 or b*c==0 or c*a==0):
-      self.setting.symmetry = 'triclinic'
-      return '  TRICLINIC'
 
   # CPMD input format
-  def write(self, name, **kwargs):
-    inp= sys.stdout if re.match("stdout", name) else open(name,"w")
+  def write(self, *args, **kwargs):
+    if len(args) == 1:
+      name = args[0]
+    else: name = ''
+
+    if 'no_warning' in kwargs and kwargs['no_warning']:
+      no_warning = True
+    if os.path.exists(name) and not no_warning:
+      ut.prompt(name + " exist, overwrite?")
+    inp = sys.stdout if not name else open(name,"w")
 
     #isolated = False
     #if re.match("ISOLATED", self.setting.symmetry.upper()):
@@ -134,6 +180,10 @@ class inp(object):
                "center and margin " + \
                "can NOT be set simultaneously.")
 
+    if self.setting.set_convergence:
+      print >>inp, " CONVERGENCE ORBITALS"
+      print >>inp, "  %e" % self.setting.convergence
+
     if self.setting.set_step:  
       print >>inp, " MAXITER"
       print >>inp, "  " + str(self.setting.maxstep)
@@ -141,6 +191,7 @@ class inp(object):
     if self.setting.save_density:
       print >>inp, " RHOOUT"
 
+    # should be set by setting!!!
     if self.structure.multiplicity > 1:
       print >>inp, " LOCAL SPIN DENSITY"
     print >>inp, " MIRROR"
@@ -154,13 +205,19 @@ class inp(object):
     print >>inp, ""
     print >>inp, "&SYSTEM"
     print >>inp, " SYMMETRY"
-    print >>inp, self.symmetry()
+    print >>inp, self.setting.q_symmetry()
     if self.setting.isolated:
       print >>inp, " POISSON SOLVER TUCKERMAN"
     if angstrom:
       print >>inp, " ANGSTROM"
     print >>inp, " CELL ABSOLUTE"
     print >>inp, "  " + " ".join(map(str, self.setting.celldm))
+    if self.setting.set_scale:
+      print >>inp, " SCALE",
+      print >>inp, "SX=%d SY=%d SZ=%d" % \
+        (self.setting.scale[0],
+         self.setting.scale[1],
+         self.setting.scale[2])
     print >>inp, " CUTOFF"
     print >>inp, "  " + str(self.setting.cutoff)
     if self.setting.mesh:
@@ -169,12 +226,14 @@ class inp(object):
       mesh.tolist()
       print >>inp, " MESH"
       print >>inp, "  " + " ".join(map(str,mesh))
-    if not self.setting.isolated and self.kpoints:
+    if not self.setting.isolated and self.setting.kpoints:
       print >>inp, " KPOINTS MONKHORST-PACK"
       print >>inp, "  " + " ".join(map(str, self.setting.kmesh))
+    # set by setting
     if self.structure.charge:
       print >>inp, " CHARGE"
       print >>inp, "  " + str(self.structure.charge)
+    # set by setting
     if self.structure.multiplicity > 1:
       print >>inp, " MULTIPLICITY"
       print >>inp, "  " + str(self.structure.multiplicity)
@@ -205,7 +264,7 @@ class inp(object):
       print >>inp 
     print >>inp, "&END"
 
-    if not re.match("stdout", name):
+    if name:
       inp.close()
 
 class out(object):
@@ -260,7 +319,7 @@ class out(object):
       self.Et = np.nan
     out.close()
 
-
+  # deprecated
   def getSteps(self, name):
     # CPMD format
     scf_p = \

@@ -29,7 +29,7 @@ def parallelize(target_function,
       if out != None:
         q_out.put([out, ind]) # output result with index
       q_in.task_done()
-    q_in.task_done() # task done for 'None' for finished q_in
+    q_in.task_done() # task done for 'None' if q_in finished
   ###### end of single thread definition ######
 
   # setup empty queue
@@ -39,14 +39,13 @@ def parallelize(target_function,
   qout = mp.Queue()
 
   # start process with empty queue
-  jobs = []
   for thread in range(threads):
     p =  mp.Process(target=run_jobs, args=(qinp, qout))
     p.daemon = True # necessary for terminating finished thread
     p.start()
-    jobs.append(p)
 
   # put I/O data into queue for parallel processing
+  # TODO!!! add block size to minize queue number
   index = range(len(input_list))
   for ind, inp in zip(index, input_list):
     inp.append(ind) # append inp index
@@ -70,14 +69,18 @@ def parallelize(target_function,
 class bcolors:
   HEADER = '\033[95m'
   OKBLUE = '\033[94m'
-#  OKGREEN = '\033[92m'
-  OKGREEN = '\x1b[96m'
+  OKGREEN = '\033[92m'
+  OKCYAN = '\x1b[96m'
   WARNING = '\033[93m'
   FAIL = '\033[91m'
   ENDC = '\033[0m'
   BOLD = '\033[1m'
   UNDERLINE = '\033[4m'
 
+
+##############
+# UI Dialoag #
+##############
 def exit(text):
   frame = inspect.stack()[1]
   module = inspect.getmodule(frame[0])
@@ -85,35 +88,53 @@ def exit(text):
   msg = bcolors.FAIL + bcolors.BOLD + name + bcolors.ENDC \
         + bcolors.FAIL + ": " + text + bcolors.ENDC
   sys.exit(msg)
-
+  
 def warning(text):
   msg = bcolors.WARNING + text + bcolors.ENDC
   print msg
 
 def progress(title, *texts):
-  msg = bcolors.OKGREEN + bcolors.BOLD + title+":" + bcolors.ENDC
+  msg = bcolors.OKCYAN + bcolors.BOLD + title+":" + bcolors.ENDC
   print msg,
   for info in texts:
-    sys.stdout.write(" " + info)
+    print info,
   sys.stdout.flush()
 
 def done():
   print " DONE"
 
 def report(title, *texts):
-  msg = bcolors.OKGREEN + bcolors.BOLD + title+":" + bcolors.ENDC
+  msg = bcolors.OKCYAN + bcolors.BOLD + title+":" + bcolors.ENDC
   print msg,
   for info in texts:
     print info,
   print ""
+
+def prompt(text):
+  frame = inspect.stack()[1]
+  module = inspect.getmodule(frame[0])
+  name = module.__name__
+
+  msg = bcolors.WARNING + name + ": " + bcolors.ENDC
+
+  user_input = raw_input(msg + text + \
+               "\nAny key to confirm, enter to cencel...? ")
+  if not user_input:
+    exit("... ABORT from " + name)
+  else:
+    report(name, "continue")
 
 def status(title, *texts):
-  msg = bcolors.OKBLUE + bcolors.BOLD + title+":" + bcolors.ENDC
+  msg = bcolors.OKBLUE + title+":" + bcolors.ENDC
   print msg,
   for info in texts:
     print info,
   print ""
+##### END OF UI Diolog #####
 
+###################################
+# Simple text formating functions #
+###################################
 def delete_next(target, pattern, line_number):
   itr = 0
   matched = False
@@ -149,6 +170,7 @@ def containing(target, pattern):
       if pattern in line:
         result = True
   return result
+##### END OF text formating #####
 
 #def have_bond(obmol, type_a, type_b):
 #  result = False

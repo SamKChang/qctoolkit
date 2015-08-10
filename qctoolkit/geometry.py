@@ -1,8 +1,6 @@
 import numpy as np
 import utilities as ut
-import re
-import sys
-import copy
+import re, os, sys, copy
 
 class Molecule(object):
   def __init__(self):
@@ -21,9 +19,6 @@ class Molecule(object):
     self.index = 0
     self.bonds = {}
     self.bond_types = {}
-
-#  def have_bond(self, type_a, type_b):
-#    obmol = ut.qt2ob(self)
 
   def __add__(self, other):
     out = Molecule()
@@ -65,12 +60,10 @@ class Molecule(object):
   def remove_atom(self, index):
     index -= 1
     if index < self.N - 1:
-      out = copy.deepcopy(self)
-      out.N -= 1
-      out.R = np.delete(out.R, index, 0)
-      out.Z = np.delete(out.Z, index)
-      out.type_list = list(np.delete(out.type_list, index))
-      return out
+      self.N -= 1
+      self.R = np.delete(self.R, index, 0)
+      self.Z = np.delete(self.Z, index)
+      self.type_list = list(np.delete(self.type_list, index))
     else:
       print "index:%d out of range, nothing has happend" % index+1
 
@@ -92,45 +85,6 @@ class Molecule(object):
         print self.bonds[key]['atom_end']
         result = True
     return result
-#  def have_bond(self, type_a, type_b):
-#
-#    result = False
-#
-#    na1 = ut.n2Z(type_a)
-#    nb1 = ut.n2Z(type_b)
-#    na2 = ut.n2Z(type_b)
-#    nb2 = ut.n2Z(type_a)
-#    def _qt2ob(qtmol):
-#      mol = ob.OBMol()
-#      new_atom = ob.OBAtom()
-#      for atom in xrange(qtmol.N):
-#        new_atom = mol.NewAtom()
-#        new_atom.SetAtomicNum(qtmol.Z[atom])
-#        new_atom.SetVector(qtmol.R[atom][0],
-#                           qtmol.R[atom][1],
-#                           qtmol.R[atom][2])
-#      mol.ConnectTheDots()
-#      #print "yo"
-#      return mol
-#      del new_atom
-#      del mol
-#
-#    bond = ob.OBBond()
-#    atom_a = ob.OBAtom()
-#    atom_b = ob.OBAtom()
-#    obmol = _qt2ob(self)
-#
-#    for i in range(obmol.NumBonds()):
-#      bond = obmol.GetBond(i)
-#      atom_a = bond.GetBeginAtom()
-#      atom_b = bond.GetBeginAtom()
-#      za = atom_a.GetAtomicNum()
-#      zb = atom_b.GetAtomicNum()
-#      if (za == na1 and zb == nb1) or (za == na2 and zb == nb2):
-#        result = True
-#        #print "(%d,%d) or (%d,%d)" % (na1,nb1,na2,nb2)
-#    return result
-#    del bond, atom_a, atom_b
 
   def center(self, center_coord):
     center_matrix = np.kron(
@@ -139,21 +93,32 @@ class Molecule(object):
     )
     self.R = self.R - center_coord
 
-  def setCenterFrame(self, center_coord, frame_vector):
-    print "not implemented yet"
+  def shift(self, shift_vector):
+    shift_matrix = np.kron(
+      np.transpose(np.atleast_2d(np.ones(self.N))),
+      shift_vector
+    )
+    self.R = self.R + shift_matrix
 
-  def setMultiplicity(self, m, **kargs):
-    self.multiplicity = m
-    if not ('forced' in kargs and kargs['forced']):
-      if not (m % 2 != (np.sum(self.Z) + self.charge) % 2):
+  def setChargeMultiplicity(self, c, m, **kwargs):
+    if type(c) == int or type(c) == float:
+      self.charge = c
+    if type(m) == int:
+      self.multiplicity = m
+
+    if type(self.multiplicity)==int and\
+       type(self.charge)==(int or float):
+      if not (self.multiplicity % 2 != \
+              (np.sum(self.Z) + self.charge) % 2):
         ve = np.vectorize(ut.n2ve)
         nve = sum(ve(self.type_list)) - self.charge
-        sys.exit("ERROR from geometry.py->" + \
-                 "Molecule.setMultiplicity: " + \
-                 "charge %d " % self.charge + \
-                 "and multiplicity %d " % m + \
-                 "with %d valence electrons " % nve +\
-                 "are not compatible")
+        msg = "Multiplicity %d " % self.multiplicity + \
+              "and %d valence electrons " % nve +\
+              "\n(with charge %3.1f) " % float(self.charge) +\
+              "are not compatible"
+        if not ('no_warning' in kwargs and kwargs['no_warning']):
+          ut.prompt(msg + "\nsuppress warning py no_warning=True,"\
+                    + " continue?")
 
   def rotate(self, u, angle):
     print "not yet implemented"	
@@ -188,14 +153,23 @@ class Molecule(object):
                       self.R[:,order[1]],\
                       self.R[:,order[0]]))
     self.R = self.R[ind]
-    
-    
-#    self.Z = data[:,1:4]
 
+  # general interface to dertermine file type
+  def read(self, name, **kwargs):
+    stem, extension = os.path.splitext(name)
+    if re.match('\.xyz', extension):
+      self.read_xyz(name, **kwargs)
+    elif re.match('\.cyl', extension):
+      self.read_cyl(name, **kwargs)
+    elif 'inp_file' in kwargs and kwargs['inp_file']=='cpmdinp':
+      self.read_cpmdinp(name)
+    else:
+      ut.exit("suffix " + extension + " is not reconized")
+      
   # read structrue from xyz
   def read_xyz(self, name, **kwargs):
 
-    # caution! not format check. 
+    # caution! no format check. 
     # correct xyz format is assumed
 
     # local array varaible for easy append function
@@ -221,17 +195,51 @@ class Molecule(object):
     self.type_list = np.array(type_list)
     self.Z = np.array(Z)
 
-    if 'set_charge' in kwargs and kwargs['set_charge']:
-      if np.sum(self.Z) % 2 == 1 :
-        self.charge = -1
+    if np.sum(self.Z) % 2 == 1:
+      self.charge = -1
 
+    xyz_in.close()
+
+  # read structrue from cyl crystal format
+  def read_cyl(self, name, **kwargs):
+
+    # local array varaible for easy append function
+    coord = []
+    type_list = []
+    Z = []
+
+    # open xyz file
+    xyz_in = open(name, 'r')
+    self.N = int(xyz_in.readline())
+    self.celldm = map(float,re.sub("[\n\t]", "",xyz_in.readline())\
+                  .split(' '))
+    self.scale = map(int,re.sub("[\n\t]", "",xyz_in.readline())\
+                         .split(' '))
+
+    # loop through every line in xyz file
+    for i in xrange(0, self.N):
+      data = re.sub("[\n\t]", "",xyz_in.readline()).split(' ')
+      # remove empty elements
+      data = filter(None, data)
+      type_list.append(data[0])
+      Z.append(ut.n2Z(data[0]))
+      crd = [float(data[1]),float(data[2]),float(data[3])]
+      coord.append(crd)
+    self.R = np.vstack(coord)
+    self.type_list = np.array(type_list)
+    self.Z = np.array(Z)
+
+    if np.sum(self.Z) % 2 == 1:
+      self.charge = -1
 
     xyz_in.close()
 
   # write xyz format to file
-  def write_xyz(self, name):
-
-    out=sys.stdout if re.match("stdout",name) else open(name,"w")
+  def write_xyz(self, *args):
+    if len(args) == 1:
+      name = args[0]
+    else: name = ''
+    out = sys.stdout if not name else open(name,"w")
 
     #if len(self.type_list) != self.N:
     tlist = np.vectorize(ut.Z2n)

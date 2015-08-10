@@ -11,6 +11,13 @@ from qctoolkit.io_format import *
 import qctoolkit.read_cube as rq
 
 class CUBE(object):
+  """
+  read Gaussian CUBE file into numpy 3D array
+  together with grid setting and strucutre
+  external C module is implemented to access *.cube file
+  pointwise addition, substraction, multiplication and division
+  are implemented for wavefunction/density analysis
+  """
   def __init__(self, cube_file):
     self.data, self.zcoord, self.grid = rq.read_cube(cube_file)
     self.structure = geometry.Molecule()
@@ -110,15 +117,15 @@ class QMInp(object):
       self.info = kwargs['info']
     else: 
       self.info = structure_inp
-    if 'set_charge' in kwargs and kwargs['set_charge']:
-      self.set_charge = True
-    else:
-      self.set_charge = False
+#    if 'set_charge' in kwargs and kwargs['set_charge']:
+#      self.set_charge = True
+#    else:
+#      self.set_charge = False
 
-    # take inpur 'program' to choose corresponding format
+    # take input 'program' to choose corresponding format
     if re.match('cpmd', self.program):
-      self.inp = cpmd.inp(structure_inp, self.info, 
-                          set_charge=self.set_charge)
+      self.inp = cpmd.inp(structure_inp, self.info)
+#                          set_charge=self.set_charge)
 
   def setAtom(self, atom_list, atom_string):
     for I in atom_list:
@@ -128,13 +135,20 @@ class QMInp(object):
     self.inp.atom_list[str(self.atom_count)] = atom_string
     self.atom_count =- 1
 
+  def setConvergence(self, convergence):
+    self.inp.setting.convergence = convergence
+    self.inp.setting.set_convergence = True
+
   def setCorner(self, corner_coord):
-    self.inp.structure.center(-np.array(corner_coord))
+    self.inp.setting.center(-np.array(corner_coord))
     self.inp.setting.set_center = True
 
   def setCenter(self, center_coord):
     self.inp.setting.center = center_coord
     self.inp.setting.set_center = True
+
+  def setCutoff(self, cutoff):
+    self.inp.setting.cutoff = cutoff
 
   def setCelldm(self, celldm):
     self.inp.setting.celldm = celldm
@@ -153,8 +167,13 @@ class QMInp(object):
     self.inp.setting.set_mode = True
 
   def setChargeMultiplicity(self, charge, multiplicity, **kargs):
-    self.inp.structure.charge = charge
-    self.inp.structure.setMultiplicity(multiplicity, **kargs)
+    self.inp.setting.charge = charge
+    self.inp.setting.multiplicity = multiplicity
+    self.inp.structure.setChargeMultiplicity(charge,
+                                             multiplicity,
+                                             **kargs)
+    self.inp.setting.set_charge = True
+    self.inp.setting.set_multiplicity = True
 
   def setTheory(self, theory):
     self.inp.setting.theory = theory
@@ -167,17 +186,32 @@ class QMInp(object):
     self.inp.setting.set_init_random = True
 
   def restart(self):
-    self.inp.restart = True
+    self.inp.setting.restart = True
 
   def debug(self):
-    self.inp.debug = True
-
-  def write(self, name, **kwargs):
-    self.inp.write(name, **kwargs)
+    self.inp.setting.debug = True
 
   def periodic(self):
     self.inp.setting.isolated = False
     self.inp.setting.set_center = False
+
+  def removeAtom(self, index):
+    self.inp.structure.remove_atom(index)
+
+
+  def write(self, *args, **kwargs):
+    mul = self.inp.structure.multiplicity
+    chg = self.inp.structure.charge
+    ve = np.vectorize(ut.n2ve)
+    nve = sum(ve(self.inp.structure.type_list)) - chg
+    if mul % 2 != (np.sum(self.inp.structure.Z) + chg) % 2:
+      self.inp.write(*args, **kwargs)
+    else:
+      msg = "Multiplicity %d " % mul + \
+            "and %d valence electrons " % nve +\
+            "\n(with charge %3.1f) " % float(chg) +\
+            "are not compatible"
+      ut.exit(msg)
 
 class QMOut(object):
   def __init__(self, qmout, program):

@@ -243,7 +243,10 @@ class DataSet(object):
       kvec = np.dot(ker, vec.T)
       nvec = np.linalg.norm(vec)
       nkvec = np.linalg.norm(kvec)
-      return np.arccos(np.dot(kvec,vec)/nvec/nkvec)
+      # angle
+      #return np.arccos(np.dot(kvec,vec)/nvec/nkvec)
+      # length
+      return nkvec/nvec
 
     #ee = error_estimate(self.kernelMatrix, self.kernelVectors[0])
     def error_i(i):

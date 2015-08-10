@@ -19,9 +19,14 @@ class QMResults(object):
     else:
       self.threads = 1
 
+    if 'except_pattern' in kwargs:
+      self.except_pattern = kwargs['except_pattern']
+    else:
+      self.except_pattern = 'NOT_DEFINED'
+
     self.out_dir = glob.glob(self.path + "/" + self.pattern)
-    print "Reading output file in " +\
-          self.path + "/" + self.pattern
+    ut.report("QMData", "Reading output file in",
+          self.path + "/" + self.pattern)
     self.results = {}
     self.data = np.atleast_2d(np.array([]))
     if self.path+'inp' in self.out_dir: 
@@ -32,12 +37,17 @@ class QMResults(object):
     def read_out_dir(out_path, Et_queue):
       for folder in out_path:
         for out in glob.glob(folder + '/*.out'):
-          # save data of each process in the queue
-          data = qmio.QMOut(out, self.program)
-          Et_queue.put(
-            {re.sub(self.path + "/", "", out) : 
-             np.array([data.Et, data.SCFStep])}
-          )
+          stem = re.sub(".*/", "", out)
+          if re.match(self.except_pattern, stem):
+            pass
+          else:
+            # save data of each process in the queue
+            data = qmio.QMOut(out, self.program)
+            Et_queue.put(
+              #{re.sub(self.path + "/", "", out) : 
+              {re.sub(".*/", "", out) : 
+               np.array([data.Et, data.SCFStep])}
+            )
 
     def chunks(l, n):
       for i in xrange(0, len(l), n):
@@ -49,40 +59,38 @@ class QMResults(object):
                 ))
 
     jobs = []
-    itr = 1
     queue = mp.Queue()
+    ut.progress("QMData", "reading files with multiprocessing...")
     for result in job_chunk:
       p = mp.Process(target=read_out_dir,\
         args=(result,queue))
       jobs.append(p)
       # start multiprocess
       p.start()
-      ut.report("reading output", "thead", itr, "started...")
-      itr += 1
-    itr = 1
+    ut.done()
+    ut.progress("QMData", "collecting results...")
     for process in job_chunk:
-      ut.report("collecting results", "from thread:", itr)
       for result in process:
         # append data from queue to hash
         self.results.update(queue.get())
-      itr += 1
-    itr = 1
+    ut.done()
+    ut.progress("QMData","joining threads...")
     for process in jobs:
       # wait for each process to finish
-      ut.report("waiting", "from thread:", itr)
       process.join()
+    ut.done()
 
 # pandas DataFrame wrapper
 class QMData(pd.DataFrame):
   def __init__(self, arg_path, arg_pattern, arg_prog, **kwargs):
-    if 'threads' in kwargs:
-      arg_threads = kwargs['threads']
-    else:
-      arg_threads = 1
+    #if 'threads' in kwargs:
+    #  arg_threads = kwargs['threads']
+    #else:
+    #  arg_threads = 1
     _qr = QMResults(arg_path, 
                     arg_pattern, 
                     arg_prog,
-                    threads=arg_threads).results
+                    **kwargs).results
     _qr = pd.DataFrame(_qr).T
     _qr.index.name = 'file'
     _qr.columns = ['E', 'step']
@@ -241,7 +249,6 @@ class ScatterPlot(object):
     #data_max = max(x)
     plot_min = data_min - (data_max-data_min)/20
     plot_max = data_max + (data_max-data_min)/20
-    print plot_min, plot_max
 
     self.fig = plt.figure(figsize=(9, 8))
     ax = self.fig.add_subplot(1,1,1, adjustable='box')#, aspect=1)

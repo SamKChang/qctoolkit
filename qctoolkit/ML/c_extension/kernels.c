@@ -4,7 +4,7 @@
 
 /**********************
 ** interface wrapper **
-***********************/
+**********************/
 double kerEval(char *type, double *input,
                double *vec1, double *vec2, int size) {
   if(strcmp(type,"Gaussian")==0)
