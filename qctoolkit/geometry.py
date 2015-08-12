@@ -27,6 +27,30 @@ class Molecule(object):
     out.Z = np.hstack([self.Z, other.Z])
     return out
 
+  def cyl2xyz(self):
+    try:
+      for i in range(3):
+        self.R[:,i] = self.R[:,i] * self.celldm[i]\
+                     / float(self.scale[i])
+      self.scale = []
+    except AttributeError:
+      pass
+
+  def view(self):
+    import pymol
+    tmp = copy.deepcopy(self)
+    try:
+      for i in range(3):
+        tmp.R[:,i] = tmp.R[:,i] * tmp.celldm[i]\
+                     / float(tmp.scale[i])
+    except AttributeError:
+      pass
+    pymol.finish_launching()
+    tmp_file = 'pymol_tmp_'+str(os.getpid())+'.xyz'
+    tmp.write_xyz(tmp_file)
+    pymol.cmd.load(tmp_file, 'structure')
+    os.remove(tmp_file)
+
   def find_bonds(self):
     itr = 0
     for i in xrange(self.N):

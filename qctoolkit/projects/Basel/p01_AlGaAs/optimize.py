@@ -11,7 +11,7 @@ def AlGaX_EvOpt(structure, vacancy_ind, ccs_span, **kwargs):
   if 'T' in kwargs:
     _T = kwargs['T']
   else:
-    _T = 300
+    _T = 1
   if 'target' in kwargs:
     _target = kwargs['target']
   else:
@@ -89,7 +89,7 @@ def AlGaX_EvOpt(structure, vacancy_ind, ccs_span, **kwargs):
     return _coord
  
   mcopt = qop.MonteCarlo(Ev_ccs, input_list, genCCSInp, 
-                         power=1, log_file=logfile)
+                         power=1, log_file=logfile, T=_T)
   mcopt.run()
 
 #  qcs.optimize.mc(Ev_ccs, init_ccs_coord, ccs, input_list, 

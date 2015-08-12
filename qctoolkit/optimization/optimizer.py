@@ -82,7 +82,7 @@ class Optimizer(object):
     if 'dump' in kwargs:
       self.dump_len = kwargs['dump']
     else:
-      self.dump_len = 1
+      self.dump_len = 30
     ##### end of default values setup #####
 
     # open logfile, close when converged
@@ -123,7 +123,9 @@ class Optimizer(object):
     self.step += 1
     self.penalty.append(penalty)
     self.coord.append(coord)
-    if self.step > 0 and self.step % self.dump_len ==0:
+    if self.step > 0 \
+     and self.step % self.dump_len ==0\
+     and len(self.coord) > 3*self.dump_len:
       self.dump()
 
   # !!!!!!!!!!!!!!!!!!!!!!!!!!

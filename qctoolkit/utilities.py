@@ -127,10 +127,26 @@ def done(*texts):
     print " DONE"
   sys.stdout.flush()
 
-def report(title, *texts):
+def report(title, *texts, **kwargs):
   from setting import quiet
   if not quiet:
-    msg = bcolors.OKCYAN + bcolors.BOLD + title+":" + bcolors.ENDC
+    if 'color' in kwargs:
+      color = kwargs['color']
+    else:
+      color = 'cyan'
+
+    if color == 'cyan':
+      msghead = bcolors.OKCYAN
+    elif color == 'blue':
+      msghead = bcolors.OKBLUE
+    elif color == 'green':
+      msghead = bcolors.OKGREEN
+    elif color == 'yellow':
+      msghead = bcolors.WARNING
+    elif color == 'red':
+      msghead = bcolors.FAIL
+
+    msg = msghead + bcolors.BOLD + title+":" + bcolors.ENDC
     print msg,
     for info in texts:
       print info,
