@@ -17,6 +17,11 @@ def AlGaX_EvOpt(structure, vacancy_ind, ccs_span, **kwargs):
   else:
     _target = 0
 
+  if 'log_file' in kwargs:
+    logfile = kwargs['log_file']
+  else:
+    logfile = 'AlGaX_EvOpt.log'
+
   if 'threads' in kwargs:
     _threads = kwargs['threads']
   else:
@@ -80,7 +85,8 @@ def AlGaX_EvOpt(structure, vacancy_ind, ccs_span, **kwargs):
     _tmp, _coord = ccs.random()
     return _coord
  
-  mcopt = qop.MonteCarlo(Ev_ccs, input_list, genCCSInp, power=1)
+  mcopt = qop.MonteCarlo(Ev_ccs, input_list, genCCSInp, 
+                         power=1, log_file=logfile)
   mcopt.run()
 
 #  qcs.optimize.mc(Ev_ccs, init_ccs_coord, ccs, input_list, 
