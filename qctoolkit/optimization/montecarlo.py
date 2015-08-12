@@ -48,6 +48,7 @@ class MonteCarlo(opt.Optimizer, opt.Temperature):
                  % (out, self.current_penalty))
       if out < self.current_penalty:
         qtk.report("MonteCarlo", "new move accepted",
+                   "penalty=%f" % out,
                    color='green')
         self.push(out, new_coord)
         return out
@@ -58,6 +59,7 @@ class MonteCarlo(opt.Optimizer, opt.Temperature):
                    % (rand, diff, self.sample_itr))
         if rand <= self.boltzmann(diff):
           qtk.report("MonteCarlo", "new move accepted",
+                     "penalty=%f" % out,
                      color='green')
           self.push(out, new_coord)
           return out

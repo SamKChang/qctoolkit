@@ -5,7 +5,7 @@ import copy, shutil, os, glob
 
 def AlGaX_EvOpt(structure, vacancy_ind, ccs_span, **kwargs):
   if 'QMInp' in kwargs:
-    inpp = kwargs['QMInp']
+    baseinp = kwargs['QMInp']
   else:
     inpp = qtk.QMInp(structure, 'cpmd')
   if 'T' in kwargs:
@@ -46,18 +46,20 @@ def AlGaX_EvOpt(structure, vacancy_ind, ccs_span, **kwargs):
 
   ccs = qcs.MoleculeSpan(structure, ccs_span)
 
+  inpp = copy.deepcopy(baseinp)
+
   molp = qtk.Molecule()
   inpp.structure = molp.read(structure)
   inpp.setInfo('Ev_per_ref')
   inpp.write('pref.inp')
 
-  inpv = copy.deepcopy(inpp)
+  inpv = copy.deepcopy(baseinp)
   inpv.removeAtom(vacancy_ind)
   inpv.setChargeMultiplicity(inpp.inp.structure.charge, 2)
   inpv.setInfo('Ev_vac_ref')
   inpv.write('vref.inp')
 
-  inpa = copy.deepcopy(inpp)  
+  inpa = copy.deepcopy(baseinp)  
   inpa.isolateAtoms(vacancy_ind)
   inpa.setChargeMultiplicity(inpp.inp.structure.charge, 2)
   inpa.setInfo('freeAtom')
@@ -79,7 +81,7 @@ def AlGaX_EvOpt(structure, vacancy_ind, ccs_span, **kwargs):
 
   tmp , init_ccs_coord = ccs.random()
   input_list = [ccs, vacancy_ind, 
-                {'QMInp':inpp, 
+                {'QMInp':baseinp, 
                  'pref':'pref', 'vref':'vref',
                  'freeAtomE':freeAtomOut.Et, 
                  'threads':_threads}]
