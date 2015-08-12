@@ -1,3 +1,4 @@
+import qctoolkit as qtk
 import optimizer as opt
 import random
 import numpy as np
@@ -28,6 +29,9 @@ class MonteCarlo(opt.Optimizer, opt.Temperature):
     else:
       self.coord.append(coord)
     if self.step > 0 and self.step % self.dump_len ==0:
+      qtk.report("MonteCarlo", "step:%d T:%f penalty:%f\n" % \
+                 (self.step, self.T, penalty) + \
+                 "coord:%s" % coord)
       self.dump()
 
   def boltzmann(self, dE):
