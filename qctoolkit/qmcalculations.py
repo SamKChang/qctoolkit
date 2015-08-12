@@ -144,6 +144,7 @@ def QMRun(inp, program, **kwargs):
       ut.delete(inpname,'MAXITER', 2)
       ut.insert(inpname,'MIRROR', ' MAXITER\n  1')
       ut.delete(inpname, 'RESTART', 1)
+      ut.delete(inpname, 'INITIALIZE WAVEFUNCTION', 1)
       ut.insert(inpname,'CPMD', ' RESTART WAVEFUNCTION')
 
     if _alchemRef:
