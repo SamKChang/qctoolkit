@@ -86,7 +86,7 @@ class Optimizer(object):
     ##### end of default values setup #####
 
     # open logfile, close when converged
-    self.logfile = open(self.log, 'w')
+    self.logfile = open(self.log, 'w', 0)
     # result lists
     self.penalty = []
     self.coord = []
@@ -113,7 +113,7 @@ class Optimizer(object):
     self.penalty = self.penalty[size:]
     self.coord = self.coord[size:]
     for line in output:
-      print >> self.logfile, line
+      print >> self.logfile, "% 10.6E %s" % (line[0], line[1])
 
   # !!!!!!!!!!!!!!!!!!!!!!!!!!
   # update penalty/coord lists

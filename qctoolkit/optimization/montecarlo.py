@@ -21,12 +21,12 @@ class MonteCarlo(opt.Optimizer, opt.Temperature):
   def push(self, penalty, coord):
     self.step += 1
     self.penalty.append(penalty)
-    self.coord.append(coord)
-    # update current penalty
     self.current_penalty = penalty
-    # update temperature
     if self.annealing:
       self.decrease_T()
+      self.coord.append([coord, {'T':self.T}])
+    else:
+      self.coord.append(coord)
     if self.step > 0 and self.step % self.dump_len ==0:
       self.dump()
 
