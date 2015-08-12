@@ -40,9 +40,9 @@ def AlGaX_EvOpt(structure, vacancy_ind, ccs_span, **kwargs):
 
   for to_clean in glob.glob('*.inp'):
     clean_file(to_clean)
-  clean_folder('pref')
-  clean_folder('freeAtom')
-  clean_folder('vref')
+#  clean_folder('pref')
+#  clean_folder('freeAtom')
+#  clean_folder('vref')
 
   ccs = qcs.MoleculeSpan(structure, ccs_span)
 
@@ -69,10 +69,13 @@ def AlGaX_EvOpt(structure, vacancy_ind, ccs_span, **kwargs):
   qtk.QMRun('vref.inp', inpp.program,
             threads=_threads,
             save_restart = True)
-  freeAtomOut = qtk.QMRun('freeAtom.inp', inpp.program,
-                          threads=_threads,
-                          save_restart = True,
-                          QMReturn=True)
+  if os.path.exists('freeAtom'):
+    freeAtomOut = qtk.QMOut('freeAtom/freeAtom.out',inpp.program)
+  else:
+    freeAtomOut = qtk.QMRun('freeAtom.inp', inpp.program,
+                            threads=_threads,
+                            save_restart = True,
+                            QMReturn=True)
 
   tmp , init_ccs_coord = ccs.random()
   input_list = [ccs, vacancy_ind, 
@@ -154,12 +157,10 @@ def Ev_ccs(ccs_coord, ccs_span, vacancy_index, **kwargs):
                         threads=_threads,
                         alchemScan=True,
                         alchemRefPath=perfect_ref,
-                        alchemRefPrefix='',
-                        QMReturn=True)
+                        alchemRefPrefix='')
   else:
     out_wov = qtk.QMRun('perfect.inp', inp_wov.program,
-                        threads=_threads,
-                        QMReturn=True)
+                        threads=_threads)
   qtk.done(out_wov.Et)
   qtk.progress("Ev_ccs", "running vacancy.inp... ")
   if alchem:
@@ -167,12 +168,10 @@ def Ev_ccs(ccs_coord, ccs_span, vacancy_index, **kwargs):
                         threads=_threads,
                         alchemScan=True,
                         alchemRefPath=vacancy_ref,
-                        alchemRefPrefix='',
-                        QMReturn=True)
+                        alchemRefPrefix='')
   else:
     out_wv = qtk.QMRun('vacancy.inp', inp_wv.program,
-                        threads=_threads,
-                        QMReturn=True)
+                        threads=_threads)
   qtk.done(out_wv.Et)
 
   qtk.report("Ev_ccs", "Ev=", out_wov.Et - out_wv.Et - freeE)

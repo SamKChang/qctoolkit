@@ -24,6 +24,14 @@ def QMRun(inp, program, **kwargs):
   else:
     _return = False
 
+  if 'bigmem' in kwargs:
+    _bigmem = kwargs['bigmem']
+  else:
+    if mp.cpu_count() > 20:
+      _bigmem = True
+    else:
+      _bigmem = False
+
   ###########################################
   # SYSTEM CALL SUBPROCESS: Running mpi job #
   ###########################################
@@ -144,7 +152,7 @@ def QMRun(inp, program, **kwargs):
 
     # big memory setup
     #if 'bigmem' in kwargs:
-    if self._bigmem:
+    if _bigmem:
       ut.delete(inpname, 'MEMORY BIG', 1)
       ut.insert(inpname, 'MIRROR', ' MEMORY BIG')
     else:
