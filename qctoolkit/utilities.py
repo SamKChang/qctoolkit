@@ -8,29 +8,44 @@ import sys
 import inspect
 import multiprocessing as mp
 import operator
+from compiler.ast import flatten
 
 def parallelize(target_function, 
                 input_list, 
-                threads):
+                threads,
+                **kwargs):
+
+  if 'block_size' in kwargs:
+    block_size = kwargs['block_size']
+  else:
+    block_size = len(input_list)/(threads*3)
 
   #############################################
   # runing target function of a single thread #
   #############################################
   def run_jobs(q_in, q_out):
-    for inp in iter(q_in.get, None):
-      ind = inp[-1]    # index of job
-      args = inp[:-1]  # actual input sequence
-      if type(args[-1]) == dict: # check known args input
-        kwargs = args[-1]
-        args = args[:-1]  
-        out = target_function(*args, **kwargs)
-      else:
-        out = target_function(*args)
+    for inps in iter(q_in.get, None):
+      ind = inps[-1]    # index of job
+      inps = inps[:-1]  # actual input sequence
+      out = []
+      for args in inps:
+        if type(args[-1]) == dict: # check known args input
+          kwargs = args[-1]
+          args = args[:-1]  
+          out.append(target_function(*args, **kwargs))
+        else:
+          out.append(target_function(*args))
       if out != None:
         q_out.put([out, ind]) # output result with index
       q_in.task_done()
     q_in.task_done() # task done for 'None' if q_in finished
   ###### end of single thread definition ######
+
+  # devide input_list into chunks according to block_size
+  def chunks(_list, _size):
+    for i in xrange(0, len(_list), _size):
+      yield _list[i:i+_size]
+  input_block = list(chunks(input_list, block_size))
 
   # setup empty queue
   output_stack = []
@@ -45,16 +60,15 @@ def parallelize(target_function,
     p.start()
 
   # put I/O data into queue for parallel processing
-  # TODO!!! add block size to minize queue number
-  index = range(len(input_list))
-  for ind, inp in zip(index, input_list):
-    inp.append(ind) # append inp index
-    qinp.put(inp)   # put inp to input queue
+  index = range(len(input_block))
+  for ind, inps in zip(index, input_block):
+    inps.append(ind) # append inp index
+    qinp.put(inps)   # put inp to input queue
   qinp.join()       # wait for jobs to finish
 
   # 'while not queue.empty' is NOT reliable
   if not qout.empty():
-    for i in range(len(input_list)):
+    for i in range(len(input_block)):
       output_stack.append(qout.get())
 
   if len(output_stack)>0:
@@ -64,7 +78,7 @@ def parallelize(target_function,
     for data_out in output_stack: 
       # if output is list of class, in-line iteration doesn't work
       output.append(data_out[0])
-    return output
+    return flatten(output)
 
 class bcolors:
   HEADER = '\033[95m'
@@ -90,46 +104,60 @@ def exit(text):
   sys.exit(msg)
   
 def warning(text):
-  msg = bcolors.WARNING + text + bcolors.ENDC
-  print msg
+  from setting import quiet
+  if not quiet:
+    msg = bcolors.WARNING + text + bcolors.ENDC
+    print msg
 
 def progress(title, *texts):
-  msg = bcolors.OKCYAN + bcolors.BOLD + title+":" + bcolors.ENDC
-  print msg,
-  for info in texts:
-    print info,
-  sys.stdout.flush()
+  from setting import quiet
+  if not quiet:
+    msg = bcolors.OKCYAN + bcolors.BOLD + title+":" + bcolors.ENDC
+    print msg,
+    for info in texts:
+      print info,
+    sys.stdout.flush()
 
-def done():
-  print " DONE"
+def done(*texts):
+  from setting import quiet
+  if not quiet:
+    for info in texts:
+      print info,
+    print " DONE"
 
 def report(title, *texts):
-  msg = bcolors.OKCYAN + bcolors.BOLD + title+":" + bcolors.ENDC
-  print msg,
-  for info in texts:
-    print info,
-  print ""
+  from setting import quiet
+  if not quiet:
+    msg = bcolors.OKCYAN + bcolors.BOLD + title+":" + bcolors.ENDC
+    print msg,
+    for info in texts:
+      print info,
+    print ""
 
 def prompt(text):
-  frame = inspect.stack()[1]
-  module = inspect.getmodule(frame[0])
-  name = module.__name__
-
-  msg = bcolors.WARNING + name + ": " + bcolors.ENDC
-
-  user_input = raw_input(msg + text + \
-               "\nAny key to confirm, enter to cencel...? ")
-  if not user_input:
-    exit("... ABORT from " + name)
-  else:
-    report(name, "continue")
+  from setting import no_warning
+  if not no_warning:
+    frame = inspect.stack()[1]
+    module = inspect.getmodule(frame[0])
+    name = module.__name__
+  
+    msg = bcolors.WARNING + name + ": " + bcolors.ENDC
+  
+    user_input = raw_input(msg + text + \
+                 "\nAny key to confirm, enter to cencel...? ")
+    if not user_input:
+      exit("... ABORT from " + name)
+    else:
+      report(name, "continue")
 
 def status(title, *texts):
-  msg = bcolors.OKBLUE + title+":" + bcolors.ENDC
-  print msg,
-  for info in texts:
-    print info,
-  print ""
+  from setting import quiet
+  if not quiet:
+    msg = bcolors.OKBLUE + title+":" + bcolors.ENDC
+    print msg,
+    for info in texts:
+      print info,
+    print ""
 ##### END OF UI Diolog #####
 
 ###################################

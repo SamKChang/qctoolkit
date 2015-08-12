@@ -111,6 +111,7 @@ class inp(object):
 
     if 'no_warning' in kwargs and kwargs['no_warning']:
       no_warning = True
+    else: no_warning = False
     if os.path.exists(name) and not no_warning:
       ut.prompt(name + " exist, overwrite?")
     inp = sys.stdout if not name else open(name,"w")

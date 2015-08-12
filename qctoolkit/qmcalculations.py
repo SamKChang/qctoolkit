@@ -14,14 +14,13 @@ def QMRun(inp, program, **kwargs):
     _threads = kwargs['threads']
   else:
     _threads = 1
+  _delete = False
   if 'QMReturn' in kwargs:
     # return value of QMRun
     # return = [list of properties to return]
     _return = kwargs['QMReturn']
     if 'cleanup' in kwargs and kwargs['cleanup']:
       _delete = True
-    else:
-      _delete = False
   else:
     _return = False
 
@@ -38,7 +37,7 @@ def QMRun(inp, program, **kwargs):
                    stdout=outfile)
     # wait each mpijob to finish before lauching another
     # otherwise all mpijobs will be launched simutaniously
-    run.wait() 
+    run.communicate() 
   ########## END OF SYSTEM CALL ##########
 
   #######################
@@ -98,6 +97,12 @@ def QMRun(inp, program, **kwargs):
 
     # RESTART file for alchemy
     if 'alchemScan' in kwargs and kwargs['alchemScan']:
+
+      if 'alchemRefPrefix' in kwargs:
+        alchemPrefix = kwargs['alchemRefPrefix']
+      else:
+        alchemPrefix = 'rst_'
+
       if not 'alchemRefPath' in kwargs:
         ut.exit("alchemical reference not set")
       elif not os.path.exists(kwargs['alchemRefPath']):
@@ -106,12 +111,14 @@ def QMRun(inp, program, **kwargs):
       else:
         _alchemScan = True
         ref = kwargs['alchemRefPath']
-        refroot = "rst_" + re.sub('\.inp', '',
+        refroot = alchemPrefix + re.sub('\.inp', '',
                                   re.sub('.*/', '', ref))
+
         refpath = re.sub(inproot, refroot, scrdir)
         rst_src = refpath + "/RESTART.1"
         rst_trg = inpdir + "/RESTART"
         os.link(rst_src, rst_trg)
+
     else:
       _alchemScan = False
 
@@ -161,15 +168,14 @@ def QMRun(inp, program, **kwargs):
     exestr = "%s %s" % (exe, inproot + ".inp")
     qmoutput = inproot + ".out"
     compute(exestr, qmoutput, _threads)
-    if _return:
-      qio_out = qio.QMOut(qmoutput, program)
-    os.chdir(cwd)
-    if _delete:
-      shutil.rmtree(inpdir)
 
     # clean up files
     try:
       os.remove('LATEST')
+    except OSError:
+      pass
+    try:
+      os.remove('GEOMETRY.scale')
     except OSError:
       pass
     try:
@@ -188,6 +194,11 @@ def QMRun(inp, program, **kwargs):
       rst_list = glob.glob("RESTART*")
       for rfile in rst_list:
         os.remove(rfile)
+
+    qio_out = qio.QMOut(qmoutput, program)
+    os.chdir(cwd)
+    if _delete:
+      shutil.rmtree(inpdir)
 
   # !!!!! TODO LIST !!!!! #
   #############################
@@ -215,8 +226,7 @@ def QMRun(inp, program, **kwargs):
   else: 
     ut.exit("ERROR! program '%s' not recognized" % program)
 
-  if _return:
-    return qio_out
+  return qio_out
 
 
 # collection of QM input files, run all in parallel

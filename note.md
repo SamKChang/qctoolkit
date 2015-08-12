@@ -86,3 +86,16 @@ for i in range(obmol.NumBonds()):
   bond = obmol.GetBond(i)
 ```
 Otherwise get stack/heap/segfault error
+
+
+PostgreSQL Note
+===============
+To exicute `psql` from `user`, both ROLE and DATABASE `user` must be created. 
+It can be done by
+```
+sudo su - postgres
+creatuser user
+creatdb user
+```
+If user is granted with supersuer privilege, new database can be created 
+from user account with `createdb new\_database`

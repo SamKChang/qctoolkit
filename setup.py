@@ -48,8 +48,8 @@ setup(name='qctoolkit',
     'qctoolkit.projects.Basel.p01_AlGaAs',
     'qctoolkit.io_format',
     'qctoolkit.ccs',
+    'qctoolkit.optimization',
     'qctoolkit.ML',
-    'qctoolkit.optimize',
     'qctoolkit'
   ],
   ext_modules = cythonize(c_module)

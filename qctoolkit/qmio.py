@@ -135,6 +135,9 @@ class QMInp(object):
     self.inp.atom_list[str(self.atom_count)] = atom_string
     self.atom_count =- 1
 
+  def setInfo(self, info):
+    self.inp.info = info
+
   def setConvergence(self, convergence):
     self.inp.setting.convergence = convergence
     self.inp.setting.set_convergence = True
@@ -198,6 +201,8 @@ class QMInp(object):
   def removeAtom(self, index):
     self.inp.structure.remove_atom(index)
 
+  def isolateAtoms(self, indices):
+    self.inp.structure.isolate_atoms(indices)
 
   def write(self, *args, **kwargs):
     mul = self.inp.structure.multiplicity
