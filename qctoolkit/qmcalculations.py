@@ -143,12 +143,12 @@ def QMRun(inp, program, **kwargs):
       ut.delete(inpname, 'RESTART', 1)
 
     # big memory setup
-    if 'bigmem' in kwargs:
-      if kwargs['bigmem']:
-        ut.delete(inpname, 'MEMORY BIG', 1)
-        ut.insert(inpname, 'MIRROR', ' MEMORY BIG')
-      else:
-        ut.delete(inpname, 'MEMORY BIG', 1)
+    #if 'bigmem' in kwargs:
+    if self._bigmem:
+      ut.delete(inpname, 'MEMORY BIG', 1)
+      ut.insert(inpname, 'MIRROR', ' MEMORY BIG')
+    else:
+      ut.delete(inpname, 'MEMORY BIG', 1)
 
     # scratch path
     if _scr:
