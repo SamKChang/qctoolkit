@@ -108,6 +108,7 @@ def warning(text):
   if not quiet:
     msg = bcolors.WARNING + text + bcolors.ENDC
     print msg
+  sys.stdout.flush()
 
 def progress(title, *texts):
   from setting import quiet
@@ -116,7 +117,7 @@ def progress(title, *texts):
     print msg,
     for info in texts:
       print info,
-    sys.stdout.flush()
+  sys.stdout.flush()
 
 def done(*texts):
   from setting import quiet
@@ -124,6 +125,7 @@ def done(*texts):
     for info in texts:
       print info,
     print " DONE"
+  sys.stdout.flush()
 
 def report(title, *texts):
   from setting import quiet
@@ -133,6 +135,7 @@ def report(title, *texts):
     for info in texts:
       print info,
     print ""
+  sys.stdout.flush()
 
 def prompt(text):
   from setting import no_warning
@@ -149,6 +152,7 @@ def prompt(text):
       exit("... ABORT from " + name)
     else:
       report(name, "continue")
+  sys.stdout.flush()
 
 def status(title, *texts):
   from setting import quiet
@@ -158,6 +162,7 @@ def status(title, *texts):
     for info in texts:
       print info,
     print ""
+  sys.stdout.flush()
 ##### END OF UI Diolog #####
 
 ###################################
