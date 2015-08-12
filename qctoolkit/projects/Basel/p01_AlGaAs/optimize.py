@@ -174,5 +174,7 @@ def Ev_ccs(ccs_coord, ccs_span, vacancy_index, **kwargs):
                         threads=_threads)
   qtk.done(out_wv.Et)
 
-  qtk.report("Ev_ccs", "Ev=", out_wov.Et - out_wv.Et - freeE)
+  qtk.report("Ev_ccs", "dE=%.4f Ep=%.4f Ev=%.4f Ef=%.4f" %\
+             (out_wov.Et - out_wv.Et - freeE,\
+              out_wov.Et, out_wv.Et, freeE))
   return out_wov.Et - out_wv.Et - freeE
