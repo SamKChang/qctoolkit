@@ -19,10 +19,10 @@ def QMRun(inp, program, **kwargs):
     # return value of QMRun
     # return = [list of properties to return]
     _return = kwargs['QMReturn']
-    if 'cleanup' in kwargs and kwargs['cleanup']:
-      _delete = True
   else:
     _return = False
+  if 'cleanup' in kwargs and kwargs['cleanup']:
+    _delete = True
 
   if 'bigmem' in kwargs:
     _bigmem = kwargs['bigmem']

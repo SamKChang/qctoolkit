@@ -27,6 +27,12 @@ def AlGaX_EvOpt(structure, vacancy_ind, ccs_span, **kwargs):
   else:
     _threads = qtk.cpu_count
 
+  if 'threads_per_job' in kwargs:
+    _threadspj = kwargs['threads_per_job']
+  else:
+    _threadspj = _threads
+  _parallel = int(_threads/_threadspj)
+
   def clean_file(old_file):
     try:
       os.remove(old_file)
@@ -84,14 +90,16 @@ def AlGaX_EvOpt(structure, vacancy_ind, ccs_span, **kwargs):
                 {'QMInp':baseinp, 
                  'pref':'pref', 'vref':'vref',
                  'freeAtomE':freeAtomOut.Et, 
-                 'threads':_threads}]
+                 'threads':_threadspj}]
 
   def genCCSInp():
     _tmp, _coord = ccs.random()
     return _coord
  
   mcopt = qop.MonteCarlo(Ev_ccs, input_list, genCCSInp, 
-                         power=1, log_file=logfile, T=_T)
+                         power=1, log_file=logfile, T=_T,
+                         parallel=_parallel
+                         )
   mcopt.run()
 
 #  qcs.optimize.mc(Ev_ccs, init_ccs_coord, ccs, input_list, 
@@ -145,38 +153,43 @@ def Ev_ccs(ccs_coord, ccs_span, vacancy_index, **kwargs):
   inp_wv.removeAtom(vacancy_index)
   inp_wv.setChargeMultiplicity(inp_wov.inp.structure.charge, 2)
 
-  if os.path.exists('perfect'):
-    shutil.rmtree('perfect')
-  if os.path.exists('vacancy'):
-    shutil.rmtree('vacancy')
+  perfect = 'ev_perfect' + str(os.getpid())
+  vacancy = 'ev_vacancy' + str(os.getpid())
+  perfectinp = perfect + '.inp'
+  vacancyinp = vacancy + '.inp'
 
-  inp_wov.write('perfect.inp', no_warning=True)
-  inp_wv.write('vacancy.inp', no_warning=True)
+  if os.path.exists(perfect):
+    shutil.rmtree(perfect)
+  if os.path.exists(vacancy):
+    shutil.rmtree(vacancy)
 
-  qtk.progress("Ev_ccs", "running perfect.inp... ")
+  inp_wov.write(perfectinp, no_warning=True)
+  inp_wv.write(vacancyinp, no_warning=True)
+
   if alchem:
-    out_wov = qtk.QMRun('perfect.inp', inp_wov.program,
+    out_wov = qtk.QMRun(perfectinp, inp_wov.program,
                         threads=_threads,
                         alchemScan=True,
                         alchemRefPath=perfect_ref,
+                        cleanup=True,
                         alchemRefPrefix='')
   else:
-    out_wov = qtk.QMRun('perfect.inp', inp_wov.program,
+    out_wov = qtk.QMRun(perfectinp, inp_wov.program,
+                        cleanup=True,
                         threads=_threads)
-  qtk.done(out_wov.Et)
-  qtk.progress("Ev_ccs", "running vacancy.inp... ")
+  os.remove(perfectinp)
+
   if alchem:
-    out_wv = qtk.QMRun('vacancy.inp', inp_wv.program,
+    out_wv = qtk.QMRun(vacancyinp, inp_wv.program,
                         threads=_threads,
                         alchemScan=True,
                         alchemRefPath=vacancy_ref,
+                        cleanup=True,
                         alchemRefPrefix='')
   else:
-    out_wv = qtk.QMRun('vacancy.inp', inp_wv.program,
+    out_wv = qtk.QMRun(vacancyinp, inp_wv.program,
+                        cleanup=True,
                         threads=_threads)
-  qtk.done(out_wv.Et)
+  os.remove(vacancyinp)
 
-  qtk.report("Ev_ccs", "dE=%.4f Ep=%.4f Ev=%.4f Ef=%.4f" %\
-             (out_wov.Et - out_wv.Et - freeE,\
-              out_wov.Et, out_wv.Et, freeE))
   return out_wov.Et - out_wv.Et - freeE

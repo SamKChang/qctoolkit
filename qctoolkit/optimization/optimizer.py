@@ -83,6 +83,15 @@ class Optimizer(object):
       self.dump_len = kwargs['dump']
     else:
       self.dump_len = 30
+
+    if 'parallel' in kwargs:
+      self.parallel = kwargs['parallel']
+    else:
+      self.parallel = 1
+
+    self.log_step = 1
+
+
     ##### end of default values setup #####
 
     # open logfile, close when converged
@@ -108,6 +117,12 @@ class Optimizer(object):
 
   # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   # flush penalty/coord list to log file
+  def write_log(self):
+    if self.step % self.log_step ==0:
+      line = [self.penalty[-1], self.coord[-1]]
+      print >> self.logfile, "% 10.6E %s" % (line[0], line[1])
+      self.logfile.flush()
+
   def dump(self):
     size = self.dump_len
     output = list(zip(self.penalty[:size], self.coord[:size]))
@@ -134,9 +149,11 @@ class Optimizer(object):
     size = self.avg_len
     length = min(len(self.penalty), size)
     if length > 1:
-      if sum(self.penalty[-length:])/float(length)\
-           < self.cutoff\
-         or self.step >= self.max_step:
+      if sum(self.penalty[-length:])/float(length) < self.cutoff\
+      or self.step >= self.max_step:
+        if self.step >= self.max_step:
+          qtk.report("Optimizer", "not max_step reached stop",
+                     color='red')
         self.logfile.close()
         return True
     else: return False
