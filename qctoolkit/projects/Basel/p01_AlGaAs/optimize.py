@@ -33,6 +33,17 @@ def AlGaX_EvOpt(structure, vacancy_ind, ccs_span, **kwargs):
     _threadspj = _threads
   _parallel = int(_threads/_threadspj)
 
+  if 'optimizer' in kwargs:
+    _optimizer = kwargs['optimizer']
+    if _optimizer == 'GA':
+      if 'population_size' in kwargs:
+        _population_size = kwargs['population_size']
+      else:
+        _population_size = qtk.setting.cpu_count
+  else:
+    _optimizer = 'MC'
+
+
   def clean_file(old_file):
     try:
       os.remove(old_file)
@@ -93,14 +104,22 @@ def AlGaX_EvOpt(structure, vacancy_ind, ccs_span, **kwargs):
                  'threads':_threadspj}]
 
   def genCCSInp():
-    _tmp, _coord = ccs.random()
+    _coord = ccs.random()[1]
     return _coord
  
-  mcopt = qop.MonteCarlo(Ev_ccs, input_list, genCCSInp, 
-                         power=1, log_file=logfile, T=_T,
-                         parallel=_parallel
-                         )
-  mcopt.run()
+  if _optimizer == 'MC':
+    cylopt = qop.MonteCarlo(Ev_ccs, input_list, genCCSInp, 
+                            power=1, log_file=logfile, T=_T,
+                            parallel=_parallel
+                           )
+  elif _optimizer == 'GA':
+    cylopt = qop.GeneticOptimizer(Ev_ccs, input_list, genCCSInp, 
+                                  ccs.mate, _population_size,
+                                  power=1, log_file=logfile,
+                                  parallel=_parallel
+                                 )
+
+  cylopt.run()
 
 #  qcs.optimize.mc(Ev_ccs, init_ccs_coord, ccs, input_list, 
 #                  target=_target, T=_T)

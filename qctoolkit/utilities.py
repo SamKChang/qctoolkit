@@ -10,6 +10,13 @@ import multiprocessing as mp
 import operator
 from compiler.ast import flatten
 
+def listShape(input_list):
+  if type(input_list) == list:
+    if type(input_list[0]) != list:
+      return len(input_list)
+    else:
+      return [listShape(sublist) for sublist in input_list]
+
 def parallelize(target_function, 
                 input_list, 
                 threads,

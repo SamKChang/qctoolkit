@@ -6,11 +6,15 @@ from time import sleep
 import multiprocessing as mp
 
 class MonteCarlo(opt.Optimizer, opt.Temperature):
-  def __init__(self, 
-               penalty, 
-               penalty_input, 
-               inpgen,
-               **kwargs):
+  """
+  penalty: function to optimize to 0
+  penalty_input: list of all input arguments of penalty function
+                 exept coordinate, which will be randomly sampled
+                 and put as the 'FIRST' argument of the 
+                 penalty function
+  inpgen: input generator, for MonteCarlo, it takes no input
+  """
+  def __init__(self, penalty, penalty_input, inpgen, **kwargs):
     opt.Optimizer.__init__(self, penalty, penalty_input, 
                            inpgen, **kwargs)
     if 'T' in kwargs:
@@ -66,14 +70,16 @@ class MonteCarlo(opt.Optimizer, opt.Temperature):
         if rand > boltz:
           qtk.report("MonteCarlo", "new move rejected", 
                      color='yellow')
-          new_coord = self.getInput()
+          new_coord = self.getInput() # generate new random inp
           self.sample_itr += 1 # record MonteCarlo iteration
           if self.parallel == 1 or self.step == 1:
-            out, tmp = self.sample()
+            # iterative run for serial job
+            out = self.sample()[0]
           # only first finished thread put to queue
           elif self.qout.empty():
+            # iterative run for parallel case
             try:
-              out, tmp = self.sample()
+              out = self.sample()[0]
             # error produced for NoneType return
             except TypeError:
               qtk.report("MonteCarlo", 
@@ -82,27 +88,41 @@ class MonteCarlo(opt.Optimizer, opt.Temperature):
           else: 
             out = None
             new_coord = None
+    # serial return
     if self.parallel == 1 or self.step == 1:
       return out, new_coord
+    # parallel case, put to queue instead of return
     elif self.qout.empty() and type(out) != None:
       self.qout.put([out, new_coord])
 
-  # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   # parallel process communicate through queue
+  # regularly check ouput queue for result
+  # return results from first accepted thread to master 
+  # 
+  # Communication mechanism: Using self.qout
+  #  accepted result is put to queue
+  #  only first accepted thread is put to queue
+  #  queue is always empty, waiting for accepted result
+  #  parallel_listener moniters queue and return result
   def parallel_listener(self,result_queue):
     qtk.progress("MonteCarlo", "waiting results from",
                  self.parallel, "threads")
-    # check result every 0.01 second
+    # check result every 0.01 second, HARD CODED
     while result_queue.empty():
       sleep(0.01)
-    result = result_queue.get()
-    qtk.done()
-    return result[0], result[1]
+    result = result_queue.get() # collect results
+    qtk.done() # indicate job done
+    return result[0], result[1] # return results to master
 
+  # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  # implementation of run method from Optimizer object
   def run(self):
+    # initial run
     self.step = 1
     init_coord = self.getInput()
     self.current_penalty = self.sample(init_coord)
+    # loop over convergence/max_step
     while not self.converged():
       self.step += 1
       self.sample_itr = 0
@@ -116,12 +136,11 @@ class MonteCarlo(opt.Optimizer, opt.Temperature):
           procs.append(p)
         for p in procs:
           p.join()
+        # collect result from single finished thread
         new_penalty, new_coord = self.parallel_listener(self.qout)
       # serial routine
       else:
         new_penalty, new_coord = self.sample()
+      # update result
       self.push(new_penalty, new_coord)
       self.current_penalty = new_penalty
-
-      
-      

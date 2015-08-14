@@ -252,8 +252,54 @@ class MoleculeSpan(object):
     return new_structure, query
   ##### END OF RANDOM CCS POINT #####
 
+  #########################################
+  # mating function for genetic algorithm #
+  #########################################
+  def mate(self, parent1, parent2, mutation_rate):
 
+    def getChild():
+      child = {}
+      for key in parent1.iterkeys():
+        if key == 'mutation':
+          child_mut = []
+          for i in range(len(parent1[key])):
+            # mix two parent
+            grp = parent1[key][i]
+            index = range(len(grp))
+            random.shuffle(index)
+            ind1 = index[:len(index)/2]
+            if len(index)%2 == 0:
+              ind2 = index[len(index)/2:]
+              append = -1
+            else:
+              ind2 = index[len(index)/2:-1]
+              append = index[-1]
+            new = [parent1[key][i][ind] for ind in ind1]
+            new.extend([parent2[key][i][ind] for ind in ind2])
+            if append >= 0:
+              if random.random() >= 0.5:
+                new.append(parent1[key][i][append])
+              else:
+                new.append(parent2[key][i][append])
+            # mutation, loop through each element
+            for j in range(len(new)):
+              if random.random() < mutation_rate:
+                mut_target = [tar \
+                  for tar in self.mutation_target[i]\
+                  if tar != new[j]]
+                new[j] = random.choice(mut_target)
+            child_mut.append(new)
+          child.update({'mutation':child_mut})
+        else:
+          qtk.exit("ccs mate function is not yet implemented for "\
+                   + key)
+      return child
 
+    child = getChild()
+    while not self.onManifold(child):
+      child = getChild()
+    return child
+  
 
   #########################################
   # read ccs_param from plain text format #

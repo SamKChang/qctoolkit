@@ -5,6 +5,7 @@ import fileinput
 import subprocess as sp
 import utilities as ut
 import numpy as np
+import setting
 
 # python interface to run QM code
 # all code dependent part should be wrapped here
@@ -59,7 +60,7 @@ def QMRun(inp, program, **kwargs):
     if 'exe' in kwargs:
       exe = kwargs['exe']
     else:
-      exe = 'cpmd.x'
+      exe = setting.cpmd_exe
     cwd = os.getcwd()
     if 'save_restart' in kwargs:
       _save_restart = True

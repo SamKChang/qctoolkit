@@ -138,6 +138,9 @@ class Optimizer(object):
     self.step += 1
     self.penalty.append(penalty)
     self.coord.append(coord)
+    qtk.report("Optimizer", "penalty:%.4E coord%s itr:%d"\
+               % (penalty, coord, self.step))
+    self.write_log()
     if self.step > 0 \
      and self.step % self.dump_len ==0\
      and len(self.coord) > 3*self.dump_len:
@@ -146,17 +149,28 @@ class Optimizer(object):
   # !!!!!!!!!!!!!!!!!!!!!!!!!!
   # convergence/max_step check
   def converged(self):
-    size = self.avg_len
-    length = min(len(self.penalty), size)
-    if length > 1:
-      if sum(self.penalty[-length:])/float(length) < self.cutoff\
-      or self.step >= self.max_step:
-        if self.step >= self.max_step:
-          qtk.report("Optimizer", "not max_step reached stop",
-                     color='red')
-        self.logfile.close()
-        return True
+    if self.penalty[-1] < self.cutoff:
+      self.logfile.close()
+      return True
+    elif self.step >= self.max_step:
+      qtk.report("Optimizer", "not max_step reached stop",
+                 color='red')
+      self.logfile.close()
+      return True
     else: return False
+
+    # average over length...
+#    size = self.avg_len
+#    length = min(len(self.penalty), size)
+#    if length > 1:
+#      if sum(self.penalty[-length:])/float(length) < self.cutoff\
+#      or self.step >= self.max_step:
+#        if self.step >= self.max_step:
+#          qtk.report("Optimizer", "not max_step reached stop",
+#                     color='red')
+#        self.logfile.close()
+#        return True
+#    else: return False
 
   # !!!!!!!!!!!!!!!!!!!!!!
   # evaluate penalty value
