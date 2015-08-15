@@ -110,12 +110,13 @@ def AlGaX_EvOpt(structure, vacancy_ind, ccs_span, **kwargs):
   if _optimizer == 'MC':
     cylopt = qop.MonteCarlo(Ev_ccs, input_list, genCCSInp, 
                             power=1, log_file=logfile, T=_T,
-                            parallel=_parallel
+                            target=_target, parallel=_parallel
                            )
   elif _optimizer == 'GA':
     cylopt = qop.GeneticOptimizer(Ev_ccs, input_list, genCCSInp, 
                                   ccs.mate, _population_size,
                                   power=1, log_file=logfile,
+                                  target=_target,
                                   parallel=_parallel
                                  )
 
@@ -164,6 +165,8 @@ def Ev_ccs(ccs_coord, ccs_span, vacancy_index, **kwargs):
   else:
     _threads = 1
 
+  _target = 0
+
   inp_wov = copy.deepcopy(base_inp)
   inp_wv = copy.deepcopy(base_inp)
   inp_wov.inp.structure = ccs_span.generate(**ccs_coord)
@@ -211,4 +214,4 @@ def Ev_ccs(ccs_coord, ccs_span, vacancy_index, **kwargs):
                         threads=_threads)
   os.remove(vacancyinp)
 
-  return out_wov.Et - out_wv.Et - freeE
+  return (out_wov.Et - out_wv.Et - freeE) - _target

@@ -27,11 +27,12 @@ class MonteCarlo(opt.Optimizer, opt.Temperature):
 
   # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   # override push for simulated annealing
-  def push(self, penalty, coord):
+  def push(self, penalty, result, coord):
     self.penalty.append(penalty)
+    self.result.append(result)
     self.current_penalty = penalty
-    qtk.report("MonteCarlo", "step:%d T:%f penalty:%f " % \
-               (self.step, self.T, penalty) + \
+    qtk.report("MonteCarlo", "step:%d T:%f penalty:%f result:%f "%\
+               (self.step, self.T, penalty, result) + \
                "coord:%s" % coord, color='green')
     if self.annealing:
       self.decrease_T()
@@ -54,13 +55,13 @@ class MonteCarlo(opt.Optimizer, opt.Temperature):
       new_coord = args[0]
     else:
       new_coord = self.getInput()
-    out = self.evaluate(new_coord, self.penalty_input)
+    penalty, out = self.evaluate(new_coord, self.penalty_input)
     if len(self.coord) > 0:
-      # accept if out < current_penalty
+      # accept if penalty < current_penalty
       # otherwise go through MonteCarlo cycle
-      if out >= self.current_penalty:
+      if penalty >= self.current_penalty:
         rand = random.uniform(0, 1)
-        diff = out - self.current_penalty
+        diff = penalty - self.current_penalty
         boltz = boltzmann(diff)
         qtk.report("MonteCarlo", 
                    "accept worse results?",
@@ -74,12 +75,12 @@ class MonteCarlo(opt.Optimizer, opt.Temperature):
           self.sample_itr += 1 # record MonteCarlo iteration
           if self.parallel == 1 or self.step == 1:
             # iterative run for serial job
-            out = self.sample()[0]
+            penalty, out = self.sample()[0]
           # only first finished thread put to queue
           elif self.qout.empty():
             # iterative run for parallel case
             try:
-              out = self.sample()[0]
+              penalty, out = self.sample()[0]
             # error produced for NoneType return
             except TypeError:
               qtk.report("MonteCarlo", 
@@ -87,13 +88,14 @@ class MonteCarlo(opt.Optimizer, opt.Temperature):
           # others return None
           else: 
             out = None
+            penalty = None
             new_coord = None
     # serial return
     if self.parallel == 1 or self.step == 1:
-      return out, new_coord
+      return penalty, out, new_coord
     # parallel case, put to queue instead of return
-    elif self.qout.empty() and type(out) != None:
-      self.qout.put([out, new_coord])
+    elif self.qout.empty() and type(penalty) != None:
+      self.qout.put([penalty, out, new_coord])
 
   # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   # parallel process communicate through queue
@@ -113,7 +115,8 @@ class MonteCarlo(opt.Optimizer, opt.Temperature):
       sleep(0.01)
     result = result_queue.get() # collect results
     qtk.done() # indicate job done
-    return result[0], result[1] # return results to master
+    # return results to master
+    return result[0], result[1], result[2] 
 
   # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   # implementation of run method from Optimizer object
@@ -137,10 +140,11 @@ class MonteCarlo(opt.Optimizer, opt.Temperature):
         for p in procs:
           p.join()
         # collect result from single finished thread
-        new_penalty, new_coord = self.parallel_listener(self.qout)
+        new_penalty, new_out, new_coord = \
+          self.parallel_listener(self.qout)
       # serial routine
       else:
-        new_penalty, new_coord = self.sample()
+        new_penalty, new_out, new_coord = self.sample()
       # update result
-      self.push(new_penalty, new_coord)
+      self.push(new_penalty, new_out, new_coord)
       self.current_penalty = new_penalty

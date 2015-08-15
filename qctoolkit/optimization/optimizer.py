@@ -67,7 +67,7 @@ class Optimizer(object):
     if 'power' in kwargs:
       self.power = kwargs['power']
     else:
-      self.power = 0
+      self.power = 1
 
     if 'log_file' in kwargs:
       self.log = kwargs['log_file']
@@ -89,6 +89,11 @@ class Optimizer(object):
     else:
       self.parallel = 1
 
+    if 'target' in kwargs:
+      self.target = kwargs['target']
+    else:
+      self.target = 0
+
     self.log_step = 1
 
 
@@ -98,6 +103,7 @@ class Optimizer(object):
     self.logfile = open(self.log, 'w', 0)
     self.logfile.flush()
     # result lists
+    self.result = []
     self.penalty = []
     self.coord = []
     self.step = 0
@@ -119,8 +125,8 @@ class Optimizer(object):
   # flush penalty/coord list to log file
   def write_log(self):
     if self.step % self.log_step ==0:
-      line = [self.penalty[-1], self.coord[-1]]
-      print >> self.logfile, "% 10.6E %s" % (line[0], line[1])
+      line = [self.result[-1], self.penalty[-1], self.coord[-1]]
+      print >> self.logfile, "% 10.6E %s" % (line[0], line[2])
       self.logfile.flush()
 
   def dump(self):
@@ -128,18 +134,20 @@ class Optimizer(object):
     output = list(zip(self.penalty[:size], self.coord[:size]))
     self.penalty = self.penalty[size:]
     self.coord = self.coord[size:]
-    for line in output:
-      print >> self.logfile, "% 10.6E %s" % (line[0], line[1])
-      self.logfile.flush()
+#    for line in output:
+#      print >> self.logfile, "% 10.6E %s" % (line[0], line[1])
+#      self.logfile.flush()
 
   # !!!!!!!!!!!!!!!!!!!!!!!!!!
   # update penalty/coord lists
-  def push(self, penalty, coord):
+  def push(self, penalty, result, coord):
     self.step += 1
     self.penalty.append(penalty)
+    self.result.append(result)
     self.coord.append(coord)
-    qtk.report("Optimizer", "penalty:%.4E coord%s itr:%d"\
-               % (penalty, coord, self.step))
+    qtk.report("Optimizer", 
+               "result:%.4E penalty:%.4E coord%s itr:%d"\
+               % (result, penalty, coord, self.step))
     self.write_log()
     if self.step > 0 \
      and self.step % self.dump_len ==0\
@@ -149,14 +157,16 @@ class Optimizer(object):
   # !!!!!!!!!!!!!!!!!!!!!!!!!!
   # convergence/max_step check
   def converged(self):
-    if self.penalty[-1] < self.cutoff:
-      self.logfile.close()
-      return True
-    elif self.step >= self.max_step:
-      qtk.report("Optimizer", "not max_step reached stop",
-                 color='red')
-      self.logfile.close()
-      return True
+    if len(self.penalty)>1:
+      if self.penalty[-1] < self.cutoff:
+        self.logfile.close()
+        return True
+      elif self.step >= self.max_step:
+        qtk.report("Optimizer", "not max_step reached stop",
+                   color='red')
+        self.logfile.close()
+        return True
+      else: return False
     else: return False
 
     # average over length...
@@ -182,10 +192,7 @@ class Optimizer(object):
               new_coord, *evl_args, **evl_kwgs)
     else:
       out = self.penalty_function(new_coord, *evl_args)
-    if self.power == 0:
-      return out
-    else:
-      return abs(out)**self.power
+    return abs(out - self.target)**self.power, out
 
   # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   # generate input for penalty function by input_generator

@@ -30,7 +30,8 @@ class GeneticOptimizer(opt.Optimizer):
     # serial implementation
     if self.parallel == 1:
       for coord in pop_list:
-        fit.append(self.evaluate(coord, self.penalty_input))
+        out = self.evaluate(coord, self.penalty_input)
+        fit.append(out[0])
     else:
 
       def run_job(qinp, qout):
@@ -49,6 +50,7 @@ class GeneticOptimizer(opt.Optimizer):
       proc = []
       for i in range(self.parallel):
         p = mp.Process(target = run_job, args=(qinp,qout))
+        p.daemon = True
         p.start()
         proc.append(p)
       for p in proc:
@@ -58,21 +60,25 @@ class GeneticOptimizer(opt.Optimizer):
         fit.append(qout.get())
       fit = list(np.array(sorted(
               fit, key=operator.itemgetter(1)))[:,0])
-    return fit
+      output = np.array(fit)
+    return list(output[:,0]), list(output[:,1])
 
   def pop_sort(self):
-    pop_sorted = [[fit, pop] for fit, pop in\
-                sorted(zip(self.fit, self.pop))]
-    self.pop = [pop[1] for pop in list(pop_sorted)]
+    pop_sorted = [[fit, out, pop] for fit, out, pop in\
+                sorted(zip(self.fit, self.out, self.pop))]
     self.fit = [pop[0] for pop in list(pop_sorted)]
+    self.out = [pop[1] for pop in list(pop_sorted)]
+    self.pop = [pop[2] for pop in list(pop_sorted)]
 
-  def merge(self, new_pop, new_fit):
+  def merge(self, new_pop, new_fit, new_out):
     self.pop.extend(new_pop)
     self.fit.extend(new_fit)
+    self.out.extend(new_out)
 
   def get_newpop(self):
     self.pop = self.pop[:self.pop_size/2]
     self.fit = self.fit[:self.pop_size/2]
+    self.out = self.out[:self.pop_size/2]
     index = range(len(self.pop))
     new_pop = []
     for i in range(self.pop_size - len(index)):
@@ -86,30 +92,12 @@ class GeneticOptimizer(opt.Optimizer):
     
   def run(self):
     self.pop = self.get_pop(self.pop_size)
-    self.fit = self.fitness(self.pop)
+    self.fit, self.out = self.fitness(self.pop)
     self.pop_sort()
-    self.push(self.fit[0], self.pop[0])
+    self.push(self.fit[0], self.out[0], self.pop[0])
     while not self.converged():
       new_pop = self.get_newpop()
-      new_fit = self.fitness(new_pop)
-      self.merge(new_pop, new_fit)
+      new_fit, new_out = self.fitness(new_pop)
+      self.merge(new_pop, new_fit, new_out)
       self.pop_sort()
-      self.push(self.fit[0], self.pop[0])
-      
-    
-
-
-  # construct initial population
-
-  # evaluate fitness (penalty) function 
-
-  # while converge/step loop 
-  #  generate new population by crossing
-  #
-  #  evaluate new fitness function
-  #
-  #  select best from new/old population -> old population
-  #
-  # 
-
-    
+      self.push(self.fit[0], self.out[0], self.pop[0])
