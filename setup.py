@@ -6,10 +6,11 @@ import numpy as np
 # to enable openmp, use:
 #  extra_compile_args=['-fopenmp', '-fpic']
 #  and extra_link_args=['-lgomp', '-shared']
+# Cython extension:
+#  Extension(name = 'qctoolkit.path.to.extension.name',
+#    sources = ['qctoolkit/path/to/extension/name.pyx'])
 
-c_module = [Extension(name = 'qctoolkit.demo',
-              sources = ['qctoolkit/src/demo.c']),
-            Extension(name = "qctoolkit.ML.kernel_matrix", 
+c_module = [Extension(name = "qctoolkit.ML.kernel_matrix", 
               sources = ['qctoolkit/ML/c_extension/'+\
                          'kernelmatrixmodule.c',
                          'qctoolkit/ML/c_extension/kernels.c'],
@@ -31,9 +32,7 @@ c_module = [Extension(name = 'qctoolkit.demo',
             Extension(name = "qctoolkit.coulomb_matrix", 
               extra_compile_args=['-O3'],
               sources = ['qctoolkit/src/coulombmatrixmodule.c',
-                         'qctoolkit/src/utilities.c']),
-            Extension(name = 'qctoolkit.primesc',
-              sources = ['qctoolkit/src/primesc.pyx'])
+                         'qctoolkit/src/utilities.c'])
            ]
 
 setup(name='qctoolkit',
