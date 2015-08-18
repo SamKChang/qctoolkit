@@ -133,6 +133,11 @@ class Molecule(object):
     )
     self.R = self.R + shift_matrix
 
+  def getValenceElectrons(self):
+    ve = np.vectorize(ut.n2ve)
+    nve = sum(ve(self.type_list)) - self.charge
+    return nve
+
   def setChargeMultiplicity(self, c, m, **kwargs):
     if type(c) == int or type(c) == float:
       self.charge = c
@@ -283,7 +288,7 @@ class Molecule(object):
       print >>out, "%-2s " % self.type_list[I],
       print >>out, " ".join("% 8.4f" % i for i in self.R[I][:])
 
-    if not re.match("stdout",name):
+    if not re.match("",name):
       out.close()
 
   # read structure from CPMD input

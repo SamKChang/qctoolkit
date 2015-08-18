@@ -298,8 +298,13 @@ class out(object):
       if not line: break
 
       if (re.match(scf_p, line)):
-        data = [float(x) for x in line.split()]
-        self.SCFStep = int(data[0])
+        try:
+          data = [float(x) for x in line.split()]
+          self.SCFStep = int(data[0])
+        except:
+          ut.report("\n\nFailed while eading file:", name,
+                    'at line: ', line,
+                    '... skipping!! \n', color='yellow')
       elif re.match(convergence, line) and self.SCFStep > 5:
         converged = False
       elif re.match(soft_exit, line):

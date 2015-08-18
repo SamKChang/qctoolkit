@@ -7,12 +7,7 @@ import re, copy, sys, os
 from compiler.ast import flatten
 import xml.etree.ElementTree as ET
 import random
-
-class MoleculeSpanXML(object):
-  def __init__(self, parameter_file, **kwargs):
-    if 'xyz' in kwargs:
-      self.structure = qtk.Molecule()
-      self.structure.read_xyz(kwargs['xyz'])
+import yaml
 
 class MoleculeSpan(object):
   def __init__(self, xyz_file, parameter_file, **kwargs):
@@ -38,6 +33,7 @@ class MoleculeSpan(object):
     self.forbiden_bonds = []
     self.ztotal = 0
     self.vtotal = 0
+    self.element_count = {}
 
     # setup all parameters
     self.read_param(parameter_file)
@@ -88,8 +84,80 @@ class MoleculeSpan(object):
       self.read_param_txt(parameter_file)
     elif extension == '.xml':
       self.read_param_xml(parameter_file)
+    elif extension == '.yml' or extension == '.yaml':
+      self.read_param_yml(parameter_file)
     else:
-      pass
+      qtk.exit("extension " + extension + " not reconized...")
+
+  ###########################################
+  # convert data string to numerical values #
+  ###########################################
+  # used for xml/yaml format
+  def str2data(self, data_string, **kwargs):
+    if 'dtype' in kwargs:
+      dtype = kwargs['dtype']
+    else:
+      dtype = 'index'
+    _data = re.sub(re.compile('[ \n]*'),'',data_string)\
+            .split(',')
+    _out_list = []
+    if dtype == 'index':
+      for ind in _data:
+        if re.match(re.compile(".*:.*"), ind):
+          if re.match(re.compile("^[^0-9]*:"), ind):
+            ind = re.sub("^[^0-9]*:", "0:", ind)
+          if re.match(re.compile(":[^0-9]"), ind):
+            ind = re.sub(":[^0-9]*", ":-1", ind)
+          ind = map(int, ind.split(":"))
+          for i in range(ind[0], ind[1]+1):
+            _out_list.append(i)
+        else:
+          _out_list.append(int(ind))
+    elif dtype == 'range':
+      _out_list = map(float, _data[0].split(":"))
+    return _out_list
+  ##### end of data/string conversion #####
+
+  #################################
+  # read ccs_param from yaml file #
+  #################################
+  def read_param_yml(self, parameter_file):
+    f = open(parameter_file, "r")
+    param = yaml.safe_load(f)
+
+    # !!!!!!!!!!!!!!!!!
+    # read span section
+    def read_span(span):
+      if span['type'] == 'mutation':
+        self.mutation_list.append(self.str2data(span['index']))
+        self.mutation_target.append(self.str2data(span['range']))
+      elif span['type'] == 'stretching':
+        self.stretching_list.append(self.str2data(span['index']))
+        self.stretching_direction.append(self.str2data(\
+          span['direction_index']))
+        self.stretching_range.append(self.str2data(\
+          span['range'], dtype='range'))
+      else:
+        qtk.exit(span['type'] + ' is not yet implemented')
+
+    def read_constraint(constraint):
+      if constraint['type'] == 'element_count':
+        self.element_count.update(\
+          {constraint['element']:\
+           self.str2data(constraint['count'])})
+
+    if param.has_key('span'):
+      for span in param['span'].itervalues():
+        read_span(span)
+    if param.has_key('replace'):
+      for replace in param['replace'].itervalues():
+        pass # not yet implemented
+    if param.has_key('constraint'):
+      for constraint in param['constraint'].itervalues():
+        read_constraint(constraint)
+
+    f.close()
+  ##### END OF READING YAML FILE #####
 
   ###############################################
   # read ccs_param to xml element tree directly #
@@ -101,38 +169,16 @@ class MoleculeSpan(object):
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # read span section of xml file
     def read_span(span):
-      # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      # convert data string to numerical values
-      def str2data(data_string, **kwargs):
-        if 'dtype' in kwargs:
-          dtype = kwargs['dtype']
-        else:
-          dtype = 'index'
-        _data = re.sub(re.compile('[ \n]*'),'',data_string)\
-                .split(',')
-        _out_list = []
-        if dtype == 'index':
-          for ind in _data:
-            if re.match(re.compile(".*:.*"), ind):
-              ind = map(int, ind.split(":"))
-              for i in range(ind[0], ind[1]+1):
-                _out_list.append(i)
-            else:
-              _out_list.append(int(ind))
-        elif dtype == 'range':
-          _out_list = map(float, _data[0].split(":"))
-        return _out_list
-      # end of data/string conversion
       for _list in span:
         if _list.attrib['type']=='mutation':
-          self.mutation_list.append(str2data(_list.text))
-          self.mutation_target.append(str2data(\
+          self.mutation_list.append(self.str2data(_list.text))
+          self.mutation_target.append(self.str2data(\
             _list.attrib['range']))
         elif _list.attrib['type']=='stretching':
-          self.stretching_list.append(str2data(_list.text))
-          self.stretching_range.append(str2data(\
+          self.stretching_list.append(self.str2data(_list.text))
+          self.stretching_range.append(self.str2data(\
             _list.attrib['range'], dtype='range'))
-          self.stretching_direction.append(str2data(\
+          self.stretching_direction.append(self.str2data(\
             _list.attrib['fromto_direction_index']))
     # end of reading span section
 
@@ -141,12 +187,19 @@ class MoleculeSpan(object):
     def read_constraint(constraint):
       for cst in constraint:
         if cst.tag == 'forbiden_bond':
+          self.constraint = True
           self.forbiden_bonds.append(sorted(map(int, 
             [cst.attrib['begin'], cst.attrib['end']])))
         elif cst.tag == 'Z_sum':
+          self.constraint = True
           self.ztotal = cst.attrib['total']
         elif cst.tag == 've_sum':
+          self.constraint = True
           self.vtotal = cst.attrib['total']
+        elif cst.tag == 'element_count':
+          element_type = cst.attrib['type']
+          element_count = int(cst.attrib['count'])
+          self.element_count.update({element_type:element_count})
         else:
           qtk.exit("constraint '" + cst.tag + \
                    "' is not reconized")
@@ -183,9 +236,9 @@ class MoleculeSpan(object):
         target = mutation[m][i]
         self.new_structure.Z[index] = target
   def _stretch(self, stretching):
-    print stretching
+    pass
   def _rotate(self, rotation):
-    print rotation
+    pass
   ##### END OF STRUCTURE GENERATION #####
 
   ################################################
@@ -193,8 +246,19 @@ class MoleculeSpan(object):
   ################################################
   # NOT YET IMPLEMENTED!!!!!
   def onManifold(self,structure):
+    on_manifold = True
     if self.constraint:
-      return True
+#      if self.ztotal:
+#        if self.ztotal == sum(structure.Z):
+#          on_manifold = on_manifold*True
+#        else:
+#          on_manifold = on_manifold*False
+#      if self.vtotal:
+#        if self.vtotal == structure.getValenceElectrons():
+#          on_manifold = on_manifold*True
+#        else:
+#          on_manifold = on_manifold*False
+      return on_manifold
     else:
       return True
 
@@ -202,14 +266,64 @@ class MoleculeSpan(object):
   # GENERATE A RANDOM POINT ON CCS MANIFOLD #
   ###########################################
   def random(self, **kwargs):
+
+    def map2list(index, nested_list):
+      new_list = flatten(nested_list)
+      value = new_list[index]
+      for i in range(len(nested_list)):
+        if value in nested_list[i]:
+          j = nested_list[i].index(value)
+          return i, j
+      
+
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # generate a random ccs coordinate sequence
     def random_coord(self, mode):
       # determin coordinate type
       if mode == 'mutation':
-        _list = self.mutation_list
-        _targ = self.mutation_target
         _dtype = int
+        _list = copy.deepcopy(self.mutation_list)
+        _targ = copy.deepcopy(self.mutation_target)
+
+
+      # algorithm for element_count constraint
+      # 1. construct mapping from flattened to nested mutation list
+      # 2. select all candidate indices for constrainted element
+      # 3. remove constrained element from target lists
+      # 4. random choice of candidate for constrained mutation
+      # 5. loop through all other indices without constrained elem
+
+        # single constraint implementation
+        if self.element_count:
+          new_list = []
+          new_targ = []
+          constraint = []
+          selected = []
+          for elem in self.element_count.iterkeys():
+            itr = 0
+            count = 0
+            _candidate = []
+            for sublist in _targ:
+              if qtk.n2Z(elem) in sublist:
+                _candidate.extend(range(itr, 
+                                        itr+len(_list[count])))
+                _targ[count].remove(qtk.n2Z(elem))
+              itr += len(_list[count])
+              count += 1
+            _candidate = [x for x in _candidate\
+                          if not x in flatten(selected)]
+            
+            selection = sorted(random.sample(_candidate, 
+                        random.choice(self.element_count[elem])),
+                        reverse=True)
+            selected.append(selection)
+  
+            for ind in selection:
+              i, j = map2list(ind, _list)
+              constraint.append([(i,j), qtk.n2Z(elem)])
+          constraint_ind = [a[0] for a in constraint]
+        # end of constraint setting
+
       elif mode == 'stretching':
         _list = self.stretching_list
         _targ = self.stretching_range
@@ -219,14 +333,25 @@ class MoleculeSpan(object):
         _targ = self.rotation_range
         _dtype = float
 
+
       _vec = []
+      ind = 0
       for _group, _targp in zip(_list, _targ):
         _subvec = []
         for _atom in _group:
           if _dtype == int:
-            _subvec.append(random.choice(_targp))
+            if self.element_count:
+              i, j = map2list(ind, _list)
+              if (i,j) in constraint_ind:
+                index = constraint_ind.index((i,j))
+                _subvec.append(constraint[index][1])
+              else:
+                _subvec.append(random.choice(_targp))
+            else:
+              _subvec.append(random.choice(_targp))
           elif _dtype == float:
             _subvec.append(random.uniform(_targp[0], _targp[1]))
+          ind += 1
         _vec.append(_subvec)
       if len(_vec) > 0:
         return _vec
@@ -235,7 +360,12 @@ class MoleculeSpan(object):
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!
     # loop until a point is found
     while True:
-      mut_vec = random_coord(self,'mutation')
+      mut_vec = None
+      while mut_vec is None:
+        try:
+          mut_vec = random_coord(self,'mutation')
+        except:
+          pass
       str_vec = random_coord(self,'stretching')
       rot_vec = random_coord(self,'rotation')
       query = {}
@@ -296,8 +426,10 @@ class MoleculeSpan(object):
       return child
 
     child = getChild()
-    while not self.onManifold(child):
+    child_structure = self.generate(**child)
+    while not self.onManifold(child_structure):
       child = getChild()
+      child_structure = self.generate(**child)
     return child
   
 

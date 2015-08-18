@@ -1,0 +1,199 @@
+H:
+ name: Hydrogen
+ period: 1
+ group: 1
+ atomic_number: 1
+ valence_electrons: 1
+ atomic_weight: 1.0079
+ 
+He:
+ name: Hellium
+ period: 1
+ group: 18
+ atomic_number: 2
+ valence_electrons: 2
+ atomic_weight: 4.003
+ 
+Li:
+ name: Lithium
+ period: 2
+ group: 1
+ atomic_number: 3
+ valence_electrons: 3
+ atomic_weight: 6.941
+ 
+Be:
+ name: Beryllium
+ period: 2
+ group: 2
+ atomic_number: 4
+ valence_electrons: 4
+ atomic_weight: 9.012
+ 
+B:
+ name: Boron
+ period: 2
+ group: 13
+ atomic_number: 5
+ valence_electrons: 3
+ atomic_weight: 10.81
+ 
+C: 
+ name: Carbon
+ period: 2
+ group: 14
+ atomic_number: 6
+ valence_electrons: 4
+ atomic_weight: 12.01
+  
+N:
+ name: Nitrogin
+ period: 2
+ group: 15
+ atomic_number: 7
+ valence_electrons: 5
+ atomic_weight: 14.01
+  
+O:
+ name: Oxygen
+ period: 2
+ group: 16
+ atomic_number: 8
+ valence_electrons: 6
+ atomic_weight: 16.00
+  
+F:
+ name: Fluorine
+ period: 2
+ group: 17
+ atomic_number: 9
+ valence_electrons: 7
+ atomic_weight: 19.00
+  
+Ne:
+ name: Neon
+ period: 2
+ group: 18
+ atomic_number: 10
+ valence_electrons: 8
+ atomic_weight: 20.18
+  
+Na:
+ name: Sodium
+ period: 3
+ group: 1
+ atomic_number: 11
+ valence_electrons: 9
+ atomic_weight: 22.99
+  
+Mg:
+ name: Magnesium
+ period: 3
+ group: 2
+ atomic_number: 12
+ valence_electrons: 10
+ atomic_weight: 24.31
+  
+Al:
+ name: Aluminium
+ period: 3
+ group: 13
+ atomic_number: 13
+ valence_electrons: 3
+ atomic_weight: 26.98
+  
+Si:
+ name: Silicon
+ period: 3
+ group: 14
+ atomic_number: 14
+ valence_electrons: 4
+ atomic_weight: 28.09
+  
+P:
+ name: Posphorus
+ period: 3
+ group: 15
+ atomic_number: 15
+ valence_electrons: 5
+ atomic_weight: 30.97
+  
+S:
+ name: Sulfur
+ period: 3
+ group: 16
+ atomic_number: 16
+ valence_electrons: 6
+ atomic_weight: 32.07
+  
+Cl:
+ name: Chlorine
+ period: 3
+ group: 17
+ atomic_number: 17
+ valence_electrons: 7
+ atomic_weight: 35.45
+  
+Ar:
+ name: Argon
+ period: 3
+ group: 18
+ atomic_number: 18
+ valence_electrons: 8
+ atomic_weight: 39.95
+  
+K:
+ name: Potassium
+ period: 4
+ group: 1
+ atomic_number: 19
+ valence_electrons: 9
+ atomic_weight: 39.10
+  
+Ca:
+ name: Calcium
+ period: 4
+ group: 2
+ atomic_number: 20
+ valence_electrons: 10
+ atomic_weight: 40.08
+  
+Ga:
+ name: Gallium
+ period: 4
+ group: 13
+ atomic_number: 31
+ valence_electrons: 3
+ atomic_weight: 69.72
+  
+Ge:
+ name: Germanium
+ period: 4
+ group: 14
+ atomic_number: 32
+ valence_electrons: 4
+ atomic_weight: 72.61
+  
+As:
+ name: Arsenic
+ period: 4
+ group: 15
+ atomic_number: 33
+ valence_electrons: 5
+ atomic_weight: 74.92
+  
+Se:
+ name: Selenium
+ period: 4
+ group: 16
+ atomic_number: 34
+ valence_electrons: 6
+ atomic_weight: 78.96
+  
+Br:
+ name: Bromine
+ period: 4
+ group: 17
+ atomic_number: 35
+ valence_electrons: 7
+ atomic_weight: 79.90

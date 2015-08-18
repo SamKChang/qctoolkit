@@ -37,9 +37,10 @@ be obtained by the --record flag during install
 * pandas 0.16.2
 * matplotlib 1.4.3
 * matplotlib.pyplot
+* PyYAML 3.11
 * cython
 * psutil
-* sys, re, os, glob, math, subprocess, multiprocessing, copy, collections, compiler.ast, shutil, fileinput, operator, inspect
+* And standard libraries: sys, re, os, glob, math, subprocess, multiprocessing, copy, collections, compiler.ast, shutil, fileinput, operator, inspect
 * pymol is also used for visualization
 
 *20150702 KYSC*

@@ -46,10 +46,13 @@ setup(name='qctoolkit',
     'qctoolkit.projects.Basel',
     'qctoolkit.projects.Basel.p01_AlGaAs',
     'qctoolkit.io_format',
+    'qctoolkit.elements',
     'qctoolkit.ccs',
     'qctoolkit.optimization',
     'qctoolkit.ML',
     'qctoolkit'
   ],
+  package_data={'': ['elements/elements.yml']},
+  include_package_data=True,
   ext_modules = cythonize(c_module)
 )
