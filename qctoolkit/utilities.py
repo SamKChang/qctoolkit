@@ -57,7 +57,7 @@ def parallelize(target_function,
 
   # devide input_list into chunks according to block_size
   def chunks(_list, _size):
-    for i in xrange(0, len(_list), _size):
+    for i in range(0, len(_list), _size):
       yield _list[i:i+_size]
   input_block = list(chunks(input_list, block_size))
 
