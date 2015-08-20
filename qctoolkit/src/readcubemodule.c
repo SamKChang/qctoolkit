@@ -85,6 +85,15 @@ void readcube_c(char *inp,
   free(string);
 }
 
+//////////////////////////////////////////////
+// redirect PyArray data contant to C-array //
+//////////////////////////////////////////////
+double *pyvector_to_Carrayptrs(PyArrayObject *arrayin)  {
+  int n=arrayin->dimensions[0];
+  /* pointer to arrayin data as double */
+  return (double *) arrayin->data;
+}
+
 ///////////////////////////////////////
 // !!! PYTHON INTERFACE FROM HERE!!! //
 ///////////////////////////////////////
@@ -119,19 +128,25 @@ static PyObject * read_cube(PyObject * self, PyObject * args){
   //  data[dims[1]+1] : data[dims[2]],
   //                 .......             ,
   // ]
-  npdata = PyArray_SimpleNewFromData(3, dims, NPY_DOUBLE, data);
-  npstructure = PyArray_SimpleNewFromData(2, 
-                                          size,
-                                          NPY_DOUBLE,
-                                          structure);
-  npgrid = PyArray_SimpleNewFromData(2, gsize, NPY_DOUBLE, grid);
-  //npgrid = PyArray_SimpleNewFromData(3, dims, NPY_DOUBLE, data);
+//  npdata = PyArray_SimpleNewFromData(3, dims, NPY_DOUBLE, data);
+//  npstructure = PyArray_SimpleNewFromData(2, 
+//                                          size,
+//                                          NPY_DOUBLE,
+//                                          structure);
+//  npgrid = PyArray_SimpleNewFromData(2, gsize, NPY_DOUBLE, grid);
+  npdata = (PyArrayObject*) PyArray_FromDims(3, dims, NPY_DOUBLE);
+  npstructure = (PyArrayObject*) PyArray_FromDims(2, 
+                                   size, NPY_DOUBLE);
+  npgrid = (PyArrayObject*) PyArray_FromDims(2, gsize, NPY_DOUBLE);
+  data = pyvector_to_Carrayptrs(npdata);
+  structure = pyvector_to_Carrayptrs(npstructure);
+  grid = pyvector_to_Carrayptrs(npgrid);
+
+  free(data);
+  free(grid);
+  free(structure);
 
   return Py_BuildValue("OOO", npdata, npstructure, npgrid);
-
-  // NOTE data CANNOT be freed before returning output to python
-  // otherwise the first element of output will be overwritten!
-  free(data);
 }
 
 /////////////////////////////////////////
