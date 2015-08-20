@@ -30,6 +30,7 @@ class Setting(object):
     self.ks_states = 0 
     self.convergence = 1.0E-5
     self.scale = [1,1,1]
+    self.shift = np.array([0,0,0])
 
     self.set_multiplicity = False
     self.set_charge = False
@@ -45,6 +46,7 @@ class Setting(object):
     self.restart = False
     self.kpoints = False
     self.isolated = True
+    self.set_shift = False
 
 # put to setting? #
   def q_symmetry(self):
@@ -180,6 +182,11 @@ class inp(object):
       sys.exit("ERROR from io_format/cpmd.py->inp.write: " +\
                "center and margin " + \
                "can NOT be set simultaneously.")
+
+    if self.setting.set_shift:
+      self.structure.shift(self.setting.shift)
+      self.setting.set_center = True
+      self.setting.center = np.array([0,0,0])
 
     if self.setting.set_convergence:
       print >>inp, " CONVERGENCE ORBITALS"

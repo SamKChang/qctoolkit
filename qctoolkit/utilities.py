@@ -327,16 +327,37 @@ def n2ve(Zn):
   if ve_list.has_key(Zn):
     return ve_list[Zn]
   else:
-    exit("element type: " + Zn + "is not defined")
+    exit("n2ve: element type " + Zn + " is not defined")
 
 def Z2n(Z):
   if type_list.has_key(Z):
     return type_list[Z]
   else:
-    exit("atomic number: " + str(Z) + " is not defined")
+    exit("Z2n: atomic number " + str(Z) + " is not defined")
   
 def n2Z(Zn):
   if z_list.has_key(Zn):
     return z_list[Zn]
   else:
-    exit("element type: " + Zn + "is not defined")
+    exit("n2Z: element type " + Zn + " is not defined")
+
+def qAtomName(query):
+  if type(query) == str:
+    if z_list.has_key(query):
+      return str(query)
+  elif type(query) == int or type(query) == float:
+    if type_list.has_key(int(query)):
+      return str(Z2n(query))
+  else:
+    exit("qAtom: element " + Zn + " is not defined")
+
+def qAtomicNumber(query):
+  if type(query) == str:
+    if z_list.has_key(query):
+      return n2Z(query)
+  elif type(query) == int or type(query) == float:
+    if type_list.has_key(int(query)):
+      return query
+  else:
+    exit("qAtom: element " + Zn + " is not defined")
+

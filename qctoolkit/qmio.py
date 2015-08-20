@@ -138,6 +138,9 @@ class QMInp(object):
   def setInfo(self, info):
     self.inp.info = info
 
+  def setStructure(self, structure):
+    self.inp.structure = copy.deepcopy(structure)
+
   def setConvergence(self, convergence):
     self.inp.setting.convergence = convergence
     self.inp.setting.set_convergence = True
@@ -145,6 +148,13 @@ class QMInp(object):
   def setCorner(self, corner_coord):
     self.inp.setting.center(-np.array(corner_coord))
     self.inp.setting.set_center = True
+
+  def saveDensity(self):
+    self.inp.setting.save_density = True
+
+  def setShift(self, shift_coord):
+    self.inp.setting.shift = np.array(shift_coord)
+    self.inp.setting.set_shift = True
 
   def setCenter(self, center_coord):
     self.inp.setting.center = center_coord

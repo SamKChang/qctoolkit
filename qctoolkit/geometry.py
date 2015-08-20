@@ -19,6 +19,8 @@ class Molecule(object):
     self.index = 0
     self.bonds = {}
     self.bond_types = {}
+    self.scale = False
+    self.celldm = False
 
   def __add__(self, other):
     out = Molecule()
@@ -39,12 +41,13 @@ class Molecule(object):
   def view(self):
     import pymol
     tmp = copy.deepcopy(self)
-    try:
-      for i in range(3):
-        tmp.R[:,i] = tmp.R[:,i] * tmp.celldm[i]\
-                     / float(tmp.scale[i])
-    except AttributeError:
-      pass
+    if self.celldm and self.scale:
+      try:
+        for i in range(3):
+          tmp.R[:,i] = tmp.R[:,i] * tmp.celldm[i]\
+                       / float(tmp.scale[i])
+      except AttributeError:
+        pass
     pymol.finish_launching()
     tmp_file = 'pymol_tmp_'+str(os.getpid())+'.xyz'
     tmp.write_xyz(tmp_file)
@@ -81,15 +84,25 @@ class Molecule(object):
             self.bond_types[bond_type] = 1
           itr += 1
 
+  def flip_atom(self, index, element):
+    index -= 1
+    if index <= self.N:
+      self.type_list[index] = ut.qAtomName(element)
+      self.Z[index] = ut.qAtomicNumber(element)
+    else:
+      print "index:%d out of range, nothing has happend"\
+            % int(index+1)
+
   def remove_atom(self, index):
     index -= 1
-    if index < self.N - 1:
+    if index <= self.N - 1:
       self.N -= 1
       self.R = np.delete(self.R, index, 0)
       self.Z = np.delete(self.Z, index)
       self.type_list = list(np.delete(self.type_list, index))
     else:
-      print "index:%d out of range, nothing has happend" % index+1
+      print "index:%d out of range, nothing has happend"\
+            % index+1
 
   def isolate_atoms(self, index_list):
     if type(index_list) != list:
@@ -199,7 +212,9 @@ class Molecule(object):
       self.read_xyz(name, **kwargs)
     elif re.match('\.cyl', extension):
       self.read_cyl(name, **kwargs)
-    elif 'inp_file' in kwargs and kwargs['inp_file']=='cpmdinp':
+    elif name == 'VOID':
+      pass
+    elif 'type' in kwargs and kwargs['type']=='cpmdinp':
       self.read_cpmdinp(name)
     else:
       ut.exit("suffix " + extension + " is not reconized")
@@ -230,7 +245,7 @@ class Molecule(object):
       crd = [float(data[1]),float(data[2]),float(data[3])]
       coord.append(crd)
     self.R = np.vstack(coord)
-    self.type_list = np.array(type_list)
+    self.type_list = type_list
     self.Z = np.array(Z)
 
     if np.sum(self.Z) % 2 == 1:

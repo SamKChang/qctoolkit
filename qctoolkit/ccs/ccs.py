@@ -340,6 +340,7 @@ class MoleculeSpan(object):
         _subvec = []
         for _atom in _group:
           if _dtype == int:
+            # element_count constraint
             if self.element_count:
               i, j = map2list(ind, _list)
               if (i,j) in constraint_ind:
@@ -347,6 +348,7 @@ class MoleculeSpan(object):
                 _subvec.append(constraint[index][1])
               else:
                 _subvec.append(random.choice(_targp))
+            # without constraint
             else:
               _subvec.append(random.choice(_targp))
           elif _dtype == float:
@@ -391,35 +393,57 @@ class MoleculeSpan(object):
       child = {}
       for key in parent1.iterkeys():
         if key == 'mutation':
-          child_mut = []
-          for i in range(len(parent1[key])):
-            # mix two parent
-            grp = parent1[key][i]
-            index = range(len(grp))
-            random.shuffle(index)
-            ind1 = index[:len(index)/2]
-            if len(index)%2 == 0:
-              ind2 = index[len(index)/2:]
-              append = -1
-            else:
-              ind2 = index[len(index)/2:-1]
-              append = index[-1]
-            new = [parent1[key][i][ind] for ind in ind1]
-            new.extend([parent2[key][i][ind] for ind in ind2])
-            if append >= 0:
-              if random.random() >= 0.5:
-                new.append(parent1[key][i][append])
+          if self.element_count:
+            # algorithm
+            # 1. loop through all constrainted elements
+            #    construct constraint list for both parrent
+            # 2. generate child constraint list
+            # 3. remove index of constraint list for other element
+            # 4. randomly select non-constraint element from parent
+            # 5. iterate until solution
+            constraint_list = []
+            for elem in self.element_count.iterkeys():
+              _z_list
+              _Z = qtk.n2Z(elem)
+              for grp in parent1['mutation']:
+                for Z_p in grp:
+                  if Z_p1 == _Z:
+                    _z_list.append(Z_p)
+              for grp in parent2['mutation']:
+                for Z_p in grp:
+                  if Z_p1 == _Z:
+                    _z_list.append(Z_p)
+              
+          else:
+            child_mut = []
+            for i in range(len(parent1[key])):
+              # mix two parent
+              grp = parent1[key][i]
+              index = range(len(grp))
+              random.shuffle(index)
+              ind1 = index[:len(index)/2]
+              if len(index)%2 == 0:
+                ind2 = index[len(index)/2:]
+                append = -1
               else:
-                new.append(parent2[key][i][append])
-            # mutation, loop through each element
-            for j in range(len(new)):
-              if random.random() < mutation_rate:
-                mut_target = [tar \
-                  for tar in self.mutation_target[i]\
-                  if tar != new[j]]
-                new[j] = random.choice(mut_target)
-            child_mut.append(new)
-          child.update({'mutation':child_mut})
+                ind2 = index[len(index)/2:-1]
+                append = index[-1]
+              new = [parent1[key][i][ind] for ind in ind1]
+              new.extend([parent2[key][i][ind] for ind in ind2])
+              if append >= 0:
+                if random.random() >= 0.5:
+                  new.append(parent1[key][i][append])
+                else:
+                  new.append(parent2[key][i][append])
+              # mutation, loop through each element
+              for j in range(len(new)):
+                if random.random() < mutation_rate:
+                  mut_target = [tar \
+                    for tar in self.mutation_target[i]\
+                    if tar != new[j]]
+                  new[j] = random.choice(mut_target)
+              child_mut.append(new)
+            child.update({'mutation':child_mut})
         else:
           qtk.exit("ccs mate function is not yet implemented for "\
                    + key)
