@@ -1,4 +1,4 @@
-import qctoolkit, re, sys, os
+import qctoolkit, re, sys, os, copy
 import numpy as np
 from qctoolkit import utilities as ut
 
@@ -98,11 +98,16 @@ class inp(object):
    
   # set atom pseudopotential string
   def PPString(self, atom_type, **kwargs):
+    if 'ext' in kwargs:
+      ext = kwargs['ext']
+    else:
+      ext = '.psp'
     if atom_type.title() in kwargs:
       return atom_type.title() + kwargs[atom_type.title()]
     else:
       return atom_type.title() + "_q" + str(ut.n2ve(atom_type))\
-             + "_" + self.setting.theory.lower() + ".psp"
+             + "_" + self.setting.theory.lower() + ext
+    
 
 
   # CPMD input format
@@ -169,6 +174,8 @@ class inp(object):
         new_center=[min(Rt[i])-self.setting.margin \
           for i in (0,1,2)]
         self.structure.center(new_center)
+      elif self.setting.set_shift:
+        pass
       else:
         sys.exit("ERROR from io_format/cpmd.py->inp.write: " +\
                  "celldm and margin " + \
@@ -179,14 +186,13 @@ class inp(object):
       print >>inp, " CENTER MOLECULE OFF"
 
     elif self.setting.set_center and self.setting.set_margin:
+      print "yo"
       sys.exit("ERROR from io_format/cpmd.py->inp.write: " +\
                "center and margin " + \
                "can NOT be set simultaneously.")
 
     if self.setting.set_shift:
       self.structure.shift(self.setting.shift)
-      self.setting.set_center = True
-      self.setting.center = np.array([0,0,0])
 
     if self.setting.set_convergence:
       print >>inp, " CONVERGENCE ORBITALS"
@@ -250,25 +256,32 @@ class inp(object):
     print >>inp, "&ATOMS"
   
     # loop through all atom types
-    self.structure.sort()
+    tmp_coord = copy.deepcopy(self.structure)
+    tmp_coord.sort()
     PP = self.PPString
-    type_index = self.structure.index
-    type_list = self.structure.type_list
+    type_index = tmp_coord.index
+    type_list = tmp_coord.type_list
     atom_list = self.atom_list
+    Z = tmp_coord.Z
     for atom_type in xrange(0,len(type_index)-1):
       type_n = type_index[atom_type+1] - type_index[atom_type]
-      if atom_list.has_key(type_list[type_index[atom_type]]):
-        key = type_list[type_index[atom_type]]
-        print >>inp, "*" + atom_list[key]
+      if atom_list.has_key(str(Z[type_index[atom_type]])):
+        key = str(Z[type_index[atom_type]])
+        AtomPP = atom_list[key]
+        if ut.isAtom(AtomPP):
+          print >>inp, "*" + PP(AtomPP)
+        else:
+          print >>inp, "*" + atom_list[key]
+        del atom_list[str(Z[type_index[atom_type]])]
       else:
         print >>inp, "*" + \
-                PP(self.structure.type_list[type_index[atom_type]],
+                PP(tmp_coord.type_list[type_index[atom_type]],
                    **kwargs)
       print >>inp, " LMAX=F\n" + "  " + str(type_n)
       for I in\
         xrange(type_index[atom_type],type_index[atom_type+1]):
         print >>inp, "  " + \
-        " ".join(" % 8.4f" % x for x in self.structure.R[I][:])
+        " ".join(" % 8.4f" % x for x in tmp_coord.R[I][:])
       print >>inp 
     print >>inp, "&END"
 

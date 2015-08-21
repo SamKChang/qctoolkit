@@ -128,6 +128,8 @@ class QMInp(object):
 #                          set_charge=self.set_charge)
 
   def setAtom(self, atom_list, atom_string):
+    if type(atom_list) == int:
+      atom_list = [atom_list]
     for I in atom_list:
       i = I-1
       self.inp.structure.type_list[i] = atom_string
@@ -155,6 +157,8 @@ class QMInp(object):
   def setShift(self, shift_coord):
     self.inp.setting.shift = np.array(shift_coord)
     self.inp.setting.set_shift = True
+    self.inp.setting.set_margin = True
+    self.inp.setting.set_center = False
 
   def setCenter(self, center_coord):
     self.inp.setting.center = center_coord
@@ -219,7 +223,8 @@ class QMInp(object):
     chg = self.inp.structure.charge
     ve = np.vectorize(ut.n2ve)
     nve = sum(ve(self.inp.structure.type_list)) - chg
-    if mul % 2 != (np.sum(self.inp.structure.Z) + chg) % 2:
+    #if mul % 2 != (np.sum(self.inp.structure.Z) + chg) % 2:
+    if mul % 2 != nve % 2:
       self.inp.write(*args, **kwargs)
     else:
       msg = "Multiplicity %d " % mul + \

@@ -4,7 +4,7 @@ import geometry as qg
 import numpy as np
 #import gc
 import fileinput
-import sys
+import sys, re
 import inspect
 import multiprocessing as mp
 import operator
@@ -324,8 +324,15 @@ z_list = qel.Elements.z_list()
 type_list = qel.Elements.type_list()
 
 def n2ve(Zn):
+  ref = re.sub('2.*','',Zn)
+  tar = re.sub('.*2','',Zn)
+  tar = re.sub('_.*','',tar)
   if ve_list.has_key(Zn):
     return ve_list[Zn]
+  elif ve_list.has_key(ref):
+    return ve_list[ref]
+  elif ve_list.has_key(tar):
+    return ve_list[tar]
   else:
     exit("n2ve: element type " + Zn + " is not defined")
 
@@ -334,6 +341,7 @@ def Z2n(Z):
     return type_list[Z]
   else:
     exit("Z2n: atomic number " + str(Z) + " is not defined")
+    #return Z
   
 def n2Z(Zn):
   if z_list.has_key(Zn):
@@ -361,3 +369,6 @@ def qAtomicNumber(query):
   else:
     exit("qAtom: element " + Zn + " is not defined")
 
+def isAtom(query):
+  if z_list.has_key(query):
+    return True

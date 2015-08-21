@@ -1,6 +1,6 @@
 import numpy as np
 import utilities as ut
-import re, os, sys, copy
+import re, os, sys, copy, operator
 
 class Molecule(object):
   def __init__(self):
@@ -177,23 +177,49 @@ class Molecule(object):
   def align(self, i,j,k):
     print "not yet implemented"
 
-  def stretch(self):
-    print "not yet implemented"
+  def extract(self, target):
+    if type(target) == int:
+      targets = target - 1
+    elif type(target) == list and type(target[0]) == int:
+      targets = [ind-1 for ind in target]
+    return self.type_list[targets], self.R[targets]
+
+  def stretch(self, stretch_targets, direction_indices, distance):
+    if type(stretch_targets)==list:
+      targets = [target - 1 for target in stretch_targets]
+    else:
+      targets = [stretch_targets - 1]
+    direction = [self.R[index - 1] for index in direction_indices]
+    vector = direction[1] - direction[0]
+    vector = distance * vector/np.linalg.norm(vector)
+    template = np.zeros([self.N,1])
+    template[targets] = 1
+    shift = np.kron(vector, template)
+    self.R += shift
 
   def twist(self):
     print "not yet implemented"
 
   def sort(self):
-    data = np.hstack([np.transpose(np.atleast_2d(self.Z)), self.R])
-    data = data[data[:,0].argsort()]
-    Z2n_vec = np.vectorize(ut.Z2n)
-    self.Z = data[:,0].astype(int)
-    self.type_list = Z2n_vec(self.Z)
-    self.R = data[:,1:4]
-
+    new = sorted(zip(self.R, self.type_list, self.Z), 
+                 key=operator.itemgetter(2))
+    self.R = np.array([tmpR for tmpR, tmpType, tmpZ in new])
+    self.type_list = [tmpType for tmpR, tmpType, tmpZ in new]
+    self.Z = [tmpZ for tmpR, tmpType, tmpZ in new]
+    
     index_a = np.insert(self.Z, 0, 0)
     index_b = np.insert(self.Z, len(self.Z), 0)
     self.index = np.where((index_a != index_b))[0]
+    if self.index[0] != 0:
+      self.index = np.insert(self.index, 0, 0)
+#    data = np.hstack([np.transpose(np.atleast_2d(self.Z)), self.R])
+#    data = data[data[:,0].argsort()]
+#    print self.type_list, self.Z
+#    Z2n_vec = np.vectorize(ut.Z2n)
+#    self.Z = data[:,0].astype(int)
+#    self.type_list = Z2n_vec(self.Z)
+#    self.R = data[:,1:4]
+#
 
   def sort_coord(self, **kwargs):
     if 'order' in kwargs:
