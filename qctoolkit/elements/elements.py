@@ -21,3 +21,8 @@ class Elements(object):
   def type_list(cls):
     return {q['atomic_number']:e\
             for e, q in cls.data.iteritems()}
+
+  @classmethod
+  def mass_list(cls):
+    return {e:q['atomic_weight']\
+            for e, q in cls.data.iteritems()}

@@ -84,6 +84,54 @@ class Molecule(object):
             self.bond_types[bond_type] = 1
           itr += 1
 
+  def getCenter(self):
+    return np.sum(self.R, axis=0)/self.N
+
+  def getCenterOfCharge(self):
+    weighted = self.R * np.array(self.Z).reshape([self.N,1])
+    return np.sum(weighted, axis=0)/sum(self.Z)
+
+  def getCenterOfMass(self):
+    mass_list = [ut.n2m(elem) for elem in self.type_list]
+    weighted = self.R * np.array(mass_list).reshape([self.N,1])
+    return np.sum(weighted, axis=0)/sum(mass_list)
+
+  def principalAxes(self, **kwargs):
+    if 'mode' in kwargs:
+      mode = kwargs['mode']
+    else:
+      mode = 'mass'
+
+    if mode == 'mass':
+      weight = [ut.n2m(elem) for elem in self.type_list]
+      center = self.getCenterOfMass()
+    elif mode == 'charge':
+      weight = self.Z
+      center = self.getCenterOfCharge()
+    else:
+      ut.exit("mode: " + str(mode) + " is not supported by "\
+              "pricialAxes()")
+
+    inertia = np.zeros([3,3])
+    for i in range(3):
+      coord_i = self.R[:,i]
+      inertia[i,i] = sum(2*coord_i**2 * weight)
+      for j in range(i+1,3):
+        coord_j = self.R[:,j]
+        inertia[i,j] = -sum(coord_i*coord_j*weight)
+    I, U = np.linalg.eigh(inertia)
+    return sorted(I,reverse=True), U[I.argsort()[::-1]]
+          
+
+  def setAtom(self, index, element):
+    index -= 1
+    if index <= self.N:
+      self.type_list[index] = ut.qAtomName(element)
+      self.Z[index] = ut.qAtomicNumber(element)
+    else:
+      print "index:%d out of range, nothing has happend"\
+            % int(index+1)
+
   def flip_atom(self, index, element):
     index -= 1
     if index <= self.N:

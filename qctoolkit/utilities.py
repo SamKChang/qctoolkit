@@ -322,6 +322,7 @@ def R(theta, u):
 ve_list = qel.Elements.ve_list()
 z_list = qel.Elements.z_list()
 type_list = qel.Elements.type_list()
+mass_list = qel.Elements.mass_list()
 
 def n2ve(Zn):
   ref = re.sub('2.*','',Zn)
@@ -346,6 +347,12 @@ def Z2n(Z):
 def n2Z(Zn):
   if z_list.has_key(Zn):
     return z_list[Zn]
+  else:
+    exit("n2Z: element type " + Zn + " is not defined")
+  
+def n2m(Zn):
+  if mass_list.has_key(Zn):
+    return mass_list[Zn]
   else:
     exit("n2Z: element type " + Zn + " is not defined")
 
