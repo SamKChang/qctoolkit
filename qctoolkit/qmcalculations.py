@@ -209,9 +209,10 @@ def QMRun(inp, program, **kwargs):
     if os.path.exists('DENSITY'):
       exe = setting.cpmd_cpmd2cube
       log = open('DENSITY.log', 'w')
-      sp.Popen("%s -fullmesh DENSITY" % exe, 
+      run = sp.Popen("%s -fullmesh DENSITY" % exe, 
                shell=True,
                stdout=log)
+      run.communicate()
       log.close()
       
 
