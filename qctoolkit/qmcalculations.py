@@ -47,6 +47,7 @@ def QMRun(inp, program, **kwargs):
     # wait each mpijob to finish before lauching another
     # otherwise all mpijobs will be launched simutaniously
     run.communicate() 
+    outfile.close()
   ########## END OF SYSTEM CALL ##########
 
   #######################
@@ -204,6 +205,15 @@ def QMRun(inp, program, **kwargs):
       rst_list = glob.glob("RESTART*")
       for rfile in rst_list:
         os.remove(rfile)
+
+    if os.path.exists('DENSITY'):
+      exe = setting.cpmd_cpmd2cube
+      log = open('DENSITY.log', 'w')
+      sp.Popen("%s -fullmesh DENSITY" % exe, 
+               shell=True,
+               stdout=log)
+      log.close()
+      
 
     qio_out = qio.QMOut(qmoutput, program)
     os.chdir(cwd)

@@ -9,3 +9,4 @@ memory = float(virtual_memory().total)/10**9
 
 # QM executables
 cpmd_exe = 'cpmd.x'
+cpmd_cpmd2cube = 'cpmd2cube.x'
