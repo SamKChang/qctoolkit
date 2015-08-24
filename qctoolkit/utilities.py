@@ -26,9 +26,13 @@ def listShape(input_list):
 
 def parallelize(target_function, 
                 input_list, 
-                threads,
                 **kwargs):
-
+  import setting
+ 
+  if 'threads' in kwargs:
+    threads = kwargs['threads']
+  else:
+    threads = setting.cpu_count
   if 'block_size' in kwargs:
     block_size = kwargs['block_size']
   else:
