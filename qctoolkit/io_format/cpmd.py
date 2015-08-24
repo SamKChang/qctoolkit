@@ -112,6 +112,7 @@ class inp(object):
 
   # CPMD input format
   def write(self, *args, **kwargs):
+    new_structure = copy.deepcopy(self.structure)
     if len(args) == 1:
       name = args[0]
     else: name = ''
@@ -167,13 +168,13 @@ class inp(object):
     if not self.setting.set_center and self.setting.set_margin:
       print >>inp, " CENTER MOLECULE OFF"
       if not self.setting.set_celldm:
-        Rt = np.transpose(self.structure.R)
+        Rt = np.transpose(new_structure.R)
         for i in xrange(0, 3):
           self.setting.celldm[i] = (max(Rt[i]) - min(Rt[i]))\
                                  + 2 * self.setting.margin
         new_center=[min(Rt[i])-self.setting.margin \
           for i in (0,1,2)]
-        self.structure.center(new_center)
+        new_structure.center(new_center)
       elif self.setting.set_shift:
         pass
       else:
@@ -182,7 +183,7 @@ class inp(object):
                  "can NOT be set simultaneously.")
   
     elif self.setting.set_center and not self.setting.set_margin:
-      self.structure.center(self.setting.center)
+      new_structure.center(self.setting.center)
       print >>inp, " CENTER MOLECULE OFF"
 
     elif self.setting.set_center and self.setting.set_margin:
@@ -192,7 +193,7 @@ class inp(object):
                "can NOT be set simultaneously.")
 
     if self.setting.set_shift:
-      self.structure.shift(self.setting.shift)
+      new_structure.shift(self.setting.shift)
 
     if self.setting.set_convergence:
       print >>inp, " CONVERGENCE ORBITALS"
@@ -206,7 +207,7 @@ class inp(object):
       print >>inp, " RHOOUT"
 
     # should be set by setting!!!
-    if self.structure.multiplicity > 1:
+    if new_structure.multiplicity > 1:
       print >>inp, " LOCAL SPIN DENSITY"
     print >>inp, " MIRROR"
     print >>inp, "&END"
@@ -244,25 +245,25 @@ class inp(object):
       print >>inp, " KPOINTS MONKHORST-PACK"
       print >>inp, "  " + " ".join(map(str, self.setting.kmesh))
     # set by setting
-    if self.structure.charge:
+    if new_structure.charge:
       print >>inp, " CHARGE"
-      print >>inp, "  " + str(self.structure.charge)
+      print >>inp, "  " + str(new_structure.charge)
     # set by setting
-    if self.structure.multiplicity > 1:
+    if new_structure.multiplicity > 1:
       print >>inp, " MULTIPLICITY"
-      print >>inp, "  " + str(self.structure.multiplicity)
+      print >>inp, "  " + str(new_structure.multiplicity)
     print >>inp, "&END"
     print >>inp, ""
     print >>inp, "&ATOMS"
   
     # loop through all atom types
-    tmp_coord = copy.deepcopy(self.structure)
-    tmp_coord.sort()
+    #new_structure = copy.deepcopy(new_structure)
+    new_structure.sort()
     PP = self.PPString
-    type_index = tmp_coord.index
-    type_list = tmp_coord.type_list
+    type_index = new_structure.index
+    type_list = new_structure.type_list
     atom_list = self.atom_list
-    Z = tmp_coord.Z
+    Z = new_structure.Z
     for atom_type in xrange(0,len(type_index)-1):
       type_n = type_index[atom_type+1] - type_index[atom_type]
       if atom_list.has_key(str(Z[type_index[atom_type]])):
@@ -275,13 +276,13 @@ class inp(object):
         del atom_list[str(Z[type_index[atom_type]])]
       else:
         print >>inp, "*" + \
-                PP(tmp_coord.type_list[type_index[atom_type]],
+                PP(new_structure.type_list[type_index[atom_type]],
                    **kwargs)
       print >>inp, " LMAX=F\n" + "  " + str(type_n)
       for I in\
         xrange(type_index[atom_type],type_index[atom_type+1]):
         print >>inp, "  " + \
-        " ".join(" % 8.4f" % x for x in tmp_coord.R[I][:])
+        " ".join(" % 8.4f" % x for x in new_structure.R[I][:])
       print >>inp 
     print >>inp, "&END"
 
