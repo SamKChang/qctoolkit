@@ -57,7 +57,7 @@ class CUBE(object):
 
   def meshgrid(self):
     if self.isCubic():
-      xi, yi, zi = (self.grid[0, i] for i in range(1,4))
+      xi, yi, zi = (self.grid[i, 0] for i in range(1,4))
       dx, dy, dz = (self.grid[i, i] for i in range(1,4))
       xf, yf, zf = (self.grid[i, 0]*self.grid[i, i]\
                     for i in range(1,4))
