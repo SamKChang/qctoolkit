@@ -143,8 +143,6 @@ def QMRun(inp, program, **kwargs):
         refpath = ref
         rst_src = refpath + "/RESTART.1"
         rst_trg = inpdir + "/RESTART"
-        print "yo SRC: " + rst_src
-        print "yo TRG: " + rst_trg
         os.link(rst_src, rst_trg)
 
     else:
