@@ -133,9 +133,18 @@ def QMRun(inp, program, **kwargs):
         refroot = alchemPrefix + re.sub('\.inp', '',
                                   re.sub('.*/', '', ref))
 
-        refpath = re.sub(inproot, refroot, scrdir)
+        # for flexibility
+
+        # for alchemy QMJobs
+        #refpath = re.sub(inproot, refroot, scrdir)
+
+        # !!!!BUG!!!! alchemy QMJobs need to be modified!!!
+        # for general interface
+        refpath = ref
         rst_src = refpath + "/RESTART.1"
         rst_trg = inpdir + "/RESTART"
+        print "yo SRC: " + rst_src
+        print "yo TRG: " + rst_trg
         os.link(rst_src, rst_trg)
 
     else:
@@ -227,6 +236,7 @@ def QMRun(inp, program, **kwargs):
 
     qio_out = qio.QMOut(qmoutput, program)
     os.chdir(cwd)
+    
     if _delete:
       shutil.rmtree(inpdir)
 
