@@ -67,7 +67,7 @@ class CUBE(object):
       zr = np.arange(zi, zf, dz)*0.529177249
       # NOTE: numpy/matlab x-y switch feature...
       #return np.meshgrid(yr, xr, zr)
-      return np.meshgrid(xr, yr, zr, indexing='xy')
+      return np.meshgrid(xr, yr, zr, indexing='ij')
     
 
   def plot(self, **kwargs):

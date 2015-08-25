@@ -32,6 +32,14 @@ def QMRun(inp, program, **kwargs):
       _bigmem = True
     else:
       _bigmem = False
+  if 'prefix' in kwargs:
+    _prefix = kwargs['prefix']
+  else:
+    _prefix = ''
+  if 'suffix' in kwargs:
+    _suffix = kwargs['suffix']
+  else:
+    _suffix = ''
 
   ###########################################
   # SYSTEM CALL SUBPROCESS: Running mpi job #
@@ -86,8 +94,9 @@ def QMRun(inp, program, **kwargs):
     else:
       _alchemRef = False
       inproot = re.sub('\.inp', '',re.sub('.*/', '', inp))
-    inpdir = root + inproot
+    inpdir = root + _prefix + inproot + _suffix
     inpname = inpdir + "/" + inproot + ".inp"
+    print inpdir, inpname
 
     # create new dir for CPMD calculation
     if not os.path.exists(inpdir):
