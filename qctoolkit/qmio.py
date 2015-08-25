@@ -62,9 +62,12 @@ class CUBE(object):
       xf, yf, zf = (self.grid[i, 0]*self.grid[i, i]\
                     for i in range(1,4))
       # convert cube file Bohr to angstrom
-      xr = np.arange(xi, xf, dx)*0.529177249
-      yr = np.arange(yi, yf, dy)*0.529177249
-      zr = np.arange(zi, zf, dz)*0.529177249
+      #xr = np.arange(xi, xf, dx)*0.529177249
+      #yr = np.arange(yi, yf, dy)*0.529177249
+      #zr = np.arange(zi, zf, dz)*0.529177249
+      xr = np.arange(xi, xf, dx)
+      yr = np.arange(yi, yf, dy)
+      zr = np.arange(zi, zf, dz)
       # NOTE: numpy/matlab x-y switch feature...
       #return np.meshgrid(yr, xr, zr)
       return np.meshgrid(xr, yr, zr, indexing='ij')
