@@ -1,4 +1,4 @@
-import glob
+import glob, copy
 import qctoolkit as qtk
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -9,6 +9,7 @@ from scipy.interpolate import interp1d
 class PathData(qtk.QMData):
   def __init__(self, path, pattern, program, **kwargs):
     qtk.QMData.__init__(self, path, pattern, program, **kwargs)
+    self.cube_list = []
 
   def loadCube(self):
     # cpmd implemetation
@@ -122,3 +123,18 @@ class PathData(qtk.QMData):
       ax.text2D(0.7, 0.9, kwargs['legend'],
                 transform=ax.transAxes,
                 bbox={'facecolor':'white', 'alpha':1, 'pad':10})
+
+  def __sub__(self, other):
+    if isinstance(other, PathData):
+      if len(self.cube_list) == len(other.cube_list):
+        _out = copy.deepcopy(self)
+        _out.cube_list = []
+        for i in range(len(self.cube_list)):
+          _out.cube_list.append(\
+            self.cube_list[i] - other.cube_list[i])
+        return _out
+      else:
+        qtk.exit("PathData lengths are not consistant")
+    else:
+      qtk.exit("operation 'PathData - %s' not defined"\
+               % type(other))
