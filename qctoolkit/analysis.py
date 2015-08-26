@@ -1,3 +1,7 @@
+# module conflict with '_string_to_bool' error
+# import Axes3D before pandas fix it
+# http://stackoverflow.com/questions/25383698/error-string-to-bool-in-mplot3d-workaround-found
+from mpl_toolkits.mplot3d import Axes3D
 import sys, os, glob, re, copy
 import qmio
 import numpy as np
@@ -95,6 +99,9 @@ class QMData(pd.DataFrame):
     _qr.index.name = 'file'
     _qr.columns = ['E', 'step']
     super(QMData, self).__init__(_qr)
+    self.pattern = arg_pattern
+    self.program = arg_prog
+    self.path = re.sub('/$', '', arg_path)
     #self.E_unit = 'Ha'
 
   ##########################
