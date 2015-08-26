@@ -70,6 +70,7 @@ class CUBE(object):
       zr = np.arange(zi, zf, dz)
       # NOTE: numpy/matlab x-y switch feature...
       #return np.meshgrid(yr, xr, zr)
+      ut.warning("CUBE.meshgrid returns in the unit of Bohr!")
       return np.meshgrid(xr, yr, zr, indexing='ij')
     
 
@@ -89,23 +90,24 @@ class CUBE(object):
                     self.grid[i, i])
       xout = np.arange(xi, xf, dx)*0.529177249
       yout = np.sum(self.data, axis=tuple(axes))*np.prod(steps)
-      if 'name' in kwargs:
-        name = kwargs['name']
-      else:
-        name = 'density plot'
-      if 'plargs' in kwargs:
-        plargs = kwargs['plargs']
-      else:
-        plargs = []
-      if 'plkwargs' in kwargs:
-        plkwargs = kwargs['plkwargs']
-      else:
-        plkwargs = {}
-
-      pl.figure(name)
-      pl.plot(xout, yout, *plargs, **plkwargs)
-      if 'legend' in kwargs:
-        pl.legend([kwargs['legend']])
+      if not 'no_show' in kwargs and not kwargs['no_shw']:
+        if 'name' in kwargs:
+          name = kwargs['name']
+        else:
+          name = 'density plot'
+        if 'plargs' in kwargs:
+          plargs = kwargs['plargs']
+        else:
+          plargs = []
+        if 'plkwargs' in kwargs:
+          plkwargs = kwargs['plkwargs']
+        else:
+          plkwargs = {}
+  
+        pl.figure(name)
+        pl.plot(xout, yout, *plargs, **plkwargs)
+        if 'legend' in kwargs:
+          pl.legend([kwargs['legend']])
       return xout, yout
     
 
@@ -191,6 +193,7 @@ class QMInp(object):
 #                          set_charge=self.set_charge)
 
   def setAtom(self, atom_list, atom_string):
+    _tmp = self.atom_count
     if type(atom_list) == int:
       atom_list = [atom_list]
     for I in atom_list:
@@ -198,12 +201,13 @@ class QMInp(object):
       self.inp.structure.type_list[i] = atom_string
       self.inp.structure.Z[i] = self.atom_count
     self.inp.atom_list[str(self.atom_count)] = atom_string
-    self.atom_count =- 1
+    self.atom_count = _tmp - 1
 
   def setInfo(self, info):
     self.inp.info = info
 
   def setStructure(self, structure):
+    self.atom_count = 0
     self.inp.structure = copy.deepcopy(structure)
 
   def setConvergence(self, convergence):

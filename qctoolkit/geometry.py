@@ -260,6 +260,9 @@ class Molecule(object):
     self.index = np.where((index_a != index_b))[0]
     if self.index[0] != 0:
       self.index = np.insert(self.index, 0, 0)
+    if index_a[-1] == index_b[-1] and index_a[-1] == 0:
+      self.index = sorted(np.insert(self.index, \
+                                    0, len(self.index)))
 #    data = np.hstack([np.transpose(np.atleast_2d(self.Z)), self.R])
 #    data = data[data[:,0].argsort()]
 #    print self.type_list, self.Z

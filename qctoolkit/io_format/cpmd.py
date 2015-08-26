@@ -187,7 +187,6 @@ class inp(object):
       print >>inp, " CENTER MOLECULE OFF"
 
     elif self.setting.set_center and self.setting.set_margin:
-      print "yo"
       sys.exit("ERROR from io_format/cpmd.py->inp.write: " +\
                "center and margin " + \
                "can NOT be set simultaneously.")

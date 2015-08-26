@@ -329,9 +329,14 @@ type_list = qel.Elements.type_list()
 mass_list = qel.Elements.mass_list()
 
 def n2ve(Zn):
-  ref = re.sub('2.*','',Zn)
-  tar = re.sub('.*2','',Zn)
+  ref = re.sub('2[a-zA-Z].*','',Zn)
+  tar = re.sub('.*[a-zA-Z]2','',Zn)
   tar = re.sub('_.*','',tar)
+  # WARNING! symbol V is used for 
+  if ref == 'V':
+    ref = 'VOID'
+    warning("VOID IS USED, symbol V is used for void "+\
+            "instead of vanadium")
   if ve_list.has_key(Zn):
     return ve_list[Zn]
   elif ve_list.has_key(ref):

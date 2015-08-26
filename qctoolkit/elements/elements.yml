@@ -1,3 +1,11 @@
+VOID:
+ name: VOID
+ period: 0
+ group: 0
+ atomic_number: 0
+ valence_electrons: 0
+ atomic_weight: 0 
+
 H:
  name: Hydrogen
  period: 1
