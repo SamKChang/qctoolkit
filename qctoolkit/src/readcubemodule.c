@@ -92,7 +92,9 @@ void readcube_c(char *inp,
       cube[i] = read;
     }else{
       // check for incomplete CUBE file
-      printf("end of file at i=%d\n",i-1);
+      printf("WARNING: End of file at i=%d\n",i-1);
+      printf("Number of grid points and %s are not consistant",
+             inp);
       break;
     }
   }
