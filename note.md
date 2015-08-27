@@ -37,6 +37,11 @@ git push origin master
   `git clone -b <branch> git@address`
 * Undo `git pull`, use `git reset --hard`
 
+Overwrite local change to merge:
+* git fetch --all
+* git reset --hard origin/master
+**NOTE**: all local changed will be lost
+
 
 Python Note
 ===========
