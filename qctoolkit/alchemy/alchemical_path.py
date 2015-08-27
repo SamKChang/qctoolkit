@@ -27,6 +27,9 @@ class PathData(qtk.QMData):
     if ax is None:
       fig = plt.figure('density_plot')
       ax = fig.gca(projection='3d')
+      _show = True
+    else:
+      _show = False
     if 'spacing' in kwargs:
       spacing = kwargs['spacing']
     else:
@@ -123,6 +126,9 @@ class PathData(qtk.QMData):
       ax.text2D(0.7, 0.9, kwargs['legend'],
                 transform=ax.transAxes,
                 bbox={'facecolor':'white', 'alpha':1, 'pad':10})
+    if _show:
+      plt.show()
+
 
   def __sub__(self, other):
     if isinstance(other, PathData):
