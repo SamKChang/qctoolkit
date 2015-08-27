@@ -82,8 +82,9 @@ void readcube_c(char *inp,
     cube[0] = read; 
     j=1; // without MO index
   }else{
-    printf("read point (skipping): % le\n", read);
     getline(&string, &len, fr);
+    printf("skipping line: (double)% le (string)%s\n", 
+           read, string);
     j=0; // with MO index
   }
 

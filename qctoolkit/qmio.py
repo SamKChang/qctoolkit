@@ -86,7 +86,7 @@ class CUBE(object):
       axes = [i for i in range(3) if not i==plot_axis]
       i = plot_axis+1
       xi, xf, dx = (self.grid[0, i], 
-                    self.grid[i, 0]*self.grid[i, i],
+                    self.grid[i, 0]*self.grid[i,i]+self.grid[0,i],
                     self.grid[i, i])
       xout = np.arange(xi, xf, dx)*0.529177249
       yout = np.sum(self.data, axis=tuple(axes))*np.prod(steps)
@@ -109,10 +109,14 @@ class CUBE(object):
         if 'legend' in kwargs:
           pl.legend([kwargs['legend']])
       return xout, yout
-    
 
   def contour(self, axis, level):
     pass
+
+  def shift(self, vector):
+    vectorb = np.array(vector) / 0.529177249
+    self.grid[0][1:] = self.grid[0][1:] + vectorb
+    self.structure.shift(np.array(vector))
 
   def __add__(self, other):
     if isinstance(other, CUBE):

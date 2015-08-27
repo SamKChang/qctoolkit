@@ -23,6 +23,10 @@ class PathData(qtk.QMData):
       qtk.exit("density of alchemical path is "\
                +"not yet implemented for %s" % self.program)
 
+  def shiftCube(self, vector):
+    for cube in self.cube_list:
+      cube.shift(vector)
+
   def plotCube(self, ax=None, **kwargs):
     if ax is None:
       fig = plt.figure('density_plot')
