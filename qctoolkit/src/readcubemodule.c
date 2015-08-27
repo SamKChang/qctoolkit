@@ -78,10 +78,11 @@ void readcube_c(char *inp,
   // signiture of corner wavefunction/density 
   // value is always a small
   fscanf(fr, "%lf", &read);
-  if((read>0) && (read<1.0E-4)){
+  if(read*read<1.0E-4){
     cube[0] = read; 
     j=1; // without MO index
   }else{
+    printf("read point (skipping): % le\n", read);
     getline(&string, &len, fr);
     j=0; // with MO index
   }
@@ -91,8 +92,12 @@ void readcube_c(char *inp,
       fscanf(fr,"%le", &read);
       cube[i] = read;
     }else{
+      printf("===== ERROR REPORT =====");
+      printf("last point read: % le\n", cube[i-1]);
+      printf("end at i=%d, while N=%d\n", i, N3);
       // check for incomplete CUBE file
-      printf("WARNING: End of file at i=%d in %s\n",i-1, inp);
+      printf("filename: %s\n", inp);
+      printf("====== END REPORT ======");
       break;
     }
   }
