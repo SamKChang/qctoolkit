@@ -1,4 +1,4 @@
-import glob, copy
+import glob, copy, os
 import qctoolkit as qtk
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -52,7 +52,7 @@ class PathData(qtk.QMData):
     ax.zaxis.set_rotate_label(False)
 
     # get values from first cube file
-    x, z = self.cube_list[0].plot(no_show=True)
+    x, z = self.cube_list[0].plot(no_show=True, axis=_axis)
     if 'plot_range' in kwargs:
       _min = kwargs['plot_range'][0]
       _max = kwargs['plot_range'][1]
@@ -148,3 +148,96 @@ class PathData(qtk.QMData):
     else:
       qtk.exit("operation 'PathData - %s' not defined"\
                % type(other))
+
+class PathScan(object):
+  def __init__(self, xyz_i, xyz_f, program='cpmd', **kwargs):
+    if 'name' in kwargs:
+      self.name = kwargs['name']
+    elif type(xyz_i)==str and type(xyz_f)==str:
+      ref_stem, _ = os.path.splitext(xyz_i)
+      tar_stem, _ = os.path.splitext(xyz_f)
+      self.name = ref_stem + '-' + tar_stem
+    else:
+      self.name = 'A2B'
+    self.program = program
+
+    if type(xyz_i) == str:
+      self.initial = qtk.Molecule()
+      self.initial.read(xyz_i)
+    elif type(xyz_i) == qtk.Molecule:
+      self.initial = xyz_i
+    if type(xyz_f) == str:
+      self.final = qtk.Molecule()
+      self.final.read(xyz_f)
+    elif type(xyz_f) == qtk.Molecule:
+      self.final = xyz_f
+
+    self.inp_base = qtk.QMInp(xyz_i, program)
+    if 'inp_base' in kwargs:
+      inp_tmp = copy.deepcopy(kwargs['inp_base'])
+      self.inp_base.inp.setting = inp_tmp.inp.setting
+    tar_list = [i for i in range(self.final.N)]
+    self.mutation_ind = []
+    self.mutation_ref = []
+    self.mutation_tar = []
+    self.mutation_crd = []
+    for i in range(self.initial.N):
+      Zi = self.initial.type_list[i]
+      Ri = self.initial.R[i]
+      to_void = True
+      for j in range(self.final.N):
+        Rj = self.final.R[j]
+        diff = np.linalg.norm(Ri-Rj)
+        if diff < 10E-6:
+          to_void = False
+          tar_list[j] = False
+          Zj = self.final.type_list[j]
+          if Zi != Zj:
+            self.mutation_ind.append(i)
+            self.mutation_ref.append(Zi)
+            self.mutation_tar.append(Zj)
+            self.mutation_crd.append(Ri)
+      if to_void:
+        self.mutation_ind.append(i)
+        self.mutation_ref.append(Zi)
+        self.mutation_tar.append('VOID')
+        self.mutation_crd.append(Ri)
+
+    N = self.initial.N
+    for j in range(self.final.N):
+      if tar_list[j]:
+        self.mutation_ind.append(N)
+        self.mutation_ref.append('VOID')
+        self.mutation_tar.append(self.final.type_list[j])
+        self.mutation_crd.append(self.initial.R[j])
+
+  def PPString(self, ind):
+    ref = self.mutation_ref[ind]
+    tar = self.mutation_tar[ind]
+    if ref == 'VOID':
+      ref = 'V'
+    if tar == 'VOID':
+      tar = 'V'
+    return ref+str(2)+tar 
+
+  def l(self, l_in):
+    if self.program == 'cpmd':
+      ppstr = "_%03d.psp" % (l_in*100)
+      out = copy.deepcopy(self.inp_base)
+      for i in range(len(self.mutation_ind)):
+        ind = self.mutation_ind[i]-1
+        pp = self.PPString(i)+ppstr
+        if ind < out.inp.structure.N:
+          out.setAtom(ind, pp)
+        else:
+          out.addAtom(ind, pp, self.mutation_crd[ind])
+      return out
+    else:
+      qtk.exit("program %s is not implemented for PathScan"\
+               % self.program)
+    
+  def fullPath(self, stem, dl=0.1):
+    inp_list = []
+    for l in np.linspace(0,1,(1/dl)+1):
+      inp_list.append(self.l(l))
+    return inp_list

@@ -207,11 +207,25 @@ class QMInp(object):
     self.inp.atom_list[str(self.atom_count)] = atom_string
     self.atom_count = _tmp - 1
 
+  def addAtom(self, pp_string, coordinate):
+    structure = copy.deepcopy(self.inp.structure)
+    structure.R = np.vstack([structure.R, coordinate])
+    structure.Z = np.hstack([structure.Z, 1])
+    structure.type_list.append('H')
+    structure.N += 1
+    self.setStructure(structure, reset=False)
+    self.setAtom(structure.N, pp_string)
+
   def setInfo(self, info):
     self.inp.info = info
 
-  def setStructure(self, structure):
-    self.atom_count = 0
+  def setStructure(self, structure, **kwargs):
+    if 'reset' in kwargs:
+      reset=kwargs['reset']
+    else:
+      reset=True
+    if reset:
+      self.atom_count = 0
     self.inp.structure = copy.deepcopy(structure)
 
   def setConvergence(self, convergence):

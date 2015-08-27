@@ -271,7 +271,8 @@ def QMRun(inp, program, **kwargs):
 # QM code independent implementation
 # target folder should contain many inp files for QM scan
 class QMJobs(object):
-  def __init__(self, path, pattern, program, **kwargs):
+  def __init__(self, path='inp', pattern='*.inp', 
+               program='cpmd', **kwargs):
 
     self._threadspj = 1
     self._path = re.sub(re.compile('/$'), '', path)

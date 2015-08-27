@@ -68,7 +68,10 @@ class inp(object):
     self.setting = Setting()
     self.atom_list = {}
     self.structure = qctoolkit.geometry.Molecule()
-    self.structure.read(structure_inp, **kwargs)
+    if type(structure_inp) == str:
+      self.structure.read(structure_inp, **kwargs)
+    else:
+      self.structure = copy.deepcopy(structure_inp)
     if self.structure.scale:
       self.setting.scale = self.structure.scale
       self.setting.set_scale = True

@@ -119,6 +119,7 @@ def exit(text):
   name = module.__name__
   msg = bcolors.FAIL + bcolors.BOLD + name + bcolors.ENDC \
         + bcolors.FAIL + ": " + text + bcolors.ENDC
+  raise ValueError(msg)
   sys.exit(msg)
   
 def warning(text):
