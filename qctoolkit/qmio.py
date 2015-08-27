@@ -116,7 +116,7 @@ class CUBE(object):
 
   def __add__(self, other):
     if isinstance(other, CUBE):
-      _grid = self.grid - other.grid
+      _grid = self.grid[1:] - other.grid[1:]
       if(abs(sum(sum(_grid))) < 10**-7 ):
         _out = copy.deepcopy(self)
         _out.data = self.data + other.data
@@ -131,7 +131,7 @@ class CUBE(object):
 
   def __sub__(self, other):
     if isinstance(other, CUBE):
-      _grid = self.grid - other.grid
+      _grid = self.grid[1:] - other.grid[1:]
       if(abs(sum(sum(_grid))) < 10**-7 ):
         _out = copy.deepcopy(self)
         _out.data = self.data - other.data
@@ -146,7 +146,7 @@ class CUBE(object):
 
   def __mul__(self, other):
     if isinstance(other, CUBE):
-      _grid = self.grid - other.grid
+      _grid = self.grid[1:] - other.grid[1:]
       if(abs(sum(sum(_grid))) < 10**-7 ):
         _out = copy.deepcopy(self)
         _out.data = np.multiply(self.data, other.data)
@@ -161,7 +161,7 @@ class CUBE(object):
 
   def __div__(self, other):
     if isinstance(other, CUBE):
-      _grid = self.grid - other.grid
+      _grid = self.grid[1:] - other.grid[1:]
       if(abs(sum(sum(_grid))) < 10**-7 ):
         _out = copy.deepcopy(self)
         _out.data = np.divide(self.data, other.data)
