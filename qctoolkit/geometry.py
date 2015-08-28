@@ -54,6 +54,13 @@ class Molecule(object):
     pymol.cmd.load(tmp_file, 'structure')
     os.remove(tmp_file)
 
+  def distance(self, i, j):
+    i -= 1
+    j -= 1
+    Ri = self.R[i]
+    Rj = self.R[j]
+    return np.linalg.norm(Ri - Rj)
+
   def find_bonds(self):
     itr = 0
     for i in xrange(self.N):
