@@ -55,9 +55,16 @@ class PathData(qtk.QMData):
 
   def plotCube(self, ax=None, **kwargs):
     if ax is None:
-      fig = plt.figure('density_plot')
+      if 'name' in kwargs:
+        _name = kwargs['name']
+      else:
+        _name = 'density_plot'
+      fig = plt.figure(_name)
       ax = fig.gca(projection='3d')
-      _show = True
+      if 'no_show' in kwargs and kwargs['no_show']:
+        _show = False
+      else:
+        _show = True
     else:
       _show = False
     if 'spacing' in kwargs:
