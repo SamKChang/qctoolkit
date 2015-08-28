@@ -85,12 +85,10 @@ class QMResults(object):
     ut.done()
 
 # pandas DataFrame wrapper
-class QMData(pd.DataFrame):
+#class QMData(pd.DataFrame):
+class QMData(object):
+  _attributes_ = "pattern, program, path, E_unit"
   def __init__(self, arg_path, arg_pattern, arg_prog, **kwargs):
-    #if 'threads' in kwargs:
-    #  arg_threads = kwargs['threads']
-    #else:
-    #  arg_threads = 1
     _qr = QMResults(arg_path, 
                     arg_pattern, 
                     arg_prog,
@@ -98,34 +96,41 @@ class QMData(pd.DataFrame):
     _qr = pd.DataFrame(_qr).T
     _qr.index.name = 'file'
     _qr.columns = ['E', 'step']
-    super(QMData, self).__init__(_qr)
+#    super(QMData, self).__init__(_qr)
+    self.data = _qr
     self.pattern = arg_pattern
     self.program = arg_prog
     self.path = re.sub('/$', '', arg_path)
-    #self.E_unit = 'Ha'
+    self.E_unit = 'Ha'
+
+  def __str__(self):
+    return str(self.data)
 
   ##########################
   # extract regex of index #
   ##########################
   def extract(self, pattern):
-    self.index = self.index.to_series().astype(str)\
-                 .str.extract(pattern)
+    self.data.index = self.data.index.to_series().astype(str)\
+                     .str.extract(pattern)
 
   ####################################
   # mathematical operations to index #
   ####################################
   def index_add(self, factor):
-    self.index = self.index.to_series().astype(float) + factor
+    self.data.index = self.data.index.to_series().astype(float)\
+                      + factor
 
   def index_sub(self, factor):
-    self.index = self.index.to_series().astype(float) - factor
+    self.data.index = self.data.index.to_series().astype(float)\
+                      - factor
 
   def index_mul(self, factor):
-    self.index = self.index.to_series().astype(float) * factor
+    self.data.index = self.data.index.to_series().astype(float)\
+                      * factor
 
   def index_div(self, factor):
-    self.index = self.index.to_series().astype(float) / factor
-
+    self.data.index = self.data.index.to_series().astype(float)\
+                      / factor
 
   #######################
   #  OPERATOR OVERLOAD  #
@@ -133,69 +138,69 @@ class QMData(pd.DataFrame):
   def __add__(self, other):
     _out = copy.deepcopy(self)
     if isinstance(other, QMData):
-      _term1 = copy.deepcopy(pd.DataFrame(self))
-      _term2 = copy.deepcopy(pd.DataFrame(other))
+      _term1 = copy.deepcopy(self.data)
+      _term2 = copy.deepcopy(other.data)
       _term2.columns = ['E2', 'step2']
       _tmp = pd.concat([_term1, _term2], axis=1)\
                [['step','step2']].max(axis=1)
       _tmp.columns = ['step']
-      _out['step'] = _tmp
+      _out.data['step'] = _tmp
       _term2.columns = ['E', 'step']
       _term3 = _term1 + _term2
-      _out['E'] = _term3['E']
+      _out.data['E'] = _term3['E']
     elif isinstance(other, float) or isinstance(other, int):
-      _out['E'] = self['E'] + other
+      _out.data['E'] = self.data['E'] + other
     return _out
 
   def __sub__(self, other):
     _out = copy.deepcopy(self)
     if isinstance(other, QMData):
-      _term1 = copy.deepcopy(pd.DataFrame(self))
-      _term2 = copy.deepcopy(pd.DataFrame(other))
+      _term1 = copy.deepcopy(self.data)
+      _term2 = copy.deepcopy(other.data)
       _term2.columns = ['E2', 'step2']
       _tmp = pd.concat([_term1, _term2], axis=1)\
                [['step','step2']].max(axis=1)
       _tmp.columns = ['step']
-      _out['step'] = _tmp
+      _out.data['step'] = _tmp
       _term2.columns = ['E', 'step']
       _term3 = _term1 - _term2
-      _out['E'] = _term3['E']
+      _out.data['E'] = _term3['E']
     elif isinstance(other, float) or isinstance(other, int):
-      _out['E'] = self['E'] - other
+      _out.data['E'] = self.data['E'] - other
     return _out
 
   def __mul__(self, other):
     _out = copy.deepcopy(self)
     if isinstance(other, QMData):
-      _term1 = copy.deepcopy(pd.DataFrame(self))
-      _term2 = copy.deepcopy(pd.DataFrame(other))
+      _term1 = copy.deepcopy(self.data)
+      _term2 = copy.deepcopy(other.data)
       _term2.columns = ['E2', 'step2']
       _tmp = pd.concat([_term1, _term2], axis=1)\
                [['step','step2']].max(axis=1)
       _tmp.columns = ['step']
-      _out['step'] = _tmp
+      _out.data['step'] = _tmp
       _term2.columns = ['E', 'step']
       _term3 = _term1 * _term2
-      _out['E'] = _term3['E']
+      _out.data['E'] = _term3['E']
     elif isinstance(other, float) or isinstance(other, int):
-      _out['E'] = self['E'] * other
+      _out.data['E'] = self.data['E'] * other
     return _out
 
   def __div__(self, other):
     _out = copy.deepcopy(self)
     if isinstance(other, QMData):
-      _term1 = copy.deepcopy(pd.DataFrame(self))
-      _term2 = copy.deepcopy(pd.DataFrame(other))
+      _term1 = copy.deepcopy(self.data)
+      _term2 = copy.deepcopy(other.data)
       _term2.columns = ['E2', 'step2']
       _tmp = pd.concat([_term1, _term2], axis=1)\
                [['step','step2']].max(axis=1)
       _tmp.columns = ['step']
-      _out['step'] = _tmp
+      _out.data['step'] = _tmp
       _term2.columns = ['E', 'step']
       _term3 = _term1 / _term2
-      _out['E'] = _term3['E']
+      _out.data['E'] = _term3['E']
     elif isinstance(other, float) or isinstance(other, int):
-      _out['E'] = self['E'] / float(other)
+      _out.data['E'] = self.data['E'] / float(other)
     return _out
 
   ###################
@@ -203,17 +208,31 @@ class QMData(pd.DataFrame):
   ###################
   # NOTE: energy MUST be read in as Hartree
   def ev(self):
-    return self * 27.21138505
+    if self.E_unit == 'Ha':
+      self.E_unit = 'ev'
+      return self * 27.21138505
+    elif self.E_unit == 'kcal':
+      self.E_unit = 'ev'
+      return self * 23.0609
+    else:
+      return self
 
   def kcal(self):
-    return self * 627.509469
+    if self.E_unit == 'Ha':
+      self.E_unit = 'kcal'
+      return self * 627.509469
+    elif self.E_unit == 'ev':
+      self.E_unit = 'kcal'
+      return self * 0.0433634
+    else:
+      return self
 
 class ScatterPlot(object):
   def __init__(self, QMData_pred, QMData_true, unit):
     # restructure data
-    self._pred = pd.DataFrame(QMData_pred)
+    self._pred = pd.DataFrame(QMData_pred.data)
     self._pred.columns = ['Epred', 's']
-    self._true = pd.DataFrame(QMData_true)
+    self._true = pd.DataFrame(QMData_true.data)
     self._true.columns = ['Etrue', 'step']
     self._step = 500
 

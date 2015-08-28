@@ -7,6 +7,26 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 class PathData(qtk.QMData):
+  _file_list = []
+  _cube_list = []
+  @classmethod
+  def loadAllCube(cls, path, pattern, program='cpmd'):
+    """
+    centralized parallel CUBE loading
+    """
+    if program == 'cpmd':
+      cls._file_list = sorted(glob.glob(
+        path + "/" + pattern + "/*.cube"))
+      _para = [[name] for name in cls._file_list]
+      if len(_para)<3*qtk.setting.cpu_count:
+        cls._cube_list = qtk.parallelize(qtk.CUBE, _para, 
+                                     block_size=1)
+      else:
+        cls._cube_list = qtk.parallelize(qtk.CUBE, _para)
+    else:
+      qtk.exit("density of alchemical path is "\
+               +"not yet implemented for %s" % self.program)
+
   def __init__(self, path, pattern, program, **kwargs):
     qtk.QMData.__init__(self, path, pattern, program, **kwargs)
     self.cube_list = []
@@ -16,9 +36,15 @@ class PathData(qtk.QMData):
     if self.program == 'cpmd':
       self.cube_name = sorted(glob.glob(
         self.path + "/" + self.pattern + "/*.cube"))
-      _para = [[name] for name in self.cube_name]
-      self.cube_list = qtk.parallelize(qtk.CUBE, _para, 
-                                       block_size=1)
+      if len(PathData._cube_list) > 0:
+        _clist = PathData._cube_list
+        _nlist = PathData._file_list
+        self.cube_list = [_clist[_nlist.index(name)]\
+                          for name in self.cube_name]
+      else:
+        _para = [[name] for name in self.cube_name]
+        self.cube_list = qtk.parallelize(qtk.CUBE, _para, 
+                                           block_size=1)
     else:
       qtk.exit("density of alchemical path is "\
                +"not yet implemented for %s" % self.program)
@@ -133,21 +159,25 @@ class PathData(qtk.QMData):
     if _show:
       plt.show()
 
+  # add cube list difference to __add__
+  def __add__(self, other):
+    _out = super(PathData, self).__add__(other)
+    _out.cube_list = []
+    if len(self.cube_list) == len(other.cube_list):
+      for i in range(len(self.cube_list)):
+        _out.cube_list.append(\
+          self.cube_list[i] + other.cube_list[i])
+    return _out
 
+  # add cube list difference to __sub__
   def __sub__(self, other):
-    if isinstance(other, PathData):
-      if len(self.cube_list) == len(other.cube_list):
-        _out = copy.deepcopy(self)
-        _out.cube_list = []
-        for i in range(len(self.cube_list)):
-          _out.cube_list.append(\
-            self.cube_list[i] - other.cube_list[i])
-        return _out
-      else:
-        qtk.exit("PathData lengths are not consistant")
-    else:
-      qtk.exit("operation 'PathData - %s' not defined"\
-               % type(other))
+    _out = super(PathData, self).__sub__(other)
+    _out.cube_list = []
+    if len(self.cube_list) == len(other.cube_list):
+      for i in range(len(self.cube_list)):
+        _out.cube_list.append(\
+          self.cube_list[i] - other.cube_list[i])
+    return _out
 
 class PathScan(object):
   def __init__(self, xyz_i, xyz_f, program='cpmd', **kwargs):
