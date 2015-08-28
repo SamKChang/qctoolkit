@@ -132,7 +132,10 @@ class PathData(qtk.QMData):
     if 'levels' in kwargs:
       levels = kwargs['levels']
     else:
-      levels = np.logspace(0.05, np.log10(np.max(Z)), num=10) - 1
+      lmin = np.min(Z) - (np.max(Z) - np.min(Z))/20
+      lmax = np.max(Z) + (np.max(Z) - np.min(Z))/20
+      #levels = np.logspace(0.05, np.log10(np.max(Z)), num=10) - 1
+      levels = np.linspace(lmin, lmax, 10)
     floor = np.min(Z) - (np.max(Z) - np.min(Z))/20
     ceil = np.max(Z) + (np.max(Z) - np.min(Z))/20
     cset = ax.contour(X, Y, Z, levels,
