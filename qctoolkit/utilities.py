@@ -358,13 +358,13 @@ def n2Z(Zn):
   if z_list.has_key(Zn):
     return z_list[Zn]
   else:
-    exit("n2Z: element type " + Zn + " is not defined")
+    exit("n2Z: element type " + str(Zn) + " is not defined")
   
 def n2m(Zn):
   if mass_list.has_key(Zn):
     return mass_list[Zn]
   else:
-    exit("n2Z: element type " + Zn + " is not defined")
+    exit("n2Z: element type " + str(Zn) + " is not defined")
 
 def qAtomName(query):
   if type(query) == str:
@@ -374,7 +374,7 @@ def qAtomName(query):
     if type_list.has_key(int(query)):
       return str(Z2n(query))
   else:
-    exit("qAtom: element " + Zn + " is not defined")
+    exit("qAtom: element " + str(Zn) + " is not defined")
 
 def qAtomicNumber(query):
   if type(query) == str:
@@ -384,7 +384,7 @@ def qAtomicNumber(query):
     if type_list.has_key(int(query)):
       return query
   else:
-    exit("qAtom: element " + Zn + " is not defined")
+    exit("qAtom: element " + str(Zn) + " is not defined")
 
 def isAtom(query):
   if z_list.has_key(query):

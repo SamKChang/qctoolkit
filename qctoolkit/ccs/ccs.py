@@ -52,24 +52,29 @@ class MoleculeSpan(object):
       lenList = [len(MList[0]) for i in range(len(MList))]
 
     if not qtk.setting.quiet:
-      print "===== CCS REPORT ====="
-      qtk.report("generating molecule", xyz_file)
-      qtk.report("ccs parameter file", parameter_file)
-      qtk.report("mutation indices", self.mutation_list)
-      qtk.report("target atomic numbers", self.mutation_target)
-      qtk.report("length of mutation vector",
-             len(_flatten), "<=>", lenList)
-      print ""
-      qtk.report("stretching indices", self.stretching_list)
-      qtk.report("stretching range", self.stretching_range)
-      qtk.report("stretching direction indices",
-             self.stretching_direction)
-      print ""
-      qtk.report("rotation indices", self.rotation_list)
-      qtk.report("rotation center", self.rotation_center)
-      qtk.report("rotation axis", self.rotation_axis)
-      qtk.report("rotation range", self.rotation_range)
-      print ""
+      report_itr = False
+      if self.mutation_list:
+        report_itr += True
+        print "===== CCS REPORT ====="
+        qtk.report("generating molecule", xyz_file)
+        qtk.report("ccs parameter file", parameter_file)
+        qtk.report("mutation indices", self.mutation_list)
+        qtk.report("target atomic numbers", self.mutation_target)
+        qtk.report("length of mutation vector",
+               len(_flatten), "<=>", lenList)
+        print ""
+      if self.stretching_list:
+        qtk.report("stretching indices", self.stretching_list)
+        qtk.report("stretching range", self.stretching_range)
+        qtk.report("stretching direction indices",
+               self.stretching_direction)
+        print ""
+      if self.rotation_list:
+        qtk.report("rotation indices", self.rotation_list)
+        qtk.report("rotation center", self.rotation_center)
+        qtk.report("rotation axis", self.rotation_axis)
+        qtk.report("rotation range", self.rotation_range)
+        print ""
       qtk.status("ccs coordinate", self.coor)
       print "========= END ========\n"
 
@@ -333,7 +338,8 @@ class MoleculeSpan(object):
         _targ = self.rotation_range
         _dtype = float
 
-
+      # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      # main routine to generate a random coordinate
       _vec = []
       ind = 0
       for _group, _targp in zip(_list, _targ):
@@ -384,6 +390,21 @@ class MoleculeSpan(object):
     return new_structure, query
   ##### END OF RANDOM CCS POINT #####
 
+#  def addr2loc(self, inp, mode='mutation'):
+#    if mode == 'mutation':
+#      _list = self.mutation_list
+#    if type(inp) is int:
+#      elm = 0
+#      grp = 0
+#      for i in _list:
+#        if inp < elm + len(i):
+#          return grp, inp-elm
+#        else:
+#          elm = elm + len(i)
+#          grp = grp + 1
+#    if type(inp) is list:
+      
+
   #########################################
   # mating function for genetic algorithm #
   #########################################
@@ -393,26 +414,91 @@ class MoleculeSpan(object):
       child = {}
       for key in parent1.iterkeys():
         if key == 'mutation':
+          # implementation for element_count constraints
           if self.element_count:
-            # algorithm
-            # 1. loop through all constrainted elements
-            #    construct constraint list for both parrent
-            # 2. generate child constraint list
-            # 3. remove index of constraint list for other element
-            # 4. randomly select non-constraint element from parent
-            # 5. iterate until solution
             constraint_list = []
+            constraint_keys = []
+            # tool to constuct list
+            def _list_append(mcoord, i_list, Zc):
+              for g in range(len(mcoord)):
+                grp = mcoord[g]
+                for i in range(len(grp)):
+                  Z_p = grp[i]
+                  if Z_p == Zc:
+                    i_list.append((g,i))
+            # construct mutation list
             for elem in self.element_count.iterkeys():
-              _z_list
+              i_list = []
               _Z = qtk.n2Z(elem)
-              for grp in parent1['mutation']:
-                for Z_p in grp:
-                  if Z_p1 == _Z:
-                    _z_list.append(Z_p)
-              for grp in parent2['mutation']:
-                for Z_p in grp:
-                  if Z_p1 == _Z:
-                    _z_list.append(Z_p)
+              _list_append(parent1['mutation'], i_list, _Z)
+              _list_append(parent2['mutation'], i_list, _Z)
+              constraint_list.append(i_list)
+              constraint_keys.append(elem)
+
+            while True:
+              selected_list = []
+              selected_coord = {}
+              consistant = True
+              for i in range(len(constraint_list)):
+                ind_location = constraint_list[i]
+                random.shuffle(ind_location)
+                elem = qtk.n2Z(constraint_keys[i])
+                _count = self.element_count[constraint_keys[i]][0]
+                _end = _count
+                while len(set(ind_location[:_end])) < _count:
+                  _end += 1
+                _new = list(set(ind_location[:_end]))
+                to_select = copy.deepcopy(selected_list)
+                to_select.extend(_new)
+                if len(set(to_select)) == \
+                len(selected_list) + len(_new):
+                  selected_list.extend(_new)
+                  for coord in _new:
+                    selected_coord.update({coord:elem})
+                  consistant = consistant & True
+                else:
+                  consistant = False
+              child_ind = []
+              for g in range(len(parent1['mutation'])):
+                child_list = []
+                for i in range(len(parent1['mutation'][g])):
+                  if selected_coord.has_key((g,i)):
+                    child_list.append(selected_coord[(g,i)])
+                  else:
+                    candidate = []
+                    A1 = qtk.Z2n(parent1['mutation'][g][i])
+                    A2 = qtk.Z2n(parent2['mutation'][g][i])
+                    if not self.element_count.has_key(A1):
+                      candidate.append(qtk.n2Z(A1))
+                    if not self.element_count.has_key(A2):
+                      candidate.append(qtk.n2Z(A2))
+                    if len(candidate) == 0:
+                      consistant = False
+                    else:
+                      child_list.append(random.choice(candidate))
+                child_ind.append(child_list)
+              if consistant:
+                break
+            for g in range(len(parent1['mutation'])):
+              for i in range(len(parent1['mutation'][g])):
+                if not selected_coord.has_key((g,i)):
+                  if random.random() < mutation_rate:
+                    child_ind[g][i] = random.choice(\
+                      self.mutation_target[g])
+                    elem = qtk.Z2n(child_ind[g][i])
+                    if self.element_count.has_key(elem):
+                      coord = random.choice([tupl for tupl,targ 
+                        in selected_coord.iteritems()\
+                        if targ == qtk.n2Z(elem)])
+                      del selected_coord[coord]
+                      selected_coord.update({(g,i):qtk.n2Z(elem)})
+                      [gc, ic] = list(coord)
+                      new_targ = random.choice([z for z in \
+                                  self.mutation_target[gc]\
+                                  if not self.element_count\
+                                  .has_key(qtk.Z2n(z))])
+                      child_ind[gc][ic] = new_targ
+            child.update({'mutation':child_ind})
               
           else:
             child_mut = []
