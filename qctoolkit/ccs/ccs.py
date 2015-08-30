@@ -240,6 +240,7 @@ class MoleculeSpan(object):
         #target = self.mutation_target[m][mutation[m][i]]
         target = mutation[m][i]
         self.new_structure.Z[index] = target
+        self.new_structure.type_list[index] = qtk.Z2n(target)
   def _stretch(self, stretching):
     pass
   def _rotate(self, rotation):

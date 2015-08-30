@@ -1,4 +1,5 @@
 import qctoolkit as qtk
+import qctoolkit.ccs as qcs
 import numpy as np
 import copy, sys, re, gc, os, math
 import itertools as it
@@ -54,6 +55,11 @@ def genRefInp(x, y, n_pair, **kwargs):
   kwargs: max_sample
   """
 
+  if 'path' in kwargs:
+    qtk.report("creating folder", kwargs['path'])
+    os.makedirs(kwargs['path'])
+    os.chdir(kwargs['path'])
+
   print "%screating inp folder...%s"\
         % (qtk.bcolors.OKGREEN, qtk.bcolors.ENDC)
   if not os.path.exists('inp'):
@@ -61,7 +67,10 @@ def genRefInp(x, y, n_pair, **kwargs):
   else:
     print "%sinp folder exist, baking up to back_inp...%s"\
           % (qtk.bcolors.WARNING, qtk.bcolors.ENDC)
-    shutil.rmtree('back_inp')
+    try:
+      shutil.rmtree('back_inp')
+    except:
+      pass
     os.rename('inp', 'back_inp')
     os.makedirs('inp')
 
@@ -103,8 +112,8 @@ def genRefInp(x, y, n_pair, **kwargs):
   graphenev = graphene.remove_atom(1)
   graphene.write_xyz(namev_xyz)
 
-  space = qtk.MoleculeSpan(name_xyz, name_ccs)
-  space_v = qtk.MoleculeSpan(namev_xyz, namev_ccs)
+  space = qcs.MoleculeSpan(name_xyz, name_ccs)
+  space_v = qcs.MoleculeSpan(namev_xyz, namev_ccs)
   flat = [item for sublist in space.mutation_list \
              for item in sublist]
 
@@ -121,15 +130,20 @@ def genRefInp(x, y, n_pair, **kwargs):
 
 
   # input setup
-  gph = qtk.QMInp(name_xyz, 'cpmd', 'gph')
+  gph = qtk.QMInp(name_xyz, 'cpmd', info='gph')
   gph.setCelldm(celldm)
   gph.periodic()
   gph.setSCFStep(500)
   
-  gphv = qtk.QMInp(namev_xyz, 'cpmd', 'gphv')
+  gphv = qtk.QMInp(namev_xyz, 'cpmd', info='gphv')
   gphv.setCelldm(celldm)
   gphv.periodic()
   gphv.setSCFStep(500)
+
+  name = "inp/%s%s.inp" % (header, str(0).zfill(digit))
+  namev = "inp/%s%sv.inp" % (header, str(0).zfill(digit))
+  gph.write(name)
+  gphv.write(namev)
 
   c_base = [ 6 for i in range(len(flat))]
 
@@ -157,12 +171,11 @@ def genRefInp(x, y, n_pair, **kwargs):
         if not all (key in mutate_mol.bond_types \
                     for key in ('B-B', 'N-N')):
           gph.setCenter([0,0,-celldm[2]/2])
-          gph.inp.structure = mutate_mol
+          gph.setStructure(mutate_mol)
           gph.write(name)
           gphv.setCenter([0,0,-celldm[2]/2])
-          gphv.inp.structure = mutate_molv
+          gphv.setStructure(mutate_molv)
           gphv.write(namev)
-          #print itr, name
         itr += 1
         if itr > max_sample:
           msg = "%sDONE! %d generated%s"\

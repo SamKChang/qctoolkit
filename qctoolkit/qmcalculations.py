@@ -141,7 +141,7 @@ def QMRun(inp, program, **kwargs):
         # !!!!BUG!!!! alchemy QMJobs need to be modified!!!
         # for general interface
         refpath = ref
-        rst_src = refpath + "/RESTART.1"
+        rst_src = refroot + "/RESTART.1"
         rst_trg = inpdir + "/RESTART"
         os.link(rst_src, rst_trg)
 
@@ -304,7 +304,7 @@ class QMJobs(object):
       self._debug = False
    
   # set alchemy scanning mode and define alchemical reference inp
-  def setAlchemScan(self, **kwargs):
+  def setAlchemyScan(self, **kwargs):
     self._alchemScan = True
     if 'ref' in kwargs:
       self._ref = self._path + "/" + kwargs['ref']
