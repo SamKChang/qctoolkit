@@ -191,7 +191,12 @@ class PathData(qtk.QMData):
                   fontsize=16, rotation=90)
 
     if 'legend' in kwargs:
+      if 'legend_size' in kwargs:
+        legend_size = kwargs['legend_size']
+      else:
+        legend_size = 12
       ax.text2D(0.7, 0.9, kwargs['legend'],
+                fontsize=legend_size,
                 transform=ax.transAxes,
                 bbox={'facecolor':'white', 'alpha':1, 'pad':10})
     if _show:
