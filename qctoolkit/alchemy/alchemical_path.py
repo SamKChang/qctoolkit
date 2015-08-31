@@ -9,6 +9,21 @@ from scipy.interpolate import interp1d
 class PathData(qtk.QMData):
   _file_list = []
   _cube_list = []
+
+  @classmethod
+  def loadCubeList(cls, path_list, program='cpmd'):
+    if program == 'cpmd':
+      cls._file_list = path_list
+      _para = [[name] for name in cls._file_list]
+      if len(_para)<3*qtk.setting.cpu_count:
+        cls._cube_list = qtk.parallelize(qtk.CUBE, _para, 
+                                     block_size=1)
+      else:
+        cls._cube_list = qtk.parallelize(qtk.CUBE, _para)
+    else:
+      qtk.exit("density of alchemical path is "\
+               +"not yet implemented for %s" % self.program)
+    
   @classmethod
   def loadAllCube(cls, path, pattern, program='cpmd'):
     """
@@ -121,13 +136,22 @@ class PathData(qtk.QMData):
 
     # construct tracking coordinates
     if len(track) > 0:
+      if 'track_style' in kwargs:
+        track_style = kwargs['track_style']
+      else:
+        track_style = ['--' for _ in track]
       track_y = np.linspace(0, 1, len(self.cube_list))
       for i in range(len(cube_track)):
         track_z = cube_track[i]
         track_x = np.array([track[i] for x in range(len(track_z))])
         # plot tracking lines
         ax.plot(track_x, track_y, track_z, 
-                color='red', linestyle='--')
+                color='red', linestyle=track_style[i])
+        if 'track_project' in kwargs and kwargs['track_project']:
+          proj_x = np.array([_min for x in range(len(track_z))])
+          ax.plot(proj_x, track_y, track_z, 
+                  color='red', linestyle=track_style[i])
+       
 
     if 'levels' in kwargs:
       levels = kwargs['levels']
@@ -136,10 +160,14 @@ class PathData(qtk.QMData):
       lmax = np.max(Z) + (np.max(Z) - np.min(Z))/20
       #levels = np.logspace(0.05, np.log10(np.max(Z)), num=10) - 1
       levels = np.linspace(lmin, lmax, 10)
+    if 'contour_floor' in kwargs:
+      cfloor = kwargs['contour_floor']
+    else:
+      cfloor = kwargs['contour_floor']
     floor = np.min(Z) - (np.max(Z) - np.min(Z))/20
     ceil = np.max(Z) + (np.max(Z) - np.min(Z))/20
     cset = ax.contour(X, Y, Z, levels,
-                      zdir='z', offset=floor, colors='black')
+                      zdir='z', offset=cfloor, colors='black')
 
     if 'xlabel' in kwargs:
       xlabel = kwargs['xlable']

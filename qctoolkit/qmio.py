@@ -90,7 +90,7 @@ class CUBE(object):
                     self.grid[i, i])
       xout = np.arange(xi, xf, dx)*0.529177249
       yout = np.sum(self.data, axis=tuple(axes))*np.prod(steps)
-      if not 'no_show' in kwargs and not kwargs['no_shw']:
+      if not 'no_show' in kwargs:
         if 'name' in kwargs:
           name = kwargs['name']
         else:
