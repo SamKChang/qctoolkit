@@ -23,6 +23,11 @@ class QMResults(object):
     else:
       self.threads = 1
 
+    if 'only' in kwargs:
+      self.only = kwargs['only']
+    else:
+      self.only = '*'
+
     if 'except_pattern' in kwargs:
       self.except_pattern = kwargs['except_pattern']
     else:
@@ -40,7 +45,7 @@ class QMResults(object):
     # queue is necessary for shared data
     def read_out_dir(out_path, Et_queue):
       for folder in out_path:
-        for out in glob.glob(folder + '/*.out'):
+        for out in glob.glob(folder + '/'+self.only+'.out'):
           stem = re.sub(".*/", "", out)
           if re.match(self.except_pattern, stem):
             pass

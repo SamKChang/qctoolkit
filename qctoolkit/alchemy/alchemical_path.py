@@ -7,11 +7,14 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 class PathData(qtk.QMData):
+  """
+  analysis on alchemical path results
+  """
   _file_list = []
   _cube_list = []
 
   @classmethod
-  def loadCubeList(cls, path_list, program='cpmd'):
+  def loadCubeList(cls, path_list, program=qtk.setting.qmcode):
     if program == 'cpmd':
       cls._file_list = path_list
       _para = [[name] for name in cls._file_list]
@@ -25,7 +28,8 @@ class PathData(qtk.QMData):
                +"not yet implemented for %s" % self.program)
     
   @classmethod
-  def loadAllCube(cls, path, pattern, program='cpmd'):
+  def loadAllCube(cls, path, pattern, 
+                  program=qtk.setting.qmcode):
     """
     centralized parallel CUBE loading
     """
@@ -223,7 +227,11 @@ class PathData(qtk.QMData):
     return _out
 
 class PathScan(object):
-  def __init__(self, xyz_i, xyz_f, program='cpmd', **kwargs):
+  """
+  generate input files to scan alchemical path
+  """
+  def __init__(self, xyz_i, xyz_f, 
+               program=qtk.setting.qmcode, **kwargs):
     if 'name' in kwargs:
       self.name = kwargs['name']
     elif type(xyz_i)==str and type(xyz_f)==str:
@@ -247,20 +255,29 @@ class PathScan(object):
 
     self.inp_base = qtk.QMInp(xyz_i, program)
     if 'inp_base' in kwargs:
-      inp_tmp = copy.deepcopy(kwargs['inp_base'])
-      self.inp_base.inp.setting = inp_tmp.inp.setting
+      if kwargs['inp_base'] is not None:
+        inp_tmp = copy.deepcopy(kwargs['inp_base'])
+        self.inp_base.inp.setting = inp_tmp.inp.setting
+
+    # !!!!!!!!!!!!!!!!!!!!!!!
+    # construct mutation list
+    # tar_list: list of matching location
     tar_list = [i for i in range(self.final.N)]
     self.mutation_ind = []
     self.mutation_ref = []
     self.mutation_tar = []
     self.mutation_crd = []
+    # loop through every atom in initial system
     for i in range(self.initial.N):
       Zi = self.initial.type_list[i]
       Ri = self.initial.R[i]
       to_void = True
+      # loop through every atom in final system
       for j in range(self.final.N):
+        # every atom-pair distance
         Rj = self.final.R[j]
         diff = np.linalg.norm(Ri-Rj)
+        # search for atoms at same location
         if diff < 10E-6:
           to_void = False
           tar_list[j] = False
@@ -270,19 +287,21 @@ class PathScan(object):
             self.mutation_ref.append(Zi)
             self.mutation_tar.append(Zj)
             self.mutation_crd.append(Ri)
+      # when no distance matched, set atom target to void
       if to_void:
         self.mutation_ind.append(i)
         self.mutation_ref.append(Zi)
         self.mutation_tar.append('VOID')
         self.mutation_crd.append(Ri)
 
+    # loop through every target atom for non-matching atoms
     N = self.initial.N
     for j in range(self.final.N):
       if tar_list[j]:
         self.mutation_ind.append(N)
         self.mutation_ref.append('VOID')
         self.mutation_tar.append(self.final.type_list[j])
-        self.mutation_crd.append(self.initial.R[j])
+        self.mutation_crd.append(self.final.R[j])
 
   def PPString(self, ind):
     ref = self.mutation_ref[ind]
@@ -298,12 +317,12 @@ class PathScan(object):
       ppstr = "_%03d.psp" % (l_in*100)
       out = copy.deepcopy(self.inp_base)
       for i in range(len(self.mutation_ind)):
-        ind = self.mutation_ind[i]-1
+        ind = self.mutation_ind[i]
         pp = self.PPString(i)+ppstr
         if ind < out.inp.structure.N:
-          out.setAtom(ind, pp)
+          out.setAtom(ind+1, pp)
         else:
-          out.addAtom(ind, pp, self.mutation_crd[ind])
+          out.addAtom(pp, self.mutation_crd[i])
       return out
     else:
       qtk.exit("program %s is not implemented for PathScan"\

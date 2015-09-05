@@ -6,6 +6,7 @@ quiet = False
 no_warning = False
 cpu_count = mp.cpu_count()
 memory = float(virtual_memory().total)/10**9
+qmcode = 'cpmd'
 
 # QM executables
 cpmd_exe = 'cpmd.x'

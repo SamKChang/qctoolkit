@@ -11,6 +11,11 @@ import operator
 from compiler.ast import flatten
 import qctoolkit.elements as qel
 
+def pathStrip(path):
+  new_path = re.sub('//*','/',path)
+  new_path = re.sub(r'([^\.])\.\/',r"\1",new_path)
+  return new_path
+
 def partialSum(iterable):
   total = 0
   for i in iterable:
@@ -119,7 +124,7 @@ def exit(text):
   name = module.__name__
   msg = bcolors.FAIL + bcolors.BOLD + name + bcolors.ENDC \
         + bcolors.FAIL + ": " + text + bcolors.ENDC
-  raise ValueError(msg)
+  raise RuntimeError(msg)
   sys.exit(msg)
   
 def warning(text):
@@ -231,11 +236,23 @@ def insert(target, pattern, text):
     if pattern in line:
       print text
 
+def replace(target, pattern, text):
+  for line in fileinput.input(target, inplace=1):
+    print re.sub(re.compile(pattern), text, line),
+
 def containing(target, pattern):
   result = False
   with open(target,"r") as ftarget:
     for line in ftarget:
       if pattern in line:
+        result = True
+  return result
+
+def matching(target, pattern):
+  result = False
+  with open(target,'r') as ftarget:
+    for line in ftarget:
+      if re.match(re.compile(pattern),line):
         result = True
   return result
 ##### END OF text formating #####

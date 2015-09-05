@@ -6,40 +6,26 @@ import subprocess as sp
 import utilities as ut
 import numpy as np
 import setting
+import io_format.cpmd as cpmd
 
 # python interface to run QM code
 # all code dependent part should be wrapped here
 # inp is passed as relative path to the calling script path
-def QMRun(inp, program, **kwargs):
+def QMRun(inp, program=setting.qmcode, **kwargs):
   if 'threads' in kwargs:
     _threads = kwargs['threads']
   else:
     _threads = 1
   _delete = False
-  if 'QMReturn' in kwargs:
-    # return value of QMRun
-    # return = [list of properties to return]
-    _return = kwargs['QMReturn']
-  else:
-    _return = False
   if 'cleanup' in kwargs and kwargs['cleanup']:
     _delete = True
-
   if 'bigmem' in kwargs:
     _bigmem = kwargs['bigmem']
   else:
-    if mp.cpu_count() > 20:
+    if setting.memory > 16:
       _bigmem = True
     else:
       _bigmem = False
-  if 'prefix' in kwargs:
-    _prefix = kwargs['prefix']
-  else:
-    _prefix = ''
-  if 'suffix' in kwargs:
-    _suffix = kwargs['suffix']
-  else:
-    _suffix = ''
 
   ###########################################
   # SYSTEM CALL SUBPROCESS: Running mpi job #
@@ -54,17 +40,13 @@ def QMRun(inp, program, **kwargs):
                    stdout=outfile)
     # wait each mpijob to finish before lauching another
     # otherwise all mpijobs will be launched simutaniously
-    run.communicate() 
+    run.wait()
     outfile.close()
   ########## END OF SYSTEM CALL ##########
 
   #######################
   # CPMD IMPLEMENTATION #
   #######################
-  # an root/inp folder contains all inp files
-  # inp files in root/inp/foo.inp
-  # will be copied to root/inp/foo/foo.inp
-  # scratch files will be generated and cleaned at root/inp/fc
   if program == 'cpmd':
     if 'exe' in kwargs:
       exe = kwargs['exe']
@@ -76,167 +58,90 @@ def QMRun(inp, program, **kwargs):
     else:
       _save_restart = False
 
-    # I/O setup for file names, folder etc
-    # out dir is set to be relative to inp file
-    # default: same as inp file
-    if 'outdir' in kwargs:
-      outdir = re.sub('\/$','', kwargs['outdir']) + '/'
+    _inplace = False
+    if 'inplace' in kwargs:
+      _inplace = kwargs['inplace']
+    if not _inplace:
+      inpdir, inpname, psinp, new_run, kwargs\
+        = cpmd.qmDir(inp, **kwargs)
     else:
-      outdir = './'
-    try:
-      root = re.match(re.compile('(.*/)[^\/]*'),inp).group(1)\
-             + outdir
-    except:
-      root = './' + outdir
-    if 'alchemRef' in kwargs:
-      _alchemRef = True
-      inproot = "rst_" + re.sub('\.inp', '',re.sub('.*/', '', inp))
-    else:
-      _alchemRef = False
-      inproot = re.sub('\.inp', '',re.sub('.*/', '', inp))
-    inpdir = root + _prefix + inproot + _suffix
-    inpname = inpdir + "/" + inproot + ".inp"
-    print inpdir, inpname
-
-    # create new dir for CPMD calculation
-    if not os.path.exists(inpdir):
-      os.makedirs(inpdir)
-      shutil.copyfile(inp,inpname) # copy inp file to folder
-    else:
-      return np.nan
-      ut.exit("folder '" + inpdir +\
-              "' exist, nothing to be done")
+      inpdir, inpname, psinp, new_run, kwargs\
+        = cpmd.qmDir_inplace(inp, **kwargs)
 
     if 'scr' in kwargs and kwargs['scr']:
-      _scr = True
-      scrdir = kwargs['scr']
-    else:
-      _scr = False
-      scrdir = inpdir
-
-    # RESTART file for alchemy
-    if 'alchemScan' in kwargs and kwargs['alchemScan']:
-
-      if 'alchemRefPrefix' in kwargs:
-        alchemPrefix = kwargs['alchemRefPrefix']
-      else:
-        alchemPrefix = 'rst_'
-
-      if not 'alchemRefPath' in kwargs:
-        ut.exit("alchemical reference not set")
-      elif not os.path.exists(kwargs['alchemRefPath']):
-        ut.exit("alchemical reference '%s' not found"\
-                % kwargs['alchemRefPath'])
-      else:
-        _alchemScan = True
-        ref = kwargs['alchemRefPath']
-        refroot = alchemPrefix + re.sub('\.inp', '',
-                                  re.sub('.*/', '', ref))
-
-        # for flexibility
-
-        # for alchemy QMJobs
-        #refpath = re.sub(inproot, refroot, scrdir)
-
-        # !!!!BUG!!!! alchemy QMJobs need to be modified!!!
-        # for general interface
-        refpath = ref
-        rst_src = refroot + "/RESTART.1"
-        rst_trg = inpdir + "/RESTART"
-        os.link(rst_src, rst_trg)
-
-    else:
-      _alchemScan = False
-
-    ####################################################
-    # PROCESS INP FILES: according to calculation mode #
-    ####################################################
-    # supress writing RESTART
-    if ('debug' in kwargs and kwargs['debug']) or _return:
+        scrdir = kwargs['scr']
+        ut.delete(inpname, 'FILEPATH', 2)
+        ut.insert(inpname, 'CPMD', ' FILEPATH\n  %s' % scrdir)
+    if 'debug' in kwargs and kwargs['debug']:
+      ut.delete(inpname, ' PENCHMARK', 2)
       ut.insert(inpname, 
                 "CPMD", 
                 " BENCHMARK\n  1 0 0 0 0 0 0 0 0 0")
-
-    # alchemical prediction
-    if _alchemScan:
-      ut.delete(inpname,'MAXITER', 2)
-      ut.insert(inpname,'MIRROR', ' MAXITER\n  1')
+    if 'maxstep' in kwargs:
+      _step = kwargs['maxstep']
+      ut.delete(inpname, ' MAXITER', 2)
+      ut.insert(inpname, 'MIRROR', ' MAXITER\n  %d' % _step)
+    if 'restart' in kwargs:
       ut.delete(inpname, 'RESTART', 1)
       ut.delete(inpname, 'INITIALIZE WAVEFUNCTION', 1)
-      ut.insert(inpname,'CPMD', ' RESTART WAVEFUNCTION')
-
-    if _alchemRef:
-      ut.delete(inpname, 'BENCHMARK', 2)
-      ut.delete(inpname, 'RESTART', 1)
-
-    # big memory setup
-    #if 'bigmem' in kwargs:
+      ut.insert(inpname, 'CPMD', ' RESTART WAVEFUNCTION')
     if _bigmem:
       ut.delete(inpname, 'MEMORY BIG', 1)
       ut.insert(inpname, 'MIRROR', ' MEMORY BIG')
     else:
       ut.delete(inpname, 'MEMORY BIG', 1)
 
-    # scratch path
-    if _scr:
-      ut.delete(inpname, 'FILEPATH', 2)
-      ut.insert(inpname, 'CPMD', ' FILEPATH\n  %s' % scrdir)
-
-    # !!!! TODO !!!! #
-    # scanning alchemical path
-    # second order alchemy
-    # KSEg
-    # geopt
-    # metal surface
-    # different optimizer?
-    ########## END OF PROCESSING INP FILES ##########
-
     os.chdir(inpdir)
-    exestr = "%s %s" % (exe, inproot + ".inp")
-    qmoutput = inproot + ".out"
-    compute(exestr, qmoutput, _threads)
+    qmoutput = psinp + ".out"
+    if new_run:
+      exestr = "%s %s" % (exe, psinp + ".inp")
+      compute(exestr, qmoutput, _threads)
 
-    # clean up files
-    try:
-      os.remove('LATEST')
-    except OSError:
-      pass
-    try:
-      os.remove('GEOMETRY.scale')
-    except OSError:
-      pass
-    try:
-      os.remove('GEOMETRY')
-    except OSError:
-      pass
-    try:
-      os.remove('KPTS_GENERATION')
-    except OSError:
-      pass
-    try:
-      os.remove('RESTART')
-    except OSError:
-      pass
-    if not _save_restart:
-      rst_list = glob.glob("RESTART*")
-      for rfile in rst_list:
-        os.remove(rfile)
-
-    if os.path.exists('DENSITY'):
-      exe = setting.cpmd_cpmd2cube
-      log = open('DENSITY.log', 'w')
-      run = sp.Popen("%s -fullmesh DENSITY" % exe, 
-               shell=True,
-               stdout=log)
-      run.communicate()
-      log.close()
-      
-
-    qio_out = qio.QMOut(qmoutput, program)
+      # clean up files
+      try:
+        os.remove('LATEST')
+      except OSError:
+        pass
+      try:
+        os.remove('GEOMETRY.scale')
+      except OSError:
+        pass
+      try:
+        os.remove('GEOMETRY')
+      except OSError:
+        pass
+      try:
+        os.remove('KPTS_GENERATION')
+      except OSError:
+        pass
+      try:
+        os.remove('RESTART')
+      except OSError:
+        pass
+      if not _save_restart:
+        rst_list = glob.glob("RESTART*")
+        for rfile in rst_list:
+          os.remove(rfile)
+  
+      if os.path.exists('DENSITY'):
+        exe = setting.cpmd_cpmd2cube
+        log = open('DENSITY.log', 'w')
+        run = sp.Popen("%s -fullmesh DENSITY" % exe, 
+                 shell=True,
+                 stdout=log)
+        run.wait()
+        log.close()
+  
+    if os.path.exists(qmoutput):
+      qio_out = qio.QMOut(qmoutput, program)
+    else:
+      qio_out = None
     os.chdir(cwd)
-    
+      
     if _delete:
       shutil.rmtree(inpdir)
+
+    return qio_out
 
   # !!!!! TODO LIST !!!!! #
   #############################
@@ -264,7 +169,6 @@ def QMRun(inp, program, **kwargs):
   else: 
     ut.exit("ERROR! program '%s' not recognized" % program)
 
-  return qio_out
 
 
 # collection of QM input files, run all in parallel
@@ -272,7 +176,7 @@ def QMRun(inp, program, **kwargs):
 # target folder should contain many inp files for QM scan
 class QMJobs(object):
   def __init__(self, path='inp', pattern='*.inp', 
-               program='cpmd', **kwargs):
+               program=setting.qmcode, **kwargs):
 
     self._threadspj = 1
     self._path = re.sub(re.compile('/$'), '', path)

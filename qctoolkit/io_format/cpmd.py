@@ -1,6 +1,80 @@
-import qctoolkit, re, sys, os, copy
+import qctoolkit as qtk
+import re, sys, os, copy, shutil
 import numpy as np
 from qctoolkit import utilities as ut
+
+def qmDir_inplace(inp, **kwargs):
+  qps = qtk.pathStrip
+  _prefix = ''
+  if 'prefix' in kwargs:
+    _prefix = kwargs['prefix']
+    del kwargs['prefix']
+  _suffix = ''
+  if 'suffix' in kwargs:
+    _suffix = kwargs['suffix']
+    del kwargs['suffix']
+  try:
+    root = re.match(re.compile('(.*/)[^\/]*'),inp).group(1)+'/'
+  except:
+    root = './'
+
+  inproot = re.sub('\.inp', '',re.sub('.*/', '', inp))
+  psinp = _prefix + inproot + _suffix
+  inpdir = root
+  inpname = inpdir + psinp + ".inp"
+  new_run = True
+  if os.path.exists(inpdir+psinp+'.out'):
+    qtk.warning("io_format.cpmd.qmDir_inplace: output file "+\
+                qps(inpdir+psinp)+\
+                '.out exist, nothing to be done')
+    new_run = False
+
+  return qps(inpdir), qps(inpname), qps(psinp), new_run, kwargs
+
+def qmDir(inp, **kwargs):
+  """
+  an root/inp folder contains all inp files
+  inp files in root/inp/foo.inp
+  will be copied to root/inp/foo/foo.inp
+  scratch files will be generated and cleaned at root/inp/fc
+  """
+
+  qps = qtk.pathStrip
+  _prefix = ''
+  if 'prefix' in kwargs:
+    _prefix = kwargs['prefix']
+    del kwargs['prefix']
+  _suffix = ''
+  if 'suffix' in kwargs:
+    _suffix = kwargs['suffix']
+    del kwargs['suffix']
+  _inplace = False
+  if 'outdir' in kwargs:
+    outdir = re.sub('\/$','', kwargs['outdir']) + '/'
+    del kwargs['outdir']
+  else:
+    outdir = './'
+  try:
+    root = re.match(re.compile('(.*/)[^\/]*'),inp).group(1)\
+           + outdir
+  except:
+    root = './' + outdir
+
+  inproot = re.sub('\.inp', '',re.sub('.*/', '', inp))
+  psinp = _prefix + inproot + _suffix
+  inpdir = root + psinp
+  inpname = inpdir + "/" + psinp + ".inp"
+  new_run = True
+  if not os.path.exists(inpdir):
+    os.makedirs(inpdir)
+    shutil.copyfile(inp, inpname) # copy inp file to folder
+  elif _inplace:
+    shutil.copyfile(inp, inpname)
+  else:
+    qtk.warning("io_format.cpmd.qmDir: folder '" + inpdir +\
+               "' exists, nothing to be done")
+    new_run = False
+  return qps(inpdir), qps(inpname), qps(psinp), new_run, kwargs
 
 class Setting(object): 
   def __init__(self): 
@@ -67,7 +141,7 @@ class inp(object):
   def __init__(self, structure_inp, info, **kwargs):
     self.setting = Setting()
     self.atom_list = {}
-    self.structure = qctoolkit.geometry.Molecule()
+    self.structure = qtk.geometry.Molecule()
     if type(structure_inp) == str:
       self.structure.read(structure_inp, **kwargs)
     else:
@@ -108,7 +182,7 @@ class inp(object):
     if atom_type.title() in kwargs:
       return atom_type.title() + kwargs[atom_type.title()]
     else:
-      return atom_type.title() + "_q" + str(ut.n2ve(atom_type))\
+      return atom_type.title() + "_q" + str(qtk.n2ve(atom_type))\
              + "_" + self.setting.theory.lower() + ext
     
 
@@ -124,7 +198,7 @@ class inp(object):
       no_warning = True
     else: no_warning = False
     if os.path.exists(name) and not no_warning:
-      ut.prompt(name + " exist, overwrite?")
+      qtk.prompt(name + " exist, overwrite?")
     inp = sys.stdout if not name else open(name,"w")
 
     #isolated = False
@@ -271,7 +345,7 @@ class inp(object):
       if atom_list.has_key(str(Z[type_index[atom_type]])):
         key = str(Z[type_index[atom_type]])
         AtomPP = atom_list[key]
-        if ut.isAtom(AtomPP):
+        if qtk.isAtom(AtomPP):
           print >>inp, "*" + PP(AtomPP)
         else:
           print >>inp, "*" + atom_list[key]
@@ -325,7 +399,7 @@ class out(object):
           data = [float(x) for x in line.split()]
           self.SCFStep = int(data[0])
         except:
-          ut.report("\n\nFailed while eading file:", name,
+          qtk.report("\n\nFailed while eading file:", name,
                     'at line: ', line,
                     '... skipping!! \n', color='yellow')
       elif re.match(convergence, line) and self.SCFStep > 5:

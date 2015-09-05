@@ -203,6 +203,7 @@ class QMInp(object):
     for I in atom_list:
       i = I-1
       self.inp.structure.type_list[i] = atom_string
+      # negative counter for count added atom string
       self.inp.structure.Z[i] = self.atom_count
     self.inp.atom_list[str(self.atom_count)] = atom_string
     self.atom_count = _tmp - 1

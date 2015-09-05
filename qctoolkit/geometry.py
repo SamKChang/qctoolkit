@@ -167,7 +167,7 @@ class Molecule(object):
     self.R = np.array([coord for coord in self.R[index_list]])
     self.Z = np.array([coord for coord in self.Z[index_list]])
     self.type_list = \
-      np.array([coord for coord in self.type_list[index_list]])
+      [coord for coord in self.type_list[index_list]]
 
   def have_bond(self, type_a, type_b):
     result = False
@@ -363,7 +363,7 @@ class Molecule(object):
       crd = [float(data[1]),float(data[2]),float(data[3])]
       coord.append(crd)
     self.R = np.vstack(coord)
-    self.type_list = np.array(type_list)
+    self.type_list = type_list
     self.Z = np.array(Z)
 
     if np.sum(self.Z) % 2 == 1:
@@ -380,7 +380,7 @@ class Molecule(object):
 
     #if len(self.type_list) != self.N:
     tlist = np.vectorize(ut.Z2n)
-    self.type_list = tlist(self.Z)
+    self.type_list = list(tlist(self.Z))
 
     print >>out, str(self.N)+"\n"
     for I in xrange(0, self.N):
@@ -400,7 +400,7 @@ class Molecule(object):
     Z = []
     type_list = []
 
-    element_p = re.compile('\*([A-Za-z])*_')
+    element_p = re.compile('\*([A-Za-z]*)_')
     pp_p = re.compile('^\*')
     inp = open(name, 'r')
     while True:
@@ -423,7 +423,7 @@ class Molecule(object):
               Z.append(ut.n2Z(element))
     self.R = np.vstack(coord)
     #self.NTypeName = np.array(NTypeName)
-    self.type_list = np.array(type_list)
+    self.type_list = type_list
     self.Z = np.array(Z)
 
     inp.close()
