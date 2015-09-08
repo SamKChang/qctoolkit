@@ -53,8 +53,8 @@ class QMResults(object):
             # save data of each process in the queue
             data = qmio.QMOut(out, self.program)
             Et_queue.put(
-              #{re.sub(self.path + "/", "", out) : 
-              {re.sub(".*/", "", out) : 
+              {re.sub(self.path + "/", "", out) : 
+              #{re.sub(".*/", "", out) : 
                np.array([data.Et, data.SCFStep])}
             )
 
