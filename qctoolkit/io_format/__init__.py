@@ -1,3 +1,5 @@
 __all__ = [
-  'cpmd'
+  'setting_pw',
+  'cpmd',
+  'vasp'
 ]

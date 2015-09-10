@@ -2,6 +2,8 @@ import qctoolkit as qtk
 import re, sys, os, copy, shutil
 import numpy as np
 from qctoolkit import utilities as ut
+import qctoolkit.io_format.setting_pw as pw
+import qctoolkit.io_format.qminp as qin
 
 def qmDir_inplace(inp, **kwargs):
   qps = qtk.pathStrip
@@ -76,104 +78,12 @@ def qmDir(inp, **kwargs):
     new_run = False
   return qps(inpdir), qps(inpname), qps(psinp), new_run, kwargs
 
-class Setting(object): 
-  def __init__(self): 
-    """
-    input setup should be manipulated here 
-    to provide general interface for other program
-    seperate setting is for flexibility of switching
-    different input struture
-    """
- 
-    # default settings
-    self.theory = "PBE" 
-    self.mode = "single_point" 
-    self.maxstep = 1000 
-    self.save_density = False 
- 
-    self.charge = 'auto'
-    self.multiplicity = 'auto'
-    self.cutoff = 100 
-    self.margin = 5 
-    self.center = np.array([0,0,0]) 
-    self.celldm = [20,20,20,0,0,0] 
-    self.unit = "Angstrom" 
-    self.symmetry = "isolated" 
-    self.mesh = 0 
-    self.kmesh = [1,1,1] 
-    self.ks_states = 0 
-    self.convergence = 1.0E-5
-    self.scale = [1,1,1]
-    self.shift = np.array([0,0,0])
-
-    self.set_multiplicity = False
-    self.set_charge = False
-    self.set_center = False
-    self.set_celldm = False
-    self.set_margin = False
-    self.set_mode = False
-    self.set_step = False
-    self.set_init_random = False
-    self.set_scale = False
-    self.set_convergence = False
-    self.debug = False
-    self.restart = False
-    self.kpoints = False
-    self.isolated = True
-    self.set_shift = False
-
-# put to setting? #
-  def q_symmetry(self):
-    a = self.celldm[3]
-    b = self.celldm[4]
-    c = self.celldm[5]
-    if self.isolated:
-      self.symmetry = 'isolated'
-      return '  ISOLATED'
-    elif a==0 and b==0 and c==0:
-      self.symmetry = 'orthorhombic'
-      return '  ORTHORHOMBIC'
-    elif a+b+c==0.5 and (a*b==0 or b*c==0 or c*a==0):
-      self.symmetry = 'triclinic'
-      return '  TRICLINIC'
-
-class inp(object):
+class inp(qin.PwInp):
   def __init__(self, structure_inp, info, **kwargs):
-    self.setting = Setting()
     self.atom_list = {}
     self.structure = qtk.geometry.Molecule()
-    if type(structure_inp) == str:
-      self.structure.read(structure_inp, **kwargs)
-    else:
-      self.structure = copy.deepcopy(structure_inp)
-    if self.structure.scale:
-      self.setting.scale = self.structure.scale
-      self.setting.set_scale = True
-      self.setting.isolated = False
-    if self.structure.celldm:
-      self.setting.celldm = self.structure.celldm
-      self.setting.set_celldm = True
-      self.setting.isolated = False
-    self.info = info
+    qin.PwInp.__init__(self, structure_inp, info, **kwargs)
 
-  def load_structure(self, new_structure, **kwargs):
-    self.structure.read(new_structure, **kwargs)
-    if self.setting.set_multiplicity:
-      _multiplicity = self.setting.multiplicity
-    else:
-      _multiplicity = 'auto'
-    if self.setting.set_charge:
-      _charge = self.setting.charge
-    else:
-      _charge = 'auto'
-
-    print self.setting.set_multiplicity
-    print _charge, _multiplicity
-    self.structure.setChargeMultiplicity(_charge,
-                                         _multiplicity,
-                                         **kwargs)
-   
-  # set atom pseudopotential string
   def PPString(self, atom_type, **kwargs):
     if 'ext' in kwargs:
       ext = kwargs['ext']

@@ -8,6 +8,9 @@ cpu_count = mp.cpu_count()
 memory = float(virtual_memory().total)/10**9
 qmcode = 'cpmd'
 
+# VASP setting
+PP = '/home/samio/Works/PhD/packages/VASP/PP'
+
 # QM executables
 cpmd_exe = 'cpmd.x'
 cpmd_cpmd2cube = 'cpmd2cube.x'

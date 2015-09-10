@@ -195,6 +195,10 @@ class QMInp(object):
     if re.match('cpmd', self.program):
       self.inp = cpmd.inp(structure_inp, self.info)
 #                          set_charge=self.set_charge)
+    elif self.program=='vasp':
+      self.inp = vasp.inp(structure_inp, self.info)
+    else:
+      ut.exit('program', self.program, 'is not implemented')
 
   def setAtom(self, atom_list, atom_string):
     _tmp = self.atom_count
