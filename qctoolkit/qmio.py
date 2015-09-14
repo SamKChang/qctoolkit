@@ -225,13 +225,17 @@ class QMInp(object):
     self.inp.info = info
 
   def setStructure(self, structure, **kwargs):
-    if 'reset' in kwargs:
-      reset=kwargs['reset']
+    if type(structure)==str:
+      self.inp.structure = geometry.Molecule()
+      self.inp.structure.read(structure)
     else:
-      reset=True
-    if reset:
-      self.atom_count = 0
-    self.inp.structure = copy.deepcopy(structure)
+      if 'reset' in kwargs:
+        reset=kwargs['reset']
+      else:
+        reset=True
+      if reset:
+        self.atom_count = 0
+      self.inp.structure = copy.deepcopy(structure)
 
   def setConvergence(self, convergence):
     self.inp.setting.convergence = convergence
@@ -284,6 +288,10 @@ class QMInp(object):
 
   def setTheory(self, theory):
     self.inp.setting.theory = theory
+
+  def setVDW(self, vdw):
+    self.inp.setting.vdw = vdw
+    self.inp.setting.set_vdw = True
 
   def setSCFStep(self, step):
     self.inp.setting.maxstep = step

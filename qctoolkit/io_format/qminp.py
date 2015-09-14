@@ -14,10 +14,7 @@ class PwInp(object):
       self.setting.scale = self.structure.scale
       self.setting.set_scale = True
       self.setting.isolated = False
-    if self.structure.celldm:
-      self.setting.celldm = self.structure.celldm
-      self.setting.set_celldm = True
-      self.setting.isolated = False
+    self.setting.celldm = self.structure.celldm
     self.info = info
 
   def load_structure(self, new_structure, **kwargs):

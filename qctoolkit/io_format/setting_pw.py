@@ -20,9 +20,9 @@ class Setting(object):
     self.margin = 5 
     self.center = np.array([0,0,0]) 
     self.celldm = [20,20,20,0,0,0] 
-    self.lattice = np.array([[20.0,  0.0,  0.0],
-                             [ 0.0, 20.0,  0.0],
-                             [ 0.0,  0.0, 20.0]])
+#    self.lattice = np.array([[20.0,  0.0,  0.0],
+#                             [ 0.0, 20.0,  0.0],
+#                             [ 0.0,  0.0, 20.0]])
     self.unit = "Angstrom" 
     self.symmetry = "isolated" 
     self.mesh = 0 
@@ -65,3 +65,12 @@ class Setting(object):
       self.symmetry = 'triclinic' 
       return '  TRICLINIC' 
 
+  def celldm2lattice(self):
+    cd = self.celldm
+    if cd[3]==0 and cd[4]==0 and cd[5]==0:
+      self.lattice = np.array([[cd[0],   0.0,   0.0],
+                               [  0.0, cd[1],   0.0],
+                               [  0.0,   0.0, cd[2]]])
+
+  def lattice2celldm():
+    pass

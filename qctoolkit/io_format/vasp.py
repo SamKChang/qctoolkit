@@ -2,6 +2,7 @@ import qctoolkit as qtk
 import qctoolkit.io_format.setting_pw as pw
 import qctoolkit.io_format.qminp as qin
 import os, sys, copy, shutil
+import numpy as np
 
 def qmDir():
   pass
@@ -19,7 +20,7 @@ class inp(qin.PwInp):
     if len(args) == 1:
       name = args[0]
       if os.path.exists(name):
-        if 'new_run' in kwargs and kwargs['new_run']:
+        if 'no_warning' in kwargs and kwargs['no_warning']:
           shutil.rmtree(name)
           cwd = os.getcwd()
           os.mkdir(name)
@@ -40,6 +41,32 @@ class inp(qin.PwInp):
     kpoints = open('KPOINTS', 'w') if name else sys.stdout
     poscar  = open('POSCAR', 'w')  if name else sys.stdout
     potcar  = open('POTCAR', 'w')  if name else sys.stdout
+
+    if not self.setting.set_center and self.setting.set_margin:
+      if not self.setting.set_celldm:
+        Rt = np.transpose(new_structure.R)
+        for i in xrange(0, 3):
+          self.setting.celldm[i] = (max(Rt[i]) - min(Rt[i]))\
+                                 + 2 * self.setting.margin
+        new_center=[min(Rt[i])-self.setting.margin \
+          for i in (0,1,2)]
+        new_structure.center(new_center)
+      else:
+        qtk.exit("celldm and margin is not compatible, "+\
+                 "also check 'center', 'shift'")
+
+    elif self.setting.set_center and not self.setting.set_margin:
+      new_structure.center(self.setting.center)
+ 
+    elif self.setting.set_center and self.setting.set_margin:
+      sys.exit("ERROR from io_format/cpmd.py->inp.write: " +\
+               "center and margin " + \
+               "can NOT be set simultaneously.")
+ 
+    if self.setting.set_shift:
+      new_structure.shift(self.setting.shift)
+
+
 
 
     # !!!!!!!!!!! TODO !!!!!!!!!!!
@@ -65,7 +92,6 @@ class inp(qin.PwInp):
 
     def getRlist(coord):
       R_list.append(coord)
-#      print " ".join(" % 8.4f" % x for x in coord)
 
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # construct to POSCAR and POTCAR data
@@ -98,6 +124,19 @@ class inp(qin.PwInp):
     print >> incar, "SYSTEM = %s" % self.info
     print >> incar, "ISMEAR = 0"
     print >> incar, "IBRION = 2"
+    if self.setting.set_vdw:
+      vdw = self.setting.vdw
+      if vdw=='d2':
+        print >> incar, "IVDW = 10"
+      elif vdw=='d3':
+        print >> incar, "IVDW = 11"
+      elif vdw=='d3-bj':
+        print >> incar, "IVDW = 12"
+      elif vdw=='mbd':
+        print >> incar, "IVDW = 20"
+    if new_structure.charge:
+      nve = new_structure.getValenceElectrons()
+      print >> incar, "NELECT = %d" % (nve)
 
     # !!!!!!!!!!!!!!!!
     # write to KPOINTS
@@ -113,6 +152,7 @@ class inp(qin.PwInp):
     qtk.report("vasp.inp", "writing", path+"POSCAR")
     print >> poscar, self.info
     print >> poscar, "1.0"
+    self.setting.celldm2lattice()
     for i in range(3):
       for j in range(3):
         print >> poscar, " %7.4f" % self.setting.lattice[i,j],
