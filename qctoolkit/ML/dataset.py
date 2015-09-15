@@ -81,7 +81,7 @@ class DataSet(object):
                           {'xyz':data}])
       self.data = qtk.parallelize(DataPoint,
                                   data_list,
-                                  self.threads)
+                                  threads=self.threads)
     else:
       for data in sorted(\
                     glob.glob(self.path + '/' + self.pattern)):
@@ -240,13 +240,18 @@ class DataSet(object):
     qtk.report("Minimum  error", min(self.error), min_name)
     
     def error_estimate(ker, vec):
-      kvec = np.dot(ker, vec.T)
-      nvec = np.linalg.norm(vec)
-      nkvec = np.linalg.norm(kvec)
+      tmp = np.vstack([ker, vec])
+      K = np.vstack([tmp.T, np.append(vec,1)]).T
+      old = np.linalg.det(ker)
+      new = np.linalg.det(K)
+      
+      #kvec = np.dot(ker, vec.T)
+      #nvec = np.linalg.norm(vec)
+      #nkvec = np.linalg.norm(kvec)
       # angle
       #return np.arccos(np.dot(kvec,vec)/nvec/nkvec)
       # length
-      return nkvec/nvec
+      return new/old
 
     #ee = error_estimate(self.kernelMatrix, self.kernelVectors[0])
     def error_i(i):
