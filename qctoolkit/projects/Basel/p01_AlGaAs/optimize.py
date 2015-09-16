@@ -7,7 +7,7 @@ def AlGaX_EvOpt(structure, vacancy_ind, ccs_span, **kwargs):
   if 'QMInp' in kwargs:
     baseinp = kwargs['QMInp']
   else:
-    inpp = qtk.QMInp(structure, 'cpmd')
+    baseinp = qtk.QMInp(structure, 'cpmd')
   if 'T' in kwargs:
     _T = kwargs['T']
   else:

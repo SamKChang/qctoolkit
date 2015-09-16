@@ -58,10 +58,13 @@ class GeneticOptimizer(opt.Optimizer):
 
       for i in range(len(pop_list)):
         fit.append(qout.get())
+      print fit
       fit = list(np.array(sorted(
               fit, key=operator.itemgetter(1)))[:,0])
-      output = np.array(fit)
-    return list(output[:,0]), list(output[:,1])
+    output = np.array(fit)
+    print output
+    #return list(output[:,0]), list(output[:,1])
+    return list(output), list(output)
 
   def pop_sort(self):
     pop_sorted = [[fit, out, pop] for fit, out, pop in\

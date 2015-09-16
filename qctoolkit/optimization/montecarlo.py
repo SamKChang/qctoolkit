@@ -50,7 +50,10 @@ class MonteCarlo(opt.Optimizer, opt.Temperature):
   # MonteCarlo sampling function, MAIN ROUTINE
   def sample(self, *args):
     def boltzmann(dE):
-      return np.exp(-abs(dE)/float(self.T))
+      if self.T > 0:
+        return np.exp(-abs(dE)/float(self.T))
+      else:
+        return 0
     if len(args) == 1:
       new_coord = args[0]
     else:
@@ -75,12 +78,13 @@ class MonteCarlo(opt.Optimizer, opt.Temperature):
           self.sample_itr += 1 # record MonteCarlo iteration
           if self.parallel == 1 or self.step == 1:
             # iterative run for serial job
-            penalty, out = self.sample()[0]
+            penalty, out, _ = self.sample()
           # only first finished thread put to queue
           elif self.qout.empty():
             # iterative run for parallel case
             try:
-              penalty, out = self.sample()[0]
+              penalty, out, _ = self.sample()
+              print penalty, out
             # error produced for NoneType return
             except TypeError:
               qtk.report("MonteCarlo", 

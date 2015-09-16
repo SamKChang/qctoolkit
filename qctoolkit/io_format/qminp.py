@@ -1,5 +1,6 @@
 import qctoolkit as qtk
 import qctoolkit.io_format.setting_pw as pw
+import copy
 
 class PwInp(object):
   def __init__(self, structure_inp, info, **kwargs):

@@ -164,10 +164,10 @@ class Molecule(object):
       index_list = [index_list]
     index_list = map(lambda a: a-1, index_list)
     self.N = len(index_list)
-    self.R = np.array([coord for coord in self.R[index_list]])
-    self.Z = np.array([coord for coord in self.Z[index_list]])
+    self.R = np.array([self.R[i] for i in index_list])
+    self.Z = np.array([self.Z[i] for i in index_list])
     self.type_list = \
-      [coord for coord in self.type_list[index_list]]
+      [self.type_list[i] for i in index_list]
 
   def have_bond(self, type_a, type_b):
     result = False
