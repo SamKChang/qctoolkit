@@ -1,6 +1,7 @@
 import qctoolkit as qtk
 import qctoolkit.ccs as qcs
 import qctoolkit.optimization as qop
+import qctoolkit.alchemy as qal
 import copy, shutil, os, glob
 
 def AlGaX_EvOpt(structure, vacancy_ind, ccs_span, **kwargs):
@@ -189,12 +190,11 @@ def Ev_ccs(ccs_coord, ccs_span, vacancy_index, **kwargs):
   inp_wv.write(vacancyinp, no_warning=True)
 
   if alchem:
-    out_wov = qtk.QMRun(perfectinp, inp_wov.program,
-                        threads=_threads,
-                        alchemScan=True,
-                        alchemRefPath=perfect_ref,
-                        cleanup=True,
-                        alchemRefPrefix='')
+    out_wov = qal.FirstOrderRun(perfectinp, inp_wov.program,
+                                threads=_threads,
+                                ref_path=perfect_ref,
+                                cleanup=True,
+                                alchemRefPrefix='')
   else:
     out_wov = qtk.QMRun(perfectinp, inp_wov.program,
                         cleanup=True,
@@ -202,12 +202,11 @@ def Ev_ccs(ccs_coord, ccs_span, vacancy_index, **kwargs):
   os.remove(perfectinp)
 
   if alchem:
-    out_wv = qtk.QMRun(vacancyinp, inp_wv.program,
-                        threads=_threads,
-                        alchemScan=True,
-                        alchemRefPath=vacancy_ref,
-                        cleanup=True,
-                        alchemRefPrefix='')
+    out_wv = qal.FirstOrderRun(vacancyinp, inp_wv.program,
+                               threads=_threads,
+                               ref_path=vacancy_ref,
+                               cleanup=True,
+                               alchemRefPrefix='')
   else:
     out_wv = qtk.QMRun(vacancyinp, inp_wv.program,
                         cleanup=True,

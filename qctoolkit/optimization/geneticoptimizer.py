@@ -32,6 +32,8 @@ class GeneticOptimizer(opt.Optimizer):
       for coord in pop_list:
         out = self.evaluate(coord, self.penalty_input)
         fit.append(out[0])
+      output = np.array(fit)
+      return list(output), list(output)
     else:
 
       def run_job(qinp, qout):
@@ -61,10 +63,8 @@ class GeneticOptimizer(opt.Optimizer):
       print fit
       fit = list(np.array(sorted(
               fit, key=operator.itemgetter(1)))[:,0])
-    output = np.array(fit)
-    print output
-    #return list(output[:,0]), list(output[:,1])
-    return list(output), list(output)
+      output = np.array(fit)
+      return list(output[:,0]), list(output[:,1])
 
   def pop_sort(self):
     pop_sorted = [[fit, out, pop] for fit, out, pop in\

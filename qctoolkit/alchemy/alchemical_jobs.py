@@ -28,13 +28,13 @@ def FirstOrderRun(inp, program=qtk.setting.qmcode, **kwargs):
       else:
         rst = 'RESTART.1'
       ref = kwargs['ref_path']
-      rst_src = ref + '/' + rst
+      rst_src = os.path.join(ref, rst)
       if not os.path.exists(ref):
         qtk.exit("FirstOrderRun: ref_path", ref, "not found")
       if not os.path.exists(rst_src):
         qtk.exit("FirstOrderRun: RESTART file", 
                  rst_src, "not found")
-      rst_trg = inpdir + '/RESTART'
+      rst_trg = os.path.join(inpdir, 'RESTART')
       os.link(rst_src, rst_trg)
   
       cwd = os.getcwd()
