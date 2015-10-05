@@ -11,6 +11,25 @@ import operator
 from compiler.ast import flatten
 import qctoolkit.elements as qel
 
+def imported(module):
+  try:
+    __import__(module)
+  except ImportError:
+    return False
+  else:
+    return True
+
+def Structure(input_data):
+  if type(input_data) is not qg.Molecule:
+    mol = qg.Molecule()
+    try:
+      mol.read(input_data)
+      return mol
+    except:
+      raise RuntimeError('error while reading ' + input_data)
+  else:
+    return input_data
+
 def pathStrip(path):
   new_path = re.sub('//*','/',path)
   new_path = re.sub(r'([^\.])\.\/',r"\1",new_path)

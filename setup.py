@@ -51,6 +51,7 @@ setup(name='qctoolkit',
     'qctoolkit.optimization',
     'qctoolkit.ML',
     'qctoolkit.alchemy',
+    'qctoolkit.properties',
     'qctoolkit'
   ],
   package_data={'': ['elements/elements.yml']},

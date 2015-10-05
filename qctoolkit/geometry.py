@@ -1,8 +1,11 @@
 import numpy as np
 import utilities as ut
 import re, os, sys, copy, operator
+from time import sleep
 
 class Molecule(object):
+  # used for pymol numeration
+  mol_id = 0
   def __init__(self):
     # number of atoms
     self.N = 0
@@ -39,7 +42,6 @@ class Molecule(object):
       pass
 
   def view(self):
-    import pymol
     tmp = copy.deepcopy(self)
     if self.celldm and self.scale:
       try:
@@ -48,10 +50,17 @@ class Molecule(object):
                        / float(tmp.scale[i])
       except AttributeError:
         pass
-    pymol.finish_launching()
-    tmp_file = 'pymol_tmp_'+str(os.getpid())+'.xyz'
+
+    if ut.imported('pymol'):
+      import pymol
+      pymol.finish_launching()
+    else:
+      pymol.cmd.reinitialize()
+      sleep(0.5)
+    tmp_file = 'pymol_tmp_' + str(Molecule.mol_id) + '.xyz'
+    Molecule.mol_id = Molecule.mol_id + 1
     tmp.write_xyz(tmp_file)
-    pymol.cmd.load(tmp_file, 'structure')
+    pymol.cmd.load(tmp_file)
     os.remove(tmp_file)
 
   def distance(self, i, j):

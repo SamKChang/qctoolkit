@@ -9,7 +9,9 @@ import numpy as np
 import utilities as ut
 from qctoolkit.io_format import *
 import qctoolkit.read_cube as rq
-import pylab as pl
+#import pylab as pl
+import matplotlib.pyplot as pl
+import setting
 
 class CUBE(object):
   """
@@ -179,7 +181,10 @@ class CUBE(object):
       return _out
 
 class QMInp(object):
-  def __init__(self, structure_inp, program, **kwargs):
+  def __init__(self, 
+               structure_inp, 
+               program=setting.qmcode, 
+               **kwargs):
     self.program = program
     self.atom_count = 0
     if 'info' in kwargs:
@@ -199,6 +204,9 @@ class QMInp(object):
       self.inp = vasp.inp(structure_inp, self.info)
     else:
       ut.exit('program', self.program, 'is not implemented')
+
+  def view(self):
+    self.inp.structure.view()
 
   def setAtom(self, atom_list, atom_string):
     _tmp = self.atom_count

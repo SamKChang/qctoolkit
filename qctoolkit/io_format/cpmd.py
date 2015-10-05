@@ -90,12 +90,15 @@ class inp(qin.PwInp):
     else:
       ext = '.psp'
     if atom_type.title() in kwargs:
+      # not using?
       return atom_type.title() + kwargs[atom_type.title()]
+    # default case
+    if self.setting.vdw == 'DCACP':
+      return atom_type.title() + '_dcacp_' + \
+             self.setting.theory.lower() + ext
     else:
       return atom_type.title() + "_q" + str(qtk.n2ve(atom_type))\
              + "_" + self.setting.theory.lower() + ext
-    
-
 
   # CPMD input format
   def write(self, *args, **kwargs):
@@ -250,8 +253,11 @@ class inp(qin.PwInp):
     type_list = new_structure.type_list
     atom_list = self.atom_list
     Z = new_structure.Z
+    # loop through sorted atom type indices
     for atom_type in xrange(0,len(type_index)-1):
+      # number of each atom type
       type_n = type_index[atom_type+1] - type_index[atom_type]
+      # check for manually added atom type
       if atom_list.has_key(str(Z[type_index[atom_type]])):
         key = str(Z[type_index[atom_type]])
         AtomPP = atom_list[key]
@@ -260,11 +266,13 @@ class inp(qin.PwInp):
         else:
           print >>inp, "*" + atom_list[key]
         del atom_list[str(Z[type_index[atom_type]])]
+      # default PP string
       else:
         print >>inp, "*" + \
                 PP(new_structure.type_list[type_index[atom_type]],
                    **kwargs)
       print >>inp, " LMAX=F\n" + "  " + str(type_n)
+      # loop through each atom in each type
       for I in\
         xrange(type_index[atom_type],type_index[atom_type+1]):
         print >>inp, "  " + \

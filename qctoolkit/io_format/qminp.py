@@ -6,16 +6,20 @@ class PwInp(object):
   def __init__(self, structure_inp, info, **kwargs):
     self.setting = pw.Setting()
     self.atom_list = {}
-    self.structure = qtk.geometry.Molecule()
-    if type(structure_inp) == str:
-      self.structure.read(structure_inp, **kwargs)
-    else:
-      self.structure = copy.deepcopy(structure_inp)
+
+    self.structure = qtk.Structure(structure_inp)
+#    self.structure = qtk.geometry.Molecule()
+#    if type(structure_inp) == str:
+#      self.structure.read(structure_inp, **kwargs)
+#    else:
+#      self.structure = copy.deepcopy(structure_inp)
+
     if self.structure.scale:
       self.setting.scale = self.structure.scale
       self.setting.set_scale = True
       self.setting.isolated = False
-    self.setting.celldm = self.structure.celldm
+    if self.structure.celldm:
+      self.setting.celldm = self.structure.celldm
     self.info = info
 
   def load_structure(self, new_structure, **kwargs):
