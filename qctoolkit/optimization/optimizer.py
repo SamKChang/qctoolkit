@@ -94,6 +94,12 @@ class Optimizer(object):
     else:
       self.target = 0
 
+    if 'converge_length' in kwargs:
+      self.converge_length = kwargs['converge_length']
+    else:
+      self.converge_length = 20
+    
+    self.conv_itr = 0
     self.log_step = 1
 
 
@@ -157,16 +163,29 @@ class Optimizer(object):
   # !!!!!!!!!!!!!!!!!!!!!!!!!!
   # convergence/max_step check
   def converged(self):
+    # first step is set to NOT converge
     if len(self.penalty)>1:
+      # if get to target
       if self.penalty[-1] < self.cutoff:
         self.logfile.close()
         return True
+      # if stuck at best solution
+      elif self.penalty[-1] == self.penalty[-2]:
+        if self.conv_itr > self.converge_length:
+          self.logfile.close()
+          return True
+        else:
+          self.conv_itr = self.conv_itr + 1
+          return False
+      # if reach max step
       elif self.step >= self.max_step:
-        qtk.report("Optimizer", "not max_step reached stop",
+        qtk.report("Optimizer", "max_step reached stopping",
                    color='red')
         self.logfile.close()
         return True
-      else: return False
+      else: 
+        self.conv_itr = 0
+        return False
     else: return False
 
     # average over length...
