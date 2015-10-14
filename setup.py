@@ -54,7 +54,8 @@ setup(name='qctoolkit',
     'qctoolkit.properties',
     'qctoolkit'
   ],
-  package_data={'': ['elements/elements.yml']},
+  package_data={'': ['elements/elements.yml', 
+                     'data/PP/cpmd/*.psp']},
   include_package_data=True,
   ext_modules = cythonize(c_module)
 )

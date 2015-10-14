@@ -1,0 +1,39 @@
+ &ATOM
+  Z  =   3.00000000000000000
+  ZV =   3.00000000000000000
+  XC = 1134    .6666666667
+  TYPE = NORMCONSERVING GOEDECKER
+ &END
+ &INFO
+ ****************************************************************
+
+ Atomic symbol                       : Li
+
+ Atomic number                       :   3
+ Effective core charge               :   3
+ Number of core states               :   0
+ Number of valence states            :  10
+ Electronic configuration (s,p,d,...):     3
+
+ Exchange-correlation functional     : PBE
+
+       r(loc)         C(1)         C(2)         C(3)         C(4)
+     0.400000   -14.081155     9.626220    -1.783616     0.085152
+
+ Please cite:
+
+ - S. Goedecker, M. Teter, and J. Hutter,
+   Phys. Rev. B 54, 1703 (1996)
+ - C. Hartwigsen, S. Goedecker, and J. Hutter,
+   Phys. Rev. B 58, 3641 (1998)
+ - M. Krack,
+   Theor. Chem. Acc. 114, 145 (2005)
+
+ ****************************************************************
+ &END
+ &POTENTIAL
+     GOEDECKER
+ 0                                    LMAX
+       .400000000                                 RC
+   4   -14.081154550     9.626219615    -1.783616053      .085152068   #C  C1 C2 C3 C4
+ &END

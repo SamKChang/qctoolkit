@@ -40,6 +40,8 @@ be obtained by the --record flag during install
 * PyYAML 3.11
 * cython
 * psutil
+* networkx
+* periodictable
 * And standard libraries: sys, re, os, glob, math, subprocess, multiprocessing, copy, collections, compiler.ast, shutil, fileinput, operator, inspect
 * pymol is also used for visualization
 

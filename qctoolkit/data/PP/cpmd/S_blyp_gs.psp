@@ -1,0 +1,47 @@
+ &ATOM
+  Z  =   16.0000000000000000
+  ZV =   6.00000000000000000
+  XC = 1312    .6666666667
+  TYPE = NORMCONSERVING GOEDECKER
+ &END
+ &INFO
+ ****************************************************************
+
+ Atomic symbol                       : S
+
+ Atomic number                       :  16
+ Effective core charge               :   6
+ Number of core states               :   3
+ Number of valence states            :  13
+ Electronic configuration (s,p,d,...):     2    4
+
+ Exchange-correlation functional     : BLYP
+
+       r(loc)         C(1)
+     0.420000    -5.988800
+
+         r(0)     h(i,j)^0
+     0.369733    12.556484    -3.912905
+                               5.051538
+         r(1)     h(i,j)^1
+     0.412876     3.587721
+
+ Please cite:
+
+ - S. Goedecker, M. Teter, and J. Hutter,
+   Phys. Rev. B 54, 1703 (1996)
+ - C. Hartwigsen, S. Goedecker, and J. Hutter,
+   Phys. Rev. B 58, 3641 (1998)
+ - M. Krack,
+   Theor. Chem. Acc. 114, 145 (2005)
+
+ ****************************************************************
+ &END
+ &POTENTIAL
+     GOEDECKER
+ 2                                    LMAX
+       .420000000                                 RC
+   1    -5.988800453   #C  C1
+       .369732662  2  12.556484500  -3.912904585   5.051538098 H(s) 11 12 22           
+       .412875713  1   3.587721138 H(p) 11                 
+ &END

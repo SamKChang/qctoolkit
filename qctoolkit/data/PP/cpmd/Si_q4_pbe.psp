@@ -1,0 +1,47 @@
+ &ATOM
+  Z  =   14.0000000000000000
+  ZV =   4.00000000000000000
+  XC = 1134    .6666666667
+  TYPE = NORMCONSERVING GOEDECKER
+ &END
+ &INFO
+ ****************************************************************
+
+ Atomic symbol                       : Si
+
+ Atomic number                       :  14
+ Effective core charge               :   4
+ Number of core states               :   3
+ Number of valence states            :  13
+ Electronic configuration (s,p,d,...):     2    2
+
+ Exchange-correlation functional     : PBE
+
+       r(loc)         C(1)
+     0.440000    -6.269288
+
+         r(0)     h(i,j)^0
+     0.435634     8.951742    -2.706271
+                               3.493781
+         r(1)     h(i,j)^1
+     0.497942     2.431277
+
+ Please cite:
+
+ - S. Goedecker, M. Teter, and J. Hutter,
+   Phys. Rev. B 54, 1703 (1996)
+ - C. Hartwigsen, S. Goedecker, and J. Hutter,
+   Phys. Rev. B 58, 3641 (1998)
+ - M. Krack,
+   Theor. Chem. Acc. 114, 145 (2005)
+
+ ****************************************************************
+ &END
+ &POTENTIAL
+     GOEDECKER
+ 2                                    LMAX
+       .440000000                                 RC
+   1    -6.269288327   #C  C1
+       .435633828  2   8.951741502  -2.706270817   3.493780601 H(s) 11 12 22           
+       .497942179  1   2.431276734 H(p) 11                 
+ &END

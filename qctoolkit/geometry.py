@@ -2,11 +2,15 @@ import numpy as np
 import utilities as ut
 import re, os, sys, copy, operator
 from time import sleep
+import networkx
+from networkx.algorithms.components.connected import connected_components
+import periodictable as pt
+import collections
 
 class Molecule(object):
   # used for pymol numeration
   mol_id = 0
-  def __init__(self):
+  def __init__(self, mol=None):
     # number of atoms
     self.N = 0
     # atom coordinates
@@ -22,14 +26,19 @@ class Molecule(object):
     self.index = 0
     self.bonds = {}
     self.bond_types = {}
+    self.segments = []
     self.scale = False
     self.celldm = False
+    if mol:
+      self.read(mol)
 
   def __add__(self, other):
     out = Molecule()
     out.N = self.N + other.N
     out.R = np.vstack([self.R, other.R])
     out.Z = np.hstack([self.Z, other.Z])
+    out.type_list = np.hstack([self.type_list, other.type_list])
+    out.charge = self.charge + other.charge
     return out
 
   def cyl2xyz(self):
@@ -52,6 +61,7 @@ class Molecule(object):
         pass
 
     if ut.imported('pymol'):
+      ut.report("Molecule", "initializing pymol...")
       import pymol
       pymol.finish_launching()
     else:
@@ -70,12 +80,41 @@ class Molecule(object):
     Rj = self.R[j]
     return np.linalg.norm(Ri - Rj)
 
-  def find_bonds(self):
+  def find_bonds(self, ratio = 1.1):
+    ut.report("Molecule", "finding bonds with cutoff ratio", ratio)
+    def to_graph(l):
+      G = networkx.Graph()
+      for part in l:
+        # each sublist is a bunch of nodes
+        G.add_nodes_from(part)
+        # it also imlies a number of edges:
+        G.add_edges_from(to_edges(part))
+      return G
+    
+    def to_edges(l):
+      """ 
+      treat `l` as a Graph and returns it's edges 
+      to_edges(['a','b','c','d']) -> [(a,b), (b,c),(c,d)]
+      """
+      it = iter(l)
+      last = next(it)
+    
+      for current in it:
+        yield last, current
+        last = current 
     itr = 0
+    bond_list = []
     for i in xrange(self.N):
       for j in xrange(i+1, self.N):
         d_ij = np.linalg.norm(self.R[i,:] - self.R[j,:])
-        if d_ij < 1.75:
+        atom_i = getattr(pt, self.type_list[i])
+        atom_j = getattr(pt, self.type_list[j])
+        Ri = atom_i.covalent_radius + \
+             atom_i.covalent_radius_uncertainty
+        Rj = atom_j.covalent_radius + \
+             atom_j.covalent_radius_uncertainty
+        Dij = (Ri+Rj) * float(ratio)
+        if d_ij < Dij:
           if self.Z[i] < self.Z[j]:
             atom_begin = self.Z[i]
             atom_end = self.Z[j]
@@ -91,6 +130,7 @@ class Molecule(object):
                              'atom_end'    : atom_end,
                              'index_end'   : index_end,
                              'length'      : d_ij}
+          bond_list.append([i, j])
           type_begin = ut.Z2n(atom_begin)
           type_end   = ut.Z2n(atom_end)
           bond_type  = type_begin + "-" + type_end
@@ -99,6 +139,19 @@ class Molecule(object):
           else:
             self.bond_types[bond_type] = 1
           itr += 1
+    segments = list(connected_components(to_graph(bond_list)))
+    for s in range(len(segments)):
+      new_mol = Molecule()
+      new_mol.N = len(segments[s])
+      new_mol.R = copy.deepcopy(self.R[segments[s]])
+      new_mol.Z = copy.deepcopy(self.Z[segments[s]])
+      new_mol.type_list = [self.type_list[i]\
+                           for i in segments[s]]
+      # need to check charge
+      multiplicity = new_mol.getValenceElectrons() % 2
+      if multiplicity:
+        new_mol.setChargeMultiplicity(-1,1)
+      self.segments.append(new_mol)
 
   def getCenter(self):
     return np.sum(self.R, axis=0)/self.N
@@ -137,7 +190,6 @@ class Molecule(object):
         inertia[i,j] = -sum(coord_i*coord_j*weight)
     I, U = np.linalg.eigh(inertia)
     return sorted(I,reverse=True), U[I.argsort()[::-1]]
-          
 
   def setAtom(self, index, element):
     index -= 1
@@ -279,14 +331,6 @@ class Molecule(object):
     if index_a[-1] == index_b[-1] and index_a[-1] == 0:
       self.index = sorted(np.insert(self.index, \
                                     0, len(self.index)))
-#    data = np.hstack([np.transpose(np.atleast_2d(self.Z)), self.R])
-#    data = data[data[:,0].argsort()]
-#    print self.type_list, self.Z
-#    Z2n_vec = np.vectorize(ut.Z2n)
-#    self.Z = data[:,0].astype(int)
-#    self.type_list = Z2n_vec(self.Z)
-#    self.R = data[:,1:4]
-#
 
   def sort_coord(self, **kwargs):
     if 'order' in kwargs:
@@ -380,6 +424,20 @@ class Molecule(object):
 
     xyz_in.close()
 
+  def stoichiometry(self, **kwargs):
+    elements = collections.Counter(sorted(self.Z))
+    data = zip(elements.keys(), elements.values())
+    data.sort(key=lambda tup: tup[0])
+    if 'format' not in kwargs:
+      kwargs['format'] = 'string'
+    if kwargs['format'] == 'list':
+      return data
+    elif kwargs['format'] == 'string':
+      out = ''
+      for element in data:
+        out = out + ut.Z2n(element[0]) + str(element[1])
+      return out
+
   # write xyz format to file
   def write_xyz(self, *args):
     if len(args) == 1:
@@ -398,6 +456,51 @@ class Molecule(object):
 
     if not re.match("",name):
       out.close()
+
+  # write pdb format to file
+  # amino acid is not implemented!
+  def write_pdb(self, *args, **kwargs):
+    if len(args) == 1:
+      name = args[0]
+    else: name = ''
+    out = sys.stdout if not name else open(name,"w")
+    if len(self.segments) == 0:
+      self.find_bonds()
+    print >> out, "%-10s%s" % ('COMPND', self.stoichiometry())
+    print >> out, "%-10s%s" % ('AUTHOR', 'QCTOOLKIT')
+    chain = 1
+    itr = 1
+
+    def connect(molecule, shift, connection):
+      molecule.find_bonds()
+      for i in molecule.bonds.iterkeys():
+        bond = molecule.bonds[i]
+        ai = bond['index_begin'] + shift
+        aj = bond['index_end'] + shift
+        connection = connection +\
+          "%-6s%4d %4d\n" % ('CONECT', ai, aj)
+      return connection
+
+    connection = ''
+    for segment in self.segments:
+      for i in range(segment.N):
+        atom = segment.type_list[i]
+        xi = segment.R[i, 0]
+        yi = segment.R[i, 1]
+        zi = segment.R[i, 2]
+        #"% 7.3f % 7.3f % 7.3f%6.2f%6.2f%12s" %\
+        print >> out, "%-6s%5d%3s%6s%6d     " %\
+          ('ATOM', itr+i, atom.upper(), 'LIG', chain) +\
+          "% 7.3f % 7.3f % 7.3f%6.2f%6.2f%12s" %\
+          (xi, yi, zi, 1, 0, atom)
+      connection = connect(segment, itr, connection)
+      itr = itr + segment.N
+      chain = chain + 1
+    print >> out, connection,
+    print >> out, "END"
+    if not re.match("",name):
+      out.close()
+
 
   # read structure from CPMD input
   def read_cpmdinp(self, name):

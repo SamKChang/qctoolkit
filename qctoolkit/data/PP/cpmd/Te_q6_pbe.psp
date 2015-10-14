@@ -1,0 +1,52 @@
+ &ATOM
+  Z  =      52.00000000000000     
+  ZV =      6.000000000000000     
+  XC = 1134   0.6666666667
+  TYPE = NORMCONSERVING GOEDECKER
+ &END
+ &INFO
+ ****************************************************************
+
+ Atomic symbol                       : Te
+
+ Atomic number                       :  52
+ Effective core charge               :   6
+ Number of core states               :   9
+ Number of valence states            :  13
+ Electronic configuration (s,p,d,...):     2    4
+
+ Exchange-correlation functional     : PBE
+
+       r(loc)         C(1)
+     0.575000     8.713649
+
+         r(0)     h(i,j)^0
+     0.574922     1.401813     0.978780    -0.486306
+                              -2.054576     1.255637
+                                           -0.996631
+         r(1)     h(i,j)^1
+     0.589891     0.764789     0.323986
+                              -0.383346
+         r(2)     h(i,j)^2
+     0.813389     0.344858
+
+ Please cite:
+
+ - S. Goedecker, M. Teter, and J. Hutter,
+   Phys. Rev. B 54, 1703 (1996)
+ - C. Hartwigsen, S. Goedecker, and J. Hutter,
+   Phys. Rev. B 58, 3641 (1998)
+ - M. Krack,
+   Theor. Chem. Acc. 114, 145 (2005)
+
+ ****************************************************************
+ &END
+ &POTENTIAL
+     GOEDECKER
+            3                                    LMAX
+      0.575000000                                 RC
+   1     8.713648681   #C  C1
+      0.574922399  3   1.401812729   0.978779916  -0.486306023  -2.054576244   1.255636753  -0.996630775 H(s) 11 12 13 22 23 33  
+      0.589890763  2   0.764788655   0.323986231  -0.383345678 H(p) 11 12 22           
+      0.813389249  1   0.344858203 H(d) 11                 
+ &END

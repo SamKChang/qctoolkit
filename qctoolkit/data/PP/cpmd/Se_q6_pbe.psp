@@ -1,0 +1,52 @@
+ &ATOM
+  Z  =      34.00000000000000     
+  ZV =      6.000000000000000     
+  XC = 1134   0.6666666667
+  TYPE = NORMCONSERVING GOEDECKER
+ &END
+ &INFO
+ ****************************************************************
+
+ Atomic symbol                       : Se
+
+ Atomic number                       :  34
+ Effective core charge               :   6
+ Number of core states               :   6
+ Number of valence states            :  13
+ Electronic configuration (s,p,d,...):     2    4
+
+ Exchange-correlation functional     : PBE
+
+       r(loc)
+     0.510000
+
+         r(0)     h(i,j)^0
+     0.432460     6.518110    -0.222716    -1.196129
+                              -1.657978     3.088392
+                                           -2.451335
+         r(1)     h(i,j)^1
+     0.470492     2.281262     0.365335
+                              -0.432271
+         r(2)     h(i,j)^2
+     0.625600     0.439799
+
+ Please cite:
+
+ - S. Goedecker, M. Teter, and J. Hutter,
+   Phys. Rev. B 54, 1703 (1996)
+ - C. Hartwigsen, S. Goedecker, and J. Hutter,
+   Phys. Rev. B 58, 3641 (1998)
+ - M. Krack,
+   Theor. Chem. Acc. 114, 145 (2005)
+
+ ****************************************************************
+ &END
+ &POTENTIAL
+     GOEDECKER
+            3                                    LMAX
+      0.510000000                                 RC
+   0   #C 
+      0.432460050  3   6.518109904  -0.222716390  -1.196128993  -1.657978329   3.088391780  -2.451334980 H(s) 11 12 13 22 23 33  
+      0.470491623  2   2.281262234   0.365335294  -0.432270549 H(p) 11 12 22           
+      0.625600343  1   0.439799479 H(d) 11                 
+ &END

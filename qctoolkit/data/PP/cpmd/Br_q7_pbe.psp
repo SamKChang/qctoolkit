@@ -1,0 +1,52 @@
+ &ATOM
+  Z  =      35.00000000000000     
+  ZV =      7.000000000000000     
+  XC = 1134   0.6666666667
+  TYPE = NORMCONSERVING GOEDECKER
+ &END
+ &INFO
+ ****************************************************************
+
+ Atomic symbol                       : Br
+
+ Atomic number                       :  35
+ Effective core charge               :   7
+ Number of core states               :   6
+ Number of valence states            :  13
+ Electronic configuration (s,p,d,...):     2    5
+
+ Exchange-correlation functional     : PBE
+
+       r(loc)
+     0.500000
+
+         r(0)     h(i,j)^0
+     0.438039     6.078556     0.330498    -1.238382
+                              -2.440900     3.197489
+                                           -2.537928
+         r(1)     h(i,j)^1
+     0.453136     2.459304     0.522753
+                              -0.618530
+         r(2)     h(i,j)^2
+     0.567714     0.559266
+
+ Please cite:
+
+ - S. Goedecker, M. Teter, and J. Hutter,
+   Phys. Rev. B 54, 1703 (1996)
+ - C. Hartwigsen, S. Goedecker, and J. Hutter,
+   Phys. Rev. B 58, 3641 (1998)
+ - M. Krack,
+   Theor. Chem. Acc. 114, 145 (2005)
+
+ ****************************************************************
+ &END
+ &POTENTIAL
+     GOEDECKER
+            3                                    LMAX
+      0.500000000                                 RC
+   0   #C 
+      0.438038916  3   6.078556320   0.330498171  -1.238382258  -2.440900198   3.197489241  -2.537928406 H(s) 11 12 13 22 23 33  
+      0.453135610  2   2.459303807   0.522753133  -0.618529849 H(p) 11 12 22           
+      0.567713828  1   0.559266446 H(d) 11                 
+ &END

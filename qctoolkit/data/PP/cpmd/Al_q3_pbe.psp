@@ -1,0 +1,47 @@
+ &ATOM
+  Z  =   13.0000000000000000
+  ZV =   3.00000000000000000
+  XC = 1134    .6666666667
+  TYPE = NORMCONSERVING GOEDECKER
+ &END
+ &INFO
+ ****************************************************************
+
+ Atomic symbol                       : Al
+
+ Atomic number                       :  13
+ Effective core charge               :   3
+ Number of core states               :   3
+ Number of valence states            :  13
+ Electronic configuration (s,p,d,...):     2    1
+
+ Exchange-correlation functional     : PBE
+
+       r(loc)         C(1)
+     0.450000    -7.554761
+
+         r(0)     h(i,j)^0
+     0.487435     6.959938    -1.888836
+                               2.438477
+         r(1)     h(i,j)^1
+     0.562189     1.865299
+
+ Please cite:
+
+ - S. Goedecker, M. Teter, and J. Hutter,
+   Phys. Rev. B 54, 1703 (1996)
+ - C. Hartwigsen, S. Goedecker, and J. Hutter,
+   Phys. Rev. B 58, 3641 (1998)
+ - M. Krack,
+   Theor. Chem. Acc. 114, 145 (2005)
+
+ ****************************************************************
+ &END
+ &POTENTIAL
+     GOEDECKER
+ 2                                    LMAX
+       .450000000                                 RC
+   1    -7.554761264   #C  C1
+       .487435290  2   6.959938324  -1.888835844   2.438476589 H(s) 11 12 22           
+       .562189490  1   1.865298566 H(p) 11                 
+ &END

@@ -1,0 +1,39 @@
+ &ATOM
+  Z  =   4.00000000000000000
+  ZV =   4.00000000000000000
+  XC = 1134    .6666666667
+  TYPE = NORMCONSERVING GOEDECKER
+ &END
+ &INFO
+ ****************************************************************
+
+ Atomic symbol                       : Be
+
+ Atomic number                       :   4
+ Effective core charge               :   4
+ Number of core states               :   0
+ Number of valence states            :  10
+ Electronic configuration (s,p,d,...):     4
+
+ Exchange-correlation functional     : PBE
+
+       r(loc)         C(1)         C(2)         C(3)         C(4)
+     0.325000   -24.067467    17.279022    -3.339106     0.165549
+
+ Please cite:
+
+ - S. Goedecker, M. Teter, and J. Hutter,
+   Phys. Rev. B 54, 1703 (1996)
+ - C. Hartwigsen, S. Goedecker, and J. Hutter,
+   Phys. Rev. B 58, 3641 (1998)
+ - M. Krack,
+   Theor. Chem. Acc. 114, 145 (2005)
+
+ ****************************************************************
+ &END
+ &POTENTIAL
+     GOEDECKER
+ 0                                    LMAX
+       .325000000                                 RC
+   4   -24.067466840    17.279021860    -3.339106289      .165549125   #C  C1 C2 C3 C4
+ &END
