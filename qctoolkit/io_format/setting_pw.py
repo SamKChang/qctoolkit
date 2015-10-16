@@ -13,6 +13,7 @@ class Setting(object):
     self.mode = "single_point" 
     self.maxstep = 1000 
     self.save_density = False 
+    self.PPext = ''
  
     self.charge = 'auto'
     self.multiplicity = 'auto'
@@ -31,7 +32,12 @@ class Setting(object):
     self.convergence = 1.0E-5
     self.scale = [1,1,1]
     self.shift = np.array([0,0,0])
-    self.vdw = 'None'
+    #self.vdw = 'None'
+    self.vdw = False
+    self.temperature = 325
+    self.temp_tolerance = 50
+    self.md_sample_rate = 10
+    self.md_step = 10000
 
     self.set_multiplicity = False
     self.set_charge = False

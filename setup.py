@@ -50,6 +50,7 @@ setup(name='qctoolkit',
     'qctoolkit.ccs',
     'qctoolkit.optimization',
     'qctoolkit.ML',
+    'qctoolkit.MD',
     'qctoolkit.alchemy',
     'qctoolkit.properties',
     'qctoolkit'

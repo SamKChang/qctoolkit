@@ -191,34 +191,71 @@ class QMInp(object):
       self.info = kwargs['info']
     else: 
       self.info = structure_inp
-#    if 'set_charge' in kwargs and kwargs['set_charge']:
-#      self.set_charge = True
-#    else:
-#      self.set_charge = False
 
     # take input 'program' to choose corresponding format
-    if re.match('cpmd', self.program):
+    if self.program == 'cpmd':
       self.inp = cpmd.inp(structure_inp, self.info)
-#                          set_charge=self.set_charge)
     elif self.program=='vasp':
       self.inp = vasp.inp(structure_inp, self.info)
     else:
       ut.exit('program', self.program, 'is not implemented')
 
+    if 'mode' in kwargs:
+      self.inp.setting.mode = kwargs['mode']
+      self.inp.setting.set_mode = True
+    if 'temperature' in kwargs:
+      self.inp.setting.temperature = kwargs['temperature']
+    if 'temperature_tolerance' in kwargs:
+      self.inp.setting.tolerance =\
+      kwargs['temperature_tolerance']
+    if 'md_step' in kwargs:
+      self.inp.setting.md_step = kwargs['md_step']
+    if 'md_sample_rate' in kwargs:
+      self.inp.setting.md_sample_rate = kwargs['md_sample_rate']
+    if 'theory' in kwargs:
+      self.inp.setting.theory = kwargs['theory']
+    if 'vdw' in kwargs: 
+      self.inp.setting.vdw = kwargs['vdw']
+    if 'wf_step' in kwargs:
+      self.inp.setting.maxstep = kwargs['wf_step']
+      self.inp.setting.set_step = True
+    if 'cutoff' in kwargs:
+      self.inp.setting.cutoff = kwargs['cutoff']
+    if 'periodic' in kwargs and kwargs['periodic']:
+      self.inp.setting.isolated = False
+      self.inp.setting.set_center = False
+    if 'celldm' in kwargs:
+      self.inp.setting.celldm = kwargs['celldm']
+      self.inp.setting.set_celldm = True
+    if 'PPext' in kwargs:
+      self.inp.setting.PPext = kwargs['PPext']
+
   def view(self):
     self.inp.structure.view()
 
   def setAtom(self, atom_list, atom_string):
-    _tmp = self.atom_count
+    self.atom_dict = {}
     if type(atom_list) == int:
       atom_list = [atom_list]
-    for I in atom_list:
-      i = I-1
-      self.inp.structure.type_list[i] = atom_string
-      # negative counter for count added atom string
-      self.inp.structure.Z[i] = self.atom_count
-    self.inp.atom_list[str(self.atom_count)] = atom_string
-    self.atom_count = _tmp - 1
+    for i in range(len(atom_list)):
+      if i > 0:
+        self.atom_dict[i] = atom_string
+      else:
+        ut.exit("atom index starts from 1")
+        
+    
+#    _tmp = self.atom_count
+#    if type(atom_list) == int:
+#      atom_list = [atom_list]
+#    for I in atom_list:
+#      if I == 0:
+#        ut.exit("atom index starts from 1")
+#      i = I-1
+#      self.inp.structure.type_list[i] = atom_string
+#      # negative counter for count added atom string
+#      self.inp.structure.Z[i] = self.atom_count
+#    self.inp.atom_list[str(self.atom_count)] = atom_string
+#    self.atom_count = _tmp - 1
 
   def addAtom(self, pp_string, coordinate):
     structure = copy.deepcopy(self.inp.structure)
@@ -281,9 +318,10 @@ class QMInp(object):
     self.inp.setting.margin = margin
     self.inp.setting.set_margin = True
 
-  def setMode(self, mode):
+  def setMode(self, mode, **kwargs):
     self.inp.setting.mode = mode
     self.inp.setting.set_mode = True
+
 
   def setChargeMultiplicity(self, charge, multiplicity, **kargs):
     self.inp.setting.charge = charge
@@ -300,6 +338,15 @@ class QMInp(object):
   def setVDW(self, vdw):
     self.inp.setting.vdw = vdw
     self.inp.setting.set_vdw = True
+
+  def setTemperature(self, temperature):
+    self.inp.setting.temperature = temperature
+  def setTolerance(self, tolerance):
+    self.inp.setting.tolerance = tolerance
+  def setMDStep(self, md_step):
+    self.inp.setting.md_step = md_step
+  def setMDSampleRate(self, rate):
+    self.inp.setting.md_sample_rate = rate
 
   def setSCFStep(self, step):
     self.inp.setting.maxstep = step

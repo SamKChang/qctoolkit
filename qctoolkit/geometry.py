@@ -11,6 +11,7 @@ class Molecule(object):
   # used for pymol numeration
   mol_id = 0
   def __init__(self, mol=None):
+    self.mol = mol
     # number of atoms
     self.N = 0
     # atom coordinates
@@ -31,6 +32,10 @@ class Molecule(object):
     self.celldm = False
     if mol:
       self.read(mol)
+
+  def __str__(self):
+    if self.mol: return self.mol
+    else: return 'generic Molecule object'
 
   def __add__(self, other):
     out = Molecule()

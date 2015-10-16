@@ -85,20 +85,28 @@ class inp(qin.PwInp):
     qin.PwInp.__init__(self, structure_inp, info, **kwargs)
 
   def PPString(self, atom_type, **kwargs):
+    ppout = ''
     if 'ext' in kwargs:
       ext = kwargs['ext']
     else:
       ext = '.psp'
     if atom_type.title() in kwargs:
       # not using?
-      return atom_type.title() + kwargs[atom_type.title()]
+      ppout = ppout + atom_type.title() + kwargs[atom_type.title()]
     # default case
+    default = True
     if self.setting.vdw == 'DCACP':
-      return atom_type.title() + '_dcacp_' + \
-             self.setting.theory.lower() + ext
-    else:
+      default = False
+      ppout = ppout + atom_type.title() + '_dcacp_' + \
+              self.setting.theory.lower()
+    if self.setting.PPext:
+      default = False
+      ppout = ppout + self.setting.PPext
+    if default:
       return atom_type.title() + "_q" + str(qtk.n2ve(atom_type))\
              + "_" + self.setting.theory.lower() + ext
+    else:
+      return ppout + ext
 
   # CPMD input format
   def write(self, *args, **kwargs):
@@ -143,6 +151,17 @@ class inp(qin.PwInp):
       print >>inp, " KOHN-SHEM ENERGIES"
       print >>inp, "  " + str(self.setting.ks_states)
       self.restart = True
+    elif self.setting.mode.upper() == 'BOMD':
+      print >>inp, " MOLECULAR DYNAMICS BO"
+      print >>inp, " TRAJECTORY SAMPLE XYZ"
+      print >>inp, "  %d" % self.setting.md_sample_rate
+      print >>inp, " TEMPERATURE"
+      print >>inp, "  %.1f" % self.setting.temperature
+      print >>inp, " NOSE IONS"
+      print >>inp, "  %.1f %f" %\
+        (self.setting.temperature, self.setting.temp_tolerance)
+      print >>inp, " MAXSTEP"
+      print >>inp, "  %d" % self.setting.md_step
     else:
       sys.exit("ERROR from io_format/cpmd.py->inp.write: " +\
                "mode '" + self.setting.mode +\
