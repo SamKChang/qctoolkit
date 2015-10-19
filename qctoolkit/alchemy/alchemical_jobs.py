@@ -6,6 +6,7 @@ import alchemical_path as alp
 
 def ReferenceRun(inp, program=qtk.setting.qmcode, **kwargs):
   if program == 'cpmd':
+    # to pass 'save_restart' explicitly
     if 'save_restart' in kwargs:
       del kwargs['save_restart']
     inpdir, inpname, psinp, new_run, kwargs\

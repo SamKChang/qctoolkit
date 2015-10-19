@@ -3,7 +3,7 @@
 # http://stackoverflow.com/questions/25383698/error-string-to-bool-in-mplot3d-workaround-found
 from mpl_toolkits.mplot3d import Axes3D
 import sys, os, glob, re, copy
-import qmio
+import io_format.qmout as qmout
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -51,7 +51,7 @@ class QMResults(object):
             pass
           else:
             # save data of each process in the queue
-            data = qmio.QMOut(out, self.program)
+            data = qmout.QMOut(out, self.program)
             Et_queue.put(
               {re.sub(self.path + "/", "", out) : 
               #{re.sub(".*/", "", out) : 

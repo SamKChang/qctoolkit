@@ -8,8 +8,12 @@ cpu_count = mp.cpu_count()
 memory = float(virtual_memory().total)/10**9
 qmcode = 'cpmd'
 
+# MPI setting
+mpistr = 'mpirun -np'
+
 # VASP setting
 PP = '/home/samio/Works/PhD/packages/VASP/PP'
+vasp_exe = 'vasp'
 
 # QM executables
 cpmd_exe = 'cpmd.x'

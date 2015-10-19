@@ -1,7 +1,7 @@
 import qctoolkit as qtk
 #import qctoolkit.io_format.cpmd as cpmd
 
-def E_int(*segments, **kwargs):
+def Eb(*segments, **kwargs):
   """
   Compute interaction energy of 1-N molecules arrangements
   a list of moleucle sould be passed as input with
@@ -23,7 +23,7 @@ def E_int(*segments, **kwargs):
       ligand = inp
       if ligand != 0: pocket = 0
     else:
-      qtk.report("E_int", "wrong input format", segments)
+      qtk.report("Eb", "wrong input format", segments)
   mol_AB = molecules[0]
   for s in range(1,len(molecules)):
     mol_AB = mol_AB + molecules[s]

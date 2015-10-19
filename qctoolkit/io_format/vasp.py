@@ -1,11 +1,9 @@
 import qctoolkit as qtk
 import qctoolkit.io_format.setting_pw as pw
-import qctoolkit.io_format.qminp as qin
-import os, sys, copy, shutil
+import qctoolkit.io_format.pwinp as qin
+import os, sys, copy, shutil, re
 import numpy as np
-
-def qmDir():
-  pass
+import qmjob
 
 class inp(qin.PwInp):
   def __init__(self, structure_inp, info, **kwargs):
@@ -14,6 +12,13 @@ class inp(qin.PwInp):
       self.PP = kwargs['PP']
     else:
       self.PP = qtk.PP
+
+  def run(self, name=None, **run_kw):
+    if not name:
+      name = re.sub('\..*', '', self.info)
+    self.write(name)
+    qmjob.QMRun(name, 'vasp',**run_kw)
+    
 
   def write(self, *args, **kwargs):
     new_structure = copy.deepcopy(self.structure)
@@ -37,10 +42,10 @@ class inp(qin.PwInp):
     else: 
       name = ''
       path = ''
-    incar   = open('INCAR', 'w')   if name else sys.stdout
-    kpoints = open('KPOINTS', 'w') if name else sys.stdout
-    poscar  = open('POSCAR', 'w')  if name else sys.stdout
-    potcar  = open('POTCAR', 'w')  if name else sys.stdout
+    incar   = open('INCAR',  'w') if name else sys.stdout
+    kpoints = open('KPOINTS','w') if name else sys.stdout
+    poscar  = open('POSCAR', 'w') if name else sys.stdout
+    potcar  = open('POTCAR', 'w') if name else sys.stdout
 
     if not self.setting.set_center and self.setting.set_margin:
       if not self.setting.set_celldm:
@@ -66,16 +71,12 @@ class inp(qin.PwInp):
     if self.setting.set_shift:
       new_structure.shift(self.setting.shift)
 
-
-
-
     # !!!!!!!!!!! TODO !!!!!!!!!!!
     # Center molecule
     # charge multiplicity
     # optimizer
     # 
     # write CPMD to modulize structure manipulation?
-
 
     PPPath = []
     n_list = []
@@ -133,7 +134,9 @@ class inp(qin.PwInp):
       elif vdw=='d3-bj':
         print >> incar, "IVDW = 12"
       elif vdw=='mbd':
-        print >> incar, "IVDW = 20"
+        print >> incar, "IVDW = 212"
+      else:
+        qtk.exit("VDW '%s' is not supported for VASP" % vdw)
     if new_structure.charge:
       nve = new_structure.getValenceElectrons()
       print >> incar, "NELECT = %d" % (nve)
