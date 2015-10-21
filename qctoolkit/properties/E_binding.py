@@ -71,6 +71,7 @@ class Eb(object):
 
   def setInp(self):
     kwargs = self.kwargs
+    print kwargs
     kwargs['celldm'] = self.celldm
     kwargs['info'] = self.header + 'Eb_A'
     self.A = qtk.QMInp(self.mol_A, **kwargs)

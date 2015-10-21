@@ -49,6 +49,7 @@ class QMInp(object):
       self.inp.setting.theory = kwargs['theory']
     if 'vdw' in kwargs: 
       self.inp.setting.vdw = kwargs['vdw']
+      self.inp.setting.set_vdw = True
     if 'wf_step' in kwargs:
       self.inp.setting.maxstep = kwargs['wf_step']
       self.inp.setting.set_step = True
