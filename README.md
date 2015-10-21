@@ -45,4 +45,8 @@ be obtained by the --record flag during install
 * And standard libraries: sys, re, os, glob, math, subprocess, multiprocessing, copy, collections, compiler.ast, shutil, fileinput, operator, inspect
 * pymol is also used for visualization
 
+**Implemented interface of QM code**:
+* CPMD
+* VASP
+
 *20150702 KYSC*
