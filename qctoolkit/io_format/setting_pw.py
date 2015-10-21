@@ -8,6 +8,9 @@ class Setting(object):
     seperate setting is for flexibility of switching
     different input struture
     """
+
+    self.settings = {}
+
     # default settings
     self.theory = "PBE" 
     self.mode = "single_point" 

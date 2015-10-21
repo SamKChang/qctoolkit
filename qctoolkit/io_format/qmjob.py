@@ -26,6 +26,10 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
       _bigmem = True
     else:
       _bigmem = False
+  if 'save_restart' in kwargs:
+    _save_restart = kwargs['save_restart']
+  else:
+    _save_restart = False
 
   # with kwargs['inplace'] = True, 
   # no folder will be created
@@ -59,10 +63,6 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
     else:
       exe = setting.cpmd_exe
     cwd = os.getcwd()
-    if 'save_restart' in kwargs:
-      _save_restart = True
-    else:
-      _save_restart = False
 
     if 'scr' in kwargs and kwargs['scr']:
         scrdir = kwargs['scr']
@@ -154,7 +154,7 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
       exestr = setting.vasp_exe
     qmoutput = inp + '.out'
     compute(exestr, qmoutput, _threads)
-    qio_out = qmout.QMOut(os.path.join(inp, vasprun.xml), program)
+    qio_out = qmout.QMOut('vasprun.xml', program)
 
     if not _save_restart:
       os.remove('WAVECAR')

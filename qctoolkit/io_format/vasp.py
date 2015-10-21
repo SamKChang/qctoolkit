@@ -147,7 +147,11 @@ class inp(qin.PwInp):
       nve = new_structure.getValenceElectrons()
       print >> incar, "NELECT = %d" % (nve)
     if not self.setting.save_density:
-      print >> incar, "LCHARGE = .FALSE."
+      print >> incar, "LCHARG = .FALSE."
+    if 'scalapack' not in self.setting.settings:
+      print >> incar, "LSCALAPACK = .FALSE."
+    elif not self.setting.settings['scalapack']:
+      print >> incar, "LSCALAPACK = .FALSE."
 
     # !!!!!!!!!!!!!!!!
     # write to KPOINTS
