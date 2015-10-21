@@ -11,6 +11,10 @@ import operator
 from compiler.ast import flatten
 import qctoolkit.elements as qel
 
+def fileStrip(path):
+  new_path = re.sub('.*/', '', path)
+  return new_path
+
 def imported(module):
   try:
     __import__(module)

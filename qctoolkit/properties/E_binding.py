@@ -33,7 +33,7 @@ class Eb(object):
         qtk.report("Eb", "wrong input format", segments)
 
     if len(segments) == 1 and type(segments[0]) is str:
-      self.header = segments[0] + "-"
+      self.header = qtk.fileStrip(segments[0]) + "-"
     else:
       self.header = ''
   

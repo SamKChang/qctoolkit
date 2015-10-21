@@ -149,12 +149,13 @@ class Molecule(object):
           itr += 1
     segments = list(connected_components(to_graph(bond_list)))
     for s in range(len(segments)):
+      segment = list(segments[s])
       new_mol = Molecule()
-      new_mol.N = len(segments[s])
-      new_mol.R = copy.deepcopy(self.R[segments[s]])
-      new_mol.Z = copy.deepcopy(self.Z[segments[s]])
+      new_mol.N = len(segment)
+      new_mol.R = copy.deepcopy(self.R[segment])
+      new_mol.Z = copy.deepcopy(self.Z[segment])
       new_mol.type_list = [self.type_list[i]\
-                           for i in segments[s]]
+                           for i in segment]
       # need to check charge
       multiplicity = new_mol.getValenceElectrons() % 2
       if multiplicity:
