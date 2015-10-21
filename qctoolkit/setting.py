@@ -11,7 +11,7 @@ qmcode = 'cpmd'
 # MPI setting
 mpistr = 'mpirun -np'
 ompthreads = 1
-ompstr = 'OMP_NUM_THREADS=%d' % ompthreads
+ompstr = '-x OMP_NUM_THREADS=%d' % ompthreads
 
 # VASP setting
 PP = '/home/samio/Works/PhD/packages/VASP/PP'

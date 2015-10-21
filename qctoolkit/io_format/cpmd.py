@@ -34,11 +34,11 @@ class inp(qin.PwInp):
       ppout = ppout + atom_type.title() + kwargs[atom_type.title()]
     # default case
     default = True
-    if self.setting.vdw and\
-    self.setting.vdw.upper() == 'DCACP':
-      default = False
-      ppout = ppout + atom_type.title() + '_dcacp_' + \
-              self.setting.theory.lower()
+    if self.setting.vdw.lower != 'none':
+      if self.setting.vdw.upper() == 'DCACP':
+        default = False
+        ppout = ppout + atom_type.title() + '_dcacp_' + \
+                self.setting.theory.lower()
     if self.setting.PPext:
       default = False
       ppout = ppout + self.setting.PPext

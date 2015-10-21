@@ -131,18 +131,19 @@ class inp(qin.PwInp):
     print >> incar, "IBRION = 2"
     if self.setting.set_vdw:
       vdw = self.setting.vdw.lower()
-      if vdw=='d2':
-        print >> incar, "IVDW = 10"
-      elif vdw=='d3':
-        print >> incar, "IVDW = 11"
-      elif vdw=='d3-bj':
-        print >> incar, "IVDW = 12"
-      elif vdw=='mbd':
-        print >> incar, "IVDW = 202"
-      elif vdw=='mbd_iter':
-        print >> incar, "IVDW = 212"
-      else:
-        qtk.exit("VDW '%s' is not supported for VASP" % vdw)
+      if vdw != 'none':
+        if vdw=='d2':
+          print >> incar, "IVDW = 10"
+        elif vdw=='d3':
+          print >> incar, "IVDW = 11"
+        elif vdw=='d3-bj':
+          print >> incar, "IVDW = 12"
+        elif vdw=='mbd':
+          print >> incar, "IVDW = 202"
+        elif vdw=='mbd_iter':
+          print >> incar, "IVDW = 212"
+        else:
+          qtk.exit("VDW '%s' is not supported for VASP" % vdw)
     if new_structure.charge:
       nve = new_structure.getValenceElectrons()
       print >> incar, "NELECT = %d" % (nve)

@@ -46,7 +46,7 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
     outfile = open(outpath, "w")
     run = sp.Popen("%s %d %s %s"\
                    % (setting.mpistr, threads_per_job,
-                      setting.ompstr exestr), 
+                      setting.ompstr, exestr), 
                    shell=True,
                    stdout=outfile)
     # wait each mpijob to finish before lauching another
