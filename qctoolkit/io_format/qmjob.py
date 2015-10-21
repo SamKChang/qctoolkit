@@ -44,8 +44,9 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
   # MUST switch pack by calling 'os.chdir(cwd)' at the end
   def compute(exestr, outpath, threads_per_job):
     outfile = open(outpath, "w")
-    run = sp.Popen("%s %d %s"\
-                   % (setting.mpistr, threads_per_job, exestr), 
+    run = sp.Popen("%s %d %s %s"\
+                   % (setting.mpistr, threads_per_job,
+                      setting.ompstr exestr), 
                    shell=True,
                    stdout=outfile)
     # wait each mpijob to finish before lauching another
