@@ -2,6 +2,12 @@ import qctoolkit as qtk
 import re
 #import qctoolkit.io_format.cpmd as cpmd
 
+def EbRun(EbObject, **kwargs):
+  """
+  general rapper for parallel execution
+  """
+  return EbObject.run(**kwargs)
+
 class Eb(object):
   """
   Compute interaction energy of 1-N molecules arrangements
