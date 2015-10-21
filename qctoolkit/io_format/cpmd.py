@@ -4,8 +4,7 @@ import numpy as np
 from qctoolkit import utilities as ut
 import qctoolkit.io_format.setting_pw as pw
 import qctoolkit.io_format.pwinp as qin
-from cpmd_structure import qmDir_inplace
-from cpmd_structure import qmDir
+from qmdir import qmDir
 import qmjob
 
 class inp(qin.PwInp):
@@ -18,11 +17,11 @@ class inp(qin.PwInp):
   def run(self, name=None, **run_kw):
     if not name:
       name = re.sub('\..*', '', self.info) + '.inp'
+    else:
+      name = re.sub('\..*', '', name) + '.inp'
     self.write(name)
-    inpdir, inpname, psinp, new_run, kwargs = \
-      qmDir_inplace(name, **run_kw)
-    qmjob.QMRun(name, 'cpmd', **run_kw)
-    os.remove(name)
+    run_kw['rminp'] = True
+    return qmjob.QMRun(name, 'cpmd', **run_kw)
 
   def PPString(self, atom_type, **kwargs):
     ppout = ''
@@ -35,7 +34,8 @@ class inp(qin.PwInp):
       ppout = ppout + atom_type.title() + kwargs[atom_type.title()]
     # default case
     default = True
-    if self.setting.vdw.upper() == 'DCACP':
+    if self.setting.vdw and\
+    self.setting.vdw.upper() == 'DCACP':
       default = False
       ppout = ppout + atom_type.title() + '_dcacp_' + \
               self.setting.theory.lower()

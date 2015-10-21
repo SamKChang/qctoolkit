@@ -6,7 +6,7 @@ import subprocess as sp
 import qctoolkit.utilities as ut
 import numpy as np
 import qctoolkit.setting as setting
-from cpmd_structure import *
+from qmdir import *
 
 # python interface to run QM code
 # all code dependent part should be wrapped here
@@ -26,6 +26,12 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
       _bigmem = True
     else:
       _bigmem = False
+
+  # with kwargs['inplace'] = True, 
+  # no folder will be created
+  # e.g. vasp.run()
+  inpdir, inpname, psinp, new_run, kwargs\
+    = qmDir(inp, **kwargs)
 
   ###########################################
   # SYSTEM CALL SUBPROCESS: Running mpi job #
@@ -58,16 +64,6 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
     else:
       _save_restart = False
 
-    _inplace = False
-    if 'inplace' in kwargs:
-      _inplace = kwargs['inplace']
-    if not _inplace:
-      inpdir, inpname, psinp, new_run, kwargs\
-        = qmDir(inp, **kwargs)
-    else:
-      inpdir, inpname, psinp, new_run, kwargs\
-        = qmDir_inplace(inp, **kwargs)
-
     if 'scr' in kwargs and kwargs['scr']:
         scrdir = kwargs['scr']
         ut.delete(inpname, 'FILEPATH', 2)
@@ -91,6 +87,8 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
     else:
       ut.delete(inpname, 'MEMORY BIG', 1)
 
+    if 'rminp' in kwargs and kwargs['rminp']:
+      os.remove(inp)
     os.chdir(inpdir)
     qmoutput = psinp + ".out"
     if new_run:
@@ -136,6 +134,7 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
       qio_out = qmout.QMOut(qmoutput, program)
     else:
       qio_out = None
+
     os.chdir(cwd)
       
     if _delete:
@@ -143,7 +142,6 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
 
     return qio_out
 
-  # !!!!! TODO LIST !!!!! #
   #######################
   # VASP IMPLEMENTATION #
   #######################
@@ -156,9 +154,19 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
       exestr = setting.vasp_exe
     qmoutput = inp + '.out'
     compute(exestr, qmoutput, _threads)
-    
-    os.chdir(cwd)
+    qio_out = qmout.QMOut(os.path.join(inp, vasprun.xml), program)
 
+    if not _save_restart:
+      os.remove('WAVECAR')
+    os.remove('POTCAR')
+
+    os.chdir(cwd)
+    if _delete:
+      shutil.rmtree(inpdir)
+
+    return qio_out
+
+  # !!!!! TODO LIST !!!!! #
   #############################
   # Gaussian09 IMPLEMENTATION #
   #############################
@@ -210,7 +218,8 @@ class QMJobs(object):
     if 'outdir' in kwargs:
       self._outdir = kwargs['outdir']
     else:
-      self._outdir = re.sub('$', '/../', self._path)
+      #self._outdir = re.sub('$', '/../', self._path)
+      self._outdir = ''
 
     if 'scr' in kwargs:
       self._scr = kwargs['scr']

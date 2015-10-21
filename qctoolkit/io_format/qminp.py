@@ -63,8 +63,8 @@ class QMInp(object):
     if 'PPext' in kwargs:
       self.inp.setting.PPext = kwargs['PPext']
 
-  def view(self):
-    self.inp.structure.view()
+  def view(self, name=None):
+    self.inp.structure.view(name)
 
   def setAtom(self, atom_list, atom_string):
     self.atom_dict = {}
@@ -220,4 +220,4 @@ class QMInp(object):
       ut.exit(msg)
 
   def run(self, *run_arg, **run_kw):
-    self.inp.run(*run_arg, **run_kw)
+    return self.inp.run(*run_arg, **run_kw)

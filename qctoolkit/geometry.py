@@ -55,7 +55,7 @@ class Molecule(object):
     except AttributeError:
       pass
 
-  def view(self):
+  def view(self, name=None):
     tmp = copy.deepcopy(self)
     if self.celldm and self.scale:
       try:
@@ -66,13 +66,16 @@ class Molecule(object):
         pass
 
     if ut.imported('pymol'):
-      ut.report("Molecule", "initializing pymol...")
+      ut.report("Molecule", "initializing pymol...", color=None)
       import pymol
       pymol.finish_launching()
     else:
       pymol.cmd.reinitialize()
       sleep(0.5)
-    tmp_file = 'pymol_tmp_' + str(Molecule.mol_id) + '.xyz'
+    if name:
+      tmp_file = name + "_tmp_" + str(Molecule.mol_id) + '.xyz'
+    else:
+      tmp_file = 'pymol_tmp_' + str(Molecule.mol_id) + '.xyz'
     Molecule.mol_id = Molecule.mol_id + 1
     tmp.write_xyz(tmp_file)
     pymol.cmd.load(tmp_file)
@@ -195,6 +198,14 @@ class Molecule(object):
         inertia[i,j] = -sum(coord_i*coord_j*weight)
     I, U = np.linalg.eigh(inertia)
     return sorted(I,reverse=True), U[I.argsort()[::-1]]
+
+  def setMargin(self, margin):
+    ut.report("Molecule", "setup margin:", margin)
+    self.shift([margin - np.min(self.R[:,i]) for i in range(3)])
+    celldm = [margin + np.max(self.R[:,i]) for i in range(3)]
+    celldm.extend([0,0,0])
+    ut.report("Molecule", "resulting celldm:", celldm)
+    return celldm
 
   def setAtom(self, index, element):
     index -= 1

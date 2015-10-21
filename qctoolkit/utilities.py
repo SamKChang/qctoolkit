@@ -177,19 +177,22 @@ def report(title, *texts, **kwargs):
       color = kwargs['color']
     else:
       color = 'cyan'
-
+    tle = bcolors.ENDC
     if color == 'cyan':
-      msghead = bcolors.OKCYAN
+      msghead = bcolors.OKCYAN + bcolors.BOLD
     elif color == 'blue':
-      msghead = bcolors.OKBLUE
+      msghead = bcolors.OKBLUE + bcolors.BOLD
     elif color == 'green':
-      msghead = bcolors.OKGREEN
+      msghead = bcolors.OKGREEN + bcolors.BOLD
     elif color == 'yellow':
-      msghead = bcolors.WARNING
+      msghead = bcolors.WARNING + bcolors.BOLD
     elif color == 'red':
-      msghead = bcolors.FAIL
+      msghead = bcolors.FAIL + bcolors.BOLD
+    else:
+      msghead = ''
+      tle = ''
 
-    msg = msghead + bcolors.BOLD + title+":" + bcolors.ENDC
+    msg = msghead + title + ":" + tle
     print msg,
     for info in texts:
       print info,

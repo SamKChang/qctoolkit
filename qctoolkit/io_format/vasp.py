@@ -4,6 +4,7 @@ import qctoolkit.io_format.pwinp as qin
 import os, sys, copy, shutil, re
 import numpy as np
 import qmjob
+import xml.etree.ElementTree as ET
 
 class inp(qin.PwInp):
   def __init__(self, structure_inp, info, **kwargs):
@@ -16,8 +17,11 @@ class inp(qin.PwInp):
   def run(self, name=None, **run_kw):
     if not name:
       name = re.sub('\..*', '', self.info)
+    else:
+      name = re.sub('\..*', '', name)
+    run_kw['inplace'] = True
     self.write(name)
-    qmjob.QMRun(name, 'vasp',**run_kw)
+    return qmjob.QMRun(name, 'vasp',**run_kw)
     
 
   def write(self, *args, **kwargs):
@@ -126,7 +130,7 @@ class inp(qin.PwInp):
     print >> incar, "ISMEAR = 0"
     print >> incar, "IBRION = 2"
     if self.setting.set_vdw:
-      vdw = self.setting.vdw
+      vdw = self.setting.vdw.lower()
       if vdw=='d2':
         print >> incar, "IVDW = 10"
       elif vdw=='d3':
@@ -134,12 +138,16 @@ class inp(qin.PwInp):
       elif vdw=='d3-bj':
         print >> incar, "IVDW = 12"
       elif vdw=='mbd':
+        print >> incar, "IVDW = 202"
+      elif vdw=='mbd_iter':
         print >> incar, "IVDW = 212"
       else:
         qtk.exit("VDW '%s' is not supported for VASP" % vdw)
     if new_structure.charge:
       nve = new_structure.getValenceElectrons()
       print >> incar, "NELECT = %d" % (nve)
+    if not self.setting.save_density:
+      print >> incar, "LCHARGE = .FALSE."
 
     # !!!!!!!!!!!!!!!!
     # write to KPOINTS
@@ -190,5 +198,13 @@ class inp(qin.PwInp):
       potcar.close()
 
 class out(object):
-  def __init__(self, qmout):
-    pass
+  """
+  directly parse vasp xml output, 'vasprun.xml'
+  converged energy, system info, and scf steps are extracted
+  """
+  def __init__(self, qmoutXML):
+    tree = ET.parse(qmoutXML)
+    self.xml = tree.getroot()
+    self.Et = float(self.xml[-2][-5][1].text)*0.0367493
+    self.info = self.xml[0][1].text
+    self.SCFStep = len(self.xml[-2])-9

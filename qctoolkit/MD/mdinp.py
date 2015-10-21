@@ -1,7 +1,7 @@
 import qctoolkit as qtk
 import copy
 
-class MDJob(object):
+class MDInp(object):
   def __init__(self, molecule, **kwargs):
     self.md_setting = {}
     if 'theory' in kwargs: 

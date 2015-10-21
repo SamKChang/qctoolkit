@@ -10,6 +10,7 @@ import qctoolkit.read_cube as rq
 import qctoolkit.setting as setting
 import numpy as np
 import cpmd
+import vasp
 #import pylab as pl
 import matplotlib.pyplot as pl
 
@@ -185,12 +186,35 @@ class QMOut(object):
     #self.name = re.sub("\..*", "", qmout)
     #self.file_name = qmout
     self.program = program
-    if (re.match('cpmd', program)):
+    if program == 'cpmd':
       self.out = cpmd.out(qmout)
+    elif program == 'vasp':
+      self.out = vasp.out(qmout)
     self.Ehartree = self.out.Et
     self.info = self.out.info
     self.Et = self.Ehartree
     self.SCFStep = self.out.SCFStep
+
+  def __repr__(self):
+    return str(self.Et)
+
+  def __add__(self, other):
+    out = copy.deepcopy(self)
+    if type(other) is type(self):
+      out.Ehartree = self.Ehartree + other.Ehartree
+      out.info = self.info + '---' + other.info
+      out.Et = self.Et + other.Et
+      out.SCFStep = max(self.SCFStep, other.SCFStep)
+    return out
+
+  def __sub__(self, other):
+    out = copy.deepcopy(self)
+    if type(other) is type(self):
+      out.Ehartree = self.Ehartree - other.Ehartree
+      out.info = self.info + '---' + other.info
+      out.Et = self.Et - other.Et
+      out.SCFStep = max(self.SCFStep, other.SCFStep)
+    return out
 
   def Ha2ev(self):
     self.Et = self.Ehartree * 27.211396132

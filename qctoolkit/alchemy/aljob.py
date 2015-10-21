@@ -1,27 +1,23 @@
 import qctoolkit as qtk
 import qctoolkit.io_format.cpmd as cpmd
+from qctoolkit.io_format.qmdir import qmDir
 import subprocess as sp
 import os, re, shutil
-import alchemical_path as alp
+import alpath as alp
 
 def ReferenceRun(inp, program=qtk.setting.qmcode, **kwargs):
   if program == 'cpmd':
     # to pass 'save_restart' explicitly
     if 'save_restart' in kwargs:
       del kwargs['save_restart']
-    inpdir, inpname, psinp, new_run, kwargs\
-      = cpmd.qmDir(inp, **kwargs)
-    if new_run:
-      qtk.delete(inpname, 'BENCHMARK', 2)
-      qtk.QMRun(inpname, 'cpmd', 
-                save_restart=True, 
-                inplace=True,
-                **kwargs)
+    qtk.QMRun(inp, 'cpmd', 
+              save_restart=True, 
+              **kwargs)
 
 def FirstOrderRun(inp, program=qtk.setting.qmcode, **kwargs):
   if program == 'cpmd':
     inpdir, inpname, psinp, new_run, kwargs\
-      = cpmd.qmDir(inp, **kwargs)
+      = qmDir(inp, **kwargs)
     if new_run:   
       if 'rst' in kwargs:
         rst = kwargs['rst']
@@ -43,10 +39,11 @@ def FirstOrderRun(inp, program=qtk.setting.qmcode, **kwargs):
                        restart=True, maxstep=1, **kwargs)
       return qout
 
+# not working
 def SecondOrderRun(inp, program=qtk.setting.qmcode, **kwargs):
   if program == 'cpmd':
     inpdir, inpname, psinp, new_run, kwargs\
-      = cpmd.qmDir(inp, **kwargs)
+      = qmDir(inp, **kwargs)
     if new_run:
       if 'inp_base' in kwargs:
         _inp_base = kwargs['inp_base']

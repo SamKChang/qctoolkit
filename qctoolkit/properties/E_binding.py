@@ -1,7 +1,8 @@
 import qctoolkit as qtk
+import re
 #import qctoolkit.io_format.cpmd as cpmd
 
-def Eb(*segments, **kwargs):
+class Eb(object):
   """
   Compute interaction energy of 1-N molecules arrangements
   a list of moleucle sould be passed as input with
@@ -9,41 +10,103 @@ def Eb(*segments, **kwargs):
   ONLY one ligand is considered
   Note that the index is used as the final segmentation index
   """
-  molecules = []
-  set_ligand = False
-  ligand = 0
-  pocket = 1
-  for inp in segments:
-    if type(inp) is str:
-      molecules.append(qtk.Molecule(inp))
-    elif type(inp) is qtk.geometry.Molecule:
-      molecules.append(inp)
-    elif type(inp) is int and not set_ligand:
-      set_ligand = True
-      ligand = inp
-      if ligand != 0: pocket = 0
+  def __init__(self, *segments, **kwargs):
+    molecules = []
+    set_ligand = False
+  
+    # flexible input format
+    ligand = 0
+    pocket = 1
+    for inp in segments:
+      if type(inp) is str:
+        molecules.append(qtk.Molecule(inp))
+      elif type(inp) is qtk.geometry.Molecule:
+        molecules.append(inp)
+      elif type(inp) is int and not set_ligand:
+        if inp <= 0:
+          qtk.exit("ligand starts from 1")
+        set_ligand = True
+        qtk.report("property.E_binding", "set ligand", inp - 1)
+        ligand = inp - 1
+        if ligand != 0: pocket = 0
+      else:
+        qtk.report("Eb", "wrong input format", segments)
+
+    if len(segments) == 1 and type(segments[0]) is str:
+      self.header = segments[0] + "-"
     else:
-      qtk.report("Eb", "wrong input format", segments)
-  mol_AB = molecules[0]
-  for s in range(1,len(molecules)):
-    mol_AB = mol_AB + molecules[s]
-  mol_AB.find_bonds()
-  mol_A = mol_AB.segments[ligand]
-  mol_B = molecules[pocket]
-  for s in range(len(mol_AB.segments)):
-    if s != ligand and s != pocket:
-      mol_B = mol_B + mol_AB.segments[s]
+      self.header = ''
+  
+    # construct total system AB
+    self.mol_AB = molecules[0]
+    for s in range(1,len(molecules)):
+      self.mol_AB = self.mol_AB + molecules[s]
+    # construct ligand A and pocket B
+    if 'margin' not in kwargs:
+      kwargs['margin'] = 5
+    self.celldm = self.mol_AB.setMargin(kwargs['margin'])
+    self.mol_AB.find_bonds()
+    self.mol_A = self.mol_AB.segments[ligand]
+    self.mol_B = self.mol_AB.segments[pocket]
+    for s in range(len(self.mol_AB.segments)):
+      if s != ligand and s != pocket:
+        self.mol_B = self.mol_B + self.mol_AB.segments[s]
+  
+    if 'program' not in kwargs:
+      kwargs['program'] = qtk.setting.qmcode
+    if 'vdw' not in kwargs:
+      if kwargs['program'] == 'cpmd':
+        kwargs['vdw'] = 'DCACP'
+      elif kwargs['program'] == 'vasp':
+        kwargs['vdw'] = 'mbd_iter'
 
-  inp_A = qtk.QMInp(mol_A, info='interaction energy A')
-  inp_B = qtk.QMInp(mol_B, info='interaction energy B')
-  inp_AB = qtk.QMInp(mol_AB, info='interaction energy AB')
+    self.kwargs = kwargs
+    self.setInp()  
 
-  inp_A.setVDW('DCACP')
-  inp_A.write()
-  inp_B.setVDW('DCACP')
-  inp_B.write()
-  inp_AB.setVDW('DCACP')
-  inp_AB.write()
+  def setInp(self):
+    kwargs = self.kwargs
+    kwargs['celldm'] = self.celldm
+    kwargs['info'] = self.header + 'Eb_A'
+    self.A = qtk.QMInp(self.mol_A, **kwargs)
+    kwargs['info'] = self.header + 'Eb_B'
+    self.B = qtk.QMInp(self.mol_B, **kwargs)
+    kwargs['info'] = self.header + 'Eb_AB'
+    self.AB = qtk.QMInp(self.mol_AB, **kwargs)
+
+  def view(self):
+    self.A.view('A')
+    self.B.view('B')
+    self.AB.view('AB')
+
+  def run(self, **kwargs):
+    header = re.sub('-', '', self.header)
+    E_A = self.A.run('Eb_A-' + header, **kwargs)
+    E_B = self.B.run('Eb_B-' + header, **kwargs)
+    E_AB = self.AB.run('Eb_AB-' + header, **kwargs)
+
+    Eb = E_AB - E_A - E_B
+    return Eb
+
+
+
+
+
+#  inp_A.write()
+#  inp_B.write()
+#  inp_AB.write()
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #  if program == 'cpmd':
 #
