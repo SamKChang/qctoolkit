@@ -39,7 +39,7 @@ class Eb(object):
         qtk.report("Eb", "wrong input format", segments)
 
     if len(segments) == 1 and type(segments[0]) is str:
-      self.header = qtk.fileStrip(segments[0]) + "-"
+      self.header = qtk.fileStrip(segments[0])
     else:
       self.header = ''
   
@@ -71,13 +71,12 @@ class Eb(object):
 
   def setInp(self):
     kwargs = self.kwargs
-    print kwargs
     kwargs['celldm'] = self.celldm
-    kwargs['info'] = self.header + 'Eb_A'
+    kwargs['info'] = 'Eb_A-' + self.header
     self.A = qtk.QMInp(self.mol_A, **kwargs)
-    kwargs['info'] = self.header + 'Eb_B'
+    kwargs['info'] = 'Eb_B-' + self.header
     self.B = qtk.QMInp(self.mol_B, **kwargs)
-    kwargs['info'] = self.header + 'Eb_AB'
+    kwargs['info'] = 'Eb_AB-' + self.header
     self.AB = qtk.QMInp(self.mol_AB, **kwargs)
 
   def view(self):
@@ -86,7 +85,6 @@ class Eb(object):
     self.AB.view('AB')
 
   def run(self, **kwargs):
-    header = re.sub('-', '', self.header)
     E_A = self.A.run('Eb_A-' + header, **kwargs)
     E_B = self.B.run('Eb_B-' + header, **kwargs)
     E_AB = self.AB.run('Eb_AB-' + header, **kwargs)

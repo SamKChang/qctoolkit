@@ -205,6 +205,9 @@ class QMOut(object):
       out.info = self.info + '---' + other.info
       out.Et = self.Et + other.Et
       out.SCFStep = max(self.SCFStep, other.SCFStep)
+    elif type(other) is float or int:
+      out.Ehartree = out.Ehartree + other
+      out.Et = out.Et + other
     return out
 
   def __sub__(self, other):
@@ -214,7 +217,25 @@ class QMOut(object):
       out.info = self.info + '---' + other.info
       out.Et = self.Et - other.Et
       out.SCFStep = max(self.SCFStep, other.SCFStep)
+    elif type(other) is float or int:
+      out.Ehartree = out.Ehartree - other
+      out.Et = out.Et - other
     return out
+
+  def __mul__(self, other):
+    out = copy.deepcopy(self)
+    if type(other) is float or int:
+      out.Ehartree = out.Ehartree * other
+      out.Et = out.Et * other
+    return out
+
+  def __div__(self, other):
+    out = copy.deepcopy(self)
+    if type(other) is float or int:
+      out.Ehartree = out.Ehartree / float(other)
+      out.Et = out.Et / float(other)
+    return out
+  
 
   def Ha2ev(self):
     self.Et = self.Ehartree * 27.211396132

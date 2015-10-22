@@ -1,7 +1,7 @@
 # interface wrapper of I/O format and settings
 # for general QM calculations
 # QM programs include: 
-#  CPMD, Gaussian, NwChem, espresso, gamess
+#  CPMD, VASP, Gaussian, NwChem, espresso, gamess
 
 import re, copy, os
 import qctoolkit.geometry as geometry
