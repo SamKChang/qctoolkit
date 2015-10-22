@@ -1,5 +1,5 @@
 import qctoolkit as qtk
-import qctoolkit.io_format.setting_pw as pw
+import setting_pw as pw
 import copy
 
 class PwInp(object):
@@ -7,7 +7,7 @@ class PwInp(object):
     self.setting = pw.Setting()
     self.atom_list = {}
 
-    self.structure = qtk.Structure(structure_inp)
+    self.structure = qtk.Structure(structure_inp, **kwargs)
 #    self.structure = qtk.geometry.Molecule()
 #    if type(structure_inp) == str:
 #      self.structure.read(structure_inp, **kwargs)

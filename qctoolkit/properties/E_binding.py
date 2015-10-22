@@ -25,7 +25,7 @@ class Eb(object):
     pocket = 1
     for inp in segments:
       if type(inp) is str:
-        molecules.append(qtk.Molecule(inp))
+        molecules.append(qtk.Molecule(inp, **kwargs))
       elif type(inp) is qtk.geometry.Molecule:
         molecules.append(inp)
       elif type(inp) is int and not set_ligand:
@@ -51,7 +51,7 @@ class Eb(object):
     if 'margin' not in kwargs:
       kwargs['margin'] = 5
     self.celldm = self.mol_AB.setMargin(kwargs['margin'])
-    self.mol_AB.find_bonds()
+    self.mol_AB.find_bonds(**kwargs)
     self.mol_A = self.mol_AB.segments[ligand]
     self.mol_B = self.mol_AB.segments[pocket]
     for s in range(len(self.mol_AB.segments)):
@@ -85,14 +85,23 @@ class Eb(object):
     self.AB.view('AB')
 
   def run(self, **kwargs):
-    E_A = self.A.run('Eb_A-' + header, **kwargs)
-    E_B = self.B.run('Eb_B-' + header, **kwargs)
-    E_AB = self.AB.run('Eb_AB-' + header, **kwargs)
+    E_A = self.A.run('Eb_A-' + self.header, **kwargs)
+    E_B = self.B.run('Eb_B-' + self.header, **kwargs)
+    E_AB = self.AB.run('Eb_AB-' + self.header, **kwargs)
 
     Eb = E_AB - E_A - E_B
     return Eb
 
-
+  def write(self, *args, **kwargs):
+    if len(*args) > 0:
+      self.A.write('Eb_A-'+args[0], **kwargs)
+      self.B.write('Eb_B-'+args[0], **kwargs)
+      self.AB.write('Eb_AB-'+args[0], **kwargs)
+    else:
+      self.A.write('Eb_A'+self.header, **kwargs)
+      self.B.write('Eb_B-'+self.header, **kwargs)
+      self.AB.write('Eb_AB-'+self.header, **kwargs)
+    
 
 
 

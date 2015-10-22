@@ -22,14 +22,15 @@ class QMInp(object):
     self.atom_count = 0
     if 'info' in kwargs:
       self.info = kwargs['info']
+      del kwargs['info']
     else: 
       self.info = structure_inp
 
     # take input 'program' to choose corresponding format
     if self.program == 'cpmd':
-      self.inp = cpmd.inp(structure_inp, self.info)
+      self.inp = cpmd.inp(structure_inp, self.info, **kwargs)
     elif self.program=='vasp':
-      self.inp = vasp.inp(structure_inp, self.info)
+      self.inp = vasp.inp(structure_inp, self.info, **kwargs)
     else:
       ut.exit('program', self.program, 'is not implemented')
 
@@ -91,13 +92,13 @@ class QMInp(object):
 #    self.inp.atom_list[str(self.atom_count)] = atom_string
 #    self.atom_count = _tmp - 1
 
-  def addAtom(self, pp_string, coordinate):
+  def addAtom(self, pp_string, coordinate, **kwargs):
     structure = copy.deepcopy(self.inp.structure)
     structure.R = np.vstack([structure.R, coordinate])
     structure.Z = np.hstack([structure.Z, 1])
     structure.type_list.append('H')
     structure.N += 1
-    self.setStructure(structure, reset=False)
+    self.setStructure(structure, reset=False, **kwargs)
     self.setAtom(structure.N, pp_string)
 
   def setInfo(self, info):
@@ -106,7 +107,7 @@ class QMInp(object):
   def setStructure(self, structure, **kwargs):
     if type(structure)==str:
       self.inp.structure = geometry.Molecule()
-      self.inp.structure.read(structure)
+      self.inp.structure.read(structure, **kwargs)
     else:
       if 'reset' in kwargs:
         reset=kwargs['reset']

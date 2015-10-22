@@ -2,8 +2,8 @@ import qctoolkit as qtk
 import re, sys, os, copy, shutil
 import numpy as np
 from qctoolkit import utilities as ut
-import qctoolkit.io_format.setting_pw as pw
-import qctoolkit.io_format.pwinp as qin
+import setting_pw as pw
+import pwinp as qin
 from qmdir import qmDir
 import qmjob
 
@@ -103,7 +103,7 @@ class inp(qin.PwInp):
       print >>inp, " MAXSTEP"
       print >>inp, "  %d" % self.setting.md_step
     else:
-      sys.exit("ERROR from io_format/cpmd.py->inp.write: " +\
+      qtk.exit("ERROR from QM.cpmd.py->inp.write: " +\
                "mode '" + self.setting.mode +\
                "' is not implemented. Supported modes:\n" +\
                " single_point\n" +\
@@ -114,31 +114,24 @@ class inp(qin.PwInp):
     if self.setting.restart:
       print >>inp, " RESTART WAVEFUNCTION"
 
-    if not self.setting.set_center and self.setting.set_margin:
-      print >>inp, " CENTER MOLECULE OFF"
-      if not self.setting.set_celldm:
-        Rt = np.transpose(new_structure.R)
-        for i in xrange(0, 3):
-          self.setting.celldm[i] = (max(Rt[i]) - min(Rt[i]))\
-                                 + 2 * self.setting.margin
-        new_center=[min(Rt[i])-self.setting.margin \
-          for i in (0,1,2)]
-        new_structure.center(new_center)
-      elif self.setting.set_shift:
-        pass
-      else:
-        sys.exit("ERROR from io_format/cpmd.py->inp.write: " +\
-                 "celldm and margin " + \
-                 "can NOT be set simultaneously.")
-  
-    elif self.setting.set_center and not self.setting.set_margin:
-      new_structure.center(self.setting.center)
+    if not self.setting.set_center:
       print >>inp, " CENTER MOLECULE OFF"
 
-    elif self.setting.set_center and self.setting.set_margin:
-      sys.exit("ERROR from io_format/cpmd.py->inp.write: " +\
-               "center and margin " + \
-               "can NOT be set simultaneously.")
+    if self.setting.set_margin:
+      Rt = np.transpose(new_structure.R)
+      for i in xrange(0, 3):
+        self.setting.celldm[i] = (max(Rt[i]) - min(Rt[i]))\
+                               + 2 * self.setting.margin
+      new_center=[min(Rt[i])-self.setting.margin \
+        for i in (0,1,2)]
+      new_structure.center(new_center)
+#    elif self.setting.set_shift:
+#      pass
+#    else:
+#      qtk.exit("ERROR from QM.cpmd.py->inp.write: " +\
+#               "celldm and margin " + \
+#               "can NOT be set simultaneously.")
+  
 
     if self.setting.set_shift:
       new_structure.shift(self.setting.shift)

@@ -23,14 +23,14 @@ def imported(module):
   else:
     return True
 
-def Structure(input_data):
+def Structure(input_data, **kwargs):
   if type(input_data) is not qg.Molecule:
     mol = qg.Molecule()
     try:
-      mol.read(input_data)
+      mol.read(input_data, **kwargs)
       return mol
     except:
-      raise RuntimeError('error while reading ' + input_data)
+      exit("error while reading file for Molecule")
   else:
     return input_data
 

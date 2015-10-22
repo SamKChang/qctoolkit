@@ -2,8 +2,8 @@ import qctoolkit as qtk
 import re, sys, os, copy, shutil
 import numpy as np
 from qctoolkit import utilities as ut
-import qctoolkit.io_format.setting_pw as pw
-import qctoolkit.io_format.pwinp as qin
+import setting_pw as pw
+import pwinp as qin
 
 def qmDir(inp, **kwargs):
   """
@@ -46,7 +46,7 @@ def qmDir(inp, **kwargs):
   new_run = True
   if _inplace:
     if os.path.exists(inpdir+psinp+'.out'):
-      qtk.warning("io_format.run_folder.qmDir_inplace:"+\
+      qtk.warning("QM.qmDir:"+\
                   " output file "+ qps(inpdir+psinp)+\
                   '.out exist, nothing to be done')
   else:
@@ -56,7 +56,7 @@ def qmDir(inp, **kwargs):
   #    elif _inplace:
   ##      shutil.copyfile(inp, inpname)
     else:
-      qtk.warning("io_format.run_folder.qmDir: folder '" + \
+      qtk.warning("QM.qmDir: folder '" + \
                   inpdir + "' exists, nothing to be done")
   #    new_run = False
   #  # return path names for inpdir, inpname, psinp

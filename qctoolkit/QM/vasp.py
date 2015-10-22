@@ -1,6 +1,6 @@
 import qctoolkit as qtk
-import qctoolkit.io_format.setting_pw as pw
-import qctoolkit.io_format.pwinp as qin
+import setting_pw as pw
+import pwinp as qin
 import os, sys, copy, shutil, re
 import numpy as np
 import qmjob
@@ -68,7 +68,7 @@ class inp(qin.PwInp):
       new_structure.center(self.setting.center)
  
     elif self.setting.set_center and self.setting.set_margin:
-      sys.exit("ERROR from io_format/cpmd.py->inp.write: " +\
+      qtk.exit("ERROR from QM.vasp.py->inp.write: " +\
                "center and margin " + \
                "can NOT be set simultaneously.")
  

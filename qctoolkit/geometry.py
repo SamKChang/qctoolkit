@@ -10,7 +10,7 @@ import collections
 class Molecule(object):
   # used for pymol numeration
   mol_id = 0
-  def __init__(self, mol=None):
+  def __init__(self, mol=None, **kwargs):
     self.mol = mol
     # number of atoms
     self.N = 0
@@ -30,8 +30,16 @@ class Molecule(object):
     self.segments = []
     self.scale = False
     self.celldm = False
+    if 'charge_saturation' not in kwargs \
+    or kwargs['charge_saturation']  == 'negative':
+      self.saturation = 'negative'
+    elif kwargs['charge_saturation'] == 'positive':
+      self.saturation = 'positive'
+    else:
+      ut.exit("charge_saturation '" + \
+        kwargs['charge_saturation'] + "' not valid")
     if mol:
-      self.read(mol)
+      self.read(mol, **kwargs)
 
   def __str__(self):
     if self.mol: return self.mol
@@ -88,7 +96,7 @@ class Molecule(object):
     Rj = self.R[j]
     return np.linalg.norm(Ri - Rj)
 
-  def find_bonds(self, ratio = 1.1):
+  def find_bonds(self, ratio = 1.1, **kwargs):
     ut.report("Molecule", "finding bonds with cutoff ratio", ratio)
     def to_graph(l):
       G = networkx.Graph()
@@ -159,7 +167,11 @@ class Molecule(object):
       # need to check charge
       multiplicity = new_mol.getValenceElectrons() % 2
       if multiplicity:
-        new_mol.setChargeMultiplicity(-1,1)
+        if 'charge_saturation' not in kwargs\
+        or kwargs['charge_saturation'] == 'negative':
+          new_mol.setChargeMultiplicity(-1,1)
+        elif kwargs['charge_saturation'] == 'positive':
+          new_mol.setChargeMultiplicity(1,1)
       self.segments.append(new_mol)
 
   def getCenter(self):
@@ -361,17 +373,27 @@ class Molecule(object):
 
   # general interface to dertermine file type
   def read(self, name, **kwargs):
-    stem, extension = os.path.splitext(name)
-    if re.match('\.xyz', extension):
-      self.read_xyz(name, **kwargs)
-    elif re.match('\.cyl', extension):
-      self.read_cyl(name, **kwargs)
-    elif name == 'VOID':
-      pass
-    elif 'type' in kwargs and kwargs['type']=='cpmdinp':
-      self.read_cpmdinp(name)
+    if os.path.exists(name):
+      stem, extension = os.path.splitext(name)
+      if re.match('\.xyz', extension):
+        self.read_xyz(name, **kwargs)
+      elif re.match('\.cyl', extension):
+        self.read_cyl(name, **kwargs)
+      elif name == 'VOID':
+        pass
+      elif 'type' in kwargs and kwargs['type']=='cpmdinp':
+        self.read_cpmdinp(name)
+      else:
+        ut.exit("suffix " + extension + " is not reconized")
+
+      if np.sum(self.Z) % 2 == 1:
+        if 'charge_saturation' not in kwargs\
+        or kwargs['charge_saturation'].lower() == 'negative':
+          self.charge = -1
+        elif kwargs['charge_saturation'].lower() == 'positive':
+          self.charge = 1
     else:
-      ut.exit("suffix " + extension + " is not reconized")
+      ut.exit("file: '" + name + "' not found")
       
   # read structrue from xyz
   def read_xyz(self, name, **kwargs):
@@ -401,9 +423,6 @@ class Molecule(object):
     self.R = np.vstack(coord)
     self.type_list = type_list
     self.Z = np.array(Z)
-
-    if np.sum(self.Z) % 2 == 1:
-      self.charge = -1
 
     xyz_in.close()
 
@@ -435,9 +454,6 @@ class Molecule(object):
     self.R = np.vstack(coord)
     self.type_list = type_list
     self.Z = np.array(Z)
-
-    if np.sum(self.Z) % 2 == 1:
-      self.charge = -1
 
     xyz_in.close()
 
