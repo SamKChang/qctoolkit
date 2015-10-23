@@ -158,8 +158,14 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
     qio_out = qmout.QMOut('vasprun.xml', program)
 
     if not _save_restart:
-      os.remove('WAVECAR')
-    os.remove('POTCAR')
+      try:
+        os.remove('WAVECAR')
+      except:
+        pass
+    try:
+      os.remove('POTCAR')
+    except:
+      pass
 
     os.chdir(cwd)
     if _delete:
@@ -193,6 +199,11 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
   else: 
     ut.exit("ERROR! program '%s' not recognized" % program)
 
+
+
+###################################################
+# !!DEPRECATED!! use utilities.parallizer instead #
+###################################################
 
 
 # collection of QM input files, run all in parallel

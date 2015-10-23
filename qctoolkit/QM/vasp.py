@@ -28,22 +28,21 @@ class inp(qin.PwInp):
     new_structure = copy.deepcopy(self.structure)
     if len(args) == 1:
       name = args[0]
+      path = name + '/'
+      cwd = os.getcwd()
       if os.path.exists(name):
         if 'no_warning' in kwargs and kwargs['no_warning']:
           shutil.rmtree(name)
-          cwd = os.getcwd()
           os.mkdir(name)
           os.chdir(name)
-          path = name + '/'
         else:
           qtk.warning("inp.write: path " + name + " exist, "+\
                       "nothing to be done")
       else:
-        cwd = os.getcwd()
         os.mkdir(name)
         os.chdir(name)
-        path = name + '/'
     else: 
+      cwd = '.'
       name = ''
       path = ''
     incar   = open('INCAR',  'w') if name else sys.stdout
@@ -194,13 +193,14 @@ class inp(qin.PwInp):
       else:
         print >> potcar, "cat %s" % PP_file
   
+    incar.close()
+    kpoints.close()
+    poscar.close()
+    potcar.close()
+
 
     if name:
       os.chdir(cwd)
-      incar.close()
-      kpoints.close()
-      poscar.close()
-      potcar.close()
 
 class out(object):
   """
