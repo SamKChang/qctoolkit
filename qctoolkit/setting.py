@@ -14,9 +14,10 @@ ompthreads = 1
 ompstr = '-x OMP_NUM_THREADS=%d' % ompthreads
 
 # VASP setting
-PP = '/home/samio/Works/PhD/packages/VASP/PP'
+vasp_pp = '/home/samio/Works/PhD/packages/VASP/PP'
 vasp_exe = 'vasp'
 
 # QM executables
 cpmd_exe = 'cpmd.x'
 cpmd_cpmd2cube = 'cpmd2cube.x'
+cpmd_pp = ''

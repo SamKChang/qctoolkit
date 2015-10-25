@@ -27,22 +27,16 @@ class Molecule(object):
     self.index = 0
     self.bonds = {}
     self.bond_types = {}
+    self.string = []
     self.segments = []
     self.scale = False
     self.celldm = False
-    if 'charge_saturation' not in kwargs \
-    or kwargs['charge_saturation']  == 'negative':
-      self.saturation = 'negative'
-    elif kwargs['charge_saturation'] == 'positive':
-      self.saturation = 'positive'
-    else:
-      ut.exit("charge_saturation '" + \
-        kwargs['charge_saturation'] + "' not valid")
+    self.name = None
     if mol:
       self.read(mol, **kwargs)
 
-  def __str__(self):
-    if self.mol: return self.mol
+  def __repr__(self):
+    if self.name: return self.name
     else: return 'generic Molecule object'
 
   def __add__(self, other):
@@ -53,15 +47,6 @@ class Molecule(object):
     out.type_list = np.hstack([self.type_list, other.type_list])
     out.charge = self.charge + other.charge
     return out
-
-  def cyl2xyz(self):
-    try:
-      for i in range(3):
-        self.R[:,i] = self.R[:,i] * self.celldm[i]\
-                     / float(self.scale[i])
-      self.scale = []
-    except AttributeError:
-      pass
 
   def view(self, name=None):
     tmp = copy.deepcopy(self)
@@ -88,6 +73,18 @@ class Molecule(object):
     tmp.write_xyz(tmp_file)
     pymol.cmd.load(tmp_file)
     os.remove(tmp_file)
+
+
+
+  def cyl2xyz(self):
+    try:
+      for i in range(3):
+        self.R[:,i] = self.R[:,i] * self.celldm[i]\
+                     / float(self.scale[i])
+      self.scale = []
+    except AttributeError:
+      pass
+
 
   def distance(self, i, j):
     i -= 1
@@ -167,11 +164,11 @@ class Molecule(object):
       # need to check charge
       multiplicity = new_mol.getValenceElectrons() % 2
       if multiplicity:
-        if 'charge_saturation' not in kwargs\
-        or kwargs['charge_saturation'] == 'negative':
+        if 'charge_saturation' not in kwargs:
           new_mol.setChargeMultiplicity(-1,1)
-        elif kwargs['charge_saturation'] == 'positive':
-          new_mol.setChargeMultiplicity(1,1)
+        else:
+          charge = kwargs['charge_saturation']
+          new_mol.setChargeMultiplicity(1,charge)
       self.segments.append(new_mol)
 
   def getCenter(self):
@@ -185,6 +182,11 @@ class Molecule(object):
     mass_list = [ut.n2m(elem) for elem in self.type_list]
     weighted = self.R * np.array(mass_list).reshape([self.N,1])
     return np.sum(weighted, axis=0)/sum(mass_list)
+
+  def getBox(self):
+    def size(i):
+      return max(self.R[:,i]) - min(self.R[:,i])
+    return np.array([size(i) for i in range(3)])
 
   def principalAxes(self, **kwargs):
     if 'mode' in kwargs:
@@ -220,14 +222,38 @@ class Molecule(object):
     ut.report("Molecule", "resulting celldm:", celldm)
     return celldm
 
-  def setAtom(self, index, element):
-    index -= 1
-    if index <= self.N:
-      self.type_list[index] = ut.qAtomName(element)
-      self.Z[index] = ut.qAtomicNumber(element)
-    else:
-      print "index:%d out of range, nothing has happend"\
-            % int(index+1)
+  def setAtom(self, index, **kwargs):
+    newZ = self.Z
+    if type(index) is int:
+      index = [index]
+    if 'element' in kwargs:
+      for i in index:
+        i -= 1
+        assert i>=0
+        if 'element' in kwargs:
+          Z = ut.n2Z(kwargs['element'])
+        elif 'Z' in kwargs:
+          Z = kwargs['Z']
+        newZ[i] = Z
+        self.type_list[i] = ut.Z2n(Z)
+    if 'string' in kwargs:
+      minZ = min(self.Z)-1
+      for i in index:
+        self.string[i] = kwargs['string']
+        newZ[i] = minZ
+    self.Z = newZ
+    
+      
+        
+
+#  def setAtom(self, index, element):
+#    index -= 1
+#    if index <= self.N:
+#      self.type_list[index] = ut.qAtomName(element)
+#      self.Z[index] = ut.qAtomicNumber(element)
+#    else:
+#      print "index:%d out of range, nothing has happend"\
+#            % int(index+1)
 
   def flip_atom(self, index, element):
     index -= 1
@@ -322,6 +348,9 @@ class Molecule(object):
   def align(self, i,j,k):
     print "not yet implemented"
 
+  def twist(self):
+    print "not yet implemented"
+
   def extract(self, target):
     if type(target) == int:
       targets = target - 1
@@ -342,15 +371,16 @@ class Molecule(object):
     shift = np.kron(vector, template)
     self.R += shift
 
-  def twist(self):
-    print "not yet implemented"
-
   def sort(self):
-    new = sorted(zip(self.R, self.type_list, self.Z), 
+    new = sorted(zip(self.R, self.type_list, self.Z, self.string), 
                  key=operator.itemgetter(2))
-    self.R = np.array([tmpR for tmpR, tmpType, tmpZ in new])
-    self.type_list = [tmpType for tmpR, tmpType, tmpZ in new]
-    self.Z = [tmpZ for tmpR, tmpType, tmpZ in new]
+    self.R = np.array([_R for _R, _T, _Z, _S in new])
+    self.type_list = np.array([_T for _R, _T, _Z, _S in new])
+    self.Z = np.array([_Z for _R, _T, _Z, _S in new])
+    self.string = np.array([_S for _R, _T, _Z, _S in new])
+#    self.type_list = [tmpType for tmpR, tmpType, tmpZ in new]
+#    self.Z = [tmpZ for tmpR, tmpType, tmpZ in new]
+#    self.string = [tmpStr for tmpR, tmpType, tmpZ in new]
     
     index_a = np.insert(self.Z, 0, 0)
     index_b = np.insert(self.Z, len(self.Z), 0)
@@ -386,12 +416,14 @@ class Molecule(object):
       else:
         ut.exit("suffix " + extension + " is not reconized")
 
+      self.string = ['' for _ in range(self.N)]
+      self.name = ut.fileStrip(stem)
+
       if np.sum(self.Z) % 2 == 1:
-        if 'charge_saturation' not in kwargs\
-        or kwargs['charge_saturation'].lower() == 'negative':
+        if 'charge_saturation' not in kwargs:
           self.charge = -1
-        elif kwargs['charge_saturation'].lower() == 'positive':
-          self.charge = 1
+        else: 
+          self.charge = kwargs['charge_saturation']
     else:
       ut.exit("file: '" + name + "' not found")
       
@@ -479,8 +511,8 @@ class Molecule(object):
     out = sys.stdout if not name else open(name,"w")
 
     #if len(self.type_list) != self.N:
-    tlist = np.vectorize(ut.Z2n)
-    self.type_list = list(tlist(self.Z))
+    #tlist = np.vectorize(ut.Z2n)
+    #self.type_list = list(tlist(self.Z))
 
     print >>out, str(self.N)+"\n"
     for I in xrange(0, self.N):
@@ -572,4 +604,3 @@ class Molecule(object):
     self.Z = np.array(Z)
 
     inp.close()
-

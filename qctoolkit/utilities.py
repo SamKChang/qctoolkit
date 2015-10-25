@@ -1,15 +1,15 @@
 from math import pi ,sin, cos
-import geometry as qg
+import molecule as qg
 #import openbabel as ob
 import numpy as np
 #import gc
 import fileinput
-import sys, re
+import sys, re, copy
 import inspect
 import multiprocessing as mp
 import operator
 from compiler.ast import flatten
-import qctoolkit.elements as qel
+import qctoolkit.data.elements as qel
 
 def fileStrip(path):
   new_path = re.sub('.*/', '', path)
@@ -25,12 +25,10 @@ def imported(module):
 
 def Structure(input_data, **kwargs):
   if type(input_data) is not qg.Molecule:
-    mol = qg.Molecule()
     try:
-      mol.read(input_data, **kwargs)
-      return mol
+      return copy.deepcopy(qg.Molecule(input_data))
     except:
-      exit("error while reading file for Molecule")
+      pass
   else:
     return input_data
 

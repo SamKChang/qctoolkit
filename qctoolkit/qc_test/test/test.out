@@ -1,0 +1,403 @@
+ CP_GROUPS: we are using a 1 x 1 grid (groups x nprocs).
+ PROGRAM CPMD STARTED AT: Sun Oct 25 22:37:51 2015  
+ SETCNST| USING: CODATA 2006 UNITS
+
+
+               ******  ******    ****  ****  ******   
+              *******  *******   **********  *******  
+             ***       **   ***  ** **** **  **   *** 
+             **        **   ***  **  **  **  **    ** 
+             **        *******   **      **  **    ** 
+             ***       ******    **      **  **   *** 
+              *******  **        **      **  *******  
+               ******  **        **      **  ******   
+
+                          VERSION 3.17.1
+
+                            COPYRIGHT
+                      IBM RESEARCH DIVISION
+                MPI FESTKOERPERFORSCHUNG STUTTGART
+
+                       The CPMD consortium
+                  Home Page: http://www.cpmd.org
+               Mailing List: cpmd-list@cpmd.org
+                     E-mail: cpmd@cpmd.org
+
+
+                  ***  Jan  3 2014 -- 15:32:28  ***
+
+ THE INPUT FILE IS:                                      test.inp
+ THIS JOB RUNS ON:                                               
+ THE CURRENT DIRECTORY IS: 
+          /home/samio/src/python/qctoolkit/qctoolkit/qc_test/test
+ THE TEMPORARY DIRECTORY IS: 
+          /home/samio/src/python/qctoolkit/qctoolkit/qc_test/test
+ THE PROCESS ID IS:                                          4653
+ THE JOB WAS SUBMITTED BY:                                  samio
+
+
+ ******************************************************************************
+ * INFO - INFO - INFO - INFO - INFO - INFO - INFO - INFO - INFO - INFO - INFO *
+ ******************************************************************************
+ *  A                                                                         *
+ ******************************************************************************
+
+ ******************************************************************************
+ **                              INPUT FILE                                  ** 
+ ******************************************************************************
+ ** &INFO                                                                    ** 
+ **  A                                                                       ** 
+ ** &END                                                                     ** 
+ **                                                                          ** 
+ ** &CPMD                                                                    ** 
+ **  MIRROR                                                                  ** 
+ **  BENCHMARK                                                               ** 
+ **   1 0 0 0 0 0 0 0 0 0                                                    ** 
+ **  OPTIMIZE WAVEFUNCTION                                                   ** 
+ **  CONVERGENCE ORBITAL                                                     ** 
+ **   1.00E-05                                                               ** 
+ **  MAXITER                                                                 ** 
+ **   1000                                                                   ** 
+ ** &END                                                                     ** 
+ **                                                                          ** 
+ ** &DFT                                                                     ** 
+ **  FUNCTIONAL PBE                                                          ** 
+ ** &END                                                                     ** 
+ **                                                                          ** 
+ ** &SYSTEM                                                                  ** 
+ **  SYMMETRY                                                                ** 
+ **   ORTHORHOMBIC                                                           ** 
+ **  ANGSTROM                                                                ** 
+ **  CELL ABSOLUTE                                                           ** 
+ **   8.532  9.005  7.944  0.000  0.000  0.000                               ** 
+ **  CUTOFF                                                                  ** 
+ **   100.0                                                                  ** 
+ ** &END                                                                     ** 
+ **                                                                          ** 
+ ** &ATOMS                                                                   ** 
+ ** *H_q1_pbe.psp                                                            ** 
+ **  LMAX=F                                                                  ** 
+ **    8                                                                     ** 
+ **      5.4430   2.0000   3.5340                                            ** 
+ **      2.8730   2.6060   2.3380                                            ** 
+ **      2.5360   4.3090   2.0000                                            ** 
+ **      2.3290   3.3080   4.4890                                            ** 
+ **      4.4670   2.8530   5.5010                                            ** 
+ **      2.0000   5.8010   4.1730                                            ** 
+ **      6.5320   3.3810   3.8090                                            ** 
+ **      5.6610   5.0170   5.9440                                            ** 
+ ** *C_q4_pbe.psp                                                            ** 
+ **  LMAX=F                                                                  ** 
+ **    5                                                                     ** 
+ **      3.1350   3.9100   4.0590                                            ** 
+ **      4.5390   3.6030   4.7010                                            ** 
+ **      3.9350   5.8250   5.0920                                            ** 
+ **      5.4980   3.0930   3.6050                                            ** 
+ **      3.1940   3.6320   2.5440                                            ** 
+ ** *N_q5_pbe.psp                                                            ** 
+ **  LMAX=F                                                                  ** 
+ **    2                                                                     ** 
+ **      4.9240   4.8950   5.2480                                            ** 
+ **      2.9230   5.3130   4.3860                                            ** 
+ ** *O_q6_pbe.psp                                                            ** 
+ **  LMAX=F                                                                  ** 
+ **    1                                                                     ** 
+ **      3.9950   7.0050   5.5660                                            ** 
+ ** *S_q6_pbe.psp                                                            ** 
+ **  LMAX=F                                                                  ** 
+ **    1                                                                     ** 
+ **      4.9450   3.8490   2.0260                                            ** 
+ ** &END                                                                     ** 
+ ******************************************************************************
+ ******************************************************************************
+
+ SINGLE POINT DENSITY OPTIMIZATION
+
+ USING SEED       123456 TO INIT. PSEUDO RANDOM NUMBER GEN.
+ PATH TO THE RESTART FILES:                                    ./
+ GRAM-SCHMIDT ORTHOGONALIZATION
+ MAXIMUM NUMBER OF STEPS:                             10000 STEPS
+ MAXIMUM NUMBER OF ITERATIONS FOR SC:                  1000 STEPS
+ PRINT INTERMEDIATE RESULTS EVERY                     10001 STEPS
+ STORE INTERMEDIATE RESULTS EVERY                     10001 STEPS
+ NUMBER OF DISTINCT RESTART FILES:                              1
+ TEMPERATURE IS CALCULATED ASSUMING EXTENDED BULK BEHAVIOR 
+ FICTITIOUS ELECTRON MASS:                               400.0000
+ TIME STEP FOR ELECTRONS:                                  5.0000
+ TIME STEP FOR IONS:                                       5.0000
+ CONVERGENCE CRITERIA FOR WAVEFUNCTION OPTIMIZATION:   1.0000E-05
+ WAVEFUNCTION OPTIMIZATION BY PRECONDITIONED DIIS
+ THRESHOLD FOR THE WF-HESSIAN IS                           0.5000
+ MAXIMUM NUMBER OF VECTORS RETAINED FOR DIIS:                  10
+ STEPS UNTIL DIIS RESET ON POOR PROGRESS:                      10
+ FULL ELECTRONIC GRADIENT IS USED 
+ SPLINE INTERPOLATION IN G-SPACE FOR PSEUDOPOTENTIAL FUNCTIONS
+    NUMBER OF SPLINE POINTS:                                 5000
+
+ EXCHANGE CORRELATION FUNCTIONALS 
+    LDA EXCHANGE:                                            NONE
+    LDA XC THROUGH PADE APPROXIMATION
+    S.GOEDECKER, J.HUTTER, M.TETER PRB 54 1703 (1996)
+    GRADIENT CORRECTED FUNCTIONAL
+    DENSITY THRESHOLD:                                1.00000E-08
+    EXCHANGE ENERGY
+       [PBE: J.P. PERDEW ET AL. PRL 77, 3865 (1996)]
+    CORRELATION ENERGY 
+       [PBE: J.P. PERDEW ET AL. PRL 77, 3865 (1996)]
+
+ ***     DETSP| SIZE OF THE PROGRAM IS   13164/  98788 kBYTES ***
+
+ ***************************** ATOMS ****************************
+   NR   TYPE        X(bohr)        Y(bohr)        Z(bohr)     MBL
+    1      H      10.285779       3.779452       6.678292       3
+    2      H       5.429183       4.924626       4.418180       3
+    3      H       4.792345       8.142830       3.779452       3
+    4      H       4.401172       6.251214       8.482981       3
+    5      H       8.441407       5.391389      10.395383       3
+    6      H       3.779452      10.962301       7.885827       3
+    7      H      12.343691       6.389164       7.197967       3
+    8      H      10.697740       9.480756      11.232532       3
+    9      C       5.924291       7.388829       7.670398       3
+   10      C       8.577467       6.808683       8.883603       3
+   11      C       7.436072      11.007655       9.622485       3
+   12      C      10.389714       5.844923       6.812463       3
+   13      C       6.035785       6.863485       4.807463       3
+   14      N       9.305011       9.250209       9.917283       3
+   15      N       5.523669      10.040115       8.288339       3
+   16      O       7.549456      13.237532      10.518216       3
+   17      S       9.344696       7.273556       3.828585       3
+ ****************************************************************
+
+ NUMBER OF STATES:                                             25
+ NUMBER OF ELECTRONS:                                    50.00000
+ CHARGE:                                                  0.00000
+ ELECTRON TEMPERATURE(KELVIN):                            0.00000
+ OCCUPATION
+  2.0  2.0  2.0  2.0  2.0  2.0  2.0  2.0  2.0  2.0  2.0  2.0  2.0
+  2.0  2.0  2.0  2.0  2.0  2.0  2.0  2.0  2.0  2.0  2.0  2.0
+
+ **************************************************************** 
+                                                                  
+ Atomic symbol                       : H                          
+                                                                  
+ Atomic number                       :   1                        
+ Effective core charge               :   1                        
+ Number of core states               :   0                        
+ Number of valence states            :  10                        
+ Electronic configuration (s,p,d,...):     1                      
+                                                                  
+ Exchange-correlation functional     : PBE                        
+                                                                  
+       r(loc)         C(1)         C(2)                           
+     0.200000    -4.178900     0.724463                           
+                                                                  
+ Please cite:                                                     
+                                                                  
+ - S. Goedecker, M. Teter, and J. Hutter,                         
+   Phys. Rev. B 54, 1703 (1996)                                   
+ - C. Hartwigsen, S. Goedecker, and J. Hutter,                    
+   Phys. Rev. B 58, 3641 (1998)                                   
+ - M. Krack,                                                      
+   Theor. Chem. Acc. 114, 145 (2005)                              
+                                                                  
+ **************************************************************** 
+
+ **************************************************************** 
+                                                                  
+ Atomic symbol                       : C                          
+                                                                  
+ Atomic number                       :   6                        
+ Effective core charge               :   4                        
+ Number of core states               :   2                        
+ Number of valence states            :  10                        
+ Electronic configuration (s,p,d,...):     4                      
+                                                                  
+ Exchange-correlation functional     : PBE                        
+                                                                  
+       r(loc)         C(1)         C(2)                           
+     0.338471    -8.803674     1.339211                           
+                                                                  
+         r(0)     h(i,j)^0                                        
+     0.302576     9.622487                                        
+                                                                  
+         r(1)     h(i,j)^1                                        
+     0.291507            0                                        
+                                                                  
+ Please cite:                                                     
+                                                                  
+ - S. Goedecker, M. Teter, and J. Hutter,                         
+   Phys. Rev. B 54, 1703 (1996)                                   
+ - C. Hartwigsen, S. Goedecker, and J. Hutter,                    
+   Phys. Rev. B 58, 3641 (1998)                                   
+ - M. Krack,                                                      
+   Theor. Chem. Acc. 114, 145 (2005)                              
+                                                                  
+ **************************************************************** 
+
+ **************************************************************** 
+                                                                  
+ Atomic symbol                       : N                          
+                                                                  
+ Atomic number                       :   7                        
+ Effective core charge               :   5                        
+ Number of core states               :   1                        
+ Number of valence states            :   9                        
+ Electronic configuration (s,p,d,...):     2    3                 
+                                                                  
+ Exchange-correlation functional     : PBE                        
+                                                                  
+       r(loc)         C(1)         C(2)                           
+     0.283791   -12.415226     1.868096                           
+                                                                  
+         r(0)     h(i,j)^0                                        
+     0.255405    13.630263                                        
+                                                                  
+ Please cite:                                                     
+                                                                  
+ - S. Goedecker, M. Teter, and J. Hutter,                         
+   Phys. Rev. B 54, 1703 (1996)                                   
+ - C. Hartwigsen, S. Goedecker, and J. Hutter,                    
+   Phys. Rev. B 58, 3641 (1998)                                   
+ - M. Krack,                                                      
+   Theor. Chem. Acc. 114, 145 (2005)                              
+                                                                  
+ **************************************************************** 
+
+ **************************************************************** 
+                                                                  
+ Atomic symbol                       : O                          
+                                                                  
+ Atomic number                       :   8                        
+ Effective core charge               :   6                        
+ Number of core states               :   1                        
+ Number of valence states            :   9                        
+ Electronic configuration (s,p,d,...):     2    4                 
+                                                                  
+ Exchange-correlation functional     : PBE                        
+                                                                  
+       r(loc)         C(1)         C(2)                           
+     0.244554   -16.667215     2.487311                           
+                                                                  
+         r(0)     h(i,j)^0                                        
+     0.220956    18.337458                                        
+                                                                  
+ Please cite:                                                     
+                                                                  
+ - S. Goedecker, M. Teter, and J. Hutter,                         
+   Phys. Rev. B 54, 1703 (1996)                                   
+ - C. Hartwigsen, S. Goedecker, and J. Hutter,                    
+   Phys. Rev. B 58, 3641 (1998)                                   
+ - M. Krack,                                                      
+   Theor. Chem. Acc. 114, 145 (2005)                              
+                                                                  
+ **************************************************************** 
+
+ **************************************************************** 
+                                                                  
+ Atomic symbol                       : S                          
+                                                                  
+ Atomic number                       :  16                        
+ Effective core charge               :   6                        
+ Number of core states               :   3                        
+ Number of valence states            :  13                        
+ Electronic configuration (s,p,d,...):     2    4                 
+                                                                  
+ Exchange-correlation functional     : PBE                        
+                                                                  
+       r(loc)         C(1)                                        
+     0.420000    -5.986260                                        
+                                                                  
+         r(0)     h(i,j)^0                                        
+     0.364820    13.143544    -4.241830                           
+                               5.476180                           
+         r(1)     h(i,j)^1                                        
+     0.409480     3.700891                                        
+                                                                  
+ Please cite:                                                     
+                                                                  
+ - S. Goedecker, M. Teter, and J. Hutter,                         
+   Phys. Rev. B 54, 1703 (1996)                                   
+ - C. Hartwigsen, S. Goedecker, and J. Hutter,                    
+   Phys. Rev. B 58, 3641 (1998)                                   
+ - M. Krack,                                                      
+   Theor. Chem. Acc. 114, 145 (2005)                              
+                                                                  
+ **************************************************************** 
+
+ ****************************************************************
+ *   ATOM       MASS   RAGGIO NLCC              PSEUDOPOTENTIAL *
+ *      H     1.0080   1.2000  NO                   S     LOCAL *
+ *      C    12.0112   1.2000  NO    GOEDECKER      S  NONLOCAL *
+ *                                                  P  NONLOCAL *
+ *                                                  D     LOCAL *
+ *      N    14.0067   1.2000  NO    GOEDECKER      S  NONLOCAL *
+ *                                                  P  NONLOCAL *
+ *                                                  D     LOCAL *
+ *      O    15.9994   1.2000  NO    GOEDECKER      S  NONLOCAL *
+ *                                                  P  NONLOCAL *
+ *                                                  D     LOCAL *
+ *      S    32.0640   1.2000  NO    GOEDECKER      S  NONLOCAL *
+ *                                                  P  NONLOCAL *
+ *                                                  D     LOCAL *
+ ****************************************************************
+
+
+ PARAPARAPARAPARAPARAPARAPARAPARAPARAPARAPARAPARAPARAPARAPARAPARA
+  NCPU     NGW     NHG  PLANES  GXRAYS  HXRAYS ORBITALS Z-PLANES
+     0   34794  278325     108    2029    8135      25       1
+                G=0 COMPONENT ON PROCESSOR :     0
+ PARAPARAPARAPARAPARAPARAPARAPARAPARAPARAPARAPARAPARAPARAPARAPARA
+
+ ***LOADPA| SIZE OF THE PROGRAM IS   30576/ 105476 kBYTES ***
+
+ OPENMPOPENMPOPENMPOPENMPOPENMPOPENMPOPENMPOPENMPOPENMPOPENMPOPEN
+ NUMBER OF CPUS PER TASK                                        1
+ OPENMPOPENMPOPENMPOPENMPOPENMPOPENMPOPENMPOPENMPOPENMPOPENMPOPEN
+
+ ***RGGEN| SIZE OF THE PROGRAM IS   40996/ 116120 kBYTES ***
+
+ ************************** SUPERCELL ***************************
+ SYMMETRY:                                           ORTHORHOMBIC
+ LATTICE CONSTANT(a.u.):                                 16.12314
+ CELL DIMENSION:  16.1231  1.0554  0.9311  0.0000  0.0000  0.0000
+ VOLUME(OMEGA IN BOHR^3):                              4118.79712
+ LATTICE VECTOR A1(BOHR):           16.1231     0.0000     0.0000
+ LATTICE VECTOR A2(BOHR):            0.0000    17.0170     0.0000
+ LATTICE VECTOR A3(BOHR):            0.0000     0.0000    15.0120
+ RECIP. LAT. VEC. B1(2Pi/BOHR):      0.0620     0.0000     0.0000
+ RECIP. LAT. VEC. B2(2Pi/BOHR):      0.0000     0.0588     0.0000
+ RECIP. LAT. VEC. B3(2Pi/BOHR):      0.0000     0.0000     0.0666
+ REAL SPACE MESH:                   108          120           96
+ WAVEFUNCTION CUTOFF(RYDBERG):                          100.00000
+ DENSITY CUTOFF(RYDBERG):          (DUAL= 4.00)         400.00000
+ NUMBER OF PLANE WAVES FOR WAVEFUNCTION CUTOFF:             34794
+ NUMBER OF PLANE WAVES FOR DENSITY CUTOFF:                 278325
+ ****************************************************************
+
+ ***  RINFORCE| SIZE OF THE PROGRAM IS   80856/ 156664 kBYTES ***
+ ***    FFTPRP| SIZE OF THE PROGRAM IS  116636/ 190656 kBYTES ***
+
+ GENERATE ATOMIC BASIS SET
+      H        SLATER ORBITALS
+        1S        ALPHA=   1.0000      OCCUPATION= 1.00
+      C        SLATER ORBITALS
+        2S        ALPHA=   1.6083      OCCUPATION= 2.00
+        2P        ALPHA=   1.5679      OCCUPATION= 2.00
+      N        SLATER ORBITALS
+        2S        ALPHA=   1.9237      OCCUPATION= 2.00
+        2P        ALPHA=   1.9170      OCCUPATION= 3.00
+      O        SLATER ORBITALS
+        2S        ALPHA=   2.2458      OCCUPATION= 2.00
+        2P        ALPHA=   2.2266      OCCUPATION= 4.00
+      S        SLATER ORBITALS
+        3S        ALPHA=   2.1223      OCCUPATION= 2.00
+        3P        ALPHA=   1.8273      OCCUPATION= 4.00
+
+
+ INITIALIZATION TIME:                                0.48 SECONDS
+
+ ***    WFOPTS| SIZE OF THE PROGRAM IS  134456/ 349156 kBYTES ***
+ ***     PHFAC| SIZE OF THE PROGRAM IS  134536/ 442856 kBYTES ***
+ NOTE: ATOMIC GUESS USING DISTRIBUTED LINALG WITH LANCZOS
+ ***    ATOMWF| SIZE OF THE PROGRAM IS  146096/ 468956 kBYTES ***
+ ATRHO| CHARGE(R-SPACE):   50.000000      (G-SPACE):   50.000000

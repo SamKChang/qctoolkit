@@ -1,40 +1,42 @@
 import qctoolkit as qtk
-import setting_pw as pw
-import copy
+from inp import GenericInput
+import numpy as np
 
-class PwInp(object):
-  def __init__(self, structure_inp, info, **kwargs):
-    self.setting = pw.Setting()
-    self.atom_list = {}
+class PlanewaveInput(GenericInput):
+  def __init__(self, molecule, **kwargs):
+    GenericInput.__init__(self, molecule, **kwargs)
 
-    self.structure = qtk.Structure(structure_inp, **kwargs)
-#    self.structure = qtk.geometry.Molecule()
-#    if type(structure_inp) == str:
-#      self.structure.read(structure_inp, **kwargs)
-#    else:
-#      self.structure = copy.deepcopy(structure_inp)
+    if 'periodic' not in kwargs:
+      self.setting['periodic'] = True
+    if 'symmetry' not in kwargs and self.setting['periodic']:
+      self.setting['symmetry'] = 'orthorhombic'
+    if 'cutoff' not in kwargs:
+      self.setting['cutoff'] = 100
+    if not self.setting['periodic'] and 'isolation' not in kwargs:
+      self.setting['isolation'] = 'mt'
+    self.pp_files = []
+    self.pp_path = ''
+  
+    # celldm can always be overwritten
+    if 'celldm' not in kwargs:
+      # for the case of molecule xyz input (molecule)
+      # set default orthorombic celldm
+      if not self.molecule.celldm:
+        box = self.molecule.getBox()
+        # set defualt margin 2, grow with box size
+        if 'margin' not in kwargs:
+          self.setting['margin'] = max(2, max(box)/5.)
+        edge = np.array([min(self.molecule.R[:,i])\
+          for i in range(3)])
+        self.molecule.shift(self.setting['margin']-edge)
+        box = 2*self.setting['margin'] + box
+        self.setting['celldm'] = np.append(box, [0, 0, 0])
+      else:
+        self.setting['celldm'] = self.molecule.celldm
 
-    if self.structure.scale:
-      self.setting.scale = self.structure.scale
-      self.setting.set_scale = True
-      self.setting.isolated = False
-    if self.structure.celldm:
-      self.setting.celldm = self.structure.celldm
-    self.info = info
-
-  def load_structure(self, new_structure, **kwargs):
-    self.structure.read(new_structure, **kwargs)
-    if self.setting.set_multiplicity:
-      _multiplicity = self.setting.multiplicity
-    else:
-      _multiplicity = 'auto'
-    if self.setting.set_charge:
-      _charge = self.setting.charge
-    else:
-      _charge = 'auto'
-
-    print self.setting.set_multiplicity
-    print _charge, _multiplicity
-    self.structure.setChargeMultiplicity(_charge,
-                                         _multiplicity,
-                                         **kwargs)
+  def celldm2lattice(self):
+    cd = self.setting['celldm']
+    if cd[3]==0 and cd[4]==0 and cd[5]==0:
+      self.setting['lattice'] = np.array([[cd[0],   0.0,   0.0],
+                                          [  0.0, cd[1],   0.0],
+                                          [  0.0,   0.0, cd[2]]])

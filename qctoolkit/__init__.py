@@ -1,4 +1,5 @@
-from geometry import *
+from molecule import *
+from QM.inp import *
 from QM.qminp import *
 from QM.qmout import *
 from QM.qmjob import *
