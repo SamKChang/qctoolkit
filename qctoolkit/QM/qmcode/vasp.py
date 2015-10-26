@@ -173,7 +173,7 @@ class out(PlanewaveOutput):
   converged energy, system info, and scf steps are extracted
   """
   def __init__(self, qmoutXML, **kwargs):
-    PlanewaveInput.__init__(self, qmoutXML, **kwargs)
+    PlanewaveOutput.__init__(self, qmoutXML, **kwargs)
     tree = ET.parse(qmoutXML)
     self.xml = tree.getroot()
     self.Et = float(self.xml[-2][-5][1].text)*0.0367493

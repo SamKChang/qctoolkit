@@ -4,7 +4,8 @@ import qctoolkit as qtk
 import qctoolkit.properties as qpty
 
 #C = qpty.Eb('data/A.xyz', 'data/B.xyz')
-C = qpty.Eb('data/AB.xyz')
+C = qpty.Eb('data/molecules/AB.xyz')
 
 #print C.write()
-C.run()
+#C.run()
+C.write()

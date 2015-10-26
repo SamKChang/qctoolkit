@@ -154,7 +154,7 @@ class inp(PlanewaveInput):
         (self.setting['mesh'][0],
          self.setting['mesh'][1],
          self.setting['mesh'][2]))
-    if molecule.charge > 0:
+    if molecule.charge != 0:
       inp.write(' CHARGE\n  %d\n' % molecule.charge)
     if molecule.multiplicity != 1:
       inp.write(' MULTIPLICITY\n  %d\n' % molecule.charge)
@@ -177,7 +177,8 @@ class inp(PlanewaveInput):
         inp.write('\n')
     inp.write('&END\n')
 
-    inp.close()
+    if name:
+      inp.close()
 
 class out(PlanewaveOutput):
   def __init__(self, qmout, **kwargs):
