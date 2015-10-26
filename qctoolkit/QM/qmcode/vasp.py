@@ -1,5 +1,6 @@
 import qctoolkit as qtk
-from qctoolkit.QM.pwinp import PlanewaveInput
+from qctoolkit.QM.planewave_io import PlanewaveInput
+from qctoolkit.QM.planewave_io import PlanewaveOutput
 import os, sys, copy, shutil, re
 import numpy as np
 import qctoolkit.QM.qmjob as qmjob
@@ -166,12 +167,13 @@ class inp(PlanewaveInput):
 
     os.chdir(cwd)
 
-class out(object):
+class out(PlanewaveOutput):
   """
   directly parse vasp xml output, 'vasprun.xml'
   converged energy, system info, and scf steps are extracted
   """
-  def __init__(self, qmoutXML):
+  def __init__(self, qmoutXML, **kwargs):
+    PlanewaveInput.__init__(self, qmoutXML, **kwargs)
     tree = ET.parse(qmoutXML)
     self.xml = tree.getroot()
     self.Et = float(self.xml[-2][-5][1].text)*0.0367493

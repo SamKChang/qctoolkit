@@ -1,16 +1,15 @@
 import qctoolkit as qtk
-import re, os, shutil
+import re, os, shutil, copy
+import numpy as np
 
 class GenericInput(object):
   def __init__(self, molecule, **kwargs):
-    self.setting = {}
+    self.setting = kwargs
     if 'program' not in kwargs:
       self.setting['program'] = qtk.setting.qmcode
     else:
       self.setting['program'] = kwargs['program']
     self.molecule = qtk.Structure(molecule)
-
-    self.setting = kwargs
 
     if 'info' not in kwargs:
       self.setting['info'] = self.molecule.name
@@ -81,11 +80,11 @@ class GenericInput(object):
     return name
 
   def cm_check(self, mol):
-    ve = mol.getValenceElectrons() - mol.charge
+    ve = mol.getValenceElectrons()
     if (ve % 2) == (mol.multiplicity % 2):
-      msg = "Multiplicity %d " % self.multiplicity + \
-            "and %d valence electrons " % nve +\
-            "\n(with charge %3.1f) " % float(self.charge) +\
+      msg = "Multiplicity %d " % mol.multiplicity + \
+            "and %d valence electrons " % ve +\
+            "\n(with charge %3.1f) " % float(mol.charge) +\
             "are not compatible"
       qtk.exit(msg)
 
@@ -94,3 +93,56 @@ class GenericInput(object):
 
   def write(self):
     raise NotImplementedError("Please Implement write method")
+
+class GenericOutput(object):
+  def __init__(self, output, **kwargs):
+    self.Et = np.nan
+    self.scf_step = np.nan
+    self.unit = 'Eh'
+
+  def __repr__(self):
+    return str(self.Et)
+
+  def inUnit(self, unit):
+    unitStr = self.unit + '-' + unit
+    if not unitStr.lower() == 'eh-eh':
+      return qtk.convE(self.Et, unitStr)
+    else: return self.Et
+
+  def __add__(self, other):
+    out = copy.deepcopy(self)
+    if isinstance(other, qtk.QM.general_io.GenericOutput):
+      if self.unit == other.unit:
+        out.Et = self.Et + other.Et
+      else:
+        unitStr = self.unit + '-' + other.unit
+        out.Et = self.Et + qtk.convE(other.Et, unitStr)
+      out.scp_step = max(self.scf_step, other.scf_step)
+    elif type(other) is int or float:
+      out.Et = self.Et + other
+    return out
+
+  def __sub__(self, other):
+    out = copy.deepcopy(self)
+    if isinstance(other, qtk.QM.general_io.GenericOutput):
+      if self.unit == other.unit:
+        out.Et = self.Et - other.Et
+      else:
+        unitStr = self.unit + '-' + other.unit
+        out.Et = self.Et + qtk.convE(other.Et, unitStr)
+      out.scp_step = max(self.scf_step, other.scf_step)
+    elif type(other) is int or float:
+      out.Et = self.Et - other
+    return out
+
+  def __mul__(self, other):
+    out = copy.deepcopy(self)
+    if type(other) is int or float:
+      out.Et = self.Et * other
+    return out
+
+  def __div__(self, other):
+    out = copy.deepcopy(self)
+    if type(other) is int or float:
+      out.Et = self.Et / other
+    return out

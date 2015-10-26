@@ -99,7 +99,7 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
       log.close()
   
     if os.path.exists(out):
-      qio_out = qio.QMOut(out, program)
+      qio_out = qio.QMOut(out, program='cpmd')
     else:
       qio_out = None
 
@@ -115,7 +115,7 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
       exestr = setting.vasp_exe
     qmoutput = inp + '.out'
     compute(exestr, qmoutput, _threads)
-    qio_out = qio.QMOut('vasprun.xml', program)
+    qio_out = qio.QMOut('vasprun.xml', program='vasp')
 
     if not _save_restart:
       try:
@@ -126,9 +126,6 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
       os.remove('POTCAR')
     except:
       pass
-
-    if _delete:
-      shutil.rmtree(inpdir)
 
     return qio_out
 

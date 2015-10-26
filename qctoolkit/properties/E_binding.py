@@ -96,11 +96,20 @@ class Eb(object):
     return Eb
 
   def write(self, *args, **kwargs):
+    def output(name, inp):
+      if os.path.exists(name):
+        qtk.prompt('file: ' + name + ' exists, overwrite?')
+        shutil.rmtree(name)
+      inp.write(name **kwargs)
     if len(args) > 0:
-      self.A.write(arg[0] + '-Eb_A', **kwargs)
-      self.B.write(arg[0] + '-Eb_B', **kwargs)
-      self.AB.write(arg[0] + '-Eb_AB', **kwargs)
+      outA = arg[0] + '-Eb_A'
+      outB = arg[0] + '-Eb_B'
+      outAB = arg[0] + '-Eb_AB'
     else:
-      self.A.write(self.header + '-Eb_A' , **kwargs)
-      self.B.write(self.header + '-Eb_B' , **kwargs)
-      self.AB.write(self.header + '-Eb_AB', **kwargs)
+      outA = self.header + '-Eb_A'
+      outB = self.header + '-Eb_B'
+      outAB = self.header + '-Eb_AB'
+
+    output(outA, self.A , **kwargs)
+    output(outB, self.B , **kwargs)
+    output(outAB, self.AB, **kwargs)

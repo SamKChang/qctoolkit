@@ -11,6 +11,48 @@ import operator
 from compiler.ast import flatten
 import qctoolkit.data.elements as qel
 
+def convE(source, units):
+
+  def returnError(ioStr, unitStr):
+    msg = 'supported units are:\n'
+    for key in Eh.iterkeys():
+      msg = msg + key + '\n'
+    report(msg, color=None)
+    exit(ioStr + " unit: " + unitStr + " is not reconized")
+
+  EhKey = {
+    'eh': 'Eh',
+    'ev': 'eV',
+    'kcal/mol': 'kcal/mol',
+    'cminv': 'cmInv',
+    'k': 'K',
+    'j': 'J',
+    'kj/mol': 'kJ/mol'
+  }
+ 
+  Eh = {
+    'Eh': 1,
+    'eV': 27.211396132,
+    'kcal/mol': 627.509469,
+    'cmInv': 219474.6313705,
+    'K': 3.15774646E5,
+    'J': 4.3597443419E-18,
+    'kJ/mol': 2625.49962
+  }
+
+  unit = units.split('-')
+  if unit[0].lower() != 'hartree' and unit[0].lower() != 'eh':
+    if unit[0].lower() in EhKey:
+      unit0 = EhKey[unit[0].lower()]
+      source = source / Eh[unit0]
+    else: returnError('input', unit[0])
+  if unit[1].lower() not in EhKey: 
+    returnError('output', unit[1])
+  else:
+    unit1 = EhKey[unit[1].lower()]
+  return source * Eh[unit1]
+
+
 def fileStrip(path):
   new_path = re.sub('.*/', '', path)
   return new_path
@@ -26,7 +68,7 @@ def imported(module):
 def Structure(input_data, **kwargs):
   if type(input_data) is not qg.Molecule:
     try:
-      return copy.deepcopy(qg.Molecule(input_data))
+      return qg.Molecule(input_data)
     except:
       pass
   else:

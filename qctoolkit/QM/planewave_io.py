@@ -1,5 +1,6 @@
 import qctoolkit as qtk
-from inp import GenericInput
+from general_io import GenericInput
+from general_io import GenericOutput
 import numpy as np
 
 class PlanewaveInput(GenericInput):
@@ -43,3 +44,7 @@ class PlanewaveInput(GenericInput):
       self.setting['lattice'] = np.array([[cd[0],   0.0,   0.0],
                                           [  0.0, cd[1],   0.0],
                                           [  0.0,   0.0, cd[2]]])
+
+class PlanewaveOutput(GenericOutput):
+  def __init__(self, output, **kwargs):
+    GenericOutput.__init__(self, output, **kwargs)

@@ -32,7 +32,7 @@ class Molecule(object):
     self.segments = []
     self.scale = False
     self.celldm = False
-    self.name = None
+    self.name = ''
     if mol:
       self.read(mol, **kwargs)
 
@@ -173,6 +173,7 @@ class Molecule(object):
         if 'charge_saturation' not in kwargs:
           new_mol.setChargeMultiplicity(-1, 1)
         else:
+          assert type(kwargs['charge_saturation']) is int
           charge = kwargs['charge_saturation']
           new_mol.setChargeMultiplicity(charge, 1)
       self.segments.append(new_mol)

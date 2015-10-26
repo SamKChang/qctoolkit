@@ -1,5 +1,6 @@
 import qctoolkit as qtk
-from qctoolkit.QM.pwinp import PlanewaveInput
+from qctoolkit.QM.planewave_io import PlanewaveInput
+from qctoolkit.QM.planewave_io import PlanewaveOutput
 import sys, os, re, copy, shutil
 import qctoolkit.QM.qmjob as qmjob
 import pkg_resources
@@ -36,18 +37,16 @@ class inp(PlanewaveInput):
   def write(self, name=None):
     molecule = copy.deepcopy(self.molecule)
     self.cm_check(molecule)
-    if not name:
-      name = molecule.name + '.inp'
-    else:
+    if name:
       out = os.path.splitext(name)
       if out[1] != '.inp':
         name = out[0] + '.inp'
-    if os.path.exists(name) and not qtk.setting.no_warning:
-      qtk.prompt(name + ' exists, overwrite?')
-      try:
-        os.remove(name)
-      except:
-        qtk.exit("can not remove file: " + name)
+      if os.path.exists(name) and not qtk.setting.no_warning:
+        qtk.prompt(name + ' exists, overwrite?')
+        try:
+          os.remove(name)
+        except:
+          qtk.exit("can not remove file: " + name)
     inp = sys.stdout if not name else open(name, 'w')
 
     def PPString(mol, i, n, outFile):
@@ -180,16 +179,11 @@ class inp(PlanewaveInput):
 
     inp.close()
 
-class out(object):
-  def __init__(self, qmout):
+class out(PlanewaveOutput):
+  def __init__(self, qmout, **kwargs):
+    PlanewaveOutput.__init__(self, qmout, **kwargs)
     self.info = ''
-    self.Et = np.nan
-    self.SCFStep = np.nan
     self.getEt(qmout)
-    #self.getSteps(qmout)
-
-  def __repr__(self):
-    return str(self.Et)
 
   def getEt(self, name):
     out = sys.stdout if re.match('stdout',name)\
@@ -215,12 +209,12 @@ class out(object):
       if (re.match(scf_p, line)):
         try:
           data = [float(x) for x in line.split()]
-          self.SCFStep = int(data[0])
+          self.scf_step = int(data[0])
         except:
           qtk.report("\n\nFailed while eading file:", name,
                     'at line: ', line,
                     '... skipping!! \n', color='yellow')
-      elif re.match(convergence, line) and self.SCFStep > 5:
+      elif re.match(convergence, line) and self.scp_step > 5:
         converged = False
       elif re.match(soft_exit, line):
         converged = False
