@@ -109,7 +109,7 @@ class inp(PlanewaveInput):
           print >> incar, "IVDW = 212"
         else:
           qtk.exit("VDW '%s' is not supported for VASP" % vdw)
-    if molecule.charge:
+    if molecule.charge != 0:
       nve = molecule.getValenceElectrons()
       print >> incar, "NELECT = %d" % (nve)
     if 'save_density'not in self.setting\
@@ -176,6 +176,6 @@ class out(PlanewaveOutput):
     PlanewaveOutput.__init__(self, qmoutXML, **kwargs)
     tree = ET.parse(qmoutXML)
     self.xml = tree.getroot()
-    self.Et = float(self.xml[-2][-5][1].text)*0.0367493
+    self.Et = qtk.convE(float(self.xml[-2][-5][1].text), 'eV-Eh')
     self.info = self.xml[0][1].text
     self.SCFStep = len(self.xml[-2])-9
