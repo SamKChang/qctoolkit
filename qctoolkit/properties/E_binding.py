@@ -1,5 +1,5 @@
 import qctoolkit as qtk
-import re
+import re, os
 #import qctoolkit.io_format.cpmd as cpmd
 
 def EbRun(EbObject, **kwargs):
@@ -38,10 +38,12 @@ class Eb(object):
       else:
         qtk.report("Eb", "wrong input format", segments)
 
-    if len(segments) == 1 and type(segments[0]) is str:
-      self.header = qtk.fileStrip(segments[0])
-    else:
-      self.header = ''
+    if type(segments[0]) is str:
+      self.header = os.path.splitext(\
+                    qtk.fileStrip(segments[0]))[0]
+    elif type(segments[0]) is qtk.Molecule:
+      self.header = segments[0].name
+
   
     # construct total system AB
     self.mol_AB = molecules[0]
@@ -49,7 +51,7 @@ class Eb(object):
       self.mol_AB = self.mol_AB + molecules[s]
     # construct ligand A and pocket B
     if 'margin' not in kwargs:
-      kwargs['margin'] = 5
+      kwargs['margin'] = qtk.setting.pw_margin
     self.celldm = self.mol_AB.setMargin(kwargs['margin'])
     self.mol_AB.find_bonds(**kwargs)
     self.mol_A = self.mol_AB.segments[ligand]
@@ -57,7 +59,8 @@ class Eb(object):
     for s in range(len(self.mol_AB.segments)):
       if s != ligand and s != pocket:
         self.mol_B = self.mol_B + self.mol_AB.segments[s]
-  
+    self.mol_A.name = 'A'
+    self.mol_B.name = 'B'
     if 'program' not in kwargs:
       kwargs['program'] = qtk.setting.qmcode
     if 'vdw' not in kwargs:
@@ -72,11 +75,11 @@ class Eb(object):
   def setInp(self):
     kwargs = self.kwargs
     kwargs['celldm'] = self.celldm
-    kwargs['info'] = 'Eb_A-' + self.header
+    kwargs['info'] = self.header + '-Eb_A' 
     self.A = qtk.QMInp(self.mol_A, **kwargs)
-    kwargs['info'] = 'Eb_B-' + self.header
+    kwargs['info'] = self.header + '-Eb_B'
     self.B = qtk.QMInp(self.mol_B, **kwargs)
-    kwargs['info'] = 'Eb_AB-' + self.header
+    kwargs['info'] = self.header + '-Eb_AB'
     self.AB = qtk.QMInp(self.mol_AB, **kwargs)
 
   def view(self):
@@ -85,22 +88,22 @@ class Eb(object):
     self.AB.view('AB')
 
   def run(self, **kwargs):
-    E_A = self.A.run('Eb_A-' + self.header, **kwargs)
-    E_B = self.B.run('Eb_B-' + self.header, **kwargs)
-    E_AB = self.AB.run('Eb_AB-' + self.header, **kwargs)
+    E_A = self.A.run(self.header + 'Eb_A-', **kwargs)
+    E_B = self.B.run(self.header + 'Eb_B-', **kwargs)
+    E_AB = self.AB.run(self.header + 'Eb_AB-', **kwargs)
 
     Eb = E_AB - E_A - E_B
     return Eb
 
   def write(self, *args, **kwargs):
-    if len(*args) > 0:
-      self.A.write('Eb_A-'+args[0], **kwargs)
-      self.B.write('Eb_B-'+args[0], **kwargs)
-      self.AB.write('Eb_AB-'+args[0], **kwargs)
+    if len(args) > 0:
+      self.A.write(arg[0] + '-Eb_A', **kwargs)
+      self.B.write(arg[0] + '-Eb_B', **kwargs)
+      self.AB.write(arg[0] + '-Eb_AB', **kwargs)
     else:
-      self.A.write('Eb_A'+self.header, **kwargs)
-      self.B.write('Eb_B-'+self.header, **kwargs)
-      self.AB.write('Eb_AB-'+self.header, **kwargs)
+      self.A.write(self.header + '-Eb_A' , **kwargs)
+      self.B.write(self.header + '-Eb_B' , **kwargs)
+      self.AB.write(self.header + '-Eb_AB', **kwargs)
     
 
 

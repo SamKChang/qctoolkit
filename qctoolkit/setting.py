@@ -8,6 +8,10 @@ cpu_count = mp.cpu_count()
 memory = float(virtual_memory().total)/10**9
 qmcode = 'cpmd'
 
+# geometry setting
+bond_ratio = 1.1
+pw_margin = 2
+
 # MPI setting
 mpistr = 'mpirun -np'
 ompthreads = 1

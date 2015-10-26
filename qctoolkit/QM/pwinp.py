@@ -6,6 +6,8 @@ class PlanewaveInput(GenericInput):
   def __init__(self, molecule, **kwargs):
     GenericInput.__init__(self, molecule, **kwargs)
 
+    self.setting.update(kwargs)
+
     if 'periodic' not in kwargs:
       self.setting['periodic'] = True
     if 'symmetry' not in kwargs and self.setting['periodic']:
@@ -25,7 +27,8 @@ class PlanewaveInput(GenericInput):
         box = self.molecule.getBox()
         # set defualt margin 2, grow with box size
         if 'margin' not in kwargs:
-          self.setting['margin'] = max(2, max(box)/5.)
+          m = qtk.setting.pw_margin
+          self.setting['margin'] = max(m, max(box)/5.)
         edge = np.array([min(self.molecule.R[:,i])\
           for i in range(3)])
         self.molecule.shift(self.setting['margin']-edge)

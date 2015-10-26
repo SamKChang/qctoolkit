@@ -1,5 +1,6 @@
 import numpy as np
 import utilities as ut
+import setting
 import re, os, sys, copy, operator
 from time import sleep
 import networkx
@@ -45,7 +46,9 @@ class Molecule(object):
     out.R = np.vstack([self.R, other.R])
     out.Z = np.hstack([self.Z, other.Z])
     out.type_list = np.hstack([self.type_list, other.type_list])
+    out.string = np.hstack([self.string, other.string])
     out.charge = self.charge + other.charge
+    out.name = self.name + "_" + other.name
     return out
 
   def view(self, name=None):
@@ -74,8 +77,6 @@ class Molecule(object):
     pymol.cmd.load(tmp_file)
     os.remove(tmp_file)
 
-
-
   def cyl2xyz(self):
     try:
       for i in range(3):
@@ -93,8 +94,11 @@ class Molecule(object):
     Rj = self.R[j]
     return np.linalg.norm(Ri - Rj)
 
-  def find_bonds(self, ratio = 1.1, **kwargs):
-    ut.report("Molecule", "finding bonds with cutoff ratio", ratio)
+  def find_bonds(self, ratio=setting.bond_ratio, **kwargs):
+    if 'quiet' not in kwargs or not kwargs['quiet']:
+      ut.report("Molecule", 
+                "finding bonds with cutoff ratio", 
+                ratio)
     def to_graph(l):
       G = networkx.Graph()
       for part in l:
@@ -161,14 +165,17 @@ class Molecule(object):
       new_mol.Z = copy.deepcopy(self.Z[segment])
       new_mol.type_list = [self.type_list[i]\
                            for i in segment]
+      new_mol.string = np.array(self.string)[segment].tolist()
+      new_mol.name = copy.deepcopy(self.name)
+      print "yo " + new_mol.name
       # need to check charge
       multiplicity = new_mol.getValenceElectrons() % 2
       if multiplicity:
         if 'charge_saturation' not in kwargs:
-          new_mol.setChargeMultiplicity(-1,1)
+          new_mol.setChargeMultiplicity(-1, 1)
         else:
           charge = kwargs['charge_saturation']
-          new_mol.setChargeMultiplicity(1,charge)
+          new_mol.setChargeMultiplicity(charge, 1)
       self.segments.append(new_mol)
 
   def getCenter(self):
@@ -242,18 +249,6 @@ class Molecule(object):
         self.string[i] = kwargs['string']
         newZ[i] = minZ
     self.Z = newZ
-    
-      
-        
-
-#  def setAtom(self, index, element):
-#    index -= 1
-#    if index <= self.N:
-#      self.type_list[index] = ut.qAtomName(element)
-#      self.Z[index] = ut.qAtomicNumber(element)
-#    else:
-#      print "index:%d out of range, nothing has happend"\
-#            % int(index+1)
 
   def flip_atom(self, index, element):
     index -= 1
@@ -381,7 +376,8 @@ class Molecule(object):
 #    self.type_list = [tmpType for tmpR, tmpType, tmpZ in new]
 #    self.Z = [tmpZ for tmpR, tmpType, tmpZ in new]
 #    self.string = [tmpStr for tmpR, tmpType, tmpZ in new]
-    
+ 
+   
     index_a = np.insert(self.Z, 0, 0)
     index_b = np.insert(self.Z, len(self.Z), 0)
     self.index = np.where((index_a != index_b))[0]
@@ -503,8 +499,18 @@ class Molecule(object):
         out = out + ut.Z2n(element[0]) + str(element[1])
       return out
 
+  def write(self, *args, **kwargs):
+    if 'format' not in kwargs:
+      kwargs['format'] = 'xyz'
+    if kwargs['format'] == 'xyz':
+      self.write_xyz(*args, **kwargs)
+    if kwargs['format'] == 'pdb':
+      self.write_pdb(*args, **kwargs)
+    if kwargs['format'] == 'cyl':
+      self.write_cyl(*args, **kwargs)
+
   # write xyz format to file
-  def write_xyz(self, *args):
+  def write_xyz(self, *args, **kwargs):
     if len(args) == 1:
       name = args[0]
     else: name = ''
@@ -527,17 +533,20 @@ class Molecule(object):
   def write_pdb(self, *args, **kwargs):
     if len(args) == 1:
       name = args[0]
-    else: name = ''
+      response = False
+    else: 
+      name = ''
+      response = True
     out = sys.stdout if not name else open(name,"w")
     if len(self.segments) == 0:
-      self.find_bonds()
+      self.find_bonds(quiet=response)
     print >> out, "%-10s%s" % ('COMPND', self.stoichiometry())
     print >> out, "%-10s%s" % ('AUTHOR', 'QCTOOLKIT')
     chain = 1
     itr = 1
 
     def connect(molecule, shift, connection):
-      molecule.find_bonds()
+      molecule.find_bonds(quiet=response)
       for i in molecule.bonds.iterkeys():
         bond = molecule.bonds[i]
         ai = bond['index_begin'] + shift

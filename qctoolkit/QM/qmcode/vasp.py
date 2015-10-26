@@ -8,15 +8,17 @@ import xml.etree.ElementTree as ET
 class inp(PlanewaveInput):
   def __init__(self, molecule, **kwargs):
     PlanewaveInput.__init__(self, molecule, **kwargs)
+    self.setting.update(kwargs)
 
-  def run(self, name=None, **run_kw):
+  def run(self, name=None, **kwargs):
     if not name:
-      name = re.sub('\..*', '', self.info)
-    else:
-      name = re.sub('\..*', '', name)
-    run_kw['inplace'] = True
+      name = self.molecule.name
+    cwd = os.getcwd()
     self.write(name)
-    return qmjob.QMRun(name, 'vasp',**run_kw)
+    os.chdir(name)
+    out = qmjob.QMRun(name, 'vasp', **kwargs)
+    os.chdir(cwd)
+    return out
     
   def write(self, name=None):
     molecule = copy.deepcopy(self.molecule)

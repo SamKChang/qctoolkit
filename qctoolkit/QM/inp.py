@@ -10,6 +10,8 @@ class GenericInput(object):
       self.setting['program'] = kwargs['program']
     self.molecule = qtk.Structure(molecule)
 
+    self.setting = kwargs
+
     if 'info' not in kwargs:
       self.setting['info'] = self.molecule.name
     if 'theory' not in kwargs:
@@ -76,6 +78,7 @@ class GenericInput(object):
       qtk.prompt(name + ' exists, overwrite?')
       shutil.rmtree(name)
     os.mkdir(name)
+    return name
 
   def cm_check(self, mol):
     ve = mol.getValenceElectrons() - mol.charge

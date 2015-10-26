@@ -7,13 +7,15 @@ import pkg_resources
 class inp(PlanewaveInput):
   def __init__(self, molecule, **kwargs):
     PlanewaveInput.__init__(self, molecule, **kwargs)
+    self.setting.update(**kwargs)
     if 'ks_states' in kwargs:
       self.setting['ks_states'] = kwargs['ks_states']
     if 'pp_type' not in kwargs:
       self.setting['pp_type'] = 'Goedecker'
 
   def run(self, name=None, **kwargs):
-    self.create_folder(name)
+    # creat_folder routine check default name
+    name = self.create_folder(name)
     cwd = os.getcwd()
     os.chdir(name)
     inp = name + '.inp'
@@ -33,6 +35,12 @@ class inp(PlanewaveInput):
   def write(self, name=None):
     molecule = copy.deepcopy(self.molecule)
     self.cm_check(molecule)
+    if not name:
+      name = molecule.name + '.inp'
+    else:
+      out = os.path.splitext(name)
+      if out[1] != '.inp':
+        name = out[0] + '.inp'
     if os.path.exists(name) and not qtk.setting.no_warning:
       qtk.prompt(name + ' exists, overwrite?')
       try:
