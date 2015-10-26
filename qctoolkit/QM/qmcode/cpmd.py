@@ -3,6 +3,7 @@ from qctoolkit.QM.pwinp import PlanewaveInput
 import sys, os, re, copy, shutil
 import qctoolkit.QM.qmjob as qmjob
 import pkg_resources
+import numpy as np
 
 class inp(PlanewaveInput):
   def __init__(self, molecule, **kwargs):
@@ -186,6 +187,9 @@ class out(object):
     self.SCFStep = np.nan
     self.getEt(qmout)
     #self.getSteps(qmout)
+
+  def __repr__(self):
+    return str(self.Et)
 
   def getEt(self, name):
     out = sys.stdout if re.match('stdout',name)\

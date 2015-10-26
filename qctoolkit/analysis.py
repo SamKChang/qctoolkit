@@ -3,7 +3,7 @@
 # http://stackoverflow.com/questions/25383698/error-string-to-bool-in-mplot3d-workaround-found
 from mpl_toolkits.mplot3d import Axes3D
 import sys, os, glob, re, copy
-import QM.qmout as qmout
+import QM.qmInterface as qmout
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl

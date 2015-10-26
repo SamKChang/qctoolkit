@@ -1,5 +1,5 @@
 import multiprocessing as mp
-import qmout
+import qmInterface as qio
 import glob, re, os, shutil
 import fileinput
 import subprocess as sp
@@ -99,7 +99,7 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
       log.close()
   
     if os.path.exists(out):
-      qio_out = qmout.QMOut(out, program)
+      qio_out = qio.QMOut(out, program)
     else:
       qio_out = None
 
@@ -115,7 +115,7 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
       exestr = setting.vasp_exe
     qmoutput = inp + '.out'
     compute(exestr, qmoutput, _threads)
-    qio_out = qmout.QMOut('vasprun.xml', program)
+    qio_out = qio.QMOut('vasprun.xml', program)
 
     if not _save_restart:
       try:
