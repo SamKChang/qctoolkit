@@ -167,10 +167,9 @@ class Molecule(object):
                            for i in segment]
       new_mol.string = np.array(self.string)[segment].tolist()
       new_mol.name = copy.deepcopy(self.name)
-      print "yo " + new_mol.name
       # need to check charge
       multiplicity = new_mol.getValenceElectrons() % 2
-      if multiplicity:
+      if multiplicity == 1:
         if 'charge_saturation' not in kwargs:
           new_mol.setChargeMultiplicity(-1, 1)
         else:

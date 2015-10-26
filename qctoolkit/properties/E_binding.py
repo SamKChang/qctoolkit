@@ -88,9 +88,9 @@ class Eb(object):
     self.AB.view('AB')
 
   def run(self, **kwargs):
-    E_A = self.A.run(self.header + 'Eb_A-', **kwargs)
-    E_B = self.B.run(self.header + 'Eb_B-', **kwargs)
-    E_AB = self.AB.run(self.header + 'Eb_AB-', **kwargs)
+    E_A = self.A.run(self.header + '-Eb_A', **kwargs)
+    E_B = self.B.run(self.header + '-Eb_B', **kwargs)
+    E_AB = self.AB.run(self.header + '-Eb_AB', **kwargs)
 
     Eb = E_AB - E_A - E_B
     return Eb
@@ -104,42 +104,3 @@ class Eb(object):
       self.A.write(self.header + '-Eb_A' , **kwargs)
       self.B.write(self.header + '-Eb_B' , **kwargs)
       self.AB.write(self.header + '-Eb_AB', **kwargs)
-    
-
-
-
-#  inp_A.write()
-#  inp_B.write()
-#  inp_AB.write()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#  if program == 'cpmd':
-#
-#    if 'vdw' in kwargs:
-#      vdw = kwargs['vdw']
-#    else:
-#      vdw = 'DCACP'
-#
-#    inp_A = cpmd.inp(mol_A, 
-#                     '2 body interaction energy part A', 
-#                     **kwargs)
-#    inp_B = cpmd.inp(mol_B, 
-#                     '2 body interaction energy part B', 
-#                     **kwargs)
-#
-#    if vdw == 'DCACP':
-#      inp_A.setting
-#
-#    print inp_A.structure.type_list
