@@ -1,4 +1,5 @@
 import sys
+from qctoolkit.setting import quiet
 import inspect
 
 class bcolors:
@@ -23,14 +24,12 @@ def exit(text):
   sys.exit(msg)
   
 def warning(text):
-  from setting import quiet
   if not quiet:
     msg = bcolors.WARNING + text + bcolors.ENDC
     print msg
   sys.stdout.flush()
 
 def progress(title, *texts):
-  from setting import quiet
   if not quiet:
     msg = bcolors.OKCYAN + bcolors.BOLD + title+":" + bcolors.ENDC
     print msg,
@@ -39,7 +38,6 @@ def progress(title, *texts):
   sys.stdout.flush()
 
 def done(*texts):
-  from setting import quiet
   if not quiet:
     for info in texts:
       print info,
@@ -47,7 +45,6 @@ def done(*texts):
   sys.stdout.flush()
 
 def report(title, *texts, **kwargs):
-  from setting import quiet
   if not quiet:
     if 'color' in kwargs:
       color = kwargs['color']
@@ -76,7 +73,6 @@ def report(title, *texts, **kwargs):
   sys.stdout.flush()
 
 def prompt(text):
-  from setting import no_warning
   if not no_warning:
     frame = inspect.stack()[1]
     module = inspect.getmodule(frame[0])
@@ -93,7 +89,6 @@ def prompt(text):
   sys.stdout.flush()
 
 def status(title, *texts):
-  from setting import quiet
   if not quiet:
     msg = bcolors.OKBLUE + title+":" + bcolors.ENDC
     print msg,

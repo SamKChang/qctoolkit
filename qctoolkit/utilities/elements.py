@@ -1,4 +1,5 @@
 import qctoolkit.data.elements as qel
+import re
 
 #################################
 # element information utilities #

@@ -3,14 +3,14 @@
 # http://stackoverflow.com/questions/25383698/error-string-to-bool-in-mplot3d-workaround-found
 from mpl_toolkits.mplot3d import Axes3D
 import sys, os, glob, re, copy
-import QM.qmInterface as qmout
+import qctoolkit as qtk
+import qctoolkit.QM.qmInterface as qmout
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import multiprocessing as mp
 import collections as cl
 import pandas as pd
-import utilities as ut
 
 # Construct dictionary of {file:results} for DataFrame
 class QMResults(object):
@@ -34,7 +34,7 @@ class QMResults(object):
       self.except_pattern = 'NOT_DEFINED'
 
     self.out_dir = glob.glob(self.path + "/" + self.pattern)
-    ut.report("QMData", "Reading output file in",
+    qtk.report("QMData", "Reading output file in",
           self.path + "/" + self.pattern)
     self.results = {}
     self.data = np.atleast_2d(np.array([]))
@@ -69,25 +69,25 @@ class QMResults(object):
 
     jobs = []
     queue = mp.Queue()
-    ut.progress("QMData", "reading files with multiprocessing...")
+    qtk.progress("QMData", "reading files with multiprocessing...")
     for result in job_chunk:
       p = mp.Process(target=read_out_dir,\
         args=(result,queue))
       jobs.append(p)
       # start multiprocess
       p.start()
-    ut.done()
-    ut.progress("QMData", "collecting results...")
+    qtk.done()
+    qtk.progress("QMData", "collecting results...")
     for process in job_chunk:
       for result in process:
         # append data from queue to hash
         self.results.update(queue.get())
-    ut.done()
-    ut.progress("QMData","joining threads...")
+    qtk.done()
+    qtk.progress("QMData","joining threads...")
     for process in jobs:
       # wait for each process to finish
       process.join()
-    ut.done()
+    qtk.done()
 
 # pandas DataFrame wrapper
 #class QMData(pd.DataFrame):
