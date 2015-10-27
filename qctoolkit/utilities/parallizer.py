@@ -3,6 +3,7 @@ import qctoolkit.setting as setting
 import multiprocessing as mp
 import operator
 from compiler.ast import flatten
+import numpy as np
 
 def parallelize(target_function, 
                 input_list, 
@@ -37,7 +38,7 @@ def parallelize(target_function,
           q_out.put([out, ind]) # output result with index
       except: 
         qtk.warning('job failed!')
-        q_out.put(['job failed', ind])
+        q_out.put([np.nan, ind])
   ###### end of single thread definition ######
 
   # devide input_list into chunks according to block_size

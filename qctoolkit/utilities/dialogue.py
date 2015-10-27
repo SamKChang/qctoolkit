@@ -1,5 +1,5 @@
 import sys
-from qctoolkit.setting import quiet
+from qctoolkit.setting import *
 import inspect
 
 class bcolors:

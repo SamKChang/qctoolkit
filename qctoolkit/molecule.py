@@ -13,7 +13,6 @@ class Molecule(object):
   # used for pymol numeration
   mol_id = 0
   def __init__(self, mol=None, **kwargs):
-    self.mol = mol
     # number of atoms
     self.N = 0
     # atom coordinates
@@ -122,6 +121,7 @@ class Molecule(object):
         last = current 
     itr = 0
     bond_list = []
+    bonded = [False for i in range(self.N)]
     for i in xrange(self.N):
       for j in xrange(i+1, self.N):
         d_ij = np.linalg.norm(self.R[i,:] - self.R[j,:])
@@ -133,6 +133,8 @@ class Molecule(object):
              atom_j.covalent_radius_uncertainty
         Dij = (Ri+Rj) * float(ratio)
         if d_ij < Dij:
+          bonded[i] = True
+          bonded[j] = True
           if self.Z[i] < self.Z[j]:
             atom_begin = self.Z[i]
             atom_end = self.Z[j]
@@ -157,27 +159,58 @@ class Molecule(object):
           else:
             self.bond_types[bond_type] = 1
           itr += 1
+
     segments = list(connected_components(to_graph(bond_list)))
     for s in range(len(segments)):
       segment = list(segments[s])
-      new_mol = Molecule()
-      new_mol.N = len(segment)
-      new_mol.R = copy.deepcopy(self.R[segment])
-      new_mol.Z = copy.deepcopy(self.Z[segment])
-      new_mol.type_list = [self.type_list[i]\
-                           for i in segment]
-      new_mol.string = np.array(self.string)[segment].tolist()
-      new_mol.name = copy.deepcopy(self.name)
+      new_mol = self.getSegment(segment, **kwargs)
+      self.segments.append(new_mol)
+    for s in [i for i in range(self.N) if not bonded[i]]:
+      segment = [s]
+      new_mol = self.getSegment(segment, **kwargs)
+      self.segments.append(new_mol)
+
+  def clone(self):
+    new_mol = Molecule()
+    new_mol.N = self.N
+    new_mol.R = copy.deepcopy(self.R)
+    new_mol.Z = copy.deepcopy(self.Z)
+    new_mol.type_list = copy.deepcopy(self.type_list)
+    new_mol.string = copy.deepcopy(self.string)
+    new_mol.name = copy.deepcopy(self.name)
+    new_mol.charge = self.charge
+    new_mol.multiplicity = self.multiplicity
+    new_mol.index = copy.deepcopy(self.index)
+    new_mol.bonds = copy.deepcopy(self.bonds)
+    new_mol.bond_types = copy.deepcopy(self.bond_types)
+    new_mol.string = copy.deepcopy(self.string)
+    new_mol.segments = []
+    new_mol.scale = False   
+    new_mol.celldm = False  
+    return new_mol
+
+  def getSegment(self, index_list, **kwargs):
+    new_mol = self.clone()
+    if type(index_list) != list:
+      index_list = [index_list]
+    index_list = map(lambda a: a-1, index_list)
+    new_mol.N = len(index_list)
+    new_mol.R = np.array([new_mol.R[i] for i in index_list])
+    new_mol.Z = np.array([new_mol.Z[i] for i in index_list])
+    new_mol.type_list = \
+      [new_mol.type_list[i] for i in index_list]
+    new_mol.string = np.array(new_mol.string)[index_list].tolist()
+    if 'check_charge' not in kwargs or kwargs['check_charge']:
       # need to check charge
-      multiplicity = new_mol.getValenceElectrons() % 2
-      if multiplicity == 1:
+      unpaired = new_mol.getValenceElectrons() % 2
+      if unpaired == 1:
         if 'charge_saturation' not in kwargs:
           new_mol.setChargeMultiplicity(-1, 1)
         else:
           assert type(kwargs['charge_saturation']) is int
           charge = kwargs['charge_saturation']
           new_mol.setChargeMultiplicity(charge, 1)
-      self.segments.append(new_mol)
+    return new_mol
 
   def getCenter(self):
     return np.sum(self.R, axis=0)/self.N
@@ -271,7 +304,7 @@ class Molecule(object):
       print "index:%d out of range, nothing has happend"\
             % index+1
 
-  def isolate_atoms(self, index_list):
+  def isolate_atoms(self, index_list, **kwargs):
     if type(index_list) != list:
       index_list = [index_list]
     index_list = map(lambda a: a-1, index_list)
@@ -280,6 +313,16 @@ class Molecule(object):
     self.Z = np.array([self.Z[i] for i in index_list])
     self.type_list = \
       [self.type_list[i] for i in index_list]
+    self.string = np.array(self.string)[index_list].tolist()
+    # need to check charge
+    unpaired = self.getValenceElectrons() % 2
+    if unpaired == 1:
+      if 'charge_saturation' not in kwargs:
+        self.setChargeMultiplicity(-1, 1)
+      else:
+        assert type(kwargs['charge_saturation']) is int
+        charge = kwargs['charge_saturation']
+        self.setChargeMultiplicity(charge, 1)
 
   def have_bond(self, type_a, type_b):
     result = False
@@ -408,7 +451,7 @@ class Molecule(object):
         self.read_cyl(name, **kwargs)
       elif name == 'VOID':
         pass
-      elif 'type' in kwargs and kwargs['type']=='cpmdinp':
+      elif 'format' in kwargs and kwargs['format']=='cpmdinp':
         self.read_cpmdinp(name)
       else:
         qtk.exit("suffix " + extension + " is not reconized")
@@ -503,12 +546,15 @@ class Molecule(object):
   def write(self, *args, **kwargs):
     if 'format' not in kwargs:
       kwargs['format'] = 'xyz'
-    if kwargs['format'] == 'xyz':
+    elif kwargs['format'] == 'xyz':
       self.write_xyz(*args, **kwargs)
-    if kwargs['format'] == 'pdb':
+    elif kwargs['format'] == 'pdb':
       self.write_pdb(*args, **kwargs)
-    if kwargs['format'] == 'cyl':
+    elif kwargs['format'] == 'cyl':
       self.write_cyl(*args, **kwargs)
+    else:
+      qtk.exit("output format: " + kwargs['format'] \
+               + " not reconized")
 
   # write xyz format to file
   def write_xyz(self, *args, **kwargs):
@@ -534,20 +580,18 @@ class Molecule(object):
   def write_pdb(self, *args, **kwargs):
     if len(args) == 1:
       name = args[0]
-      response = False
     else: 
       name = ''
-      response = True
     out = sys.stdout if not name else open(name,"w")
     if len(self.segments) == 0:
-      self.find_bonds(quiet=response)
+      self.find_bonds(quiet=True, check_charge=False)
     print >> out, "%-10s%s" % ('COMPND', self.stoichiometry())
     print >> out, "%-10s%s" % ('AUTHOR', 'QCTOOLKIT')
     chain = 1
     itr = 1
 
     def connect(molecule, shift, connection):
-      molecule.find_bonds(quiet=response)
+      molecule.find_bonds(quiet=True, check_charge=False)
       for i in molecule.bonds.iterkeys():
         bond = molecule.bonds[i]
         ai = bond['index_begin'] + shift

@@ -1,8 +1,8 @@
 import qctoolkit as qtk
-from inp import GenericInput
+from inp import GenericQMInput
 import numpy as np
 
-class AtomicBasisInput(GenericInput):
+class AtomicBasisInput(GenericQMInput):
   def __init__(self, molecule, **kwargs):
-    GenericInput.__init__(self, molecule, **kwargs)
+    GenericQMInput.__init__(self, molecule, **kwargs)
 

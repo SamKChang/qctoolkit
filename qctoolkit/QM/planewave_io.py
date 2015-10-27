@@ -1,11 +1,11 @@
 import qctoolkit as qtk
-from general_io import GenericInput
-from general_io import GenericOutput
+from general_io import GenericQMInput
+from general_io import GenericQMOutput
 import numpy as np
 
-class PlanewaveInput(GenericInput):
+class PlanewaveInput(GenericQMInput):
   def __init__(self, molecule, **kwargs):
-    GenericInput.__init__(self, molecule, **kwargs)
+    GenericQMInput.__init__(self, molecule, **kwargs)
 
     self.setting.update(kwargs)
 
@@ -46,6 +46,6 @@ class PlanewaveInput(GenericInput):
                                           [  0.0, cd[1],   0.0],
                                           [  0.0,   0.0, cd[2]]])
 
-class PlanewaveOutput(GenericOutput):
+class PlanewaveOutput(GenericQMOutput):
   def __init__(self, output, **kwargs):
-    GenericOutput.__init__(self, output, **kwargs)
+    GenericQMOutput.__init__(self, output, **kwargs)

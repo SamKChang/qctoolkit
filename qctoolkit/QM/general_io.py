@@ -2,7 +2,7 @@ import qctoolkit as qtk
 import re, os, shutil, copy
 import numpy as np
 
-class GenericInput(object):
+class GenericQMInput(object):
   def __init__(self, molecule, **kwargs):
     self.setting = kwargs
     if 'program' not in kwargs:
@@ -94,7 +94,7 @@ class GenericInput(object):
   def write(self):
     raise NotImplementedError("Please Implement write method")
 
-class GenericOutput(object):
+class GenericQMOutput(object):
   def __init__(self, output, **kwargs):
     self.Et = np.nan
     self.scf_step = np.nan
