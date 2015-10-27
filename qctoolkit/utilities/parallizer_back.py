@@ -1,4 +1,3 @@
-import qctoolkit as qtk
 import qctoolkit.setting as setting
 import multiprocessing as mp
 import operator
@@ -25,21 +24,16 @@ def parallelize(target_function,
       ind = inps[-1]    # index of job
       inps = inps[:-1]  # actual input sequence
       out = []
-      try:
-        for args in inps:
-          if type(args[-1]) == dict: # check known args input
-            kwargs = args[-1]
-            args = args[:-1]  
-            out.append(target_function(*args, **kwargs))
-          else:
-            out.append(target_function(*args))
-        if out != None:
-          q_out.put([out, ind]) # output result with index
-      except: 
-        qtk.warning('job failed!')
-        q_out.put(['job failed', ind])
-      finally:
-        q_in.task_done()
+      for args in inps:
+        if type(args[-1]) == dict: # check known args input
+          kwargs = args[-1]
+          args = args[:-1]  
+          out.append(target_function(*args, **kwargs))
+        else:
+          out.append(target_function(*args))
+      if out != None:
+        q_out.put([out, ind]) # output result with index
+      q_in.task_done()
     q_in.task_done() # task done for 'None' if q_in finished
   ###### end of single thread definition ######
 
