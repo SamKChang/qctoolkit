@@ -26,7 +26,8 @@ class PlanewaveInput(GenericInput):
       # set default orthorombic celldm
       if not self.molecule.celldm:
         box = self.molecule.getBox()
-        # set defualt margin 2, grow with box size
+        # set defualt margin in specified in setting.py, 
+        # grow with box size
         if 'margin' not in kwargs:
           m = qtk.setting.pw_margin
           self.setting['margin'] = max(m, max(box)/5.)

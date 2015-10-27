@@ -1,5 +1,6 @@
 import numpy as np
-import utilities as ut
+#import utilities as ut
+import qctoolkit as qtk
 import setting
 import re, os, sys, copy, operator
 from time import sleep
@@ -61,8 +62,8 @@ class Molecule(object):
       except AttributeError:
         pass
 
-    if ut.imported('pymol'):
-      ut.report("Molecule", "initializing pymol...", color=None)
+    if qtk.imported('pymol'):
+      qtk.report("Molecule", "initializing pymol...", color=None)
       import pymol
       pymol.finish_launching()
     else:
@@ -96,7 +97,7 @@ class Molecule(object):
 
   def find_bonds(self, ratio=setting.bond_ratio, **kwargs):
     if 'quiet' not in kwargs or not kwargs['quiet']:
-      ut.report("Molecule", 
+      qtk.report("Molecule", 
                 "finding bonds with cutoff ratio", 
                 ratio)
     def to_graph(l):
@@ -148,8 +149,8 @@ class Molecule(object):
                              'index_end'   : index_end,
                              'length'      : d_ij}
           bond_list.append([i, j])
-          type_begin = ut.Z2n(atom_begin)
-          type_end   = ut.Z2n(atom_end)
+          type_begin = qtk.Z2n(atom_begin)
+          type_end   = qtk.Z2n(atom_end)
           bond_type  = type_begin + "-" + type_end
           if bond_type in self.bond_types:
             self.bond_types[bond_type] += 1
@@ -186,7 +187,7 @@ class Molecule(object):
     return np.sum(weighted, axis=0)/sum(self.Z)
 
   def getCenterOfMass(self):
-    mass_list = [ut.n2m(elem) for elem in self.type_list]
+    mass_list = [qtk.n2m(elem) for elem in self.type_list]
     weighted = self.R * np.array(mass_list).reshape([self.N,1])
     return np.sum(weighted, axis=0)/sum(mass_list)
 
@@ -202,13 +203,13 @@ class Molecule(object):
       mode = 'mass'
 
     if mode == 'mass':
-      weight = [ut.n2m(elem) for elem in self.type_list]
+      weight = [qtk.n2m(elem) for elem in self.type_list]
       center = self.getCenterOfMass()
     elif mode == 'charge':
       weight = self.Z
       center = self.getCenterOfCharge()
     else:
-      ut.exit("mode: " + str(mode) + " is not supported by "\
+      qtk.exit("mode: " + str(mode) + " is not supported by "\
               "pricialAxes()")
 
     inertia = np.zeros([3,3])
@@ -222,11 +223,11 @@ class Molecule(object):
     return sorted(I,reverse=True), U[I.argsort()[::-1]]
 
   def setMargin(self, margin):
-    ut.report("Molecule", "setup margin:", margin)
+    qtk.report("Molecule", "setup margin:", margin)
     self.shift([margin - np.min(self.R[:,i]) for i in range(3)])
     celldm = [margin + np.max(self.R[:,i]) for i in range(3)]
     celldm.extend([0,0,0])
-    ut.report("Molecule", "resulting celldm:", celldm)
+    qtk.report("Molecule", "resulting celldm:", celldm)
     return celldm
 
   def setAtom(self, index, **kwargs):
@@ -238,11 +239,11 @@ class Molecule(object):
         i -= 1
         assert i>=0
         if 'element' in kwargs:
-          Z = ut.n2Z(kwargs['element'])
+          Z = qtk.n2Z(kwargs['element'])
         elif 'Z' in kwargs:
           Z = kwargs['Z']
         newZ[i] = Z
-        self.type_list[i] = ut.Z2n(Z)
+        self.type_list[i] = qtk.Z2n(Z)
     if 'string' in kwargs:
       minZ = min(self.Z)-1
       for i in index:
@@ -253,8 +254,8 @@ class Molecule(object):
   def flip_atom(self, index, element):
     index -= 1
     if index <= self.N:
-      self.type_list[index] = ut.qAtomName(element)
-      self.Z[index] = ut.qAtomicNumber(element)
+      self.type_list[index] = qtk.qAtomName(element)
+      self.Z[index] = qtk.qAtomicNumber(element)
     else:
       print "index:%d out of range, nothing has happend"\
             % int(index+1)
@@ -284,12 +285,12 @@ class Molecule(object):
     result = False
     if '0' not in self.bonds:
       self.find_bonds()
-    if ut.n2Z(type_a) > ut.n2Z(type_b):
-      atom_begin = ut.n2Z(type_b)
-      atom_end = ut.n2Z(type_a)
+    if qtk.n2Z(type_a) > qtk.n2Z(type_b):
+      atom_begin = qtk.n2Z(type_b)
+      atom_end = qtk.n2Z(type_a)
     else:
-      atom_begin = ut.n2Z(type_a)
-      atom_end = ut.n2Z(type_b)
+      atom_begin = qtk.n2Z(type_a)
+      atom_end = qtk.n2Z(type_b)
     for key in self.bonds:
       if self.bonds[key]['atom_begin'] == atom_begin and \
          self.bonds[key]['atom_end'] == atom_end:
@@ -313,7 +314,7 @@ class Molecule(object):
     self.R = self.R + shift_matrix
 
   def getValenceElectrons(self):
-    ve = np.vectorize(ut.n2ve)
+    ve = np.vectorize(qtk.n2ve)
     nve = sum(ve(self.type_list)) - self.charge
     return nve
 
@@ -327,14 +328,14 @@ class Molecule(object):
        type(self.charge)==(int or float):
       if not (self.multiplicity % 2 != \
               (np.sum(self.Z) + self.charge) % 2):
-        ve = np.vectorize(ut.n2ve)
+        ve = np.vectorize(qtk.n2ve)
         nve = sum(ve(self.type_list)) - self.charge
         msg = "Multiplicity %d " % self.multiplicity + \
               "and %d valence electrons " % nve +\
               "\n(with charge %3.1f) " % float(self.charge) +\
               "are not compatible"
         if not ('no_warning' in kwargs and kwargs['no_warning']):
-          ut.prompt(msg + "\nsuppress warning py no_warning=True,"\
+          qtk.prompt(msg + "\nsuppress warning py no_warning=True,"\
                     + " continue?")
 
   def rotate(self, u, angle):
@@ -410,10 +411,10 @@ class Molecule(object):
       elif 'type' in kwargs and kwargs['type']=='cpmdinp':
         self.read_cpmdinp(name)
       else:
-        ut.exit("suffix " + extension + " is not reconized")
+        qtk.exit("suffix " + extension + " is not reconized")
 
       self.string = ['' for _ in range(self.N)]
-      self.name = ut.fileStrip(stem)
+      self.name = qtk.fileStrip(stem)
 
       if np.sum(self.Z) % 2 == 1:
         if 'charge_saturation' not in kwargs:
@@ -421,7 +422,7 @@ class Molecule(object):
         else: 
           self.charge = kwargs['charge_saturation']
     else:
-      ut.exit("file: '" + name + "' not found")
+      qtk.exit("file: '" + name + "' not found")
       
   # read structrue from xyz
   def read_xyz(self, name, **kwargs):
@@ -445,7 +446,7 @@ class Molecule(object):
       # remove empty elements
       data = filter(None, data)
       type_list.append(data[0])
-      Z.append(ut.n2Z(data[0]))
+      Z.append(qtk.n2Z(data[0]))
       crd = [float(data[1]),float(data[2]),float(data[3])]
       coord.append(crd)
     self.R = np.vstack(coord)
@@ -476,7 +477,7 @@ class Molecule(object):
       # remove empty elements
       data = filter(None, data)
       type_list.append(data[0])
-      Z.append(ut.n2Z(data[0]))
+      Z.append(qtk.n2Z(data[0]))
       crd = [float(data[1]),float(data[2]),float(data[3])]
       coord.append(crd)
     self.R = np.vstack(coord)
@@ -496,7 +497,7 @@ class Molecule(object):
     elif kwargs['format'] == 'string':
       out = ''
       for element in data:
-        out = out + ut.Z2n(element[0]) + str(element[1])
+        out = out + qtk.Z2n(element[0]) + str(element[1])
       return out
 
   def write(self, *args, **kwargs):
@@ -517,7 +518,7 @@ class Molecule(object):
     out = sys.stdout if not name else open(name,"w")
 
     #if len(self.type_list) != self.N:
-    #tlist = np.vectorize(ut.Z2n)
+    #tlist = np.vectorize(qtk.Z2n)
     #self.type_list = list(tlist(self.Z))
 
     print >>out, str(self.N)+"\n"
@@ -606,7 +607,7 @@ class Molecule(object):
               line = inp.readline()
               coord.append([float(x) for x in line.split()])
               type_list.append(element)
-              Z.append(ut.n2Z(element))
+              Z.append(qtk.n2Z(element))
     self.R = np.vstack(coord)
     #self.NTypeName = np.array(NTypeName)
     self.type_list = type_list

@@ -42,6 +42,7 @@ setup(name='qctoolkit',
   author='K. Y. S. Chang',
   author_email='ky.sam.chang@gmail.com',
   packages=[
+    'qctoolkit.utilities',
     'qctoolkit.projects',
     'qctoolkit.projects.Basel',
     'qctoolkit.projects.Basel.p01_AlGaAs',

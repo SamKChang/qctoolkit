@@ -10,7 +10,7 @@ qmcode = 'cpmd'
 
 # geometry setting
 bond_ratio = 1.1
-pw_margin = 2
+pw_margin = 3
 
 # MPI setting
 mpistr = 'mpirun -np'

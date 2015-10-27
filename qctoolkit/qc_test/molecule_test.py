@@ -3,9 +3,9 @@
 import qctoolkit as qtk
 import glob
 
-A = qtk.Molecule('data/A.xyz')
-B = qtk.Molecule('data/B.xyz')
-AB = qtk.Molecule('data/AB.xyz')
-p = qtk.Molecule('data/periodic_algaas.cyl')
+A = qtk.Molecule( 'data/molecules/A.xyz')
+B = qtk.Molecule( 'data/molecules/B.xyz')
+AB = qtk.Molecule('data/molecules/AB.xyz')
+p = qtk.Molecule('data/molecules/periodic_algaas.cyl')
 
 B.write()
