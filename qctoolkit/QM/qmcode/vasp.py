@@ -24,8 +24,8 @@ class inp(PlanewaveInput):
   def write(self, name=None):
     molecule = copy.deepcopy(self.molecule)
     self.cm_check(molecule)
-    cwd = os.getcwd()
     if name:
+      cwd = os.getcwd()
       if os.path.exists(name) and not qtk.setting.no_warning:
         qtk.prompt(name + ' exists, overwrite?')
         try:
@@ -159,11 +159,12 @@ class inp(PlanewaveInput):
             print >> potcar, line,
       else:
         print >> potcar, "cat %s" % PP_file
-  
-    incar.close()
-    kpoints.close()
-    poscar.close()
-    potcar.close()
+
+    if name:
+      incar.close()
+      kpoints.close()
+      poscar.close()
+      potcar.close()
 
     os.chdir(cwd)
 

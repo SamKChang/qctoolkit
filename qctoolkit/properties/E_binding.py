@@ -102,9 +102,9 @@ class Eb(object):
         shutil.rmtree(name)
       inp.write(name, **kwargs)
     if len(args) > 0:
-      outA = arg[0] + '-Eb_A'
-      outB = arg[0] + '-Eb_B'
-      outAB = arg[0] + '-Eb_AB'
+      outA = args[0] + '-Eb_A'
+      outB = args[0] + '-Eb_B'
+      outAB = args[0] + '-Eb_AB'
     else:
       outA = None
       outB = None

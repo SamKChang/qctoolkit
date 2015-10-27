@@ -38,6 +38,9 @@ def parallelize(target_function,
       except: 
         qtk.warning('job failed!')
         q_out.put(['job failed', ind])
+      finally:
+        q_in.task_done()
+    q_in.task_done() # task done for 'None' if q_in finished
   ###### end of single thread definition ######
 
   # devide input_list into chunks according to block_size
@@ -49,32 +52,26 @@ def parallelize(target_function,
   # setup empty queue
   output_stack = []
   output = []
-  qinp = mp.Queue()
+  qinp = mp.JoinableQueue()
   qout = mp.Queue()
 
   # start process with empty queue
-  jobs = []
   for thread in range(threads):
     p =  mp.Process(target=run_jobs, args=(qinp, qout))
+    p.daemon = True # necessary for terminating finished thread
     p.start()
-    jobs.append(p)
 
   # put I/O data into queue for parallel processing
   index = range(len(input_block))
   for ind, inps in zip(index, input_block):
     inps.append(ind) # append inp index
     qinp.put(inps)   # put inp to input queue
-
-  for thread in jobs:
-    qinp.put(None)
+  qinp.join()       # wait for jobs to finish
 
   # 'while not queue.empty' is NOT reliable
   if not qout.empty():
     for i in range(len(input_block)):
       output_stack.append(qout.get())
-
-  for thread in jobs:
-    thread.join()
 
   if len(output_stack)>0:
     # sort/restructure output according to input order
