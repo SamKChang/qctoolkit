@@ -34,8 +34,7 @@ def parallelize(target_function,
             out.append(target_function(*args, **kwargs))
           else:
             out.append(target_function(*args))
-        if out != None:
-          q_out.put([out, ind]) # output result with index
+        q_out.put([out, ind]) # output result with index
       except: 
         qtk.warning('job failed!')
         q_out.put([np.nan, ind])
@@ -70,9 +69,8 @@ def parallelize(target_function,
     qinp.put(None)
 
   # 'while not queue.empty' is NOT reliable
-  if not qout.empty():
-    for i in range(len(input_block)):
-      output_stack.append(qout.get())
+  for i in range(len(input_block)):
+    output_stack.append(qout.get())
 
   for thread in jobs:
     thread.join()
