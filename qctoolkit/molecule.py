@@ -161,6 +161,7 @@ class Molecule(object):
           itr += 1
 
     segments = list(connected_components(to_graph(bond_list)))
+    print segments
     for s in range(len(segments)):
       segment = list(segments[s])
       new_mol = self.getSegment(segment, **kwargs)
@@ -191,9 +192,10 @@ class Molecule(object):
 
   def getSegment(self, index_list, **kwargs):
     new_mol = self.clone()
+    new_mol.charge = 0
     if type(index_list) != list:
       index_list = [index_list]
-    index_list = map(lambda a: a-1, index_list)
+    index_list = map(lambda a: a, index_list)
     new_mol.N = len(index_list)
     new_mol.R = np.array([new_mol.R[i] for i in index_list])
     new_mol.Z = np.array([new_mol.Z[i] for i in index_list])
@@ -205,6 +207,7 @@ class Molecule(object):
       unpaired = new_mol.getValenceElectrons() % 2
       if unpaired == 1:
         if 'charge_saturation' not in kwargs:
+          print "yo! setting segments, unpaired=True, no setting"
           new_mol.setChargeMultiplicity(-1, 1)
         else:
           assert type(kwargs['charge_saturation']) is int
