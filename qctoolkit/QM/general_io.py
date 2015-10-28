@@ -106,12 +106,14 @@ class GenericQMOutput(object):
   def inUnit(self, unit):
     unitStr = self.unit + '-' + unit
     if not unitStr.lower() == 'eh-eh':
-      return qtk.convE(self.Et, unitStr)
+      new_E = qtk.convE(self.Et, unitStr)
+      self.Et = new_E
+      return new_E
     else: return self.Et
 
   def __add__(self, other):
     out = copy.deepcopy(self)
-    if isinstance(other, qtk.QM.general_io.GenericOutput):
+    if isinstance(other, qtk.QM.general_io.GenericQMOutput):
       if self.unit == other.unit:
         out.Et = self.Et + other.Et
       else:
@@ -124,7 +126,7 @@ class GenericQMOutput(object):
 
   def __sub__(self, other):
     out = copy.deepcopy(self)
-    if isinstance(other, qtk.QM.general_io.GenericOutput):
+    if isinstance(other, qtk.QM.general_io.GenericQMOutput):
       if self.unit == other.unit:
         out.Et = self.Et - other.Et
       else:
