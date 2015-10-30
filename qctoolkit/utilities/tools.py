@@ -1,6 +1,7 @@
 from math import pi ,sin, cos
 import qctoolkit.molecule as qg
 import numpy as np
+import qctoolkit as qtk
 
 def R(theta, u):
   return np.array(
@@ -20,17 +21,22 @@ def convE(source, units):
     msg = 'supported units are:\n'
     for key in Eh.iterkeys():
       msg = msg + key + '\n'
-    report(msg, color=None)
-    exit(ioStr + " unit: " + unitStr + " is not reconized")
+    qtk.report(msg, color=None)
+    qtk.exit(ioStr + " unit: " + unitStr + " is not reconized")
 
   EhKey = {
     'eh': 'Eh',
-    'ev': 'eV',
-    'kcal/mol': 'kcal/mol',
-    'cminv': 'cmInv',
-    'k': 'K',
+    'hartree': 'Eh',
     'j': 'J',
-    'kj/mol': 'kJ/mol'
+    'joule': 'J',
+    'kj/mol': 'kJ/mol',
+    'kcal/mol': 'kcal/mol',
+    'ev': 'eV',
+    'cminv': 'cmInv',
+    'cminverse': 'cmInv',
+    'icm': 'cmInv',
+    'k': 'K',
+    'kelvin': 'K',
   }
  
   Eh = {

@@ -72,6 +72,12 @@ def parallelize(target_function,
   for i in range(len(input_block)):
     output_stack.append(qout.get())
 
+  # clean up queues
+  while not qinp.empty():
+    qinp.get()
+  while not qout.empty():
+    qout.get()
+
   for thread in jobs:
     thread.join()
 
@@ -82,4 +88,4 @@ def parallelize(target_function,
     for data_out in output_stack: 
       # if output is list of class, in-line iteration doesn't work
       output.append(data_out[0])
-    return flatten(output)
+  return flatten(output)

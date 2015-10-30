@@ -28,6 +28,8 @@ def convE(source, units):
     'k': 'K',
     'j': 'J',
     'kj/mol': 'kJ/mol'
+    'joule': 'J',
+    'Joule': 'J',
   }
  
   Eh = {

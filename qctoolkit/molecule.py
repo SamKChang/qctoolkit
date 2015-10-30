@@ -161,7 +161,6 @@ class Molecule(object):
           itr += 1
 
     segments = list(connected_components(to_graph(bond_list)))
-    print segments
     for s in range(len(segments)):
       segment = list(segments[s])
       new_mol = self.getSegment(segment, **kwargs)
