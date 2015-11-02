@@ -17,8 +17,14 @@ class inp(PlanewaveInput):
     cwd = os.getcwd()
     self.write(name)
     os.chdir(name)
-    out = qmjob.QMRun(name, 'vasp', **kwargs)
-    os.chdir(cwd)
+    try:
+      out = qmjob.QMRun(name, 'vasp', **kwargs)
+    except:
+      qtk.warning("qmjob finished unexpectedly for '" + \
+                  name + "'")
+      out = None
+    finally:
+      os.chdir(cwd)
     return out
     
   def write(self, name=None):
@@ -94,6 +100,8 @@ class inp(PlanewaveInput):
     print >> incar, "SYSTEM = %s" % self.setting['info']
     print >> incar, "ISMEAR = 0"
     print >> incar, "IBRION = 2"
+    if 'scf_step' in self.setting:
+      incar.write('NELM = %d\n' % self.setting['scf_step'])
     if 'vdw' in self.setting:
       vdw = self.setting['vdw'].lower()
       if vdw != 'none':

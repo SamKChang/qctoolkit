@@ -30,8 +30,14 @@ class inp(PlanewaveInput):
     for f in self.pp_files:
       pp = os.path.join(self.pp_path, f)
       shutil.copyfile(pp, f)
-    out = qmjob.QMRun(inp, 'cpmd', **kwargs)
-    os.chdir(cwd)
+    try:
+      out = qmjob.QMRun(inp, 'cpmd', **kwargs)
+    except:
+      qtk.warning("qmjob finished unexpectedly for '" + \
+                  name + "'")
+      out = None
+    finally:
+      os.chdir(cwd)
     return out
 
   def write(self, name=None):

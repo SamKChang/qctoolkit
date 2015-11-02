@@ -10,3 +10,6 @@ class xyzOutput(GenericMDOutput):
     self.molecule.write(pdb, format='pdb')
     GenericMDOutput.__init__(self, traj, pdb)
     os.remove(pdb)
+
+    self.type_list = self.molecule.type_list
+    self.Z = self.molecule.Z
