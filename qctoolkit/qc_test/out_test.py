@@ -10,3 +10,5 @@ print cpmdOut
 print vaspOut
 
 print cpmdOut - vaspOut
+
+print cpmdOut -'test'
