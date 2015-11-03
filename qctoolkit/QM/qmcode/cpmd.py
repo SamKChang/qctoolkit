@@ -218,10 +218,10 @@ class out(PlanewaveOutput):
           data = [float(x) for x in line.split()]
           self.scf_step = int(data[0])
         except:
-          qtk.report("\n\nFailed while eading file:", name,
+          qtk.report("\n\nFailed while reading file:", name,
                     'at line: ', line,
                     '... skipping!! \n', color='yellow')
-      elif re.match(convergence, line) and self.scp_step > 5:
+      elif re.match(convergence, line) and self.scf_step > 5:
         converged = False
       elif re.match(soft_exit, line):
         converged = False
