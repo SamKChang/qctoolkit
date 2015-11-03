@@ -32,7 +32,21 @@ c_module = [Extension(name = "qctoolkit.ML.kernel_matrix",
             Extension(name = "qctoolkit.coulomb_matrix", 
               extra_compile_args=['-O3'],
               sources = ['qctoolkit/src/coulombmatrixmodule.c',
-                         'qctoolkit/src/utilities.c'])
+                         'qctoolkit/src/utilities.c']),
+            Extension(name = "qctoolkit.MD.dlist_1", 
+              sources = ['qctoolkit/MD/c_extension/'+\
+                         'dlist1.c'],
+              extra_compile_args=['-fopenmp', '-fpic', '-lm',
+                                  '-Wno-write-strings'],
+              extra_link_args=['-lgomp', '-shared'],
+              include_dirs = [np.get_include()]),
+            Extension(name = "qctoolkit.MD.dlist_2", 
+              sources = ['qctoolkit/MD/c_extension/'+\
+                         'dlist2.c'],
+              extra_compile_args=['-fopenmp', '-fpic', '-lm',
+                                  '-Wno-write-strings'],
+              extra_link_args=['-lgomp', '-shared'],
+              include_dirs = [np.get_include()])
            ]
 
 setup(name='qctoolkit',
