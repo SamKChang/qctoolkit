@@ -35,7 +35,7 @@ class inp(PlanewaveInput):
     except:
       qtk.warning("qmjob finished unexpectedly for '" + \
                   name + "'")
-      out = np.nan
+      out = PlanewaveOutput(program='cpmd')
     finally:
       os.chdir(cwd)
     return out
@@ -190,7 +190,8 @@ class out(PlanewaveOutput):
   def __init__(self, qmout, **kwargs):
     PlanewaveOutput.__init__(self, qmout, **kwargs)
     self.info = ''
-    self.getEt(qmout)
+    if qmout:
+      self.getEt(qmout)
 
   def getEt(self, name):
     out = sys.stdout if re.match('stdout',name)\

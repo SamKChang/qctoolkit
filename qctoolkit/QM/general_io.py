@@ -95,7 +95,7 @@ class GenericQMInput(object):
     raise NotImplementedError("Please Implement write method")
 
 class GenericQMOutput(object):
-  def __init__(self, output, **kwargs):
+  def __init__(self, output=None, **kwargs):
     self.Et = np.nan
     self.scf_step = np.nan
     self.unit = 'Eh'

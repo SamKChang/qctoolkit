@@ -12,7 +12,7 @@ def QMInp(molecule, **kwargs):
   elif kwargs['program'].lower() == 'vasp':
     return vasp.inp(molecule, **kwargs)
 
-def QMOut(out, **kwargs):
+def QMOut(out=None, **kwargs):
 
   if 'program' not in kwargs:
     kwargs['program'] = qtk.setting.qmcode

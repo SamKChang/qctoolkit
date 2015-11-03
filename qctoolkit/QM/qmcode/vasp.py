@@ -22,7 +22,7 @@ class inp(PlanewaveInput):
     except:
       qtk.warning("qmjob finished unexpectedly for '" + \
                   name + "'")
-      out = np.nan
+      out = PlanewaveOutput(program='vasp')
     finally:
       os.chdir(cwd)
     return out
@@ -183,9 +183,10 @@ class out(PlanewaveOutput):
   """
   def __init__(self, qmoutXML, **kwargs):
     PlanewaveOutput.__init__(self, qmoutXML, **kwargs)
-    tree = ET.parse(qmoutXML)
-    self.xml = tree.getroot()
-    self.Et = qtk.convE(float(self.xml[-2][-5][1].text),
-                        'eV-Eh', '-')
-    self.info = self.xml[0][1].text
-    self.SCFStep = len(self.xml[-2])-9
+    if qmoutXML:
+      tree = ET.parse(qmoutXML)
+      self.xml = tree.getroot()
+      self.Et = qtk.convE(float(self.xml[-2][-5][1].text),
+                          'eV-Eh', '-')
+      self.info = self.xml[0][1].text
+      self.SCFStep = len(self.xml[-2])-9

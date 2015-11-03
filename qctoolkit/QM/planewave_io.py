@@ -47,5 +47,5 @@ class PlanewaveInput(GenericQMInput):
                                           [  0.0,   0.0, cd[2]]])
 
 class PlanewaveOutput(GenericQMOutput):
-  def __init__(self, output, **kwargs):
-    GenericQMOutput.__init__(self, output, **kwargs)
+  def __init__(self, output=None, **kwargs):
+    GenericQMOutput.__init__(self, output=None, **kwargs)

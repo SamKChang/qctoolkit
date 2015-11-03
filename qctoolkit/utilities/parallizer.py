@@ -68,7 +68,7 @@ def parallelize(target_function,
   for thread in jobs:
     qinp.put(None)
 
-  # 'while not queue.empty' is NOT reliable
+  # while not queue.empty' is NOT reliable
   for i in range(len(input_block)):
     output_stack.append(qout.get())
 
