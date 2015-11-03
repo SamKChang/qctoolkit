@@ -22,7 +22,7 @@ class inp(PlanewaveInput):
     except:
       qtk.warning("qmjob finished unexpectedly for '" + \
                   name + "'")
-      out = None
+      out = np.nan
     finally:
       os.chdir(cwd)
     return out
