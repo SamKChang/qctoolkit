@@ -2,7 +2,7 @@ import qctoolkit as qtk
 import mdtraj as md
 import numpy as np
 
-class MDResult(traj, **kwargs):
+def MDResult(traj, **kwargs):
 
   mol = qtk.Molecule(traj)
   mol.write('qtk_tmp_traj.pdb', format='pdb')

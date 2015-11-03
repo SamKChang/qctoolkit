@@ -106,7 +106,7 @@ class GenericQMOutput(object):
   def inUnit(self, unit):
     unitStr = self.unit + '-' + unit
     if not unitStr.lower() == 'eh-eh':
-      new_E = qtk.convE(self.Et, unitStr)
+      new_E = qtk.convE(self.Et, unitStr, '-')
       self.Et = new_E
       return new_E
     else: return self.Et
@@ -118,7 +118,7 @@ class GenericQMOutput(object):
         out.Et = self.Et + other.Et
       else:
         unitStr = self.unit + '-' + other.unit
-        out.Et = self.Et + qtk.convE(other.Et, unitStr)
+        out.Et = self.Et + qtk.convE(other.Et, unitStr, '-')
       out.scp_step = max(self.scf_step, other.scf_step)
     elif type(other) is int or float:
       out.Et = self.Et + other
@@ -131,7 +131,7 @@ class GenericQMOutput(object):
         out.Et = self.Et - other.Et
       else:
         unitStr = self.unit + '-' + other.unit
-        out.Et = self.Et + qtk.convE(other.Et, unitStr)
+        out.Et = self.Et + qtk.convE(other.Et, unitStr, '-')
       out.scp_step = max(self.scf_step, other.scf_step)
     elif type(other) is int or float:
       out.Et = self.Et - other

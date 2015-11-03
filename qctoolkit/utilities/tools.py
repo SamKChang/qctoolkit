@@ -16,7 +16,7 @@ def R(theta, u):
       cos(theta) + u[2]**2 * (1-cos(theta))]]
   )
 
-def convE(source, units):
+def convE(source, units, separator=None):
   def returnError(ioStr, unitStr):
     msg = 'supported units are:\n'
     for key in Eh.iterkeys():
@@ -25,16 +25,22 @@ def convE(source, units):
     qtk.exit(ioStr + " unit: " + unitStr + " is not reconized")
 
   EhKey = {
+    'ha': 'Eh',
     'eh': 'Eh',
     'hartree': 'Eh',
     'j': 'J',
     'joule': 'J',
     'kj/mol': 'kJ/mol',
+    'kjmol': 'kJ/mol',
+    'kjm': 'kJ/mol',
     'kcal/mol': 'kcal/mol',
+    'kcalmol': 'kcal/mol',
+    'kcm': 'kcal/mol',
     'ev': 'eV',
     'cminv': 'cmInv',
     'cminverse': 'cmInv',
     'icm': 'cmInv',
+    'cm-1': 'cmInv',
     'k': 'K',
     'kelvin': 'K',
   }
@@ -49,7 +55,11 @@ def convE(source, units):
     'kJ/mol': 2625.49962
   }
 
-  unit = units.split('-')
+  if not separator:
+    separator='-'
+  unit = units.split(separator)
+  if len(unit) != 2:
+    qtk.exit("problem with unit separator '%s'" % separator)
   if unit[0].lower() != 'hartree' and unit[0].lower() != 'eh':
     if unit[0].lower() in EhKey:
       unit0 = EhKey[unit[0].lower()]

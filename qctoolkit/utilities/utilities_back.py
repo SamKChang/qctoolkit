@@ -27,7 +27,7 @@ def convE(source, units):
     'cminv': 'cmInv',
     'k': 'K',
     'j': 'J',
-    'kj/mol': 'kJ/mol'
+    'kj/mol': 'kJ/mol',
     'joule': 'J',
     'Joule': 'J',
   }

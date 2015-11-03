@@ -2,12 +2,11 @@
 
 import qctoolkit as qtk
 import qctoolkit.MD as qmd
+import pylab as p
 
 traj = qmd.xyzOutput('data/mdout/TRAJEC.xyz')
 
-print traj
-print traj.type_list
+out = traj.gr()
+n, bins, patches = p.hist(out)
 
-traj.gr('H', 'O')
-
-
+p.show()
