@@ -5,6 +5,7 @@ fileList.txt
 **.swp
 **.pyc
 qctoolkit/test/
+qctoolkit/.test-old/
 branchUpdate.sh
 initialize.sh
 install.sh

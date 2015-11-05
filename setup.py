@@ -10,6 +10,9 @@ import numpy as np
 #  Extension(name = 'qctoolkit.path.to.extension.name',
 #    sources = ['qctoolkit/path/to/extension/name.pyx'])
 
+#            Extension(name = "qctoolkit.read_cube", 
+#              extra_compile_args=['-O3'],
+#              sources = ['qctoolkit/src/readcubemodule.c']),
 c_module = [Extension(name = "qctoolkit.ML.kernel_matrix", 
               sources = ['qctoolkit/ML/c_extension/'+\
                          'kernelmatrixmodule.c',
@@ -26,9 +29,10 @@ c_module = [Extension(name = "qctoolkit.ML.kernel_matrix",
                                   '-Wno-write-strings'],
               extra_link_args=['-lgomp', '-shared'],
               include_dirs = [np.get_include()]),
-            Extension(name = "qctoolkit.read_cube", 
+            Extension(name = "qctoolkit.analysis.read_cube", 
               extra_compile_args=['-O3'],
-              sources = ['qctoolkit/src/readcubemodule.c']),
+              sources = ['qctoolkit/analysis/c_extension/'+\
+                         'readcubemodule.c']),
             Extension(name = "qctoolkit.coulomb_matrix", 
               extra_compile_args=['-O3'],
               sources = ['qctoolkit/src/coulombmatrixmodule.c',
@@ -46,7 +50,7 @@ c_module = [Extension(name = "qctoolkit.ML.kernel_matrix",
               extra_compile_args=['-fopenmp', '-fpic', '-lm',
                                   '-Wno-write-strings'],
               extra_link_args=['-lgomp', '-shared'],
-              include_dirs = [np.get_include()])
+              include_dirs = [np.get_include()]),
            ]
 
 setup(name='qctoolkit',
@@ -71,6 +75,8 @@ setup(name='qctoolkit',
     'qctoolkit.optimization',
     'qctoolkit.ML',
     'qctoolkit.MD',
+    'qctoolkit.MD.mdcode',
+    'qctoolkit.MD.trajectory',
     'qctoolkit.alchemy',
     'qctoolkit.properties',
     'qctoolkit'

@@ -3,10 +3,29 @@
 import qctoolkit as qtk
 import qctoolkit.MD as qmd
 import pylab as p
+import numpy as np
+import matplotlib.pyplot as plt
 
-traj = qmd.xyzOutput('data/mdout/TRAJEC.xyz')
+out = 'data/mdout/cpmd/'
 
-out = traj.gr()
-n, bins, patches = p.hist(out)
+traj = qmd.MDOut(out)
+#print traj.position
+#print traj.velocity
+#print traj.cell
 
+x, out = traj.gr('O')
+#for x0,y0 in zip(x, out):
+#  print x0,y0
+#
+#print 'pos(11): ',
+#print traj.position[0,11,:]
+#print 'pos(22): ',
+#print traj.position[0,22,:]
+
+#traj = qmd.xyzOutput('data/mdout/TRAJEC-short.xyz')
+#
+#out = traj.gr('O')
+plt.plot(x, out)
+#n, bins, patches = p.hist(out, bins=100)
+#np.savetxt('traj.dat', out)
 p.show()

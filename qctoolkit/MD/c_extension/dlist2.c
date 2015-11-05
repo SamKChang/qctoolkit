@@ -1,6 +1,7 @@
 #include <Python.h>
 #include <numpy/arrayobject.h>
 #include <omp.h>
+#define PI 3.14159265358979323846
 
 /*  python interface */
 static PyObject* dlist_2(PyObject* self, PyObject* args){
@@ -12,11 +13,14 @@ static PyObject* dlist_2(PyObject* self, PyObject* args){
   PyObject *l2_inp;
   PyObject *l1;
   PyObject *l2;
+  PyObject *cell_inp;
+  PyObject *cell_py;
   PyObject *item;
   int *atom_list1;
   int *atom_list2;
   int nt, N, len0, len1, len2;
   double *data;
+  double cell[3];
 
   /* python output variables */
   PyObject *np_matrix;
@@ -25,16 +29,17 @@ static PyObject* dlist_2(PyObject* self, PyObject* args){
   int i, j, k, t;
   int I, J;
   int itr = 0;
-  double Rij_t;
+  double Rij_t, dij, surf;
 
   /*  parse numpy array and two integers as argument */
   //                      &PyArray_Type, &in_array, // O!, NpArray
-  if (!PyArg_ParseTuple(args, "OiiOO", 
+  if (!PyArg_ParseTuple(args, "OiiOOO", 
                         &in_array, // O, PyObject
                         &nt,       // i, integer
                         &N,        // i, integer
                         &l1_inp,   // O, PyObject
-                        &l2_inp    // O, PyObject
+                        &l2_inp,   // O, PyObject
+                        &cell_inp  // O, PyObject
                        )) return NULL;
   if(in_array == NULL) return NULL;
 
@@ -69,6 +74,13 @@ static PyObject* dlist_2(PyObject* self, PyObject* args){
     atom_list2[i] = PyFloat_AsDouble(item);
   }
   Py_DECREF(l2);
+
+  cell_py = PySequence_Fast(cell_inp, "expected a sequence");
+  for(i=0;i<3;i++){
+    item = PySequence_Fast_GET_ITEM(cell_py, i);
+    cell[i] = PyFloat_AsDouble(item);
+  }
+  Py_DECREF(cell_py);
   /***** end of input data construction *****/
 
   /**************************
@@ -86,9 +98,12 @@ static PyObject* dlist_2(PyObject* self, PyObject* args){
         J = j + t*N*3;
         Rij_t = 0.0;
         for(k=0;k<3;k++){
-          Rij_t += pow((data[I+k] - data[J+k]), 2);
+          dij = data[I+k] - data[J+k];
+          if(dij>cell[k]) dij = cell[k] - dij;
+          Rij_t += pow(dij, 2);
         }
-        matrix[j + i*len2 + t*len1*len2] = pow(Rij_t, 0.5);
+        surf = 4*PI*Rij_t;
+        matrix[j + i*len2 + t*len1*len2] = pow(Rij_t, 0.5)/surf;
       }
     }
   }

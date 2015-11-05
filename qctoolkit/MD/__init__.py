@@ -1,2 +1,1 @@
-from mdinp import *
-from mdout import *
+from mdInterface import *

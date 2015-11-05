@@ -1,17 +1,33 @@
-import mdtraj as md
+import qctoolkit as qtk
 import numpy as np
 from dlist_2 import dlist_2 as dl2
 from dlist_1 import dlist_1 as dl1
 
+class GenericMDInput(object):
+  def __init__(self, molecule, **kwargs):
+    self.molecule = qtk.Structure(molecule)
+    if 'temperature' not in kwargs:
+      kwargs['temperatur'] = 298
+    if 'temperature_tolerance' not in kwargs:
+      kwargs['temperature_tolerance'] = 50
+    if 'md_sample_period' not in kwargs:
+      kwargs['md_sample_period'] = 50
+    self.setting = kwargs
+
+
 class GenericMDOutput(object):
-  def __init__(self, traj, topology):
-    self.data = md.load(traj, top=topology)
-    self.N = self.data.n_atoms
-    self.time = self.data.time
-    self.slice = self.data.slice
+  def __init__(self, out_dir=None, **kwargs):
+    self.N = 0
+    self.position = None
+    self.velocity = None
+    self.time = []
+    self.cell = None
+    self.t_unit = 0
+    self.t_step = 0
+    self.l_unit = 0
 
   def __repr__(self):
-    return str(self.data.xyz)
+    return str(self.position)
 
   def gr(self, type1=None, type2=None, **kwargs):
     """
@@ -28,18 +44,29 @@ class GenericMDOutput(object):
     two specified atom types
     """
 
+    if 'dr' not in kwargs:
+      kwargs['dr'] = 0.005;
+
+    if np.sum(abs(
+      self.cell - np.diag(np.diag(self.cell)))) != 0:
+      qtk.exit("radial distribution is only implemented "+\
+               "for orthorhmbic cell")
+
     if 't_start' not in kwargs:
       kwargs['t_start'] = 0
 
     def distance_list(list1, list2):
-      traj = self.data.xyz[kwargs['t_start']:]
+      traj = self.position[kwargs['t_start']:]
       size_t, size_n, _ = traj.shape
       size = size_t * size_n * 3
       flatTraj = list(traj.reshape([size]))
+      cell = list(np.diag(self.cell))
       if list1 == list2:
-        return dl1(flatTraj, size_t, size_n, list1, list2)
+        return dl1(flatTraj, size_t, size_n, list1, list2, 
+                   cell, kwargs['dr'])
       else:
-        return dl2(flatTraj, size_t, size_n, list1, list2)
+        return dl2(flatTraj, size_t, size_n, list1, list2, 
+                   cell, kwargs['dr'])
         
     # the case for two atom types specifed
     if type2:

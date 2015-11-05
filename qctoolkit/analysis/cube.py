@@ -6,7 +6,7 @@
 import re, copy
 import qctoolkit.molecule as geometry
 import qctoolkit.utilities as ut
-import qctoolkit.read_cube as rq
+import read_cube as rq
 import qctoolkit.setting as setting
 import numpy as np
 import matplotlib.pyplot as pl
