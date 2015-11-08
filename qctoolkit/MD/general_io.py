@@ -2,6 +2,7 @@ import qctoolkit as qtk
 import numpy as np
 from dlist_2 import dlist_2 as dl2
 from dlist_1 import dlist_1 as dl1
+from vacf import vacf as vacf_c
 
 class GenericMDInput(object):
   def __init__(self, molecule, **kwargs):
@@ -21,6 +22,7 @@ class GenericMDOutput(object):
     self.position = None
     self.velocity = None
     self.time = []
+    self.type_list = []
     self.cell = None
     self.t_unit = 0
     self.t_step = 0
@@ -28,6 +30,28 @@ class GenericMDOutput(object):
 
   def __repr__(self):
     return str(self.position)
+
+  def vacf(self, type_list=None, **kwargs):
+    """
+    velocity autocorrelation function
+    """
+    if type_list:
+      if type(type_list) is not list: type_list = [type_list]
+      if type(type_list[0]) is str:
+        new = [i for i in range(self.N)\
+               if self.type_list[i] in type_list]
+        type_list = new
+    else: type_list = range(self.N)
+
+    velocity = self.velocity
+    size_t, size_n, _ = velocity.shape
+    size = size_t * size_n * 3
+    flatVel = list(velocity.reshape([size]))
+    va, vax, vay, vaz = vacf_c(flatVel, size_t, size_n, type_list)
+    if 'components' in kwargs and kwargs['components']:
+      return va, vax, vay, vaz
+    else:
+      return va
 
   def gr(self, type1=None, type2=None, **kwargs):
     """

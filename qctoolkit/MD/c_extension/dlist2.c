@@ -151,8 +151,6 @@ static PyObject* dlist_2(PyObject* self, PyObject* args){
     return NULL;
 
   free(data);
-  free(g);
-  free(r);
 }
 
 /*  define functions in module */
