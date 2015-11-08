@@ -82,7 +82,7 @@ def imported(module):
 def Structure(input_data, **kwargs):
   if type(input_data) is not qg.Molecule:
     try:
-      return qg.Molecule(input_data)
+      return qg.Molecule(input_data, **kwargs)
     except:
       pass
   else:

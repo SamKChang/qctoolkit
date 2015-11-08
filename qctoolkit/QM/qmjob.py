@@ -129,6 +129,41 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
 
     return qio_out
 
+  #########################
+  # NWChem IMPLEMENTATION #
+  #########################
+  elif program.lower() == 'nwchem':
+    if 'exe' in kwargs:
+      exe = kwargs['exe']
+    else:
+      exe = setting.nwchem_exe
+    exestr = "%s %s" % (exe, inp)
+    qmoutput = os.path.splitext(inp)[0] + '.out'
+    compute(exestr, qmoutput, _threads)
+    qio_out = qio.QMOut(qmoutput, program='nwchem')
+
+    files = glob.glob('*.*')
+    tmp = filter(\
+      lambda x: '.out' not in x \
+                and '.inp' not in x\
+                and '.movecs' not in x, files
+    )
+    for f in tmp: os.remove(f)
+    movecs = glob.glob('*.movecs')
+    for f in movecs:
+      if not _save_restart:
+        os.remove(f)
+      else:
+        exe = setting.nwchem_mov2asc
+        nb = qio_out.nbasis
+        out = re.sub('\.movecs','.dat',f)
+        exestr = "%s %d %s %s" % (exe, nb, f, out)
+        run = sp.Popen(exestr, shell=True)
+        run.wait()
+
+    return qio_out
+    
+
   # !!!!! TODO LIST !!!!! #
   #############################
   # Gaussian09 IMPLEMENTATION #

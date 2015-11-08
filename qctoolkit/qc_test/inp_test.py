@@ -7,9 +7,13 @@ import glob
 files = sorted(glob.glob('data/molecules/*'))
 mols = []
 for i in files:
-  mols.append(qtk.QMInp(i, program='cpmd', scf_step=1))
+  print i
+  mols.append(qtk.QMInp(i, program='nwchem'))
 
 #mols[0].setAtom(1,element='C')
-out = mols[0].run()
-
+#out = mols[0].run()
+#print out
+mols[3].write()
+out = mols[3].run(save_restart=True)
 print out
+

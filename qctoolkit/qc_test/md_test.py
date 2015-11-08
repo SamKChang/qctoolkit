@@ -13,7 +13,7 @@ traj = qmd.MDOut(out)
 #print traj.velocity
 #print traj.cell
 
-x, out = traj.gr('O')
+x, out = traj.gr()
 #for x0,y0 in zip(x, out):
 #  print x0,y0
 #

@@ -18,11 +18,14 @@ mpistr = 'mpirun -np'
 ompthreads = 1
 ompstr = '-x OMP_NUM_THREADS=%d' % ompthreads
 
+# QM executables
 # VASP setting
 vasp_pp = '/home/samio/Works/PhD/packages/VASP/PP'
 vasp_exe = 'vasp'
-
-# QM executables
+# CPMD setting
 cpmd_exe = 'cpmd.x'
 cpmd_cpmd2cube = 'cpmd2cube.x'
 cpmd_pp = ''
+# NWChem setting
+nwchem_exe = 'nwchem'
+nwchem_mov2asc = 'mov2asc'

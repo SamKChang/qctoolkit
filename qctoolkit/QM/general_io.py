@@ -9,7 +9,7 @@ class GenericQMInput(object):
       self.setting['program'] = qtk.setting.qmcode
     else:
       self.setting['program'] = kwargs['program']
-    self.molecule = qtk.Structure(molecule)
+    self.molecule = qtk.Structure(molecule, **kwargs)
 
     if 'info' not in kwargs:
       self.setting['info'] = self.molecule.name
