@@ -15,5 +15,8 @@ for i in files:
 #print out
 mols[3].write()
 out = mols[3].run(save_restart=True)
-print out
-
+print out.n_basis
+print out.occupation
+print out.mo_eigenvalues
+print out.mo
+print out.nuclear_repulsion

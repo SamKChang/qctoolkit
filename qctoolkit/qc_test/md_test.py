@@ -13,7 +13,7 @@ traj = qmd.MDOut(out)
 #print traj.velocity
 #print traj.cell
 
-x, out = traj.gr()
+out = traj.vacf()
 #for x0,y0 in zip(x, out):
 #  print x0,y0
 #
@@ -25,7 +25,7 @@ x, out = traj.gr()
 #traj = qmd.xyzOutput('data/mdout/TRAJEC-short.xyz')
 #
 #out = traj.gr('O')
-plt.plot(x, out)
+plt.plot(out)
 #n, bins, patches = p.hist(out, bins=100)
 #np.savetxt('traj.dat', out)
 p.show()

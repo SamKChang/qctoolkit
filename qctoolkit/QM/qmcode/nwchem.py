@@ -115,6 +115,7 @@ class out(AtomicBasisOutput):
   def __init__(self, qmout=None, **kwargs):
     AtomicBasisOutput.__init__(self, qmout=None, **kwargs)
     if qmout:
+      stem, ext = os.path.splitext(qmout)
       outfile = open(qmout, 'r')
       data = outfile.readlines()
       Et = filter(lambda x: 'Total DFT' in x, data)
@@ -127,3 +128,29 @@ class out(AtomicBasisOutput):
         self.nbasis = int(nbasis[-1].split(':')[1])
       except:
         self.nbasis = np.nan
+
+  def getMO(self, mo_file):
+    if os.path.exists(mo_file):
+      mo = open(mo_file, 'r')
+      mo_out = mo.readlines()
+      self.n_basis = int(mo_out[13].split( )[0])
+      lines = self.n_basis / 3 + 1
+      print "yo"
+      print mo_out[14]
+      print mo_out[14:14+lines]
+      self.occupation = \
+        [float(j) for i in mo_out[14:14+lines]\
+         for j in i.split( )]
+      self.mo_eigenvalues = \
+        [float(j) for i in mo_out[14+lines:14+(2*lines)]\
+         for j in i.split( )]
+
+      _mo = []
+      for k in range(self.n_basis):
+        start = 14+((2+k)*lines)
+        end = 14+((3+k)*lines)
+        vec = [float(j) for i in mo_out[start:end]\
+               for j in i.split( )]
+        _mo.append(vec)
+      self.mo = np.array(_mo)
+      self.nuclear_repulsion = float(mo_out[-1].split( )[1])

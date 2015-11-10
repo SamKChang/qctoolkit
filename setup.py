@@ -51,6 +51,13 @@ c_module = [Extension(name = "qctoolkit.ML.kernel_matrix",
                                   '-Wno-write-strings'],
               extra_link_args=['-lgomp', '-shared'],
               include_dirs = [np.get_include()]),
+            Extension(name = "qctoolkit.MD.vacf", 
+              sources = ['qctoolkit/MD/c_extension/'+\
+                         'vacf.c'],
+              extra_compile_args=['-fopenmp', '-fpic', '-lm',
+                                  '-Wno-write-strings'],
+              extra_link_args=['-lgomp', '-shared'],
+              include_dirs = [np.get_include()]),
            ]
 
 setup(name='qctoolkit',

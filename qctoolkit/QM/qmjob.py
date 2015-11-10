@@ -160,6 +160,7 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
         exestr = "%s %d %s %s" % (exe, nb, f, out)
         run = sp.Popen(exestr, shell=True)
         run.wait()
+        qio_out.getMO(out)
 
     return qio_out
     
