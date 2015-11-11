@@ -137,7 +137,7 @@ class inp(PlanewaveInput):
     else:
       inp.write('  ISOLATED\n')
       if self.setting['isolation'] == 'mt':
-        inp.wriate(' POISSON SOLVER TUCKERMAN\n')
+        inp.write(' POISSON SOLVER TUCKERMAN\n')
     if self.setting['unit'].lower() == 'angstrom':
       inp.write(' ANGSTROM\n')
     inp.write(' CELL ABSOLUTE\n')

@@ -45,6 +45,10 @@ class PlanewaveInput(GenericQMInput):
       self.setting['lattice'] = np.array([[cd[0],   0.0,   0.0],
                                           [  0.0, cd[1],   0.0],
                                           [  0.0,   0.0, cd[2]]])
+  def center(self, coord):
+    self.molecule.center(coord)
+  def shift(self, coord):
+    self.molecule.shift(coord)
 
 class PlanewaveOutput(GenericQMOutput):
   def __init__(self, output=None, **kwargs):
