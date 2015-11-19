@@ -118,9 +118,9 @@ class out(AtomicBasisOutput):
       stem, ext = os.path.splitext(qmout)
       outfile = open(qmout, 'r')
       data = outfile.readlines()
-      Et = filter(lambda x: 'Total DFT' in x, data)
+      Et = filter(lambda x: 'Total' in x and 'energy' in x, data)
       try:
-        self.Et = float(Et[-1].split('=')[1])
+        self.Et = float(Et[-1].split( )[-1])
       except:
         self.Et = np.nan
       nbasis = filter(lambda x: 'number of functions' in x, data)
@@ -130,14 +130,18 @@ class out(AtomicBasisOutput):
         self.nbasis = np.nan
 
   def getMO(self, mo_file):
+    """
+    return self.n_basis
+           self.occupation
+           self.eigenvalues
+           self.mo
+           self.nuclear_repulsion
+    """
     if os.path.exists(mo_file):
       mo = open(mo_file, 'r')
       mo_out = mo.readlines()
       self.n_basis = int(mo_out[13].split( )[0])
       lines = self.n_basis / 3 + 1
-      print "yo"
-      print mo_out[14]
-      print mo_out[14:14+lines]
       self.occupation = \
         [float(j) for i in mo_out[14:14+lines]\
          for j in i.split( )]

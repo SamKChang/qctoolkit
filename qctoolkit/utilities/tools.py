@@ -7,12 +7,12 @@ def R(theta, u):
   return np.array(
     [[cos(theta) + u[0]**2 * (1-cos(theta)), 
       u[0] * u[1] * (1-cos(theta)) - u[2] * sin(theta), 
-      u[0] * u[2] * (1 - cos(theta)) + u[1] * sin(theta)],
-     [u[0] * u[1] * (1-cos(theta)) - u[2] * sin(theta),
+      u[0] * u[2] * (1-cos(theta)) + u[1] * sin(theta)],
+     [u[0] * u[1] * (1-cos(theta)) + u[2] * sin(theta),
       cos(theta) + u[1]**2 * (1-cos(theta)),
-      u[1] * u[2] * (1 - cos(theta)) + u[0] * sin(theta)],
+      u[1] * u[2] * (1-cos(theta)) - u[0] * sin(theta)],
      [u[0] * u[2] * (1-cos(theta)) - u[1] * sin(theta),
-      u[1] * u[2] * (1-cos(theta)) - u[0] * sin(theta),
+      u[1] * u[2] * (1-cos(theta)) + u[0] * sin(theta),
       cos(theta) + u[2]**2 * (1-cos(theta))]]
   )
 

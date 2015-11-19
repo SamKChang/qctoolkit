@@ -14,7 +14,7 @@ for i in files:
 #out = mols[0].run()
 #print out
 mols[3].write()
-out = mols[3].run(save_restart=True)
+#out = mols[3].run(save_restart=True)
 print out.n_basis
 print out.occupation
 print out.mo_eigenvalues

@@ -18,9 +18,9 @@ class Molecule(object):
     # atom coordinates
     self.R = np.atleast_2d(np.array([]))
     # atom symbols
-    self.type_list = 'None'
+    self.type_list = []
     # nuclear charges
-    self.Z = 0
+    self.Z = []
     # moelcule charge
     self.charge = 0
     self.multiplicity = 1
@@ -50,6 +50,39 @@ class Molecule(object):
     out.charge = self.charge + other.charge
     out.name = self.name + "_" + other.name
     return out
+
+  def addAtom(self, element, coord):
+    def getAtom(element):
+      if len(element)<2:
+        try:
+          atom = getattr(pt, element.title())
+          return atom
+        except:
+          qtk.exit("element %s not found." % element.title())
+      else:
+        try:
+          atom = getattr(pt, element.lower())
+          return atom
+        except:
+          qtk.exit("element %s not found." % element.lower())
+    
+    if type(element) is str:
+      element = [element]
+      coord = [coord]
+    Z = list(self.Z)
+    for i in range(len(element)):
+      e = getAtom(element[i])
+      r = coord[i]
+      if self.N == 0:
+        self.R = np.array(r)
+      else:
+        self.R = np.vstack([self.R, np.array(r)])
+      self.N = self.N + 1
+      self.type_list.append(e.symbol)
+      Z.append(e.number)
+    self.Z = np.array(Z)
+      
+    
 
   def view(self, name=None):
     tmp = copy.deepcopy(self)
@@ -219,12 +252,12 @@ class Molecule(object):
 
   def getCenterOfCharge(self):
     weighted = self.R * np.array(self.Z).reshape([self.N,1])
-    return np.sum(weighted, axis=0)/sum(self.Z)
+    return np.sum(weighted, axis=0)/float(sum(self.Z))
 
   def getCenterOfMass(self):
     mass_list = [qtk.n2m(elem) for elem in self.type_list]
     weighted = self.R * np.array(mass_list).reshape([self.N,1])
-    return np.sum(weighted, axis=0)/sum(mass_list)
+    return np.sum(weighted, axis=0)/float(sum(mass_list))
 
   def getBox(self):
     def size(i):
@@ -383,11 +416,27 @@ class Molecule(object):
           qtk.prompt(msg + "\nsuppress warning py no_warning=True,"\
                     + " continue?")
 
-  def rotate(self, u, angle):
-    print "not yet implemented"	
+  def rotate(self, angle, u):
+    R_tmp = copy.deepcopy(self.R)
+    self.R = np.dot(qtk.R(angle, u),R_tmp.T).T
 
-  def align(self, i,j,k):
-    print "not yet implemented"
+  def align(self, u, **kwargs):
+    if 'axis' not in kwargs:
+      kwargs['axis'] = 0
+    if kwargs['axis'] == 0:
+      v = np.array([1,0,0])
+    elif kwargs['axis'] == 1:
+      v = np.array([0,1,0])
+    elif kwargs['axis'] == 2:
+      v = np.array([0,0,1])
+
+    u = np.array(u)
+    n1 = np.linalg.norm(u)
+    n2 = np.linalg.norm(v)
+    angle = np.arccos(np.dot(u, v)/(n1*n2))
+    axis = np.cross(u, v)
+    axis = axis / np.linalg.norm(axis)
+    self.rotate(angle, axis)
 
   def twist(self):
     print "not yet implemented"
@@ -487,7 +536,8 @@ class Molecule(object):
 
     # loop through every line in xyz file
     for i in xrange(0, self.N):
-      data = re.sub("[\n\t]", "",xyz_in.readline()).split(' ')
+      line = re.sub('\t',' ',xyz_in.readline())
+      data = re.sub("[\n\t]", "",line).split(' ')
       # remove empty elements
       data = filter(None, data)
       type_list.append(data[0])
