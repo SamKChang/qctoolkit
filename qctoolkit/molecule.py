@@ -128,6 +128,8 @@ class Molecule(object):
     return np.linalg.norm(Ri - Rj)
 
   def find_bonds(self, ratio=setting.bond_ratio, **kwargs):
+    del self.segments
+    self.segments = []
     if 'quiet' not in kwargs or not kwargs['quiet']:
       qtk.report("Molecule", 
                 "finding bonds with cutoff ratio", 
