@@ -76,19 +76,46 @@ class inp(AtomicBasisInput):
     inp.write('title %s\n' % nameStr)
     inp.write('start %s\n' % nameStr)
     inp.write('echo\n')
-    inp.write('\ngeometry units angstrom\n')
+    if self.setting['fix_molecule']\
+    and self.setting['fix_molecule']:
+      fix_mol = 'nocenter'
+    else:
+      fix_mol = ''
+    inp.write('\ngeometry units angstrom %s\n' % fix_mol)
+    if 'nuclear_charges' in self.setting:
+      new_Z = self.setting['nuclear_charges']
+    else:
+      new_Z = []
+    z_itr = 0
     for i in range(molecule.N):
-      inp.write(' %-2s % 8.4f % 8.4f % 8.4f\n' % \
-                (molecule.type_list[i],
+      n_charge = ''
+      e_str = molecule.type_list[i]
+      if new_Z and z_itr < len(new_Z):
+        if new_Z[z_itr][0] == i+1:
+          n_charge = 'charge %.3f' % float(new_Z[z_itr][1])
+          e_str = new_Z[z_itr][2]
+          molecule.string[i] = e_str
+          z_itr = z_itr + 1
+      inp.write(' %-8s % 8.4f % 8.4f % 8.4f %s\n' % \
+                (e_str,
                  molecule.R[i, 0],
                  molecule.R[i, 1],
                  molecule.R[i, 2],
+                 n_charge
                ))
     inp.write('end\n\n')
     inp.write('basis\n')
     if self.setting['basis_set'] != 'gen':
-      inp.write('* library %s\n' % \
-        self.setting['basis_set'].upper())
+      for e in range(len(molecule.Z)):
+        if molecule.string[e]:
+          eString = molecule.string[e]
+        else:
+          eString = molecule.type_list[e]
+        inp.write(' %-8s library %2s %s\n' % (\
+          eString,
+          molecule.type_list[e],
+          self.setting['basis_set'].upper()),
+        )
     inp.write('end\n\n')
     if module == 'dft':
       inp.write('dft\n')
