@@ -155,11 +155,11 @@ class out(AtomicBasisOutput):
         self.Et = float(Et[-1].split( )[-1])
       except:
         self.Et = np.nan
-      nbasis = filter(lambda x: 'number of functions' in x, data)
+      n_basis = filter(lambda x: 'number of functions' in x, data)
       try:
-        self.nbasis = int(nbasis[-1].split(':')[1])
+        self.n_basis = int(n_basis[-1].split(':')[1])
       except:
-        self.nbasis = np.nan
+        self.n_basis = np.nan
 
       ######################################
       # extract basis function information #
@@ -172,26 +172,97 @@ class out(AtomicBasisOutput):
       batomStr = filter(batom_P.match, data)
       coordStr = filter(coord_P.match, data)
 
-      self.basis_exponents = [float(filter(None, s.split(' '))\
+      _exponents = [float(filter(None, s.split(' '))\
         [2]) for s in basisStr]
-      self.basis_coefficients = [float(filter(None, s.split(' '))\
+      _coefficients = [float(filter(None, s.split(' '))\
         [3]) for s in basisStr]
-      self.basis_N = [int(filter(None, s.split(' '))[0])\
+      _N = [int(filter(None, s.split(' '))[0])\
         for s in basisStr]
-      self.basis_type = [filter(None, s.split(' '))[1]\
+      _type = [filter(None, s.split(' '))[1]\
         for s in basisStr]
-      ao_keys = np.diff(self.basis_N)
+      ao_keys = np.diff(_N)
       self.ao_keys = [i+1 for i in range(len(ao_keys))\
         if ao_keys[i] < 0]
-      self.ao_keys.append(len(self.basis_N))
+      self.ao_keys.append(len(_N))
       self.ao_keys.insert(0, 0)
-      self.basis_atoms = [filter(None, s.split(' '))[0]\
+      _atoms = [filter(None, s.split(' '))[0]\
         for s in batomStr]
       self.type_list = [filter(None, s.split(' '))[0]\
         for s in coordStr]
       self.R = np.array([filter(None, s.split(' '))[1:4]\
         for s in coordStr]).astype(float)
       self.R_bohr = 1.889725989 * self.R
+
+      _N.append(0)
+      self.basis = []
+      print _N
+      print len(_N)
+      print self.ao_keys
+      for i in range(len(self.type_list)):
+        e = self.type_list[i]
+        center = self.R_bohr[i]
+        ind = _atoms.index(e)
+        bfn_base = {}
+        bfn_base['atom'] = e
+        bfn_base['center'] = center
+        bfn_base['index'] = i
+        exp = []
+        cef = []
+        for g in range(self.ao_keys[ind], self.ao_keys[ind+1]):
+          exp.append(_exponents[g])
+          cef.append(_coefficients[g])
+          print _N[g], g
+          if _N[g] != _N[g+1]:
+            bfn = copy.deepcopy(bfn_base)
+            bfn['exponents'] = copy.deepcopy(exp)
+            bfn['coefficients'] = copy.deepcopy(cef)
+            if _type[g] == 'S':
+              bfn['type'] = 's'
+              self.basis.append(bfn)
+            elif _type[g] == 'P':
+              bfn['type'] = 'px'
+              self.basis.append(copy.deepcopy(bfn))
+              bfn['type'] = 'py'
+              self.basis.append(copy.deepcopy(bfn))
+              bfn['type'] = 'pz'
+              self.basis.append(copy.deepcopy(bfn))
+            elif _type[g] == 'D':
+              bfn['type'] = 'dxx'
+              self.basis.append(copy.deepcopy(bfn))
+              bfn['type'] = 'dxy'
+              self.basis.append(copy.deepcopy(bfn))
+              bfn['type'] = 'dxz'
+              self.basis.append(copy.deepcopy(bfn))
+              bfn['type'] = 'dyy'
+              self.basis.append(copy.deepcopy(bfn))
+              bfn['type'] = 'dyz'
+              self.basis.append(copy.deepcopy(bfn))
+              bfn['type'] = 'dzz'
+              self.basis.append(copy.deepcopy(bfn))
+            elif _type[g] == 'F':
+              bfn['type'] = 'fxxx'
+              self.basis.append(copy.deepcopy(bfn))
+              bfn['type'] = 'fxxy'
+              self.basis.append(copy.deepcopy(bfn))
+              bfn['type'] = 'fxxz'
+              self.basis.append(copy.deepcopy(bfn))
+              bfn['type'] = 'fxyy'
+              self.basis.append(copy.deepcopy(bfn))
+              bfn['type'] = 'fxyz'
+              self.basis.append(copy.deepcopy(bfn))
+              bfn['type'] = 'fxzz'
+              self.basis.append(copy.deepcopy(bfn))
+              bfn['type'] = 'fyyy'
+              self.basis.append(copy.deepcopy(bfn))
+              bfn['type'] = 'fyyz'
+              self.basis.append(copy.deepcopy(bfn))
+              bfn['type'] = 'fyzz'
+              self.basis.append(copy.deepcopy(bfn))
+              bfn['type'] = 'fzzz'
+              self.basis.append(copy.deepcopy(bfn))
+            exp = []
+            cef = []
+          
 
       movecs = stem+'.modat'
       self.getMO(movecs)
@@ -207,7 +278,7 @@ class out(AtomicBasisOutput):
     if os.path.exists(mo_file):
       mo = open(mo_file, 'r')
       mo_out = mo.readlines()
-      self.n_basis = int(mo_out[12].split( )[0])
+      #self.n_basis = int(mo_out[12].split( )[0])
       self.n_mo = int(mo_out[13].split( )[0])
       lines = self.n_basis / 3 + 1
       self.occupation = \
