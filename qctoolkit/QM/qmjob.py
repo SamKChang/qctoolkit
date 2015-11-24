@@ -151,16 +151,15 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
     for f in tmp: os.remove(f)
     movecs = glob.glob('*.movecs')
     for f in movecs:
+      exe = setting.nwchem_mov2asc
+      nb = qio_out.nbasis
+      out = re.sub('\.movecs','.modat',f)
+      exestr = "%s %d %s %s" % (exe, nb, f, out)
+      run = sp.Popen(exestr, shell=True)
+      run.wait()
+      qio_out.getMO(out)
       if not _save_restart:
         os.remove(f)
-      else:
-        exe = setting.nwchem_mov2asc
-        nb = qio_out.nbasis
-        out = re.sub('\.movecs','.dat',f)
-        exestr = "%s %d %s %s" % (exe, nb, f, out)
-        run = sp.Popen(exestr, shell=True)
-        run.wait()
-        qio_out.getMO(out)
 
     return qio_out
     

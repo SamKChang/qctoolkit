@@ -21,8 +21,8 @@ class GenericQMInput(object):
       self.setting['scf_step'] = 1000
     if 'wf_convergence' not in kwargs:
       self.setting['wf_convergence'] = 1E-5
-    if 'fix_molecule' in kwargs:
-      self.setting['fix_molecule'] = kwargs['fix_molecule']
+    if 'fix_molecule' not in kwargs:
+      self.setting['fix_molecule'] = True
     if 'unit' not in kwargs:
       self.setting['unit'] = 'angstrom'
     if re.match(self.setting['mode'].lower(), 'md'):
@@ -40,17 +40,17 @@ class GenericQMInput(object):
     if self.setting['mode'] == 'geopt':
       self.setting['geometry_convergence'] = 1E-4
 
-    if 'save_density' in kwargs:
-      self.setting['save_density'] = kwargs['save_density']
-    if 'save_restart' in kwargs:
-      self.setting['save_restart'] = kwargs['save_restart']
-    if 'restart' in kwargs:
-      self.setting['restart'] = kwargs['restart']
-
-    if 'prefix' in kwargs:
-      self.setting['prefix'] = kwargs['prefix']
-    if 'suffix' in kwargs:
-      self.setting['suffix'] = kwargs['suffix']
+#    if 'save_density' in kwargs:
+#      self.setting['save_density'] = kwargs['save_density']
+#    if 'save_restart' in kwargs:
+#      self.setting['save_restart'] = kwargs['save_restart']
+#    if 'restart' in kwargs:
+#      self.setting['restart'] = kwargs['restart']
+#
+#    if 'prefix' in kwargs:
+#      self.setting['prefix'] = kwargs['prefix']
+#    if 'suffix' in kwargs:
+#      self.setting['suffix'] = kwargs['suffix']
 
   def __repr__(self):
     return self.molecule.name + ': ' + self.setting['program']
@@ -77,6 +77,8 @@ class GenericQMInput(object):
       qtk.prompt(name + ' exists, overwrite?')
       shutil.rmtree(name)
     os.mkdir(name)
+    if 'restart_file' in self.setting:
+      shutil.copy(self.setting['restart_file'], name)
     return name
 
   def cm_check(self, mol):

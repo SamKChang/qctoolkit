@@ -267,30 +267,25 @@ class Molecule(object):
     return np.array([size(i) for i in range(3)])
 
   def principalAxes(self, **kwargs):
-    if 'mode' in kwargs:
-      mode = kwargs['mode']
-    else:
-      mode = 'mass'
-
-    if mode == 'mass':
-      weight = [qtk.n2m(elem) for elem in self.type_list]
-      center = self.getCenterOfMass()
-    elif mode == 'charge':
-      weight = self.Z
-      center = self.getCenterOfCharge()
-    else:
-      qtk.exit("mode: " + str(mode) + " is not supported by "\
-              "pricialAxes()")
+    weight = [qtk.n2m(elem) for elem in self.type_list]
+    center = self.getCenterOfMass()
+    self.center(center)
 
     inertia = np.zeros([3,3])
+    I0 = 0
+    for i in range(3):
+      I0 = I0 + sum(self.R[:,i]**2 * weight)
     for i in range(3):
       coord_i = self.R[:,i]
-      inertia[i,i] = sum(2*coord_i**2 * weight)
+      inertia[i,i] = I0 - sum(coord_i**2 * weight)
       for j in range(i+1,3):
         coord_j = self.R[:,j]
         inertia[i,j] = -sum(coord_i*coord_j*weight)
+        inertia[j,i] = inertia[i,j]
     I, U = np.linalg.eigh(inertia)
-    return sorted(I,reverse=True), U[I.argsort()[::-1]]
+    self.shift(center)
+    #return sorted(I,reverse=True), U[I.argsort()[::-1]]
+    return I, U
 
   def setMargin(self, margin):
     qtk.report("Molecule", "setup margin:", margin)
@@ -422,7 +417,9 @@ class Molecule(object):
     R_tmp = copy.deepcopy(self.R)
     self.R = np.dot(qtk.R(angle, u),R_tmp.T).T
 
-  def align(self, u, **kwargs):
+  def align(self, u=None, **kwargs):
+    center = self.getCenterOfMass()
+    self.center(center)
     if 'axis' not in kwargs:
       kwargs['axis'] = 0
     if kwargs['axis'] == 0:
@@ -432,13 +429,17 @@ class Molecule(object):
     elif kwargs['axis'] == 2:
       v = np.array([0,0,1])
 
-    u = np.array(u)
-    n1 = np.linalg.norm(u)
-    n2 = np.linalg.norm(v)
-    angle = np.arccos(np.dot(u, v)/(n1*n2))
-    axis = np.cross(u, v)
-    axis = axis / np.linalg.norm(axis)
-    self.rotate(angle, axis)
+    if u is None:
+      U = self.principalAxes()[1]
+      self.R = np.dot(self.R, U)
+    else:      
+      u = np.array(u)
+      n1 = np.linalg.norm(u)
+      n2 = np.linalg.norm(v)
+      angle = np.arccos(np.dot(u, v)/(n1*n2))
+      axis = np.cross(u, v)
+      axis = axis / np.linalg.norm(axis)
+      self.rotate(angle, axis)
 
   def twist(self):
     print "not yet implemented"

@@ -82,6 +82,8 @@ class inp(AtomicBasisInput):
     else:
       fix_mol = ''
     inp.write('\ngeometry units angstrom %s\n' % fix_mol)
+    if fix_mol:
+      inp.write('symmetry group c1\n')
     if 'nuclear_charges' in self.setting:
       new_Z = self.setting['nuclear_charges']
     else:
@@ -106,16 +108,19 @@ class inp(AtomicBasisInput):
     inp.write('end\n\n')
     inp.write('basis\n')
     if self.setting['basis_set'] != 'gen':
+      eStr = []
       for e in range(len(molecule.Z)):
         if molecule.string[e]:
           eString = molecule.string[e]
         else:
           eString = molecule.type_list[e]
-        inp.write(' %-8s library %2s %s\n' % (\
-          eString,
-          molecule.type_list[e],
-          self.setting['basis_set'].upper()),
-        )
+        if eString not in set(eStr):
+          eStr.append(eString)
+          inp.write(' %-8s library %2s %s\n' % (\
+            eString,
+            molecule.type_list[e],
+            self.setting['basis_set'].upper()),
+          )
     inp.write('end\n\n')
     if module == 'dft':
       inp.write('dft\n')
@@ -156,18 +161,54 @@ class out(AtomicBasisOutput):
       except:
         self.nbasis = np.nan
 
+      ######################################
+      # extract basis function information #
+      ######################################
+      basis_P = re.compile(r"  [0-9] [A-Z] +")
+      batom_P = re.compile(r"^  [A-Z][a-z\ ] *\(")
+      coord_P = re.compile(r"^ [A-Z][a-z ] +[-0-9\.]" + \
+                           r"{10,}[-0-9\. ]+$")
+      basisStr = filter(basis_P.match, data)
+      batomStr = filter(batom_P.match, data)
+      coordStr = filter(coord_P.match, data)
+
+      self.basis_exponents = [float(filter(None, s.split(' '))\
+        [2]) for s in basisStr]
+      self.basis_coefficients = [float(filter(None, s.split(' '))\
+        [3]) for s in basisStr]
+      self.basis_N = [int(filter(None, s.split(' '))[0])\
+        for s in basisStr]
+      self.basis_type = [filter(None, s.split(' '))[1]\
+        for s in basisStr]
+      ao_keys = np.diff(self.basis_N)
+      self.ao_keys = [i+1 for i in range(len(ao_keys))\
+        if ao_keys[i] < 0]
+      self.ao_keys.append(len(self.basis_N))
+      self.ao_keys.insert(0, 0)
+      self.basis_atoms = [filter(None, s.split(' '))[0]\
+        for s in batomStr]
+      self.type_list = [filter(None, s.split(' '))[0]\
+        for s in coordStr]
+      self.R = np.array([filter(None, s.split(' '))[1:4]\
+        for s in coordStr]).astype(float)
+      self.R_bohr = 1.889725989 * self.R
+
+      movecs = stem+'.modat'
+      self.getMO(movecs)
+
   def getMO(self, mo_file):
     """
-    return self.n_basis
-           self.occupation
-           self.eigenvalues
-           self.mo
-           self.nuclear_repulsion
+    setup self.n_basis
+          self.occupation
+          self.eigenvalues
+          self.mo
+          self.nuclear_repulsion
     """
     if os.path.exists(mo_file):
       mo = open(mo_file, 'r')
       mo_out = mo.readlines()
-      self.n_basis = int(mo_out[13].split( )[0])
+      self.n_basis = int(mo_out[12].split( )[0])
+      self.n_mo = int(mo_out[13].split( )[0])
       lines = self.n_basis / 3 + 1
       self.occupation = \
         [float(j) for i in mo_out[14:14+lines]\
@@ -177,7 +218,7 @@ class out(AtomicBasisOutput):
          for j in i.split( )]
 
       _mo = []
-      for k in range(self.n_basis):
+      for k in range(self.n_mo):
         start = 14+((2+k)*lines)
         end = 14+((3+k)*lines)
         vec = [float(j) for i in mo_out[start:end]\
