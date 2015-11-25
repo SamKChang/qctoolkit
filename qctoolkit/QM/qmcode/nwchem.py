@@ -181,23 +181,21 @@ class out(AtomicBasisOutput):
       _type = [filter(None, s.split(' '))[1]\
         for s in basisStr]
       ao_keys = np.diff(_N)
-      self.ao_keys = [i+1 for i in range(len(ao_keys))\
+      _ao_keys = [i+1 for i in range(len(ao_keys))\
         if ao_keys[i] < 0]
-      self.ao_keys.append(len(_N))
-      self.ao_keys.insert(0, 0)
+      _ao_keys.append(len(_N))
+      _ao_keys.insert(0, 0)
       _atoms = [filter(None, s.split(' '))[0]\
         for s in batomStr]
       self.type_list = [filter(None, s.split(' '))[0]\
         for s in coordStr]
       self.R = np.array([filter(None, s.split(' '))[1:4]\
         for s in coordStr]).astype(float)
+      self.N = len(self.R)
       self.R_bohr = 1.889725989 * self.R
 
       _N.append(0)
       self.basis = []
-      print _N
-      print len(_N)
-      print self.ao_keys
       for i in range(len(self.type_list)):
         e = self.type_list[i]
         center = self.R_bohr[i]
@@ -208,10 +206,9 @@ class out(AtomicBasisOutput):
         bfn_base['index'] = i
         exp = []
         cef = []
-        for g in range(self.ao_keys[ind], self.ao_keys[ind+1]):
+        for g in range(_ao_keys[ind], _ao_keys[ind+1]):
           exp.append(_exponents[g])
           cef.append(_coefficients[g])
-          print _N[g], g
           if _N[g] != _N[g+1]:
             bfn = copy.deepcopy(bfn_base)
             bfn['exponents'] = copy.deepcopy(exp)
@@ -295,5 +292,5 @@ class out(AtomicBasisOutput):
         vec = [float(j) for i in mo_out[start:end]\
                for j in i.split( )]
         _mo.append(vec)
-      self.mo = np.array(_mo)
+      self.mo_coefficients = np.array(_mo)
       self.nuclear_repulsion = float(mo_out[-1].split( )[1])
