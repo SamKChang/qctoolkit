@@ -49,5 +49,6 @@ be obtained by the --record flag during install
 **Implemented interface of QM code**:
 * CPMD
 * VASP
+* NWChem
 
 *20150702 KYSC*
