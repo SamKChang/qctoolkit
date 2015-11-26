@@ -192,6 +192,7 @@ class out(AtomicBasisOutput):
       self.R = np.array([filter(None, s.split(' '))[1:4]\
         for s in coordStr]).astype(float)
       self.N = len(self.R)
+      self.Z = [qtk.n2Z(e) for e in self.type_list]
       self.R_bohr = 1.889725989 * self.R
 
       _N.append(0)
@@ -262,7 +263,8 @@ class out(AtomicBasisOutput):
           
 
       movecs = stem+'.modat'
-      self.getMO(movecs)
+      if os.path.exists(movecs):
+        self.getMO(movecs)
 
   def getMO(self, mo_file):
     """

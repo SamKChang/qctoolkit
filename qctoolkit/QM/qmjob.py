@@ -152,7 +152,7 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
     movecs = glob.glob('*.movecs')
     for f in movecs:
       exe = setting.nwchem_mov2asc
-      nb = qio_out.nbasis
+      nb = qio_out.n_basis
       out = re.sub('\.movecs','.modat',f)
       exestr = "%s %d %s %s" % (exe, nb, f, out)
       run = sp.Popen(exestr, shell=True)
