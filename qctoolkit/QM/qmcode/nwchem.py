@@ -4,6 +4,7 @@ from qctoolkit.QM.atomicbasis_io import AtomicBasisOutput
 import os, sys, copy, shutil, re
 import numpy as np
 import qctoolkit.QM.qmjob as qmjob
+import periodictable as pt
 
 class inp(AtomicBasisInput):
   def __init__(self, molecule, **kwargs):
@@ -61,16 +62,19 @@ class inp(AtomicBasisInput):
       'bp86': 'becke88 perdew86',
       'pw91': 'xperdew91 perdew91',
     }
-    others = {
+    scf = {
       'rhf', 'rohf', 'uhf',
+    }
+    tce = {
       'mp2', 'ccsd', 'ccsd(t)',
-      'md'
     }
     if self.setting['theory'] in dft:
       module = 'dft'
       xc = dft[self.setting['theory']]
-    elif self.setting['theory'] in others:
-      module = self.setting['theory']
+    elif self.setting['theory'] in scf:
+      module = 'scf'
+    elif self.setting['theory'] in tce:
+      module = 'tce'
 
     # print file
     inp.write('title %s\n' % nameStr)
@@ -155,19 +159,20 @@ class out(AtomicBasisOutput):
         self.Et = float(Et[-1].split( )[-1])
       except:
         self.Et = np.nan
-      n_basis = filter(lambda x: 'number of functions' in x, data)
-      try:
-        self.n_basis = int(n_basis[-1].split(':')[1])
-      except:
-        self.n_basis = np.nan
+#      n_basis = filter(lambda x: 'number of functions' in x, data)
+#      try:
+#        self.n_basis = int(n_basis[-1].split(':')[1])
+#      except:
+#        self.n_basis = np.nan
 
       ######################################
       # extract basis function information #
       ######################################
       basis_P = re.compile(r"  [0-9] [A-Z] +")
-      batom_P = re.compile(r"^  [A-Z][a-z\ ] *\(")
-      coord_P = re.compile(r"^ [A-Z][a-z ] +[-0-9\.]" + \
-                           r"{10,}[-0-9\. ]+$")
+      batom_P = re.compile(r"^  [A-Za-z\-_\.]* *\([A-Z][a-z]*\)")
+      bname_P = re.compile(r"\((.*)\)")
+      coord_P = re.compile(r"^ [A-Za-z\.\-_]+ +[- ][0-9\.]" +\
+                           r"{10,}[- ][0-9\. ]+$")
       basisStr = filter(basis_P.match, data)
       batomStr = filter(batom_P.match, data)
       coordStr = filter(coord_P.match, data)
@@ -185,9 +190,11 @@ class out(AtomicBasisOutput):
         if ao_keys[i] < 0]
       _ao_keys.append(len(_N))
       _ao_keys.insert(0, 0)
-      _atoms = [filter(None, s.split(' '))[0]\
+      _atoms = [getattr(pt, bname_P.match(
+        filter(None, s.split(' '))[1]).group(1).lower()).symbol\
         for s in batomStr]
-      self.type_list = [filter(None, s.split(' '))[0]\
+      self.type_list = [re.split(r'[\._]',
+        filter(None, s.split(' '))[0])[0].title()\
         for s in coordStr]
       self.R = np.array([filter(None, s.split(' '))[1:4]\
         for s in coordStr]).astype(float)
@@ -268,7 +275,8 @@ class out(AtomicBasisOutput):
 
   def getMO(self, mo_file):
     """
-    setup self.n_basis
+    setup self.n_ao
+          self.n_mo
           self.occupation
           self.eigenvalues
           self.mo
@@ -277,9 +285,9 @@ class out(AtomicBasisOutput):
     if os.path.exists(mo_file):
       mo = open(mo_file, 'r')
       mo_out = mo.readlines()
-      #self.n_basis = int(mo_out[12].split( )[0])
+      self.n_ao = int(mo_out[12].split( )[0])
       self.n_mo = int(mo_out[13].split( )[0])
-      lines = self.n_basis / 3 + 1
+      lines = self.n_ao / 3 + 1
       self.occupation = \
         [float(j) for i in mo_out[14:14+lines]\
          for j in i.split( )]
