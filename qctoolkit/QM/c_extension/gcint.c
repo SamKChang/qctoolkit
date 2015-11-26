@@ -6,23 +6,67 @@
 *  main function for Gaussian-Coulomb integral  *
 ************************************************/
 void gcMatrix(double *data,   //output result
-              double *R,
+              double *R,      //all the rest are input
               double *Z,
               double *center,
               double *exp,
               double *cef,
+              int *lm_xyz,
               int *ng,
               int Nao,
-              int N
+              int N,
+              int aoi,
+              int aoj
              ){
-  int i, j;
 
-  for(i=0;i<Nao;i++){
-    for(j=i;j<Nao;j++){
-      data[j+i*Nao] = 0.1;
-      data[i+j*Nao] = 0.2;
-    }
+  /* input related variables */
+  int i, j, k, i0 = 0, j0 = 0;
+  double ci[3], cj[3];
+  int lmi[3], lmj[3];
+  int ngi = ng[aoi], ngj = ng[aoj];
+  double *expi = (double*) malloc(ngi * sizeof(double));
+  double *expj = (double*) malloc(ngj * sizeof(double));
+  double *cefi = (double*) malloc(ngi * sizeof(double));
+  double *cefj = (double*) malloc(ngj * sizeof(double));
+
+  /* gaussian integral variables */
+  double cij[3], P[3], PA[3], PB[3], PC[3], PC2;
+  int lmij[3];
+  int t, u, v;
+  double p, mu;
+
+	for(i=0;i<aoi;i++) i0 += ng[i];
+  for(j=0;j<aoj;j++) j0 += ng[j];
+  for(i=0;i<ngi;i++){
+    expi[i] = exp[i0+i];
+    cefi[i] = cef[i0+i];
   }
+  for(j=0;j<ngj;j++){
+    expj[j] = exp[j0+j];
+    cefj[j] = cef[j0+j];
+  }
+  for(i=0;i<3;i++){
+    ci[i] = center[i + 3*aoi];
+    lmi[i] = lm_xyz[i + 3*aoi];
+  }
+  for(j=0;j<3;j++){
+    cj[j] = center[j + 3*aoj];
+    lmj[j] = lm_xyz[j + 3*aoj];
+  }
+  for(i=0;i<3;i++){
+    cij[i] = ci[i] - cj[i];
+    lmij[i] = lmi[i] + lmj[i];
+  }
+
+  /* normalization constant */
+  /* Boys function */
+  /* Hermite-Coulomb coefficient */
+
+  data[aoj+aoi*Nao] = 0.1;
+  free(expi);
+  free(expj);
+  free(cefi);
+  free(cefj);
 }
 
 /*  python interface */
@@ -186,7 +230,14 @@ static PyObject* gcint(PyObject* self, PyObject* args){
   *******************/
   data = (double*) malloc(Nao * Nao * sizeof(double));
 
-  gcMatrix(data, R, Z, center, exp, cef, ng, Nao, N);
+  for(i=0;i<Nao;i++){
+    for(j=i;j<Nao;j++){
+      gcMatrix(data, R, Z, 
+               center, exp, cef, ng, lm_xyz, 
+               Nao, N, i, j);
+      if(j!=i) data[i+j*Nao] = data[j+i*Nao];
+    }
+  }
 
   mat_dim[0] = Nao;
   mat_dim[1] = Nao;

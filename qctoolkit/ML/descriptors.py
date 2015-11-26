@@ -1,6 +1,6 @@
 import qctoolkit as qtk
 import numpy as np
-import qctoolkit.coulomb_matrix as cm
+import qctoolkit.ML.coulomb_matrix as cm
 import re
 
 class CoulombMatrix(object):

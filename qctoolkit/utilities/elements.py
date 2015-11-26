@@ -41,6 +41,12 @@ def n2Z(Zn):
     return z_list[Zn]
   else:
     qtk.exit("n2Z: element type " + str(Zn) + " is not defined")
+
+def n2Z0(Zn):
+  if z_list.has_key(Zn):
+    return z_list[Zn]
+  else:
+    return 0
   
 def n2m(Zn):
   if mass_list.has_key(Zn):
