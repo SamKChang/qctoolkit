@@ -10,15 +10,6 @@ collections of modules of format I/O, analysis, plots.
 Hopefully, these modules can one day become a package for general 
 purpose chemistry tool kit. 
 
-Many of these functions were first written in bash, or perl 
-for linux eviroment. Migrating to python implies that
-the functions CANNOT be called iteratively from bash terminal.
-Due to constant reloading packages, short python scripts for 
-iterative bash calls gives very bad performance when compared to
-perl/bash equivalent. A simple test give 60 times more exicution
-time for python scripts. Instead, all commands need to be
-integrated to python enviroment with minimal reloading of packages.
-
 **Installation on Ubuntu 32/64 systems**:
 * **Note** that the ```setup.py``` script depends on python setuptools
   package. This can be installed by
@@ -51,4 +42,9 @@ be obtained by the --record flag during install
 * VASP
 * NWChem
 
+**Required libraries**:
+* OpenMP
+* oenmpi
+* gsl
+(GNU Scientific Library)
 *20150702 KYSC*

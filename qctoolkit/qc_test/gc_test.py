@@ -6,11 +6,13 @@ from qctoolkit.QM.atomicbasis_io import gcMatrix
 import numpy as np
 
 
-nwOut = qtk.QMOut('data/qmout/water_nwchem/anDIR-01_00A.out', program='nwchem')
+#nwOut = qtk.QMOut('data/qmout/water_nwchem/anDIR-01_00A.out', program='nwchem')
+nwOut = qtk.QMOut('data/qmout/H_1g/h.out', program='nwchem')
 #gc.gcint(nwOut.basis, nwOut.R_bohr, nwOut.Z)
 #print basisData(nwOut.basis)
+print nwOut.Z
 aoV = gcMatrix(nwOut.basis, nwOut.R_bohr, nwOut.Z)
-moV = np.dot(nwOut.mo_coefficients,np.dot(aoV, nwOut.mo_coefficients.T))
+#moV = np.dot(nwOut.mo_coefficients,np.dot(aoV, nwOut.mo_coefficients.T))
 print aoV
 #print sum(np.diag(moV)[:5])
 #print nwOut.occupation

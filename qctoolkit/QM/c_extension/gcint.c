@@ -1,7 +1,7 @@
 #include <Python.h>
 #include <numpy/arrayobject.h>
 #include <omp.h>
-static const math_PI = 3.14159265359;
+#include <gsl/gsl_sf_gamma.h>
 
 /* Hermite-Gaussian expansion coefficients */
 double Hermite(int mi, int mj, int t, double p2, double mu,
@@ -25,6 +25,19 @@ double Hermite(int mi, int mj, int t, double p2, double mu,
   return Hij;
 }
 
+/* factorial function */
+int fac(n){
+  if (n<-1) return 0;
+  else if (n<=0) return 1;
+  else{
+    int val = 1, k = n;
+    while(k>0){
+      val *= k;
+      k = k-1;
+    }
+    return val;
+  }
+}
 /* 2-factorial function */
 int fac2(n){
   if (n<-1) return 0;
@@ -46,7 +59,7 @@ double Norm(float exp, int* lm){
   int nz = fac2(2*lm[2]-1);
   int n_xyz = lm[0] + lm[1] + lm[2];
   double N_xyz = nx * ny * nz;
-  double num1 = pow(2*exp/math_PI, 1.5);
+  double num1 = pow(2*exp/M_PI, 1.5);
   double num2 = pow(4*exp, n_xyz);
   double out = pow(num1 * num2 / N_xyz, 0.5);
   return out;
@@ -55,9 +68,13 @@ double Norm(float exp, int* lm){
 /* Boys function */
 double F(int n, double x){
   if(x>0){
-    return 1;
+    double g1, g2, factor;
+    factor = 0.5 * pow(x, -n-0.5);
+    g1 = gsl_sf_gamma(0.5+n);
+    g2 = gsl_sf_gamma_inc_P(0.5+n, x);
+    return factor * g1 * g2;
   }else{
-    return 0;
+    return 1.0/(1.0+2.0*n);
   }
 }
 
@@ -172,7 +189,7 @@ void gcMatrix(double *data,   //output result
                            cij[2], Pi[2], Pj[2]);
               HC_cef = HCcef(t, u, v, 0, PI, p2, x);
               num = ZI*(Nij*Hx*Hy*Hz*HC_cef);
-              element_ij -= num*(2*math_PI/p);
+              element_ij -= num*(2*M_PI/p);
             }
           }
         }
