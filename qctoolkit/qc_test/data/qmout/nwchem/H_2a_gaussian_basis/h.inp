@@ -1,0 +1,21 @@
+start h
+
+geometry nocenter
+ h 0 0 0
+ symmetry c1
+end
+
+basis 
+ hydrogen s
+  0.2   1.0
+ hydrogen s
+  0.5   0.630975152
+  0.8   0.378585091
+end
+charge -1
+scf
+ singlet
+ print "overlap" "kinetic"
+end
+
+task scf energy

@@ -1,0 +1,24 @@
+start hli
+
+geometry nocenter
+ h  0 0 0
+ li 1 0 0
+ symmetry c1
+end
+
+basis 
+ hydrogen s
+  0.5   1.0
+ lithium s
+  0.5   1.0
+ lithium s
+  82.640   0.0020060
+  12.410   0.0153430
+   2.824   0.0755790
+end
+
+scf
+ singlet
+end
+
+task scf energy

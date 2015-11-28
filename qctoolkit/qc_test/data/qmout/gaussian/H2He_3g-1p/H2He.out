@@ -1,0 +1,207 @@
+ Entering Gaussian System, Link 0=/opt/programs/g09/g09
+ Input=/home/chang/test/H2He.com
+ Output=/scratch/chang/H2He/H2He.out
+ Initial command:
+ /opt/programs/g09/l1.exe /scratch/chang/H2He/Gau-30221.inp -scrdir=/scratch/chang/H2He/
+ Entering Link 1 = /opt/programs/g09/l1.exe PID=     30222.
+  
+ Copyright (c) 1988,1990,1992,1993,1995,1998,2003,2009, Gaussian, Inc.
+                  All Rights Reserved.
+  
+ This is part of the Gaussian(R) 09 program.  It is based on
+ the Gaussian(R) 03 system (copyright 2003, Gaussian, Inc.),
+ the Gaussian(R) 98 system (copyright 1998, Gaussian, Inc.),
+ the Gaussian(R) 94 system (copyright 1995, Gaussian, Inc.),
+ the Gaussian 92(TM) system (copyright 1992, Gaussian, Inc.),
+ the Gaussian 90(TM) system (copyright 1990, Gaussian, Inc.),
+ the Gaussian 88(TM) system (copyright 1988, Gaussian, Inc.),
+ the Gaussian 86(TM) system (copyright 1986, Carnegie Mellon
+ University), and the Gaussian 82(TM) system (copyright 1983,
+ Carnegie Mellon University). Gaussian is a federally registered
+ trademark of Gaussian, Inc.
+  
+ This software contains proprietary and confidential information,
+ including trade secrets, belonging to Gaussian, Inc.
+  
+ This software is provided under written license and may be
+ used, copied, transmitted, or stored only in accord with that
+ written license.
+  
+ The following legend is applicable only to US Government
+ contracts under FAR:
+  
+                    RESTRICTED RIGHTS LEGEND
+  
+ Use, reproduction and disclosure by the US Government is
+ subject to restrictions as set forth in subparagraphs (a)
+ and (c) of the Commercial Computer Software - Restricted
+ Rights clause in FAR 52.227-19.
+  
+ Gaussian, Inc.
+ 340 Quinnipiac St., Bldg. 40, Wallingford CT 06492
+  
+  
+ ---------------------------------------------------------------
+ Warning -- This program may not be used in any manner that
+ competes with the business of Gaussian, Inc. or will provide
+ assistance to any competitor of Gaussian, Inc.  The licensee
+ of this program is prohibited from giving any competitor of
+ Gaussian, Inc. access to this program.  By using this program,
+ the user acknowledges that Gaussian, Inc. is engaged in the
+ business of creating and licensing software in the field of
+ computational chemistry and represents and warrants to the
+ licensee that it is not a competitor of Gaussian, Inc. and that
+ it will not use this program in any manner prohibited above.
+ ---------------------------------------------------------------
+  
+
+ Cite this work as:
+ Gaussian 09, Revision A.02,
+ M. J. Frisch, G. W. Trucks, H. B. Schlegel, G. E. Scuseria, 
+ M. A. Robb, J. R. Cheeseman, G. Scalmani, V. Barone, B. Mennucci, 
+ G. A. Petersson, H. Nakatsuji, M. Caricato, X. Li, H. P. Hratchian, 
+ A. F. Izmaylov, J. Bloino, G. Zheng, J. L. Sonnenberg, M. Hada, 
+ M. Ehara, K. Toyota, R. Fukuda, J. Hasegawa, M. Ishida, T. Nakajima, 
+ Y. Honda, O. Kitao, H. Nakai, T. Vreven, J. A. Montgomery, Jr., 
+ J. E. Peralta, F. Ogliaro, M. Bearpark, J. J. Heyd, E. Brothers, 
+ K. N. Kudin, V. N. Staroverov, R. Kobayashi, J. Normand, 
+ K. Raghavachari, A. Rendell, J. C. Burant, S. S. Iyengar, J. Tomasi, 
+ M. Cossi, N. Rega, J. M. Millam, M. Klene, J. E. Knox, J. B. Cross, 
+ V. Bakken, C. Adamo, J. Jaramillo, R. Gomperts, R. E. Stratmann, 
+ O. Yazyev, A. J. Austin, R. Cammi, C. Pomelli, J. W. Ochterski, 
+ R. L. Martin, K. Morokuma, V. G. Zakrzewski, G. A. Voth, 
+ P. Salvador, J. J. Dannenberg, S. Dapprich, A. D. Daniels, 
+ O. Farkas, J. B. Foresman, J. V. Ortiz, J. Cioslowski, 
+ and D. J. Fox, Gaussian, Inc., Wallingford CT, 2009.
+ 
+ ******************************************
+ Gaussian 09:  EM64L-G09RevA.02 11-Jun-2009
+                28-Nov-2015 
+ ******************************************
+ %nproc=4
+ Will use up to    4 processors via shared memory.
+ %chk=/home/chang/test/
+ ----------------------------------------------------------------------
+ # hf gen 6d 10f nosymm Scf(maxcycle=1000,verytight) int(grid=ultrafine
+ )
+ ----------------------------------------------------------------------
+ 1/38=1/1;
+ 2/12=2,15=1,17=6,18=5,40=1/2;
+ 3/5=7,8=22,11=9,16=1,25=1,30=1,75=-5/1,2,3;
+ 4//1;
+ 5/5=2,7=1000,17=3,38=5/2;
+ 6/7=2,8=2,9=2,10=2,28=1/1;
+ 99/5=1,9=1/99;
+ -
+ H
+ -
+ Symbolic Z-matrix:
+ Charge =  0 Multiplicity = 1
+ H                     0.        0.        0. 
+ He                    1.        0.        0. 
+ H                     1.        1.        0. 
+ 
+                          Input orientation:                          
+ ---------------------------------------------------------------------
+ Center     Atomic      Atomic             Coordinates (Angstroms)
+ Number     Number       Type             X           Y           Z
+ ---------------------------------------------------------------------
+      1          1           0        0.000000    0.000000    0.000000
+      2          2           0        1.000000    0.000000    0.000000
+      3          1           0        1.000000    1.000000    0.000000
+ ---------------------------------------------------------------------
+                    Distance matrix (angstroms):
+                    1          2          3
+     1  H    0.000000
+     2  He   1.000000   0.000000
+     3  H    1.414214   1.000000   0.000000
+ Symmetry turned off by external request.
+ Stoichiometry    H2He
+ Framework group  C2V[C2(He),SGV(H2)]
+ Deg. of freedom     2
+ Full point group                 C2V     NOp   4
+ Rotational constants (GHZ):    753.9802563    501.4551003    301.1602653
+ General basis read from cards:  (6D, 10F)
+ Integral buffers will be    131072 words long.
+ Raffenetti 1 integral format.
+ Two-electron integral symmetry is turned off.
+     9 basis functions,    11 primitive gaussians,     9 cartesian basis functions
+     2 alpha electrons        2 beta electrons
+       nuclear repulsion energy         2.4908936270 Hartrees.
+ NAtoms=    3 NActive=    3 NUniq=    3 SFac= 7.50D-01 NAtFMM=   80 NAOKFM=F Big=F
+ One-electron integrals computed using PRISM.
+ NBasis=     9 RedAO= T  NBF=     9
+ NBsUse=     9 1.00D-06 NBFU=     9
+ Harris functional with IExCor=  205 diagonalized for initial guess.
+ ExpMin= 2.00D-01 ExpMax= 8.26D+01 ExpMxC= 8.26D+01 IAcc=3 IRadAn=         5 AccDes= 0.00D+00
+ HarFok:  IExCor=  205 AccDes= 0.00D+00 IRadAn=         5 IDoV= 1
+ ScaDFX=  1.000000  1.000000  1.000000  1.000000
+ FoFCou: FMM=F IPFlag=           0 FMFlag=      100000 FMFlg1=           0
+         NFxFlg=           0 DoJE=T BraDBF=F KetDBF=T FulRan=T
+         Omega=  0.000000  0.000000  1.000000  0.000000  0.000000 ICntrl=     500 IOpCl=  0
+         NMat0=    1 NMatS0=    1 NMatT0=    0 NMatD0=    1 NMtDS0=    0 NMtDT0=    0
+         I1Cent=           4 NGrid=           0.
+ Symmetry not used in FoFCou.
+ Requested convergence on RMS density matrix=1.00D-08 within1000 cycles.
+ Requested convergence on MAX density matrix=1.00D-06.
+ Requested convergence on             energy=1.00D-06.
+ No special actions if energy rises.
+ Keep R1 ints in memory in canonical form, NReq=1808752.
+ SCF Done:  E(RHF) =  -2.89826465176     A.U. after    9 cycles
+             Convg  =    0.2315D-10             -V/T =  1.6857
+
+ **********************************************************************
+
+            Population analysis using the SCF density.
+
+ **********************************************************************
+
+ Alpha  occ. eigenvalues --   -1.01607  -0.19569
+ Alpha virt. eigenvalues --    0.14346   0.31905   0.48547   0.52035   0.56043
+ Alpha virt. eigenvalues --    0.68495   1.59502
+          Condensed to atoms (all electrons):
+              1          2          3
+     1  H    1.147649   0.102539   0.448005
+     2  He   0.102539   0.398538   0.102539
+     3  H    0.448005   0.102539   1.147649
+ Mulliken atomic charges:
+              1
+     1  H   -0.698193
+     2  He   1.396385
+     3  H   -0.698193
+ Sum of Mulliken atomic charges =   0.00000
+ Mulliken charges with hydrogens summed into heavy atoms:
+              1
+     2  He   0.000000
+ Sum of Mulliken charges with hydrogens summed into heavy atoms =   0.00000
+ Electronic spatial extent (au):  <R**2>=             25.3532
+ Charge=              0.0000 electrons
+ Dipole moment (field-independent basis, Debye):
+    X=              1.0407    Y=             -1.0407    Z=              0.0000  Tot=              1.4718
+ Quadrupole moment (field-independent basis, Debye-Ang):
+   XX=             -4.6718   YY=             -6.7532   ZZ=             -3.4632
+   XY=             -4.2010   XZ=              0.0000   YZ=              0.0000
+ Traceless Quadrupole moment (field-independent basis, Debye-Ang):
+   XX=              0.2909   YY=             -1.7905   ZZ=              1.4995
+   XY=             -4.2010   XZ=              0.0000   YZ=              0.0000
+ Octapole moment (field-independent basis, Debye-Ang**2):
+  XXX=             -9.6210  YYY=             -7.5163  ZZZ=              0.0000  XYY=             -6.8176
+  XXY=             -7.2969  XXZ=              0.0000  XZZ=             -2.2898  YZZ=             -1.1733
+  YYZ=              0.0000  XYZ=              0.0000
+ Hexadecapole moment (field-independent basis, Debye-Ang**3):
+ XXXX=            -26.4540 YYYY=            -20.1631 ZZZZ=             -2.5390 XXXY=            -15.0987
+ XXXZ=              0.0000 YYYX=            -12.2867 YYYZ=              0.0000 ZZZX=              0.0000
+ ZZZY=              0.0000 XXYY=            -12.8140 XXZZ=             -3.8840 YYZZ=             -2.7675
+ XXYZ=              0.0000 YYXZ=              0.0000 ZZXY=             -2.0661
+ N-N= 2.490893627003D+00 E-N=-1.258141071916D+01  KE= 4.226606694060D+00
+ 1\1\GINC-STUDIX19\SP\RHF\Gen\H2He1\CHANG\28-Nov-2015\0\\# hf gen 6d 10
+ f nosymm Scf(maxcycle=1000,verytight) int(grid=ultrafine)\\H\\0,1\H,0,
+ 0.,0.,0.\He,0,1.,0.,0.\H,0,1.,1.,0.\\Version=EM64L-G09RevA.02\HF=-2.89
+ 82647\RMSD=2.315e-11\Dipole=0.4094428,-0.4094428,0.\Quadrupole=0.21630
+ 67,-1.3311629,1.1148561,-3.1233347,0.,0.\PG=C02V [C2(He1),SGV(H2)]\\@
+
+
+ When cryptography is outlawed, bayl bhgynjf jvyy unir cevinpl.
+ Job cpu time:  0 days  0 hours  0 minutes 47.6 seconds.
+ File lengths (MBytes):  RWF=      5 Int=      0 D2E=      0 Chk=      2 Scr=      1
+ Normal termination of Gaussian 09 at Sat Nov 28 11:03:26 2015.

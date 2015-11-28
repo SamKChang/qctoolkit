@@ -1,0 +1,19 @@
+start h
+
+geometry
+ h 0 0 0
+ symmetry c1
+end
+
+basis 
+ hydrogen s
+  0.5   1.0
+ hydrogen p
+  0.2   1.0
+end
+
+scf
+ doublet
+end
+
+task scf energy
