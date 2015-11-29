@@ -1,0 +1,25 @@
+start h
+
+geometry nocenter
+ H 0 0 0
+ symmetry c1
+end
+
+basis
+H    S
+     13.0100000              0.0196850        
+      1.9620000              0.1379770        
+      0.4446000              0.4781480        
+H    S
+      0.1220000              1.0000000        
+H    S
+      0.0297400              1.0000000        
+end
+charge -1
+
+scf
+ singlet
+end
+print high "kinetic_energy"
+
+task scf energy

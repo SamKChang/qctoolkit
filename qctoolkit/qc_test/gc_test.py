@@ -6,24 +6,36 @@ from qctoolkit.QM.atomicbasis_io import gcMatrix
 import numpy as np
 
 
-#nwOut = qtk.QMOut('data/qmout/nwchem/water/anDIR-01_00A.out', program='nwchem')
-#nwOut = qtk.QMOut('data/qmout/nwchem/H2_1g/h.out', program='nwchem')
-#nwOut = qtk.QMOut('data/qmout/nwchem/H_3g/h.out', program='nwchem')
-#nwOut = qtk.QMOut('data/qmout/nwchem/H_2g/h.out', program='nwchem')
-#nwOut = qtk.QMOut('data/qmout/nwchem/H_2a_gaussian_basis/h.out', program='nwchem')
-#nwOut = qtk.QMOut('data/qmout/nwchem/H_1g/h.out', program='nwchem')
-#nwOut = qtk.QMOut('data/qmout/nwchem/H_1a/h.out', program='nwchem')
-#nwOut = qtk.QMOut('data/qmout/nwchem/H2_3g/h2.out', program='nwchem')
-#nwOut = qtk.QMOut('data/qmout/nwchem/H2He_3g/h2he.out', program='nwchem')
-#nwOut = qtk.QMOut('data/qmout/nwchem/H2He_3g-1p/h2he.out', program='nwchem')
-#nwOut = qtk.QMOut('data/qmout/nwchem/H2He_1p/hhe.out', program='nwchem')
-nwOut = qtk.QMOut('data/qmout/nwchem/HHe_1p/hhe.out', program='nwchem')
-#nwOut = qtk.QMOut('data/qmout/nwchem/HHe_2p/hhe.out', program='nwchem')
-#nwOut = qtk.QMOut('data/qmout/nwchem/HLi_3g/hli.out', program='nwchem')
-#nwOut = qtk.QMOut('data/qmout/nwchem/H2O_aug-cc-pvdz/h2o.out', program='nwchem')
-for b in nwOut.basis:
-  print b
+#qmOut = qtk.QMOut('data/qmout/nwchem/water/anDIR-01_00A.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H2_1g/h.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H_3g/h.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H_2g/h.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H_2a_gaussian_basis/h.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H_1g/h.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H_1p/h.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H_2p/h.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H_2g2p/h.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H_aug-cc-pvdz/h.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H_cc-pvdz_no-p/h.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H_1a/h.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H2_3g/h2.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H2He_3g/h2he.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H2He_3g-1p/h2he.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H2He_1p/hhe.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/HHe_1p/hhe.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/HHe_2p/hhe.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/HLi_3g/hli.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H2O_aug-cc-pvdz/h2o.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H2O_aug-cc-pvdz_b3lyp/h2o.out', program='nwchem')
 
+#qmOut = qtk.QMOut('data/qmout/gaussian/H_1g/H.out', program='gaussian')
+#qmOut = qtk.QMOut('data/qmout/gaussian/H_1p/H.out', program='gaussian')
+#qmOut = qtk.QMOut('data/qmout/gaussian/H_2g2p/H.out', program='gaussian')
+#qmOut = qtk.QMOut('data/qmout/gaussian/H_2a/H.out', program='gaussian')
+#qmOut = qtk.QMOut('data/qmout/gaussian/H2He_3g-1p/H2He.out', program='gaussian')
+#qmOut = qtk.QMOut('data/qmout/gaussian/H2_3g/H2.out', program='gaussian')
+#qmOut = qtk.QMOut('data/qmout/gaussian/H2_1s1p/H2.out', program='gaussian')
+qmOut = qtk.QMOut('data/qmout/gaussian/H2O_aug-cc-pvdz/H2O.out', program='gaussian')
 
 
 #gc.gcint(nwOut.basis, nwOut.R_bohr, nwOut.Z)
@@ -46,8 +58,8 @@ for b in nwOut.basis:
 #print np.dot(mox,mox.T)
 
 ##print nwOut.Z
-aoV = gcMatrix(nwOut.basis, nwOut.R_bohr, nwOut.Z)
-moV = np.dot(nwOut.mo_vectors,np.dot(aoV, nwOut.mo_vectors.T))
+aoV = gcMatrix(qmOut.basis, qmOut.R, qmOut.Z)
+moV = np.dot(qmOut.mo_vectors,np.dot(aoV, qmOut.mo_vectors.T))
 print aoV
 #aoVx = np.dot(X.T, np.dot(aoV, X))
 #moVx = np.dot(nwOut.mo_vectors,np.dot(aoVx, nwOut.mo_vectors.T))
@@ -58,10 +70,11 @@ print aoV
 #
 #print moVx
 ##print moV
-noc = len([a for a in nwOut.occupation if a > 0])
+#noc = len([a for a in nwOut.occupation if a > 0])
 ##print noc
 #
-print np.dot(np.diag(moV), nwOut.occupation)
+print np.dot(np.diag(moV), qmOut.occupation)
+print qmOut.n_ao
 ##print nwOut.occupation
 #print nwOut.basis[10]
 #print "aaa"

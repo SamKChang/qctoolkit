@@ -50,6 +50,7 @@ end
 
 scf
  singlet
+ print "overlap" "kinetic"
 end
 
 task scf energy

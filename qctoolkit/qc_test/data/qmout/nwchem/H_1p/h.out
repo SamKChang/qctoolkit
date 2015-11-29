@@ -38,7 +38,7 @@
 
     hostname        = R700
     program         = nwchem
-    date            = Sat Nov 28 11:09:59 2015
+    date            = Sun Nov 29 07:35:22 2015
 
     compiled        = Thu_Oct_22_13:27:42_2015
     source          = /home/samio/src/quantumChemistry/nwchem-6.6
@@ -141,10 +141,10 @@
   ao basis        = "ao basis"
   functions       =     4
   atoms           =     1
-  closed shells   =     0
-  open shells     =     1
-  charge          =   0.00
-  wavefunction    = ROHF
+  closed shells   =     1
+  open shells     =     0
+  charge          =  -1.00
+  wavefunction    = RHF 
   input vectors   = atomic
   output vectors  = ./h.movecs
   use symmetry    = F
@@ -159,7 +159,7 @@
 
 
 
- Forming initial guess at       0.0s
+ Forming initial guess at       0.1s
 
 
       Superposition of Atomic Density Guess
@@ -167,17 +167,19 @@
 
  Sum of atomic energies:          -0.37837917
 
+ Renormalizing density from       1.00 to      2
+
       Non-variational initial energy
       ------------------------------
 
- Total energy =      -0.378379
- 1-e energy   =      -0.378379
- 2-e energy   =       0.000000
- HOMO         =      -0.378379
- LUMO         =       0.024234
+ Total energy =       0.041126
+ 1-e energy   =      -0.756758
+ 2-e energy   =       0.797885
+ HOMO         =       0.419505
+ LUMO         =       0.896419
 
 
- Starting SCF solution at       0.0s
+ Starting SCF solution at       0.1s
 
 
 
@@ -195,21 +197,21 @@
 
  Integral file          = ./h.aoints.0
  Record size in doubles =  65536        No. of integs per rec  =  43688
- Max. records in memory =      2        Max. records in file   =  30500
+ Max. records in memory =      2        Max. records in file   =  29882
  No. of bits per label  =      8        No. of bits per value  =     64
 
 
               iter       energy          gnorm     gmax       time
              ----- ------------------- --------- --------- --------
-                 1       -0.3783791671  2.42D-18  1.71D-18      0.0
+                 1        0.0411262266  1.49D-16  1.49D-16      0.0
 
 
-       Final ROHF results 
+       Final RHF  results 
        ------------------ 
 
-         Total SCF energy =     -0.378379167095
-      One-electron energy =     -0.378379167095
-      Two-electron energy =      0.000000000000
+         Total SCF energy =      0.041126226612
+      One-electron energy =     -0.756758334191
+      Two-electron energy =      0.797884560803
  Nuclear repulsion energy =      0.000000000000
 
         Time for solution =      0.0s
@@ -219,37 +221,37 @@
              -----------------
 
               1      
-    1    0.0206
-    2    0.4603
-    3    0.4603
-    4    0.4603
+    1    0.4195
+    2    0.8964
+    3    0.8964
+    4    0.8964
 
                        ROHF Final Molecular Orbital Analysis
                        -------------------------------------
 
- Vector    1  Occ=1.000000D+00  E= 2.056311D-02
-              MO Center=  0.0D+00,  0.0D+00,  0.0D+00, r^2= 4.2D-01
+ Vector    1  Occ=2.000000D+00  E= 4.195054D-01
+              MO Center= -6.9D-21,  1.3D-16,  0.0D+00, r^2= 4.2D-01
    Bfn.  Coefficient  Atom+Function         Bfn.  Coefficient  Atom+Function  
   ----- ------------  ---------------      ----- ------------  ---------------
      1      1.000000  1 H  s          
 
- Vector    2  Occ=0.000000D+00  E= 4.603260D-01
-              MO Center=  0.0D+00,  0.0D+00,  0.0D+00, r^2= 1.8D+00
+ Vector    2  Occ=0.000000D+00  E= 8.964185D-01
+              MO Center= -6.7D-17, -6.7D-17,  0.0D+00, r^2= 1.8D+00
    Bfn.  Coefficient  Atom+Function         Bfn.  Coefficient  Atom+Function  
   ----- ------------  ---------------      ----- ------------  ---------------
-     2      0.999978  1 H  px         
+     2      0.707071  1 H  px                 3      0.707143  1 H  py         
 
- Vector    3  Occ=0.000000D+00  E= 4.603260D-01
-              MO Center=  0.0D+00,  0.0D+00,  0.0D+00, r^2= 1.8D+00
-   Bfn.  Coefficient  Atom+Function         Bfn.  Coefficient  Atom+Function  
-  ----- ------------  ---------------      ----- ------------  ---------------
-     3      0.999978  1 H  py         
-
- Vector    4  Occ=0.000000D+00  E= 4.603260D-01
+ Vector    3  Occ=0.000000D+00  E= 8.964185D-01
               MO Center=  0.0D+00,  0.0D+00,  0.0D+00, r^2= 1.8D+00
    Bfn.  Coefficient  Atom+Function         Bfn.  Coefficient  Atom+Function  
   ----- ------------  ---------------      ----- ------------  ---------------
      4      1.000000  1 H  pz         
+
+ Vector    4  Occ=0.000000D+00  E= 8.964185D-01
+              MO Center=  6.7D-17, -6.7D-17,  0.0D+00, r^2= 1.8D+00
+   Bfn.  Coefficient  Atom+Function         Bfn.  Coefficient  Atom+Function  
+  ----- ------------  ---------------      ----- ------------  ---------------
+     2      0.707143  1 H  px                 3     -0.707071  1 H  py         
 
 
  center of mass
@@ -267,38 +269,31 @@
 
     Atom       Charge   Shell Charges
  -----------   ------   -------------------------------------------------------
-    1 H    1     1.00   1.00  0.00
-
- Mulliken analysis of the open-shell density
- -------------------------------------------
-
-    Atom       Charge   Shell Charges
- -----------   ------   -------------------------------------------------------
-    1 H    1     1.00   1.00  0.00
+    1 H    1     2.00   2.00  0.00
 
        Multipole analysis of the density wrt the origin
        ------------------------------------------------
 
      L   x y z        total         open         nuclear
      -   - - -        -----         ----         -------
-     0   0 0 0     -0.000000     -1.000000      1.000000
+     0   0 0 0     -1.000000      0.000000      1.000000
 
      1   1 0 0      0.000000      0.000000      0.000000
-     1   0 1 0      0.000000      0.000000      0.000000
+     1   0 1 0     -0.000000      0.000000      0.000000
      1   0 0 1      0.000000      0.000000      0.000000
 
-     2   2 0 0     -0.500000     -0.500000      0.000000
+     2   2 0 0     -1.000000      0.000000      0.000000
      2   1 1 0      0.000000      0.000000      0.000000
      2   1 0 1      0.000000      0.000000      0.000000
-     2   0 2 0     -0.500000     -0.500000      0.000000
+     2   0 2 0     -1.000000      0.000000      0.000000
      2   0 1 1      0.000000      0.000000      0.000000
-     2   0 0 2     -0.500000     -0.500000      0.000000
+     2   0 0 2     -1.000000      0.000000      0.000000
 
 
  Parallel integral file used       1 records with       0 large values
 
 
- Task  times  cpu:        0.0s     wall:        0.0s
+ Task  times  cpu:        0.0s     wall:        0.1s
  Summary of allocated global arrays
 -----------------------------------
   No active global arrays
@@ -309,11 +304,11 @@
                          ------------------------------
 
        create   destroy   get      put      acc     scatter   gather  read&inc
-calls:   55       55      190      122       17        0        0        4     
+calls:   43       43      150      101       10        0        0        6     
 number of processes/call 1.00e+00 1.00e+00 1.00e+00 0.00e+00 0.00e+00
-bytes total:             1.44e+04 7.57e+03 1.74e+03 0.00e+00 0.00e+00 1.60e+01
+bytes total:             1.02e+04 6.36e+03 8.48e+02 0.00e+00 0.00e+00 2.40e+01
 bytes remote:            0.00e+00 0.00e+00 0.00e+00 0.00e+00 0.00e+00 0.00e+00
-Max memory consumed for GA by this process: 1920 bytes
+Max memory consumed for GA by this process: 1664 bytes
 MA_summarize_allocated_blocks: starting scan ...
 MA_summarize_allocated_blocks: scan completed: 0 heap blocks, 0 stack blocks
 MA usage statistics:

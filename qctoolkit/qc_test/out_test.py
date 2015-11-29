@@ -3,9 +3,12 @@
 import qctoolkit as qtk
 
 cpmdOut = qtk.QMOut('data/qmout/cpmd.out')
-vaspOut = qtk.QMOut('data/qmout/vasprun.xml', program='vasp')
-#nwOut = qtk.QMOut('data/qmout/water_nwchem/anDIR-01_00A.out', program='nwchem')
-nwOut = qtk.QMOut('A/A.out', program='nwchem')
+vaspOut = qtk.QMOut('data/qmout/vasp/vasprun.xml', program='vasp')
+#nwOut = qtk.QMOut('data/qmout/nwchem/water/anDIR-01_00A.out', program='nwchem')
+nwOut = qtk.QMOut('data/qmout/nwchem/A_nwchem/A.out', program='nwchem')
+gsOut = qtk.QMOut('data/qmout/gaussian/H2O_aug-cc-pvdz/H2O.out', program='gaussian')
+print gsOut.n_mo, gsOut.n_ao
+print len(gsOut.basis)
 #print cpmdOut.inUnit('eV')
 #print vaspOut.inUnit('eV')
 #print cpmdOut
@@ -26,5 +29,5 @@ nwOut = qtk.QMOut('A/A.out', program='nwchem')
 #print nwOut.basis_exponents
 #print nwOut.basis_coefficients
 #print nwOut.ao_keys
-print nwOut.basis
-print len(nwOut.basis)
+#print nwOut.basis
+#print len(nwOut.basis)
