@@ -44,8 +44,9 @@ be obtained by the --record flag during install
 
 **Required libraries**:
 * OpenMP
-* oenmpi
+* openmpi
 * gsl
 (GNU Scientific Library)
+* LAPACK
 
 *20150702 KYSC*
