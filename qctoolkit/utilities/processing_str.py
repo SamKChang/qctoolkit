@@ -60,3 +60,7 @@ def pathStrip(path):
   new_path = re.sub('//*','/',path)
   new_path = re.sub(r'([^\.])\.\/',r"\1",new_path)
   return new_path
+
+def getPath(path):
+  out = re.match(r'(.*)/', path).group(1)
+  return out
