@@ -2,6 +2,7 @@ import qctoolkit as qtk
 import qmcode.cpmd as cpmd
 import qmcode.vasp as vasp
 import qmcode.nwchem as nwchem
+import qmcode.gaussian as gaussian
 
 def QMInp(molecule, **kwargs):
 
@@ -26,3 +27,7 @@ def QMOut(out=None, **kwargs):
     return vasp.out(out)
   elif kwargs['program'].lower() == 'nwchem':
     return nwchem.out(out)
+  elif kwargs['program'].lower() == 'nwchem':
+    return nwchem.out(out)
+  elif kwargs['program'].lower() == 'gaussian':
+    return gaussian.out(out)

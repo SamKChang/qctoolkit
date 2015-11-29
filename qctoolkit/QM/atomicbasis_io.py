@@ -6,6 +6,7 @@ import numpy as np
 
 def gcMatrix(basis, coord, Z):
   basis_data, center, lm = basisData(basis)
+  coord = np.array(coord) * 1.889725989
   return gcint(basis_data, center, lm, coord, list(Z))
 
 def basisData(basis):
@@ -81,4 +82,4 @@ class AtomicBasisInput(GenericQMInput):
 
 class AtomicBasisOutput(GenericQMOutput):
   def __init__(self, output=None, **kwargs):
-    GenericQMOutput.__init__(self, output=None, **kwargs)
+    GenericQMOutput.__init__(self, output, **kwargs)

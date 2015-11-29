@@ -101,6 +101,10 @@ class GenericQMOutput(object):
     self.Et = np.nan
     self.scf_step = np.nan
     self.unit = 'Eh'
+    if output:
+      self.path = qtk.getPath(output)
+      _file = qtk.fileStrip(output)
+      self.stem, self.ext = os.path.splitext(_file)
 
   def __repr__(self):
     return str(self.Et)
