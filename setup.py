@@ -59,12 +59,12 @@ c_module = [Extension(name = "qctoolkit.ML.kernel_matrix",
               extra_link_args=['-lgomp', '-shared'],
               include_dirs = [np.get_include()]),
             Extension(name = "qctoolkit.QM.gcint", 
-              sources = ['qctoolkit/QM/c_extension/'+\
-                         'gcint.c'],
+              sources = ['qctoolkit/QM/c_extension/gcint.c',
+                         'qctoolkit/QM/c_extension/gto.c'],
               extra_compile_args=['-fopenmp', '-fpic', '-lm',
                                   '-Wno-write-strings'],
               extra_link_args=['-lgomp', '-shared',
-                               '-lgsl', '-lgslcblas'],
+                               '-lgsl', '-lgslcblas', '-llapack'],
               include_dirs = [np.get_include()]),
            ]
 
