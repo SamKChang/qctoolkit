@@ -159,11 +159,12 @@ class out(AtomicBasisOutput):
         self.Et = float(Et[-1].split( )[-1])
       except:
         self.Et = np.nan
-#      n_basis = filter(lambda x: 'number of functions' in x, data)
-#      try:
-#        self.n_basis = int(n_basis[-1].split(':')[1])
-#      except:
-#        self.n_basis = np.nan
+      # necessary for opening *.movecs file
+      n_basis = filter(lambda x: ' functions ' in x, data)
+      try:
+        self.n_basis = int(n_basis[-1].split('=')[1])
+      except:
+        self.n_basis = np.nan
 
       ######################################
       # extract basis function information #
@@ -171,11 +172,18 @@ class out(AtomicBasisOutput):
       basis_P = re.compile(r"  [0-9] [A-Z] +")
       batom_P = re.compile(r"^  [A-Za-z\-_\.]* *\([A-Z][a-z]*\)")
       bname_P = re.compile(r"\((.*)\)")
-      coord_P = re.compile(r"^ [A-Za-z\.\-_]+ +[- ][0-9\.]" +\
-                           r"{10,}[- ][0-9\. ]+$")
+      coord_P = re.compile(r"^ [A-Za-z\.\-_]+ +[- ][0-9\.]{9,}" +\
+                           r" +[- ][0-9\. ]+$")
       basisStr = filter(basis_P.match, data)
       batomStr = filter(batom_P.match, data)
       coordStr = filter(coord_P.match, data)
+
+      # change 'Sulphur' to 'Sulfur' for NWChem format
+      _sulphur = filter(lambda x: 'Sulphur' in x, batomStr)[0]
+      _s = batomStr.index(_sulphur)
+      batomStr[_s] = re.sub('Sulphur', 'Sulfur', batomStr[_s])
+      _s = data.index(_sulphur)
+      data[_s] = re.sub('Sulphur', 'Sulfur', data[_s])
 
       _exponents = [float(filter(None, s.split(' '))\
         [2]) for s in basisStr]
@@ -185,11 +193,18 @@ class out(AtomicBasisOutput):
         for s in basisStr]
       _type = [filter(None, s.split(' '))[1]\
         for s in basisStr]
-      ao_keys = np.diff(_N)
-      _ao_keys = [i+1 for i in range(len(ao_keys))\
-        if ao_keys[i] < 0]
-      _ao_keys.append(len(_N))
-      _ao_keys.insert(0, 0)
+      _bfnInd = [data.index(batom) for batom in batomStr]
+      _bfnEndPtn = re.compile(r" Summary of \"")
+      _bfnEndStr = filter(_bfnEndPtn.match, data)[0]
+      _bfnInd.append(data.index(_bfnEndStr))
+
+      _ao_keys = [0]
+      for ind in range(len(_bfnInd)-1):
+        _key = _ao_keys[-1]
+        for i in range(_bfnInd[ind]+4, _bfnInd[ind+1]):
+          if len(data[i]) > 1:
+            _key = _key + 1
+        _ao_keys.append(_key)
       _atoms = [getattr(pt, bname_P.match(
         filter(None, s.split(' '))[1]).group(1).lower()).symbol\
         for s in batomStr]
@@ -217,7 +232,7 @@ class out(AtomicBasisOutput):
         for g in range(_ao_keys[ind], _ao_keys[ind+1]):
           exp.append(_exponents[g])
           cef.append(_coefficients[g])
-          if _N[g] != _N[g+1]:
+          if _N[g] != _N[g+1] or g+1 >= _ao_keys[ind+1]:
             bfn = copy.deepcopy(bfn_base)
             bfn['exponents'] = copy.deepcopy(exp)
             bfn['coefficients'] = copy.deepcopy(cef)
@@ -278,8 +293,8 @@ class out(AtomicBasisOutput):
     setup self.n_ao
           self.n_mo
           self.occupation
-          self.eigenvalues
-          self.mo
+          self.mo_eigenvalues
+          self.mo_vectors
           self.nuclear_repulsion
     """
     if os.path.exists(mo_file):
@@ -287,7 +302,10 @@ class out(AtomicBasisOutput):
       mo_out = mo.readlines()
       self.n_ao = int(mo_out[12].split( )[0])
       self.n_mo = int(mo_out[13].split( )[0])
-      lines = self.n_ao / 3 + 1
+      if self.n_ao % 3 != 0:
+        lines = self.n_ao / 3 + 1
+      else:
+        lines = self.n_ao / 3
       self.occupation = \
         [float(j) for i in mo_out[14:14+lines]\
          for j in i.split( )]
@@ -302,5 +320,5 @@ class out(AtomicBasisOutput):
         vec = [float(j) for i in mo_out[start:end]\
                for j in i.split( )]
         _mo.append(vec)
-      self.mo_coefficients = np.array(_mo)
+      self.mo_vectors = np.array(_mo)
       self.nuclear_repulsion = float(mo_out[-1].split( )[1])
