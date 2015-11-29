@@ -179,11 +179,13 @@ class out(AtomicBasisOutput):
       coordStr = filter(coord_P.match, data)
 
       # change 'Sulphur' to 'Sulfur' for NWChem format
-      _sulphur = filter(lambda x: 'Sulphur' in x, batomStr)[0]
-      _s = batomStr.index(_sulphur)
-      batomStr[_s] = re.sub('Sulphur', 'Sulfur', batomStr[_s])
-      _s = data.index(_sulphur)
-      data[_s] = re.sub('Sulphur', 'Sulfur', data[_s])
+      _sulphur = filter(lambda x: 'Sulphur' in x, batomStr)
+      if _sulphur:
+        _sulphur = _sulphur[0]
+        _s = batomStr.index(_sulphur)
+        batomStr[_s] = re.sub('Sulphur', 'Sulfur', batomStr[_s])
+        _s = data.index(_sulphur)
+        data[_s] = re.sub('Sulphur', 'Sulfur', data[_s])
 
       _exponents = [float(filter(None, s.split(' '))\
         [2]) for s in basisStr]
