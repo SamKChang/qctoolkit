@@ -1,5 +1,6 @@
 #include <omp.h>
 #include <gsl/gsl_sf_gamma.h>
+#include <gsl/gsl_sf_erf.h>
 #include <math.h>
 #include "gto.h"
 
@@ -23,6 +24,33 @@ double Hermite(int mi, int mj, int t, double p2, double mu,
     Hij = exp(-mu*pow(Xij,2));
   }
   return Hij;
+}
+
+/* Boys function */
+// calling gsl gamma function library
+double F(int n, double x){
+//  // even more error....
+//  if(x>0){
+//    if(n==0){
+//      double factor = 0.5*sqrt(M_PI/x);
+//      printf("%f\n ", gsl_sf_erf(sqrt(x)));
+//      return factor * gsl_sf_erf(sqrt(x));
+//    }else{
+//      return ((2*n - 1) * F(n-1, x) - exp(-x))/(2*x);
+//    }
+//  }else{
+//    return 1.0/(1.0+2.0*n);
+//  }
+
+  if(x>0){
+    double g1, g2, factor;
+    g1 = gsl_sf_gamma(0.5+n);
+    g2 = gsl_sf_gamma_inc_P(0.5+n, x);
+    factor = 0.5 * pow(x, -n-0.5);
+    return factor * g1 * g2;
+  }else{
+    return 1.0/(1.0+2.0*n);
+  }
 }
 
 /* Hermite-Coulomb integral coefficient */
@@ -102,8 +130,6 @@ double aoOverlap(double *center, double *exp, double *cef, int *ng,
     cij[k] = ci[k] - cj[k];
   }
 
-  printf("yoyoy from include\n");
-
   for(i=0;i<ngi;i++){
     expi[i] = exp[i0+i];
     cefi[i] = cef[i0+i];
@@ -129,7 +155,8 @@ double aoOverlap(double *center, double *exp, double *cef, int *ng,
           for(v=0;v<lmij[2]+1;v++){
             Hz = Hermite(lmi[2], lmj[2], v, p2, mu, 
                          cij[2], Pi[2], Pj[2]);
-            overlap += cef_out * norm * Hx*Hy*Hz * pow(M_PI/p, 1.5);
+            overlap += cef_out * norm * Hx*Hy*Hz
+                       * pow(M_PI/p, 1.5);
           }
         }
       }
@@ -152,17 +179,15 @@ void renormalize(double *center, double *exp, double *cef,
 
   for(ao=0;ao<Nao;ao++){
     overlap = aoOverlap(center, exp, cef, ng, lm_xyz, ao, ao);
-    printf("overlap: %f\n", overlap);
     for(i=ngo;i<ngo+ng[ao];i++){
-      printf("%f->", cef[i]);
       cef[i] /= sqrt(overlap);
-      printf("%f\n", cef[i]);
     }
     ngo += ng[ao];
   }
 }
 
 // orthogonalize(overlap, center, exp, cef, ng, lm_xyz, Nao);
+// calling LAPACK functions, at the moment not used
 void orthogonalize(double *overlap, double *center, 
                    double *exp, double *cef, int *ng, 
                    int *lm_xyz, int Nao){
@@ -194,20 +219,7 @@ void orthogonalize(double *overlap, double *center,
       printf("yoyo %f\n", overlap[j+i*Nao]);
     }
   }
-  printf("yoyoyo");
   for(i=0;i<Nao;i++) printf(" %f", w[i]);
   printf("\n");
 }
 
-/* Boys function */
-double F(int n, double x){
-  if(x>0){
-    double g1, g2, factor;
-    g1 = gsl_sf_gamma(0.5+n);
-    g2 = gsl_sf_gamma_inc_P(0.5+n, x);
-    factor = 0.5 * pow(x, -n-0.5);
-    return factor * g1 * g2;
-  }else{
-    return 1.0/(1.0+2.0*n);
-  }
-}
