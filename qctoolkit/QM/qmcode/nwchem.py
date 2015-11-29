@@ -149,9 +149,8 @@ class out(AtomicBasisOutput):
   converged energy, system info, and scf steps are extracted
   """
   def __init__(self, qmout=None, **kwargs):
-    AtomicBasisOutput.__init__(self, qmout=None, **kwargs)
+    AtomicBasisOutput.__init__(self, qmout, **kwargs)
     if qmout:
-      stem, ext = os.path.splitext(qmout)
       outfile = open(qmout, 'r')
       data = outfile.readlines()
       Et = filter(lambda x: 'Total' in x and 'energy' in x, data)
@@ -286,7 +285,7 @@ class out(AtomicBasisOutput):
             cef = []
           
 
-      movecs = stem+'.modat'
+      movecs = os.path.join(self.path, self.stem) + '.modat'
       if os.path.exists(movecs):
         self.getMO(movecs)
 
