@@ -18,8 +18,8 @@ def n2ve(Zn):
   # WARNING! symbol V is used for 
   if ref == 'V':
     ref = 'VOID'
-    warning("VOID IS USED, symbol V is used for void "+\
-            "instead of vanadium")
+    qtk.warning("VOID IS USED, symbol V is used for void "+\
+                "instead of vanadium")
   if ve_list.has_key(Zn):
     return ve_list[Zn]
   elif ve_list.has_key(ref):
@@ -40,7 +40,9 @@ def n2Z(Zn):
   if z_list.has_key(Zn):
     return z_list[Zn]
   else:
-    qtk.exit("n2Z: element type " + str(Zn) + " is not defined")
+    qtk.warning("n2Z: element type " + str(Zn) +\
+                " is not defined, returning nuclear charge 0")
+    return 0
 
 def n2Z0(Zn):
   if z_list.has_key(Zn):

@@ -169,10 +169,9 @@ class out(AtomicBasisOutput):
       # extract basis function information #
       ######################################
       basis_P = re.compile(r"  [0-9] [A-Z] +")
-      batom_P = re.compile(r"^  [0-9A-Za-z\-_\.]* *\([A-Z][a-z]*\)")
+      batom_P = re.compile(r"^  [0-9A-Za-z\-_\.]+ *\([A-Z][a-z]*\)")
       bname_P = re.compile(r"\((.*)\)")
-      coord_P = re.compile(r"^ [A-Za-z\.\-_]+ +[- ][0-9\.]{9,}" +\
-                           r" +[- ][0-9\. ]+$")
+      coord_P = re.compile(r"^ [0-9A-Za-z\.\-_]+ +[- ][0-9\.]{9,}")
       basisStr = filter(basis_P.match, data)
       batomStr = filter(batom_P.match, data)
       coordStr = filter(coord_P.match, data)
@@ -223,7 +222,7 @@ class out(AtomicBasisOutput):
       for i in range(len(self.type_list)):
         e = self.type_list[i]
         center = self.R_bohr[i]
-        ind = _atoms.index(e)
+        ind = self.type_list.index(e)
         bfn_base = {}
         bfn_base['atom'] = e
         bfn_base['center'] = center
