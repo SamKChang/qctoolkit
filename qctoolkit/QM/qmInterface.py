@@ -32,4 +32,4 @@ def QMOut(out=None, **kwargs):
   elif kwargs['program'].lower() == 'gaussian':
     return gaussian.out(out)
   else:
-    qtk.exit("program: %s not reconized" kwargs['program'])
+    qtk.exit("program: %s not reconized" % kwargs['program'])

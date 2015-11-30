@@ -169,7 +169,7 @@ class out(AtomicBasisOutput):
       # extract basis function information #
       ######################################
       basis_P = re.compile(r"  [0-9] [A-Z] +")
-      batom_P = re.compile(r"^  [A-Za-z\-_\.]* *\([A-Z][a-z]*\)")
+      batom_P = re.compile(r"^  [0-9A-Za-z\-_\.]* *\([A-Z][a-z]*\)")
       bname_P = re.compile(r"\((.*)\)")
       coord_P = re.compile(r"^ [A-Za-z\.\-_]+ +[- ][0-9\.]{9,}" +\
                            r" +[- ][0-9\. ]+$")
