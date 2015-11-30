@@ -1,7 +1,7 @@
 #include <Python.h>
 #include <numpy/arrayobject.h>
 #include <omp.h>
-#include "gto.h"
+#include "gaussian.h"
 
 /************************************************
 *  main function for Gaussian-Coulomb integral  *
@@ -289,6 +289,10 @@ static PyObject* gcint(PyObject* self, PyObject* args){
   /* renormalization */
   renormalize(center, exp, cef, ng, lm_xyz, Nao);
 
+  /* orthogonalize */
+  // no effect at the moment, for debug purpose
+  orthogonalize(overlap, center, exp, cef, ng, lm_xyz, Nao);
+
   for(i=0;i<Nao;i++){
     for(j=i;j<Nao;j++){
       gcMatrix(data, R, Z, 
@@ -311,6 +315,7 @@ static PyObject* gcint(PyObject* self, PyObject* args){
   free(center);
   free(R);
   free(Z);
+  free(overlap);
 
   Py_INCREF(py_out);
   return Py_BuildValue("O", py_out);
