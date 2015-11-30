@@ -3,6 +3,15 @@
 #include <omp.h>
 #include "gaussian.h"
 
+/**********************************
+*  necessary Numpy functionality  *
+**********************************/
+// return 1D memory array pointer to allocated numpy array 
+double* pyvector_to_Carrayptrs(PyArrayObject *arrayin){
+  int n = arrayin->dimensions[0];
+  return (double*) arrayin->data;
+}
+
 /************************************************
 *  main function for Gaussian-Coulomb integral  *
 ************************************************/
@@ -155,6 +164,7 @@ static PyObject* gcint(PyObject* self, PyObject* args){
 
   /* python output variables */
   PyObject *py_out;
+  PyObject *py_out2;
   double *data, *overlap;
   int i, j;
   int mat_dim[2];
@@ -283,14 +293,18 @@ static PyObject* gcint(PyObject* self, PyObject* args){
   /*******************
   * construct output *
   *******************/
-  data = (double*) malloc(Nao * Nao * sizeof(double));
-  overlap = (double*) malloc(Nao * Nao * sizeof(double));
+  mat_dim[0] = Nao;
+  mat_dim[1] = Nao;
+  py_out = (PyArrayObject*) PyArray_FromDims(2, mat_dim, NPY_DOUBLE);
+  data = pyvector_to_Carrayptrs(py_out);
 
   /* renormalization */
   renormalize(center, exp, cef, ng, lm_xyz, Nao);
 
   /* orthogonalize */
   // no effect at the moment, for debug purpose
+  //py_out2 = (PyArrayObject*) PyArray_FromDims(2, mat_dim, NPY_DOUBLE);
+  //overlap = pyvector_to_Carrayptrs(py_out2);
   //orthogonalize(overlap, center, exp, cef, ng, lm_xyz, Nao);
 
   for(i=0;i<Nao;i++){
@@ -302,9 +316,7 @@ static PyObject* gcint(PyObject* self, PyObject* args){
     }
   }
 
-  mat_dim[0] = Nao;
-  mat_dim[1] = Nao;
-  py_out = PyArray_SimpleNewFromData(2, mat_dim, NPY_DOUBLE, data);
+  //py_out = PyArray_SimpleNewFromData(2, mat_dim, NPY_DOUBLE, data);
 
   /*********************************
   * clean up and return the result *
