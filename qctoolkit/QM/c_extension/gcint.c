@@ -39,7 +39,7 @@ void gcMatrix(double *data,   //output result
   double p, p2, mu, ZI, x, HC_cef, Ni, Nj, Nij;
   double Hx, Hy, Hz, num, element_ij = 0;
 
-	for(i=0;i<aoi;i++) i0 += ng[i];
+  for(i=0;i<aoi;i++) i0 += ng[i];
   for(j=0;j<aoj;j++) j0 += ng[j];
   for(k=0;k<3;k++){
     lmi[k] = lm_xyz[k + 3*aoi];
@@ -291,7 +291,7 @@ static PyObject* gcint(PyObject* self, PyObject* args){
 
   /* orthogonalize */
   // no effect at the moment, for debug purpose
-  orthogonalize(overlap, center, exp, cef, ng, lm_xyz, Nao);
+  //orthogonalize(overlap, center, exp, cef, ng, lm_xyz, Nao);
 
   for(i=0;i<Nao;i++){
     for(j=i;j<Nao;j++){

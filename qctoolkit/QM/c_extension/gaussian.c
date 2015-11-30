@@ -57,7 +57,9 @@ double Norm(float exp, int* lm){
 /* Boys function */
 // calling gsl gamma/error function library
 double F(int n, double x){
-//  // even more error....
+// error function implementation
+// even more error....
+// error comes from resursion
 //  if(x>0){
 //    if(n==0){
 //      double factor = 0.5*sqrt(M_PI/x);
@@ -70,6 +72,8 @@ double F(int n, double x){
 //    return 1.0/(1.0+2.0*n);
 //  }
 
+// gamma function implementation
+// directly calculate top n value
   if(x>0){
     // analytic expression of boys function from gamma functions
     // result from Mathematica
@@ -81,6 +85,49 @@ double F(int n, double x){
   }else{
     return 1.0/(1.0+2.0*n);
   }
+
+//  approximated Boy's funciton, 
+//  very similar results as gamma function implimentation
+//  int i;
+//  double expx, gamma_n, term, crit, Fn = 0;
+//
+//  expx = exp(-x);
+//  gamma_n = gsl_sf_gamma(n+0.5);
+//  crit = 1.0E-12;
+//
+//  if(x<=0){
+//    Fn = 1.0/(1.0+2.0*n);
+//  }else if(x<=10){
+//    i = 0;
+//    while(i<100){
+//      term = pow(x, i) / gsl_sf_gamma(n+i+1.5);
+//      term *= gamma_n;
+//      if(term/Fn < crit){
+//        break;
+//      }else if(i > 100){
+//        printf("Boy's function not converged for x<10\n");
+//      }
+//      Fn += term;
+//      i++;
+//    }
+//    Fn *= 0.5 * expx;
+//  }else{
+//    i = 0;
+//    while(i<100){
+//      term = pow(x, -i) /  gsl_sf_gamma(n-i+1.5);
+//      term *= gamma_n;
+//      if(term/Fn < crit){
+//        break;
+//      }else if(i > 100){
+//        printf("Boy's function not converged for x>10\n");
+//      }
+//      Fn += term;
+//      i++;
+//    }
+//    Fn *= -0.5 * expx;
+//    Fn += gamma_n / (2*pow(x, n+0.5));
+//  }
+//  return Fn;
 }
 
 /* Hermite-Coulomb integral coefficient */
