@@ -31,3 +31,5 @@ def QMOut(out=None, **kwargs):
     return nwchem.out(out)
   elif kwargs['program'].lower() == 'gaussian':
     return gaussian.out(out)
+  else:
+    qtk.exit("program: %s not reconized" kwargs['program'])
