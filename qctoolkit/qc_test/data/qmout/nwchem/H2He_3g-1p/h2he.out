@@ -38,7 +38,7 @@
 
     hostname        = R700
     program         = nwchem
-    date            = Sat Nov 28 11:04:10 2015
+    date            = Mon Nov 30 08:49:53 2015
 
     compiled        = Thu_Oct_22_13:27:42_2015
     source          = /home/samio/src/quantumChemistry/nwchem-6.6
@@ -194,8 +194,94 @@
  hellium                 user specified              1        1   1s
 
 
+ ====================================
+ Begin kinetic 1-e integrals
+ ====================================
+1eke          1   H  s     1   H  s           0.75000000
+1eke          5   He s     1   H  s          -0.00328913
+1eke          6   H  s     1   H  s          -0.02394298
+1eke          7   H  p     1   H  s          -0.15801769
+1eke          8   H  p     1   H  s          -0.15801769
+1eke          2   H  p     2   H  p           0.50000000
+1eke          3   H  p     3   H  p           0.50000000
+1eke          4   H  p     4   H  p           0.50000000
+1eke          5   He s     2   H  p           0.18127889
+1eke          6   H  s     2   H  p           0.15801769
+1eke          6   H  s     3   H  p           0.15801769
+1eke          7   H  p     2   H  p          -0.01996084
+1eke          8   H  p     2   H  p          -0.19481702
+1eke          7   H  p     3   H  p          -0.19481702
+1eke          8   H  p     3   H  p          -0.01996084
+1eke          9   H  p     4   H  p           0.17485618
+1eke          1   H  s     5   He s          -0.00328913
+1eke          2   H  p     5   He s           0.18127889
+1eke          5   He s     5   He s           5.45553505
+1eke          6   H  s     5   He s          -0.00328913
+1eke          8   H  p     5   He s          -0.18127889
+1eke          1   H  s     6   H  s          -0.02394298
+1eke          2   H  p     6   H  s           0.15801769
+1eke          3   H  p     6   H  s           0.15801769
+1eke          5   He s     6   H  s          -0.00328913
+1eke          6   H  s     6   H  s           0.75000000
+1eke          1   H  s     7   H  p          -0.15801769
+1eke          1   H  s     8   H  p          -0.15801769
+1eke          2   H  p     7   H  p          -0.01996084
+1eke          3   H  p     7   H  p          -0.19481702
+1eke          2   H  p     8   H  p          -0.19481702
+1eke          3   H  p     8   H  p          -0.01996084
+1eke          4   H  p     9   H  p           0.17485618
+1eke          5   He s     8   H  p          -0.18127889
+1eke          7   H  p     7   H  p           0.50000000
+1eke          8   H  p     8   H  p           0.50000000
+1eke          9   H  p     9   H  p           0.50000000
+ ====================================
+ End kinetic 1-e integrals
+ ====================================
+ ====================================
+ Begin overlap 1-e integrals
+ ====================================
+1eov          1   H  s     1   H  s           1.00000000
+1eov          5   He s     1   H  s           0.12248079
+1eov          6   H  s     1   H  s           0.16770779
+1eov          7   H  p     1   H  s          -0.37376729
+1eov          8   H  p     1   H  s          -0.37376729
+1eov          2   H  p     2   H  p           1.00000000
+1eov          3   H  p     3   H  p           1.00000000
+1eov          4   H  p     4   H  p           1.00000000
+1eov          5   He s     2   H  p           0.26412643
+1eov          6   H  s     2   H  p           0.37376729
+1eov          6   H  s     3   H  p           0.37376729
+1eov          7   H  p     2   H  p           0.13991490
+1eov          8   H  p     2   H  p          -0.34966242
+1eov          7   H  p     3   H  p          -0.34966242
+1eov          8   H  p     3   H  p           0.13991490
+1eov          9   H  p     4   H  p           0.48957732
+1eov          1   H  s     5   He s           0.12248079
+1eov          2   H  p     5   He s           0.26412643
+1eov          5   He s     5   He s           1.00000000
+1eov          6   H  s     5   He s           0.12248079
+1eov          8   H  p     5   He s          -0.26412643
+1eov          1   H  s     6   H  s           0.16770779
+1eov          2   H  p     6   H  s           0.37376729
+1eov          3   H  p     6   H  s           0.37376729
+1eov          5   He s     6   H  s           0.12248079
+1eov          6   H  s     6   H  s           1.00000000
+1eov          1   H  s     7   H  p          -0.37376729
+1eov          1   H  s     8   H  p          -0.37376729
+1eov          2   H  p     7   H  p           0.13991490
+1eov          3   H  p     7   H  p          -0.34966242
+1eov          2   H  p     8   H  p          -0.34966242
+1eov          3   H  p     8   H  p           0.13991490
+1eov          4   H  p     9   H  p           0.48957732
+1eov          5   He s     8   H  p          -0.26412643
+1eov          7   H  p     7   H  p           1.00000000
+1eov          8   H  p     8   H  p           1.00000000
+1eov          9   H  p     9   H  p           1.00000000
+ ====================================
+ End overlap 1-e integrals
+ ====================================
 
- Forming initial guess at       0.0s
+ Forming initial guess at       0.1s
 
 
       Superposition of Atomic Density Guess
@@ -213,7 +299,7 @@
  LUMO         =       0.197096
 
 
- Starting SCF solution at       0.0s
+ Starting SCF solution at       0.1s
 
 
 
@@ -231,7 +317,7 @@
 
  Integral file          = ./h2he.aoints.0
  Record size in doubles =  65536        No. of integs per rec  =  43688
- Max. records in memory =      2        Max. records in file   =  30502
+ Max. records in memory =      2        Max. records in file   =  29844
  No. of bits per label  =      8        No. of bits per value  =     64
 
 
@@ -241,7 +327,7 @@
                  2       -2.8805495028  4.88D-01  4.59D-01      0.0
                  3       -2.8967274066  1.69D-01  1.60D-01      0.0
                  4       -2.8982164205  1.47D-02  1.21D-02      0.0
-                 5       -2.8982647016  2.75D-05  2.07D-05      0.1
+                 5       -2.8982647016  2.75D-05  2.07D-05      0.0
 
 
        Final RHF  results 

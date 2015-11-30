@@ -20,7 +20,7 @@ import numpy as np
 #qmOut = qtk.QMOut('data/qmout/nwchem/H_1a/h.out', program='nwchem')
 #qmOut = qtk.QMOut('data/qmout/nwchem/H2_3g/h2.out', program='nwchem')
 #qmOut = qtk.QMOut('data/qmout/nwchem/H2He_3g/h2he.out', program='nwchem')
-#qmOut = qtk.QMOut('data/qmout/nwchem/H2He_3g-1p/h2he.out', program='nwchem')
+qmOut = qtk.QMOut('data/qmout/nwchem/H2He_3g-1p/h2he.out', program='nwchem')
 #qmOut = qtk.QMOut('data/qmout/nwchem/H2He_1p/hhe.out', program='nwchem')
 #qmOut = qtk.QMOut('data/qmout/nwchem/HHe_1p/hhe.out', program='nwchem')
 #qmOut = qtk.QMOut('data/qmout/nwchem/HHe_2p/hhe.out', program='nwchem')
@@ -35,7 +35,7 @@ import numpy as np
 #qmOut = qtk.QMOut('data/qmout/gaussian/H2He_3g-1p/H2He.out', program='gaussian')
 #qmOut = qtk.QMOut('data/qmout/gaussian/H2_3g/H2.out', program='gaussian')
 #qmOut = qtk.QMOut('data/qmout/gaussian/H2_1s1p/H2.out', program='gaussian')
-qmOut = qtk.QMOut('data/qmout/gaussian/H2O_aug-cc-pvdz/H2O.out', program='gaussian')
+#qmOut = qtk.QMOut('data/qmout/gaussian/H2O_aug-cc-pvdz/H2O.out', program='gaussian')
 
 
 #gc.gcint(nwOut.basis, nwOut.R_bohr, nwOut.Z)
@@ -74,7 +74,11 @@ print aoV
 ##print noc
 #
 print np.dot(np.diag(moV), qmOut.occupation)
-print qmOut.n_ao
+#for b in qmOut.basis:
+#  print b
+#for i in range(qmOut.n_ao):
+#  for j in range(i, qmOut.n_ao):
+#    print aoV[i,j]
 ##print nwOut.occupation
 #print nwOut.basis[10]
 #print "aaa"
