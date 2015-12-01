@@ -168,7 +168,10 @@ class out(AtomicBasisOutput):
       ######################################
       # extract basis function information #
       ######################################
-      basis_P = re.compile(r"  [0-9] [A-Z] +")
+
+      basis_dict = {"S":0, "P":1, "D":2, "F":3, "G":4, "H":5}
+
+      basis_P = re.compile(r" *[0-9]+ [A-Z]  [0-9]\.[0-9]{8}")
       batom_P = re.compile(r"^  [0-9A-Za-z\-_\.]+ *\([A-Z][a-z]*\)")
       bname_P = re.compile(r"\((.*)\)")
       coord_P = re.compile(r"^ [0-9A-Za-z\.\-_]+ +[- ][0-9\.]{9,}")
@@ -236,50 +239,11 @@ class out(AtomicBasisOutput):
             bfn = copy.deepcopy(bfn_base)
             bfn['exponents'] = copy.deepcopy(exp)
             bfn['coefficients'] = copy.deepcopy(cef)
-            if _type[g] == 'S':
-              bfn['type'] = 's'
-              self.basis.append(bfn)
-            elif _type[g] == 'P':
-              bfn['type'] = 'px'
-              self.basis.append(copy.deepcopy(bfn))
-              bfn['type'] = 'py'
-              self.basis.append(copy.deepcopy(bfn))
-              bfn['type'] = 'pz'
-              self.basis.append(copy.deepcopy(bfn))
-            elif _type[g] == 'D':
-              bfn['type'] = 'dxx'
-              self.basis.append(copy.deepcopy(bfn))
-              bfn['type'] = 'dxy'
-              self.basis.append(copy.deepcopy(bfn))
-              bfn['type'] = 'dxz'
-              self.basis.append(copy.deepcopy(bfn))
-              bfn['type'] = 'dyy'
-              self.basis.append(copy.deepcopy(bfn))
-              bfn['type'] = 'dyz'
-              self.basis.append(copy.deepcopy(bfn))
-              bfn['type'] = 'dzz'
-              self.basis.append(copy.deepcopy(bfn))
-            elif _type[g] == 'F':
-              bfn['type'] = 'fxxx'
-              self.basis.append(copy.deepcopy(bfn))
-              bfn['type'] = 'fxxy'
-              self.basis.append(copy.deepcopy(bfn))
-              bfn['type'] = 'fxxz'
-              self.basis.append(copy.deepcopy(bfn))
-              bfn['type'] = 'fxyy'
-              self.basis.append(copy.deepcopy(bfn))
-              bfn['type'] = 'fxyz'
-              self.basis.append(copy.deepcopy(bfn))
-              bfn['type'] = 'fxzz'
-              self.basis.append(copy.deepcopy(bfn))
-              bfn['type'] = 'fyyy'
-              self.basis.append(copy.deepcopy(bfn))
-              bfn['type'] = 'fyyz'
-              self.basis.append(copy.deepcopy(bfn))
-              bfn['type'] = 'fyzz'
-              self.basis.append(copy.deepcopy(bfn))
-              bfn['type'] = 'fzzz'
-              self.basis.append(copy.deepcopy(bfn))
+            if _type[g] in basis_dict:
+              _bfnList = self.basisList(basis_dict[_type[g]])
+              for bStr in _bfnList:
+                bfn['type'] = _type[g].lower() + bStr
+                self.basis.append(copy.deepcopy(bfn))
             exp = []
             cef = []
           
@@ -322,3 +286,27 @@ class out(AtomicBasisOutput):
         _mo.append(vec)
       self.mo_vectors = np.array(_mo)
       self.nuclear_repulsion = float(mo_out[-1].split( )[1])
+
+  def basisList(self, N):
+    lm = ['x', 'y', 'z']
+    outList = []
+    outStr = []
+    item = ['x' for s in range(N)]
+  
+    # recursive function that collects all the ids in `acc`
+    def recurse(current, depth, N, count):
+      if depth < N:
+        for s in range(current, 3): 
+          item[depth] = lm[s]
+          if depth == N-1:
+            count = depth
+            outList.append(copy.deepcopy(item))
+          recurse(s, depth+1, N, count)
+  
+    recurse(0, 0, N, 0) # starts the recursion
+    if outList:
+      for out in outList:
+        outStr.append(''.join(out))
+    else:
+      outStr = ['']
+    return outStr
