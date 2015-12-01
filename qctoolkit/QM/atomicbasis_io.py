@@ -24,46 +24,9 @@ def basisData(basis):
       if g == len(ao['exponents'])-1:
         n_gaussians.append(g+1)
         centers.append(list(ao['center']))
-        if ao['type'] == 's':
-          lm_xyz.append([0,0,0])
-        elif ao['type'] == 'px':
-          lm_xyz.append([1,0,0])
-        elif ao['type'] == 'py':
-          lm_xyz.append([0,1,0])
-        elif ao['type'] == 'pz':
-          lm_xyz.append([0,0,1])
-        elif ao['type'] == 'dxx':
-          lm_xyz.append([2,0,0])
-        elif ao['type'] == 'dxy':
-          lm_xyz.append([1,1,0])
-        elif ao['type'] == 'dxz':
-          lm_xyz.append([1,0,0])
-        elif ao['type'] == 'dyy':
-          lm_xyz.append([0,2,0])
-        elif ao['type'] == 'dyz':
-          lm_xyz.append([0,1,1])
-        elif ao['type'] == 'dzz':
-          lm_xyz.append([0,0,2])
-        elif ao['type'] == 'fxxx':
-          lm_xyz.append([3,0,0])
-        elif ao['type'] == 'fxxy':
-          lm_xyz.append([2,1,0])
-        elif ao['type'] == 'fxxz':
-          lm_xyz.append([2,0,1])
-        elif ao['type'] == 'fxyy':
-          lm_xyz.append([1,2,0])
-        elif ao['type'] == 'fxyz':
-          lm_xyz.append([1,1,1])
-        elif ao['type'] == 'fxzz':
-          lm_xyz.append([1,0,2])
-        elif ao['type'] == 'fyyy':
-          lm_xyz.append([0,3,0])
-        elif ao['type'] == 'fyyz':
-          lm_xyz.append([0,2,1])
-        elif ao['type'] == 'fyzz':
-          lm_xyz.append([0,1,2])
-        elif ao['type'] == 'fzzz':
-          lm_xyz.append([0,0,3])
+        lm_xyz.append([ao['type'].count('x'), 
+                       ao['type'].count('y'), 
+                       ao['type'].count('z')])
   out = {}
   out['exponents'] = exponents
   out['coefficients'] = coefficients
