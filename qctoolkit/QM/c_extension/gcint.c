@@ -97,25 +97,6 @@ void gcMatrix(double *data,   //output result
               HC_cef = HCcef(t, u, v, 0, PI, p2, x);
               num = ZI*(Nij*Hx*Hy*Hz*HC_cef);
               element_ij -= num*(2*M_PI/p);
-/*
-              if(num*(2*M_PI/p)*num > 1E-7){
-                if(aoi==1 && aoj==1){
-                  printf("% 10.6E a=%7.3E b=%7.3E: ", 
-                         -num*(2*M_PI/p), expi[i], expj[j]);
-                  printf("lm_a=[%d %d %d] lm_b=[%d %d %d]\n  ",
-                         lmi[0],lmi[1],lmi[2],
-                         lmj[0],lmj[1],lmj[2]);
-                  printf("Nij:%6.2E Ni:%6.2E Nj:%6.2E ", 
-                         Nij, Ni, Nj);
-                  printf("Hx=%6.2E Hy=%6.2E Hz=%6.2E HC=%6.2E\n  ",
-                         Hx, Hy, Hz, HC_cef);
-                  printf("HCcef(%d, %d, %d, 0, PI, %3.1f %3.1f)=%f\n",
-                         t, u, v, p2, x, HC_cef);
-                  printf("   PI: %6.4f %6.4f %6.4f\n", 
-                         PI[0], PI[1], PI[2]);
-                }
-              }
-*/
             }
           }
         }
