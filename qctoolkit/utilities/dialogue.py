@@ -1,4 +1,5 @@
 import sys
+import qctoolkit as qtk
 from qctoolkit.setting import *
 import inspect
 
@@ -24,13 +25,13 @@ def exit(text):
   sys.exit(msg)
   
 def warning(text):
-  if not quiet:
+  if not qtk.setting.quiet:
     msg = bcolors.WARNING + text + bcolors.ENDC
     print msg
   sys.stdout.flush()
 
 def progress(title, *texts):
-  if not quiet:
+  if not qtk.setting.quiet:
     msg = bcolors.OKCYAN + bcolors.BOLD + title+":" + bcolors.ENDC
     print msg,
     for info in texts:
@@ -38,14 +39,14 @@ def progress(title, *texts):
   sys.stdout.flush()
 
 def done(*texts):
-  if not quiet:
+  if not qtk.setting.quiet:
     for info in texts:
       print info,
     print " DONE"
   sys.stdout.flush()
 
 def report(title, *texts, **kwargs):
-  if not quiet:
+  if not qtk.setting.quiet:
     if 'color' in kwargs:
       color = kwargs['color']
     else:
@@ -89,7 +90,7 @@ def prompt(text):
   sys.stdout.flush()
 
 def status(title, *texts):
-  if not quiet:
+  if not qtk.setting.quiet:
     msg = bcolors.OKBLUE + title+":" + bcolors.ENDC
     print msg,
     for info in texts:
