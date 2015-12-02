@@ -62,5 +62,8 @@ def pathStrip(path):
   return new_path
 
 def getPath(path):
-  out = re.match(r'(.*)/', path).group(1)
+  try:
+    out = re.match(r'(.*)/', path).group(1)
+  except AttributeError:
+    out = '.'
   return out
