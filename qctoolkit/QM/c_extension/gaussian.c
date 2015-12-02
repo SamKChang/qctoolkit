@@ -297,15 +297,15 @@ void orthogonalize(double *overlap, double *center,
 //gc2Matrix(data, center, exp, cef, ng, 
 //         lm_xyz, Nao, N, i, j, k, l);
 double gc2Matrix(double *center,
-               double *exp,
-               double *cef,
-               int *ng,
-               int *lm_xyz,
-               int Nao,
-               int aoi,
-               int aoj,
-               int aok,
-               int aol
+                 double *exp,
+                 double *cef,
+                 int *ng,
+                 int *lm_xyz,
+                 int Nao,
+                 int aoi,
+                 int aoj,
+                 int aok,
+                 int aol
               ){
 
   /* input related variables */
@@ -329,7 +329,8 @@ double gc2Matrix(double *center,
   double p, p2, mu, x, Ni, Nj, Nij;
   double Hx1, Hy1, Hz1, HC_cef1;
   double Hx2, Hy2, Hz2, HC_cef2; 
-  double element_ijkl = 0;
+  double element_ijkl = aol + aok*Nao + aoj*Nao*Nao 
+                        + aoi*Nao*Nao*Nao;
 
 //  for(i=0;i<aoi;i++) i0 += ng[i];
 //  for(j=0;j<aoj;j++) j0 += ng[j];
@@ -385,7 +386,6 @@ double gc2Matrix(double *center,
 //      }
 //    }
 //  }
-
   free(expi);
   free(expj);
   free(expk);
