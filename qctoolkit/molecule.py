@@ -601,7 +601,7 @@ class Molecule(object):
   def write(self, *args, **kwargs):
     if 'format' not in kwargs:
       kwargs['format'] = 'xyz'
-    elif kwargs['format'] == 'xyz':
+    if kwargs['format'] == 'xyz':
       self.write_xyz(*args, **kwargs)
     elif kwargs['format'] == 'pdb':
       self.write_pdb(*args, **kwargs)
