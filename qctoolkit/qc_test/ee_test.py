@@ -26,7 +26,7 @@ import numpy as np
 #qmOut = qtk.QMOut('data/qmout/nwchem/HHe_1p/hhe.out', program='nwchem')
 #qmOut = qtk.QMOut('data/qmout/nwchem/HHe_2p/hhe.out', program='nwchem')
 #qmOut = qtk.QMOut('data/qmout/nwchem/HLi_3g/hli.out', program='nwchem')
-#qmOut = qtk.QMOut('data/qmout/nwchem/H2O_aug-cc-pvdz/h2o.out', program='nwchem')
+qmOut = qtk.QMOut('data/qmout/nwchem/H2O_aug-cc-pvdz/h2o.out', program='nwchem')
 #qmOut = qtk.QMOut('data/qmout/nwchem/H2O_aug-cc-pvdz_b3lyp/h2o.out', program='nwchem')
 
 #qmOut = qtk.QMOut('data/qmout/gaussian/H_1g/H.out', program='gaussian')
@@ -36,16 +36,17 @@ import numpy as np
 #qmOut = qtk.QMOut('data/qmout/gaussian/H2He_3g-1p/H2He.out', program='gaussian')
 #qmOut = qtk.QMOut('data/qmout/gaussian/H2_3g/H2.out', program='gaussian')
 #qmOut = qtk.QMOut('data/qmout/gaussian/H2_1s1p/H2.out', program='gaussian')
-qmOut = qtk.QMOut('data/qmout/gaussian/H2O_aug-cc-pvdz/H2O.out', program='gaussian')
+#qmOut = qtk.QMOut('data/qmout/gaussian/H2O_aug-cc-pvdz/H2O.out', program='gaussian')
 
 #print len(qmOut.basis)
 #for b in qmOut.basis:
 #  print b
 
 ee = eeMatrix(qmOut.basis)
-for i in range(10):
-  for j in range(10):
-    for k in range(10):
-      for l in range(10):
-        print i, j, k, l, ee[i,j,k,l]
+print ee
+#for i in range(10):
+#  for j in range(10):
+#    for k in range(10):
+#      for l in range(10):
+#        print i, j, k, l, ee[i,j,k,l]
 print ee.shape

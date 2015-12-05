@@ -156,24 +156,83 @@ static PyObject* gc2int(PyObject* self, PyObject* args){
   //overlap = pyvector_to_Carrayptrs(py_out2);
   //orthogonalize(overlap, center, exp, cef, ng, lm_xyz, Nao);
 
+//#pragma omp parallel private(i, j, k, l,s, t, u, v) shared(data)
+{
+//  #pragma omp for
   for(i=0;i<Nao;i++){
     for(j=i;j<Nao;j++){
-      s = Nao*Nao + j*Nao*Nao + i*Nao*Nao*Nao;
-      t = Nao*Nao + i*Nao*Nao + j*Nao*Nao*Nao;
-      for(k=0;k<Nao;k++){
-        for(l=k;l<Nao;l++){
-          u = l + k*Nao + j*Nao*Nao + i*Nao*Nao*Nao;
-          v = k + l*Nao + j*Nao*Nao + i*Nao*Nao*Nao;
+      for(k=i;k<Nao;k++){
+        for(l=j+k;l<Nao;l++){
+          s = l + k*Nao + j*Nao*Nao + i*Nao*Nao*Nao;
           element = gc2Matrix(center, exp, cef, ng, lm_xyz,
                               Nao, i, j, k, l);
-          data[u] = element;
-          if(k!=l) data[v] = data[u];
+          data[s] = element;
+
+          t = l + k*Nao + i*Nao*Nao + j*Nao*Nao*Nao;
+          u = k + l*Nao + j*Nao*Nao + i*Nao*Nao*Nao;
+          v = k + l*Nao + i*Nao*Nao + j*Nao*Nao*Nao;
+          data[t] = data[s];
+          data[u] = data[s];
+          data[v] = data[s];
+  
+          t = i + j*Nao + l*Nao*Nao + k*Nao*Nao*Nao;
+          u = j + i*Nao + k*Nao*Nao + l*Nao*Nao*Nao;
+          v = i + j*Nao + k*Nao*Nao + l*Nao*Nao*Nao;
+          data[t] = data[s];
+          data[u] = data[s];
+          data[v] = data[s];
+
+//          if((k!=i)||(l!=j)){
+//            t = j + i*Nao + l*Nao*Nao + k*Nao*Nao*Nao;
+//            data[t] = data[s];
+//            if((j!=i)&&(l!=k)){ 
+//              t = l + k*Nao + i*Nao*Nao + j*Nao*Nao*Nao;
+//              u = k + l*Nao + j*Nao*Nao + i*Nao*Nao*Nao;
+//              v = k + l*Nao + i*Nao*Nao + j*Nao*Nao*Nao;
+//              data[t] = data[s];
+//              data[u] = data[s];
+//              data[v] = data[s];
+//
+//              t = i + j*Nao + l*Nao*Nao + k*Nao*Nao*Nao;
+//              u = j + i*Nao + k*Nao*Nao + l*Nao*Nao*Nao;
+//              v = i + j*Nao + k*Nao*Nao + l*Nao*Nao*Nao;
+//              data[t] = data[s];
+//              data[u] = data[s];
+//              data[v] = data[s];
+//            }else if(j!=i){
+//              u = k + l*Nao + j*Nao*Nao + i*Nao*Nao*Nao;
+//              data[u] = data[s];
+//
+//              u = j + i*Nao + k*Nao*Nao + l*Nao*Nao*Nao;
+//              data[u] = data[s];
+//            }else if(l!=k){
+//              t = l + k*Nao + i*Nao*Nao + j*Nao*Nao*Nao;
+//              data[t] = data[s];
+//
+//              t = i + j*Nao + l*Nao*Nao + k*Nao*Nao*Nao;
+//              data[t] = data[s];
+//            }
+//          }else{
+//            if((j!=i)&&(l!=k)){ 
+//              t = l + k*Nao + i*Nao*Nao + j*Nao*Nao*Nao;
+//              u = k + l*Nao + j*Nao*Nao + i*Nao*Nao*Nao;
+//              v = k + l*Nao + i*Nao*Nao + j*Nao*Nao*Nao;
+//              data[t] = data[s];
+//              data[u] = data[s];
+//              data[v] = data[s];
+//            }else if(j!=i){
+//              u = k + l*Nao + j*Nao*Nao + i*Nao*Nao*Nao;
+//              data[u] = data[s];
+//            }else if(l!=k){
+//              t = l + k*Nao + i*Nao*Nao + j*Nao*Nao*Nao;
+//              data[t] = data[s];
+//            }
+//          }
         }
       }
-      if(j!=i) data[t] = data[s];
     }
   }
-
+}
   //py_out = PyArray_SimpleNewFromData(2, mat_dim, NPY_DOUBLE, data);
 
   /*********************************

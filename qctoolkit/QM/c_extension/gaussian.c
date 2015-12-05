@@ -57,21 +57,6 @@ double Norm(float exp, int* lm){
 /* Boys function */
 // calling gsl gamma/error function library
 double F(int n, double x){
-// error function implementation
-// even more error....
-// error comes from resursion
-//  if(x>0){
-//    if(n==0){
-//      double factor = 0.5*sqrt(M_PI/x);
-//      printf("%f\n ", gsl_sf_erf(sqrt(x)));
-//      return factor * gsl_sf_erf(sqrt(x));
-//    }else{
-//      return ((2*n - 1) * F(n-1, x) - exp(-x))/(2*x);
-//    }
-//  }else{
-//    return 1.0/(1.0+2.0*n);
-//  }
-
 // gamma function implementation
 // directly calculate top n value
   if(x>0){
@@ -323,37 +308,124 @@ double gc2Matrix(double *center,
   double *cefl = (double*) malloc(ngl * sizeof(double));
 
   /* gaussian integral variables */
-  double cI[3], cij[3], P[3], Pi[3], Pj[3], PI[3], PI2;
-  int lmij[3];
+  double P[3], Pi[3], Pj[3];
+  double Q[3], Qk[3], Ql[3];
+  double PQ[3], PQ2, alpha;
+  double cij[3], ckl[3];
+  int lmij[3], lmkl[3];
   int t1, u1, v1, t2, u2, v2;
   double p, p2, mu, x, Ni, Nj, Nij;
-  double Hx1, Hy1, Hz1, HC_cef1;
-  double Hx2, Hy2, Hz2, HC_cef2; 
-  double element_ijkl = aol + aok*Nao + aoj*Nao*Nao 
-                        + aoi*Nao*Nao*Nao;
+  double q, q2, nu, y, Nk, Nl, Nkl;
+  double Hx1, Hy1, Hz1;
+  double Hx2, Hy2, Hz2;
+  double factor1, factor2, HC_cef; 
+  double element_ijkl = 0;
 
-//  for(i=0;i<aoi;i++) i0 += ng[i];
-//  for(j=0;j<aoj;j++) j0 += ng[j];
-//  for(k=0;k<3;k++){
-//    lmi[k] = lm_xyz[k + 3*aoi];
-//    lmj[k] = lm_xyz[k + 3*aoj];
-//    lmij[k] = lmi[k] + lmj[k];
-//    ci[k] = center[k + 3*aoi];
-//    cj[k] = center[k + 3*aoj];
-//    cij[k] = ci[k] - cj[k];
-//  }
-//  for(i=0;i<ngi;i++){
-//    expi[i] = exp[i0+i];
-//    cefi[i] = cef[i0+i];
-//    for(j=0;j<ngj;j++){
-//      expj[j] = exp[j0+j];
-//      cefj[j] = cef[j0+j];
-//      p = expi[i] + expj[j];
-//      p2 = 2*p;
-//      mu = expi[i] * expj[j] / p;
-//      Ni = cefi[i] * Norm(expi[i], lmi);
-//      Nj = cefj[j] * Norm(expj[j], lmj);
-//      Nij = Ni * Nj;
+
+  for(s=0;s<aoi;s++) i0 += ng[s];
+  for(s=0;s<aoj;s++) j0 += ng[s];
+  for(s=0;s<aok;s++) k0 += ng[s];
+  for(s=0;s<aol;s++) l0 += ng[s];
+  for(s=0;s<3;s++){
+    lmi[s] = lm_xyz[s + 3*aoi];
+    lmj[s] = lm_xyz[s + 3*aoj];
+    lmk[s] = lm_xyz[s + 3*aok];
+    lml[s] = lm_xyz[s + 3*aol];
+    lmij[s] = lmi[s] + lmj[s];
+    lmkl[s] = lmk[s] + lml[s];
+    ci[s] = center[s + 3*aoi];
+    cj[s] = center[s + 3*aoj];
+    ck[s] = center[s + 3*aok];
+    cl[s] = center[s + 3*aol];
+    cij[s] = ci[s] - cj[s];
+    ckl[s] = ck[s] - cl[s];
+  }
+  //printf("yo %d %d %d %d\n", aoi, aoj, aok, aol);
+  for(i=0;i<ngi;i++){
+    //printf("yoi %d: %d\n", i , ngi);
+    expi[i] = exp[i0+i];
+    cefi[i] = cef[i0+i];
+    for(j=0;j<ngj;j++){
+      //printf("yoj %d: %d\n", j , ngj);
+      expj[j] = exp[j0+j];
+      cefj[j] = cef[j0+j];
+      p = expi[i] + expj[j];
+      p2 = 2*p;
+      mu = expi[i] * expj[j] / p;
+      Ni = cefi[i] * Norm(expi[i], lmi);
+      Nj = cefj[j] * Norm(expj[j], lmj);
+      Nij = Ni * Nj;
+      for(s=0;s<3;s++){
+        P[s] = (expi[i]*ci[s] + expj[j]*cj[s]) / p;
+        Pi[s] = P[s] - ci[s];
+        Pj[s] = P[s] - cj[s];
+      }
+      for(k=0;k<ngk;k++){
+        expk[k] = exp[k0+k];
+        cefk[k] = cef[k0+k];
+        for(l=0;l<ngl;l++){
+          //printf("yol %d: %d\n", l , ngl);
+          expl[l] = exp[l0+l];
+          cefl[l] = cef[l0+l];
+          q = expk[k] + expl[l];
+          q2 = 2*q;
+          nu = expk[k] * expl[l] / p;
+          Nk = cefk[k] * Norm(expk[k], lmk);
+          Nl = cefl[l] * Norm(expl[l], lml);
+          Nkl = Nk * Nl;
+          factor1 = 2*pow(M_PI, 5.0/2.0);
+          factor1 /= p*q * sqrt(p+q);
+          PQ2 = 0;
+          for(s=0;s<3;s++){
+            Q[s] = (expk[k]*ck[s] + expl[l]*cl[s]) / q;
+            //printf("Q[%d]=%e, %e %e %e %e\n", s, Q[s], expk[k], ck[s], expl[l], cl[s]);
+            Qk[s] = Q[s] - ck[s];
+            Ql[s] = Q[s] - cl[s];
+            PQ[s] = P[s] - Q[s];
+            PQ2 += PQ[s] * PQ[s];
+          }
+          alpha = p*q / (p+q);
+          int itr = 0;
+          for(t1=0;t1<lmij[0]+1;t1++){
+            Hx1 = Hermite(lmi[0], lmj[0], t1, p2, mu, 
+                          cij[0], Pi[0], Pj[0]);
+            for(u1=0;u1<lmij[1]+1;u1++){
+              Hy1 = Hermite(lmi[1], lmj[1], u1, p2, mu, 
+                            cij[1], Pi[1], Pj[1]);
+              for(v1=0;v1<lmij[2]+1;v1++){
+                Hz1 = Hermite(lmi[2], lmj[2], v1, p2, mu, 
+                              cij[2], Pi[2], Pj[2]);
+                for(t2=0;t2<lmkl[0]+1;t2++){
+                  Hx2 = Hermite(lmk[0], lml[0], t2, q2, nu, 
+                                ckl[0], Qk[0], Ql[0]);
+                  for(u2=0;u2<lmkl[1]+1;u2++){
+                    Hy2 = Hermite(lmk[1], lml[1], u2, q2, nu, 
+                                  ckl[1], Qk[1], Ql[1]);
+                    for(v2=0;v2<lmkl[2]+1;v2++){
+                      Hz2 = Hermite(lmk[2], lml[2], u2, q2, nu, 
+                                    ckl[2], Qk[2], Ql[2]);
+                      //printf("%d %d %d %d %d %d %d %d %d %d\n", 
+                      //       i, j, k, l, t1, u1, v1, t2, u2, v2);
+                      factor2 = Nij*Nkl*Hx1*Hy1*Hz1*Hx2*Hy2*Hz2;
+                      factor2 *= pow(1, t2+u2+v2);
+                      HC_cef = HCcef(t1+t2, u1+u2, v1+v2, 
+                                     0, PQ, PQ2, alpha);
+                      element_ijkl += factor1*factor2*HC_cef;
+//                      if(u1==1||u2==1){
+//                        printf("%d %d %d %d: (%d,%d,%d), (%d,%d,%d) %e %e %e\n", aoi, aoj, aok, aol, t1,u1,v1,t2,u2,v2, factor1, factor2, HC_cef);
+//                        for(s=0;s<3;s++) printf("%e ", P[s]);
+//                        printf("%e, %e\n", PQ2, alpha);
+                        //}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 //      for(k=0;k<3;k++){
 //        P[k] = (expi[i]*ci[k] + expj[j]*cj[k])/p;
 //        Pi[k] = P[k] - ci[k];
