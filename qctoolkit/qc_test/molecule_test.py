@@ -19,9 +19,9 @@ p = qtk.Molecule('data/molecules/periodic_algaas.cyl')
 #test = B.principalAxes()
 #print test[1][0]
 
-A.write_xyz()
+#A.write_xyz()
 #A.align([1,1,1])
 #A.write_xyz()
 
 A.align()
-A.write_xyz()
+A.write()
