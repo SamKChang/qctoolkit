@@ -105,7 +105,7 @@ static PyObject* dlist_2(PyObject* self, PyObject* args){
 
 #pragma omp parallel private(itr,i,j,t,I,J,Rij_t,dij) shared(g)
 {
-  #pragma omp for
+  #pragma omp for schedule(dynamic)
   for(t=0;t<nt;t++){
     itr = 0;
     for(i=0;i<len1-1;i++){

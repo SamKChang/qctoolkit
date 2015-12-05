@@ -156,10 +156,11 @@ static PyObject* gc2int(PyObject* self, PyObject* args){
   //overlap = pyvector_to_Carrayptrs(py_out2);
   //orthogonalize(overlap, center, exp, cef, ng, lm_xyz, Nao);
 
-//#pragma omp parallel private(i, j, k, l,s, t, u, v) shared(data)
+#pragma omp parallel private(i, j, k, l,s, t, u, v) shared(data)
 {
-//  #pragma omp for
+  #pragma omp for schedule(dynamic)
   for(i=0;i<Nao;i++){
+    printf("i=%d\n",i);
     for(j=i;j<Nao;j++){
       for(k=i;k<Nao;k++){
         for(l=j+k;l<Nao;l++){

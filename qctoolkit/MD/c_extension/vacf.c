@@ -76,7 +76,7 @@ static PyObject* vacf(PyObject* self, PyObject* args){
 #pragma omp parallel private(t, dt, i, I_0, I_t) \
 shared(vax, vay, vaz, va)
 {
-  #pragma omp for
+  #pragma omp for schedule(dynamic)
   for(t=0;t<nt-1;t++){
     for(dt=0;(t+dt)<nt;dt++){
       count[dt]++;
