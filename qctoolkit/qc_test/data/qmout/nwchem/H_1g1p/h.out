@@ -38,7 +38,7 @@
 
     hostname        = R700
     program         = nwchem
-    date            = Sat Dec  5 19:06:11 2015
+    date            = Sat Dec  5 18:51:59 2015
 
     compiled        = Thu_Oct_22_13:27:42_2015
     source          = /home/samio/src/quantumChemistry/nwchem-6.6
@@ -120,11 +120,9 @@
   -------------------
             Exponent  Coefficients 
        -------------- ---------------------------------------------------------
-  1 S  5.00000000E-01  0.500000
-  1 S  8.00000000E-01  0.200000
+  1 S  5.00000000E-01  1.000000
 
-  2 P  2.00000000E-01  0.500000
-  2 P  1.00000000E-01  0.200000
+  2 P  2.00000000E-01  1.000000
 
 
 
@@ -161,27 +159,27 @@
 
 
 
- Forming initial guess at       0.0s
+ Forming initial guess at       0.1s
 
 
       Superposition of Atomic Density Guess
       -------------------------------------
 
- Sum of atomic energies:          -0.35990349
+ Sum of atomic energies:          -0.37837917
 
  Renormalizing density from       1.00 to      2
 
       Non-variational initial energy
       ------------------------------
 
- Total energy =       0.136062
- 1-e energy   =      -0.719807
- 2-e energy   =       0.855869
- HOMO         =       0.495966
- LUMO         =       0.802971
+ Total energy =       0.041126
+ 1-e energy   =      -0.756758
+ 2-e energy   =       0.797885
+ HOMO         =       0.419505
+ LUMO         =       0.896419
 
 
- Starting SCF solution at       0.0s
+ Starting SCF solution at       0.2s
 
 
 
@@ -199,21 +197,21 @@
 
  Integral file          = ./h.aoints.0
  Record size in doubles =  65536        No. of integs per rec  =  43688
- Max. records in memory =      2        Max. records in file   =  27589
+ Max. records in memory =      2        Max. records in file   =  27591
  No. of bits per label  =      8        No. of bits per value  =     64
 
 
               iter       energy          gnorm     gmax       time
              ----- ------------------- --------- --------- --------
-                 1        0.1360621477  3.78D-17  3.40D-17      0.0
+                 1        0.0411262266  1.49D-16  1.49D-16      0.0
 
 
        Final RHF  results 
        ------------------ 
 
-         Total SCF energy =      0.136062147674
-      One-electron energy =     -0.719806971238
-      Two-electron energy =      0.855869118913
+         Total SCF energy =      0.041126226612
+      One-electron energy =     -0.756758334191
+      Two-electron energy =      0.797884560803
  Nuclear repulsion energy =      0.000000000000
 
         Time for solution =      0.0s
@@ -223,37 +221,37 @@
              -----------------
 
               1      
-    1    0.4960
-    2    0.8030
-    3    0.8030
-    4    0.8030
+    1    0.4195
+    2    0.8964
+    3    0.8964
+    4    0.8964
 
                        ROHF Final Molecular Orbital Analysis
                        -------------------------------------
 
- Vector    1  Occ=2.000000D+00  E= 4.959656D-01
-              MO Center= -2.1D-19, -1.7D-16,  0.0D+00, r^2= 3.7D-01
+ Vector    1  Occ=2.000000D+00  E= 4.195054D-01
+              MO Center= -6.9D-21,  1.3D-16,  0.0D+00, r^2= 4.2D-01
    Bfn.  Coefficient  Atom+Function         Bfn.  Coefficient  Atom+Function  
   ----- ------------  ---------------      ----- ------------  ---------------
      1      1.000000  1 H  s          
 
- Vector    2  Occ=0.000000D+00  E= 8.029709D-01
-              MO Center=  8.6D-17,  8.5D-17,  0.0D+00, r^2= 2.1D+00
+ Vector    2  Occ=0.000000D+00  E= 8.964185D-01
+              MO Center= -6.7D-17, -6.7D-17,  0.0D+00, r^2= 1.8D+00
    Bfn.  Coefficient  Atom+Function         Bfn.  Coefficient  Atom+Function  
   ----- ------------  ---------------      ----- ------------  ---------------
-     2      0.707959  1 H  px                 3      0.706253  1 H  py         
+     2      0.707071  1 H  px                 3      0.707143  1 H  py         
 
- Vector    3  Occ=0.000000D+00  E= 8.029709D-01
-              MO Center= -8.5D-17,  8.6D-17,  0.0D+00, r^2= 2.1D+00
-   Bfn.  Coefficient  Atom+Function         Bfn.  Coefficient  Atom+Function  
-  ----- ------------  ---------------      ----- ------------  ---------------
-     2      0.706253  1 H  px                 3     -0.707959  1 H  py         
-
- Vector    4  Occ=0.000000D+00  E= 8.029709D-01
-              MO Center=  0.0D+00,  0.0D+00,  0.0D+00, r^2= 2.1D+00
+ Vector    3  Occ=0.000000D+00  E= 8.964185D-01
+              MO Center=  0.0D+00,  0.0D+00,  0.0D+00, r^2= 1.8D+00
    Bfn.  Coefficient  Atom+Function         Bfn.  Coefficient  Atom+Function  
   ----- ------------  ---------------      ----- ------------  ---------------
      4      1.000000  1 H  pz         
+
+ Vector    4  Occ=0.000000D+00  E= 8.964185D-01
+              MO Center=  6.7D-17, -6.7D-17,  0.0D+00, r^2= 1.8D+00
+   Bfn.  Coefficient  Atom+Function         Bfn.  Coefficient  Atom+Function  
+  ----- ------------  ---------------      ----- ------------  ---------------
+     2      0.707143  1 H  px                 3     -0.707071  1 H  py         
 
 
  center of mass
@@ -281,21 +279,21 @@
      0   0 0 0     -1.000000      0.000000      1.000000
 
      1   1 0 0      0.000000      0.000000      0.000000
-     1   0 1 0      0.000000      0.000000      0.000000
+     1   0 1 0     -0.000000      0.000000      0.000000
      1   0 0 1      0.000000      0.000000      0.000000
 
-     2   2 0 0     -0.876965      0.000000      0.000000
-     2   1 1 0     -0.000000      0.000000      0.000000
+     2   2 0 0     -1.000000      0.000000      0.000000
+     2   1 1 0      0.000000      0.000000      0.000000
      2   1 0 1      0.000000      0.000000      0.000000
-     2   0 2 0     -0.876965      0.000000      0.000000
+     2   0 2 0     -1.000000      0.000000      0.000000
      2   0 1 1      0.000000      0.000000      0.000000
-     2   0 0 2     -0.876965      0.000000      0.000000
+     2   0 0 2     -1.000000      0.000000      0.000000
 
 
  Parallel integral file used       1 records with       0 large values
 
 
- Task  times  cpu:        0.0s     wall:        0.0s
+ Task  times  cpu:        0.0s     wall:        0.1s
  Summary of allocated global arrays
 -----------------------------------
   No active global arrays
@@ -306,9 +304,9 @@
                          ------------------------------
 
        create   destroy   get      put      acc     scatter   gather  read&inc
-calls:   43       43      150      102       10        0        0        6     
+calls:   43       43      150      101       10        0        0        6     
 number of processes/call 1.00e+00 1.00e+00 1.00e+00 0.00e+00 0.00e+00
-bytes total:             1.02e+04 6.39e+03 8.48e+02 0.00e+00 0.00e+00 2.40e+01
+bytes total:             1.02e+04 6.36e+03 8.48e+02 0.00e+00 0.00e+00 2.40e+01
 bytes remote:            0.00e+00 0.00e+00 0.00e+00 0.00e+00 0.00e+00 0.00e+00
 Max memory consumed for GA by this process: 1664 bytes
 MA_summarize_allocated_blocks: starting scan ...
@@ -321,7 +319,7 @@ MA usage statistics:
 	current number of blocks	         0	         0
 	maximum number of blocks	        17	        14
 	current total bytes		         0	         0
-	maximum total bytes		   1051836	  22509020
+	maximum total bytes		   1051580	  22509020
 	maximum total K-bytes		      1052	     22510
 	maximum total M-bytes		         2	        23
 
@@ -367,4 +365,4 @@ MA usage statistics:
    K. Glaesemann, G. Sandrone, M. Stave, H. Taylor, G. Thomas, J. H. van Lenthe,
                                A. T. Wong, Z. Zhang.
 
- Total times  cpu:        0.0s     wall:        0.1s
+ Total times  cpu:        0.0s     wall:        0.2s

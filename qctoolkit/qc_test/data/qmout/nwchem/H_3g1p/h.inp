@@ -1,0 +1,22 @@
+start h
+
+geometry nocenter
+ h  0 0 0
+ symmetry group c1
+end
+
+basis 
+ hydrogen s
+  82.640   0.0020060
+  12.410   0.0153430
+   2.824   0.0755790
+ hydrogen p
+  0.5   1.0
+end
+charge -1
+
+scf
+ singlet
+end
+
+task scf energy

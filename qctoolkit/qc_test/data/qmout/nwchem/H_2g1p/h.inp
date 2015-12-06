@@ -10,8 +10,7 @@ basis
   0.5   0.5
   0.8   0.2
  hydrogen p
-  0.2   0.5
-  0.1   0.2
+  0.2   1.0
 end
 charge -1
 
