@@ -314,8 +314,9 @@ double gc2Matrix(double *center,
   double cij[3], ckl[3];
   int lmij[3], lmkl[3];
   int t1, u1, v1, t2, u2, v2;
-  double p, p2, mu, x, Ni, Nj, Nij;
-  double q, q2, nu, y, Nk, Nl, Nkl;
+  double p, p2, mu, Ni, Nj, Nij;
+  double q, q2, nu, Nk, Nl, Nkl;
+  double x;
   double Hx1, Hy1, Hz1;
   double Hx2, Hy2, Hz2;
   double factor1, factor2, HC_cef; 
@@ -340,21 +341,18 @@ double gc2Matrix(double *center,
     cij[s] = ci[s] - cj[s];
     ckl[s] = ck[s] - cl[s];
   }
-  //printf("yo %d %d %d %d\n", aoi, aoj, aok, aol);
   for(i=0;i<ngi;i++){
-    //printf("yoi %d: %d\n", i , ngi);
     expi[i] = exp[i0+i];
     cefi[i] = cef[i0+i];
+    Ni = cefi[i] * Norm(expi[i], lmi);
     for(j=0;j<ngj;j++){
-      //printf("yoj %d: %d\n", j , ngj);
       expj[j] = exp[j0+j];
       cefj[j] = cef[j0+j];
+      Nj = cefj[j] * Norm(expj[j], lmj);
+      Nij = Ni * Nj;
       p = expi[i] + expj[j];
       p2 = 2*p;
       mu = expi[i] * expj[j] / p;
-      Ni = cefi[i] * Norm(expi[i], lmi);
-      Nj = cefj[j] * Norm(expj[j], lmj);
-      Nij = Ni * Nj;
       for(s=0;s<3;s++){
         P[s] = (expi[i]*ci[s] + expj[j]*cj[s]) / p;
         Pi[s] = P[s] - ci[s];
@@ -363,29 +361,27 @@ double gc2Matrix(double *center,
       for(k=0;k<ngk;k++){
         expk[k] = exp[k0+k];
         cefk[k] = cef[k0+k];
+        Nk = cefk[k] * Norm(expk[k], lmk);
         for(l=0;l<ngl;l++){
-          //printf("yol %d: %d\n", l , ngl);
           expl[l] = exp[l0+l];
           cefl[l] = cef[l0+l];
+          Nl = cefl[l] * Norm(expl[l], lml);
+          Nkl = Nk * Nl;
           q = expk[k] + expl[l];
           q2 = 2*q;
           nu = expk[k] * expl[l] / p;
-          Nk = cefk[k] * Norm(expk[k], lmk);
-          Nl = cefl[l] * Norm(expl[l], lml);
-          Nkl = Nk * Nl;
           factor1 = 2*pow(M_PI, 5.0/2.0);
           factor1 /= p*q * sqrt(p+q);
           PQ2 = 0;
           for(s=0;s<3;s++){
             Q[s] = (expk[k]*ck[s] + expl[l]*cl[s]) / q;
-            //printf("Q[%d]=%e, %e %e %e %e\n", s, Q[s], expk[k], ck[s], expl[l], cl[s]);
             Qk[s] = Q[s] - ck[s];
             Ql[s] = Q[s] - cl[s];
             PQ[s] = P[s] - Q[s];
             PQ2 += PQ[s] * PQ[s];
           }
           alpha = p*q / (p+q);
-          int itr = 0;
+          x = alpha * PQ2;
           for(t1=0;t1<lmij[0]+1;t1++){
             Hx1 = Hermite(lmi[0], lmj[0], t1, p2, mu, 
                           cij[0], Pi[0], Pj[0]);
@@ -402,20 +398,14 @@ double gc2Matrix(double *center,
                     Hy2 = Hermite(lmk[1], lml[1], u2, q2, nu, 
                                   ckl[1], Qk[1], Ql[1]);
                     for(v2=0;v2<lmkl[2]+1;v2++){
-                      Hz2 = Hermite(lmk[2], lml[2], u2, q2, nu, 
+                      Hz2 = Hermite(lmk[2], lml[2], v2, q2, nu, 
                                     ckl[2], Qk[2], Ql[2]);
-                      //printf("%d %d %d %d %d %d %d %d %d %d\n", 
-                      //       i, j, k, l, t1, u1, v1, t2, u2, v2);
                       factor2 = Nij*Nkl*Hx1*Hy1*Hz1*Hx2*Hy2*Hz2;
-                      factor2 *= pow(1, t2+u2+v2);
+                      double tmp = Nij*Nkl*Hx1*Hy1*Hz1*Hx2*Hy2*Hz2;
+                      factor2 *= pow(-1, t2+u2+v2);
                       HC_cef = HCcef(t1+t2, u1+u2, v1+v2, 
-                                     0, PQ, PQ2, alpha);
+                                     0, PQ, 2*alpha, x);
                       element_ijkl += factor1*factor2*HC_cef;
-//                      if(u1==1||u2==1){
-//                        printf("%d %d %d %d: (%d,%d,%d), (%d,%d,%d) %e %e %e\n", aoi, aoj, aok, aol, t1,u1,v1,t2,u2,v2, factor1, factor2, HC_cef);
-//                        for(s=0;s<3;s++) printf("%e ", P[s]);
-//                        printf("%e, %e\n", PQ2, alpha);
-                        //}
                     }
                   }
                 }
@@ -426,38 +416,6 @@ double gc2Matrix(double *center,
       }
     }
   }
-//      for(k=0;k<3;k++){
-//        P[k] = (expi[i]*ci[k] + expj[j]*cj[k])/p;
-//        Pi[k] = P[k] - ci[k];
-//        Pj[k] = P[k] - cj[k];
-//      }
-//      for(I=0;I<Nao;I++){
-//        PI2 = 0;
-//        for(k=0;k<3;k++){
-//          cI[k] = 0;
-//          PI[k] = P[k] - cI[k];
-//          PI2 += PI[k] * PI[k];
-//        }
-//        x = p*PI2;
-//
-//        for(t=0;t<lmij[0]+1;t++){
-//          Hx = Hermite(lmi[0], lmj[0], t, p2, mu, 
-//                       cij[0], Pi[0], Pj[0]);
-//          for(u=0;u<lmij[1]+1;u++){
-//            Hy = Hermite(lmi[1], lmj[1], u, p2, mu, 
-//                         cij[1], Pi[1], Pj[1]);
-//            for(v=0;v<lmij[2]+1;v++){
-//              Hz = Hermite(lmi[2], lmj[2], v, p2, mu, 
-//                           cij[2], Pi[2], Pj[2]);
-//              HC_cef = HCcef(t, u, v, 0, PI, p2, x);
-//              num = (Nij*Hx*Hy*Hz*HC_cef);
-//              element_ij -= num*(2*M_PI/p);
-//            }
-//          }
-//        }
-//      }
-//    }
-//  }
   free(expi);
   free(expj);
   free(expk);

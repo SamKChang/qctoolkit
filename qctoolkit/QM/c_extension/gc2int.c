@@ -45,7 +45,7 @@ static PyObject* gc2int(PyObject* self, PyObject* args){
   double *data, *overlap;
   double element;
   int i, j, k, l;
-  int s, t, u, v;
+  int s, t, u, v, w;
   int mat_dim[4];
 
   /*  parse numpy array and two integers as argument */
@@ -156,19 +156,21 @@ static PyObject* gc2int(PyObject* self, PyObject* args){
   //overlap = pyvector_to_Carrayptrs(py_out2);
   //orthogonalize(overlap, center, exp, cef, ng, lm_xyz, Nao);
 
-#pragma omp parallel private(i, j, k, l,s, t, u, v) shared(data)
+  printf("Nao: %d\n", Nao);
+//#pragma omp parallel private(i, j, k, l,s, t, u, v) shared(data)
 {
-  #pragma omp for schedule(dynamic)
+//  #pragma omp for schedule(dynamic)
   for(i=0;i<Nao;i++){
-    printf("i=%d\n",i);
     for(j=i;j<Nao;j++){
-      for(k=i;k<Nao;k++){
-        for(l=j+k;l<Nao;l++){
+      for(k=0;k<Nao;k++){
+        for(l=k;l<Nao;l++){
           s = l + k*Nao + j*Nao*Nao + i*Nao*Nao*Nao;
           element = gc2Matrix(center, exp, cef, ng, lm_xyz,
                               Nao, i, j, k, l);
           data[s] = element;
+          printf("(%d,%d,%d,%d): %e\n", i, j, k, l, data[s]);
 
+          // symmetry for (ij|kl)=(ij|lk)=(ji|kl)=(ji|lk)
           t = l + k*Nao + i*Nao*Nao + j*Nao*Nao*Nao;
           u = k + l*Nao + j*Nao*Nao + i*Nao*Nao*Nao;
           v = k + l*Nao + i*Nao*Nao + j*Nao*Nao*Nao;
@@ -176,12 +178,15 @@ static PyObject* gc2int(PyObject* self, PyObject* args){
           data[u] = data[s];
           data[v] = data[s];
   
-          t = i + j*Nao + l*Nao*Nao + k*Nao*Nao*Nao;
-          u = j + i*Nao + k*Nao*Nao + l*Nao*Nao*Nao;
-          v = i + j*Nao + k*Nao*Nao + l*Nao*Nao*Nao;
+          // symmetry for (ij|kl)=(kl|ij)=(kl|ji)=(lk|ij)=(lk|ji)
+          t = j + i*Nao + l*Nao*Nao + k*Nao*Nao*Nao;
+          u = i + j*Nao + l*Nao*Nao + k*Nao*Nao*Nao;
+          v = j + i*Nao + k*Nao*Nao + l*Nao*Nao*Nao;
+          w = i + j*Nao + k*Nao*Nao + l*Nao*Nao*Nao;
           data[t] = data[s];
           data[u] = data[s];
           data[v] = data[s];
+          data[w] = data[s];
 
 //          if((k!=i)||(l!=j)){
 //            t = j + i*Nao + l*Nao*Nao + k*Nao*Nao*Nao;
