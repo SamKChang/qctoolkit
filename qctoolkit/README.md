@@ -1,3 +1,5 @@
+Is it editable via DroidEdit?
+
 Manual
 ======
 **CAUTION**: No foolproof check is implemented! 
