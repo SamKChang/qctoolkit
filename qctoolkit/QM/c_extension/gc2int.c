@@ -156,7 +156,6 @@ static PyObject* gc2int(PyObject* self, PyObject* args){
   //overlap = pyvector_to_Carrayptrs(py_out2);
   //orthogonalize(overlap, center, exp, cef, ng, lm_xyz, Nao);
 
-  printf("Nao: %d\n", Nao);
 //#pragma omp parallel private(i, j, k, l,s, t, u, v) shared(data)
 {
 //  #pragma omp for schedule(dynamic)
@@ -168,21 +167,20 @@ static PyObject* gc2int(PyObject* self, PyObject* args){
           element = gc2Matrix(center, exp, cef, ng, lm_xyz,
                               Nao, i, j, k, l);
           data[s] = element;
-          printf("(%d,%d,%d,%d): %e\n", i, j, k, l, data[s]);
 
           // symmetry for (ij|kl)=(ij|lk)=(ji|kl)=(ji|lk)
-          t = l + k*Nao + i*Nao*Nao + j*Nao*Nao*Nao;
-          u = k + l*Nao + j*Nao*Nao + i*Nao*Nao*Nao;
-          v = k + l*Nao + i*Nao*Nao + j*Nao*Nao*Nao;
+          t = k + l*Nao + j*Nao*Nao + i*Nao*Nao*Nao; //(ij|lk)
+          u = l + k*Nao + i*Nao*Nao + j*Nao*Nao*Nao; //(ji|kl)
+          v = k + l*Nao + i*Nao*Nao + j*Nao*Nao*Nao; //(ji|lk)
           data[t] = data[s];
           data[u] = data[s];
           data[v] = data[s];
   
           // symmetry for (ij|kl)=(kl|ij)=(kl|ji)=(lk|ij)=(lk|ji)
-          t = j + i*Nao + l*Nao*Nao + k*Nao*Nao*Nao;
-          u = i + j*Nao + l*Nao*Nao + k*Nao*Nao*Nao;
-          v = j + i*Nao + k*Nao*Nao + l*Nao*Nao*Nao;
-          w = i + j*Nao + k*Nao*Nao + l*Nao*Nao*Nao;
+          t = j + i*Nao + l*Nao*Nao + k*Nao*Nao*Nao; //(kl|ij)
+          u = i + j*Nao + l*Nao*Nao + k*Nao*Nao*Nao; //(kl|ji)
+          v = j + i*Nao + k*Nao*Nao + l*Nao*Nao*Nao; //(lk|ij)
+          w = i + j*Nao + k*Nao*Nao + l*Nao*Nao*Nao; //(lk|ji)
           data[t] = data[s];
           data[u] = data[s];
           data[v] = data[s];

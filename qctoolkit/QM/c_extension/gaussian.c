@@ -49,7 +49,6 @@ double Norm(float exp, int* lm){
   double N_xyz = nx * ny * nz;
   double num1 = pow(2*exp/M_PI, 1.5);
   double num2 = pow(4*exp, n_xyz);
-  //printf("%10.6E\n", pow(num1 * num2 / N_xyz, 0.5));
   double out = pow(num1 * num2 / N_xyz, 0.5);
   return out;
 }
@@ -369,7 +368,7 @@ double gc2Matrix(double *center,
           Nkl = Nk * Nl;
           q = expk[k] + expl[l];
           q2 = 2*q;
-          nu = expk[k] * expl[l] / p;
+          nu = expk[k] * expl[l] / q;
           factor1 = 2*pow(M_PI, 5.0/2.0);
           factor1 /= p*q * sqrt(p+q);
           PQ2 = 0;
@@ -401,7 +400,6 @@ double gc2Matrix(double *center,
                       Hz2 = Hermite(lmk[2], lml[2], v2, q2, nu, 
                                     ckl[2], Qk[2], Ql[2]);
                       factor2 = Nij*Nkl*Hx1*Hy1*Hz1*Hx2*Hy2*Hz2;
-                      double tmp = Nij*Nkl*Hx1*Hy1*Hz1*Hx2*Hy2*Hz2;
                       factor2 *= pow(-1, t2+u2+v2);
                       HC_cef = HCcef(t1+t2, u1+u2, v1+v2, 
                                      0, PQ, 2*alpha, x);
