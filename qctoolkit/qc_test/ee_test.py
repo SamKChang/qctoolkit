@@ -5,6 +5,7 @@ from qctoolkit.QM.atomicbasis_io import basisData
 from qctoolkit.QM.atomicbasis_io import gcMatrix
 from qctoolkit.QM.atomicbasis_io import eeMatrix
 import numpy as np
+from numpy import tensordot as td
 
 
 #qmOut = qtk.QMOut('data/qmout/nwchem/H_1g/h.out', program='nwchem')
@@ -65,70 +66,32 @@ qmOut = qtk.QMOut('data/qmout/nwchem/H3_1g-012/h3.out', program='nwchem')
 #qmOut = qtk.QMOut('data/qmout/gaussian/H2_1s1p/H2.out', program='gaussian')
 #qmOut = qtk.QMOut('data/qmout/gaussian/H2O_aug-cc-pvdz/H2O.out', program='gaussian')
 
-print len(qmOut.basis)
-for b in qmOut.basis:
-  print b
+#print len(qmOut.basis)
+#for b in qmOut.basis:
+#  print b
 
 ee = eeMatrix(qmOut.basis)
-print ee
-#for i in range(10):
-#  for j in range(10):
-#    for k in range(10):
-#      for l in range(10):
-#        print i, j, k, l, ee[i,j,k,l]
-print ee.shape
-
+ex = np.swapaxes(ee, 1,2)
+fock = 2*ee - ex
 occ = [i for i in range(qmOut.n_ao) if qmOut.occupation[i]==2][-1] + 1
-print occ
-
 mo = qmOut.mo_vectors
 Eee = 0
-for i in range(ee.shape[0]):
-  for j in range(ee.shape[1]):
-    for k in range(ee.shape[2]):
-      for l in range(ee.shape[3]):
-#        print "(%d%d|%d%d):" % (i,j,k,l),
-#        print ee[i,j,k,l]
-        for a in range(occ):
-          for b in range(occ):
-#            print mo[a,i]
-#            print mo[a,j]
-#            print mo[b,k]
-#            print mo[b,l]
-#            print mo[a,i]*mo[a,j]*mo[b,k]*mo[b,l]*ee[i,j,k,l]
-            if occ>1:
-              Eee += 2*mo[a,i]*mo[a,j]*mo[b,k]*mo[b,l]*ee[i,j,k,l]
-              Eee -= mo[a,i]*mo[a,j]*mo[b,k]*mo[b,l]*ee[i,k,j,l]
-            else:
-              Eee += mo[a,i]*mo[a,j]*mo[b,k]*mo[b,l]*ee[i,j,k,l]
-#        Eee += ee[i,j,k,l] * qmOut.mo_vectors
-print qmOut.mo_vectors
-
-print qmOut.n_ao
-
+for a in range(occ):
+  for b in range(occ):
+    for i in range(ee.shape[0]):
+      for j in range(ee.shape[1]):
+        for k in range(ee.shape[2]):
+          for l in range(ee.shape[3]):
+            Eee += mo[a,i]*mo[a,j]*mo[b,k]*mo[b,l]*fock[i,j,k,l]
+print "direct for loop: ",
 print Eee
-print qmOut.occupation
-print occ
-print qmOut.mo_eigenvalues
 
-
-#print "(00|00):",
-#print ee[0,0,0,0]
-#print "(11|11):",
-#print ee[1,1,1,1]
-#print "(00|01):",
-#print ee[0,0,0,1]
-#print "(00|10):",
-#print ee[0,0,1,0]
-#print "(01|00):",
-#print ee[0,1,0,0]
-#print "(10|00):",
-#print ee[1,0,0,0]
-#print "(00|11):",
-#print ee[0,0,1,1]
-#print "(11|00):",
-#print ee[1,1,0,0]
-#print "(10|01):",
-#print ee[1,0,0,1]
-#print "(10|01):",
-#print ee[0,1,0,1]
+# NOTE: order of contraction matters!
+# 0,1,2,3 is correct while 3,2,1,0 is wrong!
+out = td(mo, fock, axes=(1,0))
+out = td(mo, out, axes=(1,1))
+out = td(mo, out, axes=(1,2))
+out = td(mo, out, axes=(1,3))
+Eee = [out[a,a,b,b] for a in range(occ) for b in range(occ)]
+print "tensordot: ",
+print sum(Eee)
