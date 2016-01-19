@@ -156,88 +156,43 @@ static PyObject* gc2int(PyObject* self, PyObject* args){
   //overlap = pyvector_to_Carrayptrs(py_out2);
   //orthogonalize(overlap, center, exp, cef, ng, lm_xyz, Nao);
 
-//#pragma omp parallel private(i, j, k, l,s, t, u, v) shared(data)
+#pragma omp parallel private(i, j, k, l, s, t, u, v, w)\
+shared(data)
 {
-//  #pragma omp for schedule(dynamic)
+  #pragma omp for schedule(dynamic)
   for(i=0;i<Nao;i++){
     for(j=i;j<Nao;j++){
       for(k=0;k<Nao;k++){
         for(l=k;l<Nao;l++){
-          s = l + k*Nao + j*Nao*Nao + i*Nao*Nao*Nao;
-          element = gc2Matrix(center, exp, cef, ng, lm_xyz,
-                              Nao, i, j, k, l);
-          data[s] = element;
+          if(l+k >= i+j){
+            s = l + k*Nao + j*Nao*Nao + i*Nao*Nao*Nao;
+            element = gc2Matrix(center, exp, cef, ng, lm_xyz,
+                                Nao, i, j, k, l);
+            data[s] = element;
 
-          // symmetry for (ij|kl)=(ij|lk)=(ji|kl)=(ji|lk)
-          t = k + l*Nao + j*Nao*Nao + i*Nao*Nao*Nao; //(ij|lk)
-          u = l + k*Nao + i*Nao*Nao + j*Nao*Nao*Nao; //(ji|kl)
-          v = k + l*Nao + i*Nao*Nao + j*Nao*Nao*Nao; //(ji|lk)
-          data[t] = data[s];
-          data[u] = data[s];
-          data[v] = data[s];
-  
-          // symmetry for (ij|kl)=(kl|ij)=(kl|ji)=(lk|ij)=(lk|ji)
-          t = j + i*Nao + l*Nao*Nao + k*Nao*Nao*Nao; //(kl|ij)
-          u = i + j*Nao + l*Nao*Nao + k*Nao*Nao*Nao; //(kl|ji)
-          v = j + i*Nao + k*Nao*Nao + l*Nao*Nao*Nao; //(lk|ij)
-          w = i + j*Nao + k*Nao*Nao + l*Nao*Nao*Nao; //(lk|ji)
-          data[t] = data[s];
-          data[u] = data[s];
-          data[v] = data[s];
-          data[w] = data[s];
-
-//          if((k!=i)||(l!=j)){
-//            t = j + i*Nao + l*Nao*Nao + k*Nao*Nao*Nao;
-//            data[t] = data[s];
-//            if((j!=i)&&(l!=k)){ 
-//              t = l + k*Nao + i*Nao*Nao + j*Nao*Nao*Nao;
-//              u = k + l*Nao + j*Nao*Nao + i*Nao*Nao*Nao;
-//              v = k + l*Nao + i*Nao*Nao + j*Nao*Nao*Nao;
-//              data[t] = data[s];
-//              data[u] = data[s];
-//              data[v] = data[s];
-//
-//              t = i + j*Nao + l*Nao*Nao + k*Nao*Nao*Nao;
-//              u = j + i*Nao + k*Nao*Nao + l*Nao*Nao*Nao;
-//              v = i + j*Nao + k*Nao*Nao + l*Nao*Nao*Nao;
-//              data[t] = data[s];
-//              data[u] = data[s];
-//              data[v] = data[s];
-//            }else if(j!=i){
-//              u = k + l*Nao + j*Nao*Nao + i*Nao*Nao*Nao;
-//              data[u] = data[s];
-//
-//              u = j + i*Nao + k*Nao*Nao + l*Nao*Nao*Nao;
-//              data[u] = data[s];
-//            }else if(l!=k){
-//              t = l + k*Nao + i*Nao*Nao + j*Nao*Nao*Nao;
-//              data[t] = data[s];
-//
-//              t = i + j*Nao + l*Nao*Nao + k*Nao*Nao*Nao;
-//              data[t] = data[s];
-//            }
-//          }else{
-//            if((j!=i)&&(l!=k)){ 
-//              t = l + k*Nao + i*Nao*Nao + j*Nao*Nao*Nao;
-//              u = k + l*Nao + j*Nao*Nao + i*Nao*Nao*Nao;
-//              v = k + l*Nao + i*Nao*Nao + j*Nao*Nao*Nao;
-//              data[t] = data[s];
-//              data[u] = data[s];
-//              data[v] = data[s];
-//            }else if(j!=i){
-//              u = k + l*Nao + j*Nao*Nao + i*Nao*Nao*Nao;
-//              data[u] = data[s];
-//            }else if(l!=k){
-//              t = l + k*Nao + i*Nao*Nao + j*Nao*Nao*Nao;
-//              data[t] = data[s];
-//            }
-//          }
+            // symmetry for (ij|kl)=(ij|lk)=(ji|kl)=(ji|lk)
+            t = k + l*Nao + j*Nao*Nao + i*Nao*Nao*Nao; //(ij|lk)
+            u = l + k*Nao + i*Nao*Nao + j*Nao*Nao*Nao; //(ji|kl)
+            v = k + l*Nao + i*Nao*Nao + j*Nao*Nao*Nao; //(ji|lk)
+            data[t] = data[s];
+            data[u] = data[s];
+            data[v] = data[s];
+    
+            // symmetry for (ij|kl)=(kl|ij)=(kl|ji)=(lk|ij)=(lk|ji)
+            t = j + i*Nao + l*Nao*Nao + k*Nao*Nao*Nao; //(kl|ij)
+            u = i + j*Nao + l*Nao*Nao + k*Nao*Nao*Nao; //(kl|ji)
+            v = j + i*Nao + k*Nao*Nao + l*Nao*Nao*Nao; //(lk|ij)
+            w = i + j*Nao + k*Nao*Nao + l*Nao*Nao*Nao; //(lk|ji)
+            data[t] = data[s];
+            data[u] = data[s];
+            data[v] = data[s];
+            data[w] = data[s];
+          }
         }
       }
     }
   }
-}
-  //py_out = PyArray_SimpleNewFromData(2, mat_dim, NPY_DOUBLE, data);
+} // end of omp loop
 
   /*********************************
   * clean up and return the result *
@@ -255,7 +210,7 @@ static PyObject* gc2int(PyObject* self, PyObject* args){
   fail:
     Py_XDECREF(py_out);
     return NULL;
-}
+} // end of gc2int function
 
 /*  define functions in module */
 static PyMethodDef GC2Int[] ={

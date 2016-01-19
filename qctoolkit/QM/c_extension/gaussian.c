@@ -278,6 +278,10 @@ void orthogonalize(double *overlap, double *center,
 /************************************************
 *  main function for Gaussian-Coulomb integral  *
 ************************************************/
+// calculate 4D array for 4-center Gaussian-Coulom
+// electron-electron repulsion matrix from atomic Gaussian orbitals
+// NOTE: Exchange interaction need to be considered 
+//       to compute two-electron energy
 //gc2Matrix(data, center, exp, cef, ng, 
 //         lm_xyz, Nao, N, i, j, k, l);
 double gc2Matrix(double *center,
@@ -321,7 +325,7 @@ double gc2Matrix(double *center,
   double factor1, factor2, HC_cef; 
   double element_ijkl = 0;
 
-
+  /* setup variables and save to allocated memory */
   for(s=0;s<aoi;s++) i0 += ng[s];
   for(s=0;s<aoj;s++) j0 += ng[s];
   for(s=0;s<aok;s++) k0 += ng[s];
@@ -340,14 +344,17 @@ double gc2Matrix(double *center,
     cij[s] = ci[s] - cj[s];
     ckl[s] = ck[s] - cl[s];
   }
+  /* loop for i_th AO */
   for(i=0;i<ngi;i++){
     expi[i] = exp[i0+i];
     cefi[i] = cef[i0+i];
     Ni = cefi[i] * Norm(expi[i], lmi);
+    /* loop for j_th AO */
     for(j=0;j<ngj;j++){
       expj[j] = exp[j0+j];
       cefj[j] = cef[j0+j];
       Nj = cefj[j] * Norm(expj[j], lmj);
+      /* variables for first spatial variale, r1 */
       Nij = Ni * Nj;
       p = expi[i] + expj[j];
       p2 = 2*p;
@@ -357,14 +364,17 @@ double gc2Matrix(double *center,
         Pi[s] = P[s] - ci[s];
         Pj[s] = P[s] - cj[s];
       }
+      /* loop for k_th AO */
       for(k=0;k<ngk;k++){
         expk[k] = exp[k0+k];
         cefk[k] = cef[k0+k];
         Nk = cefk[k] * Norm(expk[k], lmk);
+        /* loop for l_th AO */
         for(l=0;l<ngl;l++){
           expl[l] = exp[l0+l];
           cefl[l] = cef[l0+l];
           Nl = cefl[l] * Norm(expl[l], lml);
+          /* variables for second spatial variale, r2 */
           Nkl = Nk * Nl;
           q = expk[k] + expl[l];
           q2 = 2*q;
@@ -381,26 +391,33 @@ double gc2Matrix(double *center,
           }
           alpha = p*q / (p+q);
           x = alpha * PQ2;
+          /* Hermite coefficient for x1 */
           for(t1=0;t1<lmij[0]+1;t1++){
             Hx1 = Hermite(lmi[0], lmj[0], t1, p2, mu, 
                           cij[0], Pi[0], Pj[0]);
+            /* Hermite coefficient for y1 */
             for(u1=0;u1<lmij[1]+1;u1++){
               Hy1 = Hermite(lmi[1], lmj[1], u1, p2, mu, 
                             cij[1], Pi[1], Pj[1]);
+              /* Hermite coefficient for z1 */
               for(v1=0;v1<lmij[2]+1;v1++){
                 Hz1 = Hermite(lmi[2], lmj[2], v1, p2, mu, 
                               cij[2], Pi[2], Pj[2]);
+                /* Hermite coefficient for x2 */
                 for(t2=0;t2<lmkl[0]+1;t2++){
                   Hx2 = Hermite(lmk[0], lml[0], t2, q2, nu, 
                                 ckl[0], Qk[0], Ql[0]);
+                  /* Hermite coefficient for y2 */
                   for(u2=0;u2<lmkl[1]+1;u2++){
                     Hy2 = Hermite(lmk[1], lml[1], u2, q2, nu, 
                                   ckl[1], Qk[1], Ql[1]);
+                    /* Hermite coefficient for z2 */
                     for(v2=0;v2<lmkl[2]+1;v2++){
                       Hz2 = Hermite(lmk[2], lml[2], v2, q2, nu, 
                                     ckl[2], Qk[2], Ql[2]);
                       factor2 = Nij*Nkl*Hx1*Hy1*Hz1*Hx2*Hy2*Hz2;
                       factor2 *= pow(-1, t2+u2+v2);
+                      /* 2-center integral */
                       HC_cef = HCcef(t1+t2, u1+u2, v1+v2, 
                                      0, PQ, 2*alpha, x);
                       element_ijkl += factor1*factor2*HC_cef;
@@ -428,6 +445,7 @@ double gc2Matrix(double *center,
 
 
 /* 2-factorial function */
+// approximation necessary for large n
 int fac2(int n){
   if (n<-1) return 0;
   else if (n<=0) return 1;
