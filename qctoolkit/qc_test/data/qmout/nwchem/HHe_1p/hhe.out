@@ -38,7 +38,7 @@
 
     hostname        = R700
     program         = nwchem
-    date            = Sat Nov 28 11:19:27 2015
+    date            = Mon Jan 11 16:17:36 2016
 
     compiled        = Thu_Oct_22_13:27:42_2015
     source          = /home/samio/src/quantumChemistry/nwchem-6.6
@@ -144,13 +144,13 @@
        -------------- ---------------------------------------------------------
   1 S  5.00000000E-01  1.000000
 
-  2 P  2.00000000E-01  1.000000
-
   hellium (Helium)
   ----------------
             Exponent  Coefficients 
        -------------- ---------------------------------------------------------
-  1 S  1.00000000E-01  1.000000
+  1 S  2.00000000E-01  1.000000
+
+  2 P  1.00000000E-01  1.000000
 
 
 
@@ -158,8 +158,8 @@
  ------------------------------------------------------------------------------
        Tag                 Description            Shells   Functions and Types
  ---------------- ------------------------------  ------  ---------------------
- hydrogen                user specified              2        4   1s1p
- hellium                 user specified              1        1   1s
+ hydrogen                user specified              1        1   1s
+ hellium                 user specified              2        4   1s1p
 
 
                                  NWChem SCF Module
@@ -184,8 +184,8 @@
  ------------------------------------------------------------------------------
        Tag                 Description            Shells   Functions and Types
  ---------------- ------------------------------  ------  ---------------------
- hydrogen                user specified              2        4   1s1p
- hellium                 user specified              1        1   1s
+ hydrogen                user specified              1        1   1s
+ hellium                 user specified              2        4   1s1p
 
 
 
@@ -195,18 +195,18 @@
       Superposition of Atomic Density Guess
       -------------------------------------
 
- Sum of atomic energies:          -1.74006036
+ Sum of atomic energies:          -2.12835125
 
  Renormalizing density from       3.00 to      2
 
       Non-variational initial energy
       ------------------------------
 
- Total energy =      -1.056267
- 1-e energy   =      -2.640043
- 2-e energy   =       0.525421
- HOMO         =      -1.023741
- LUMO         =      -0.315133
+ Total energy =      -1.406204
+ 1-e energy   =      -3.096949
+ 2-e energy   =       0.632390
+ HOMO         =      -1.085162
+ LUMO         =      -0.347714
 
 
  Starting SCF solution at       0.0s
@@ -227,23 +227,23 @@
 
  Integral file          = ./hhe.aoints.0
  Record size in doubles =  65536        No. of integs per rec  =  43688
- Max. records in memory =      2        Max. records in file   =  30500
+ Max. records in memory =      2        Max. records in file   =  14980
  No. of bits per label  =      8        No. of bits per value  =     64
 
 
               iter       energy          gnorm     gmax       time
              ----- ------------------- --------- --------- --------
-                 1       -1.5763344758  2.01D-01  1.94D-01      0.0
-                 2       -1.5827108108  1.05D-02  9.80D-03      0.0
-                 3       -1.5827280405  4.11D-06  3.27D-06      0.0
+                 1       -1.7727352878  7.53D-02  7.34D-02      0.0
+                 2       -1.7736985130  4.42D-03  4.38D-03      0.0
+                 3       -1.7737007506  5.77D-07  5.21D-07      0.0
 
 
        Final RHF  results 
        ------------------ 
 
-         Total SCF energy =     -1.582728040522
-      One-electron energy =     -3.166797543765
-      Two-electron energy =      0.525715005243
+         Total SCF energy =     -1.773700750600
+      One-electron energy =     -3.349081834895
+      Two-electron energy =      0.517026586295
  Nuclear repulsion energy =      1.058354497999
 
         Time for solution =      0.0s
@@ -253,47 +253,46 @@
              -----------------
 
               1      
-    1   -1.0577
-    2   -0.1741
-    3    0.0213
-    4    0.0213
-    5    0.0413
+    1   -1.1575
+    2   -0.2972
+    3   -0.1221
+    4   -0.1221
+    5    0.1751
 
                        ROHF Final Molecular Orbital Analysis
                        -------------------------------------
 
- Vector    1  Occ=2.000000D+00  E=-1.057684D+00
-              MO Center=  5.9D-01,  2.6D-17,  1.9D-17, r^2= 1.1D+00
+ Vector    1  Occ=2.000000D+00  E=-1.157514D+00
+              MO Center=  6.7D-01,  1.2D-18,  9.6D-18, r^2= 1.0D+00
    Bfn.  Coefficient  Atom+Function         Bfn.  Coefficient  Atom+Function  
   ----- ------------  ---------------      ----- ------------  ---------------
-     1      0.545679  1 H  s                  5      0.456856  2 He s          
-     2      0.352567  1 H  px         
+     2      0.813956  2 He s                  1      0.280282  1 H  s          
 
- Vector    2  Occ=0.000000D+00  E=-1.741084D-01
-              MO Center=  3.0D-01, -2.3D-17,  2.1D-17, r^2= 1.6D+00
+ Vector    2  Occ=0.000000D+00  E=-2.972196D-01
+              MO Center=  8.3D-01,  3.5D-18, -6.0D-17, r^2= 2.1D+00
    Bfn.  Coefficient  Atom+Function         Bfn.  Coefficient  Atom+Function  
   ----- ------------  ---------------      ----- ------------  ---------------
-     1      0.899400  1 H  s                  5     -0.531949  2 He s          
-     2     -0.425729  1 H  px         
+     1      0.652101  1 H  s                  2     -0.611779  2 He s          
+     3     -0.531203  2 He px         
 
- Vector    3  Occ=0.000000D+00  E= 2.129570D-02
-              MO Center=  7.8D-35,  6.7D-19,  4.9D-19, r^2= 1.8D+00
+ Vector    3  Occ=0.000000D+00  E=-1.221027D-01
+              MO Center=  1.0D+00, -2.2D-17,  5.7D-18, r^2= 3.5D+00
    Bfn.  Coefficient  Atom+Function         Bfn.  Coefficient  Atom+Function  
   ----- ------------  ---------------      ----- ------------  ---------------
-     3      0.807457  1 H  py                 4      0.589927  1 H  pz         
+     4      0.968917  2 He py                 5     -0.247385  2 He pz         
 
- Vector    4  Occ=0.000000D+00  E= 2.129570D-02
-              MO Center= -3.2D-35,  6.4D-18, -8.7D-18, r^2= 1.8D+00
+ Vector    4  Occ=0.000000D+00  E=-1.221027D-01
+              MO Center=  1.0D+00,  6.6D-18,  2.6D-17, r^2= 3.5D+00
    Bfn.  Coefficient  Atom+Function         Bfn.  Coefficient  Atom+Function  
   ----- ------------  ---------------      ----- ------------  ---------------
-     4      0.807457  1 H  pz                 3     -0.589927  1 H  py         
+     5      0.968917  2 He pz                 4      0.247385  2 He py         
 
- Vector    5  Occ=0.000000D+00  E= 4.133453D-02
-              MO Center= -1.3D-01,  6.1D-17,  1.0D-16, r^2= 2.9D+00
+ Vector    5  Occ=0.000000D+00  E= 1.750529D-01
+              MO Center=  7.7D-01, -4.1D-19,  4.4D-19, r^2= 3.3D+00
    Bfn.  Coefficient  Atom+Function         Bfn.  Coefficient  Atom+Function  
   ----- ------------  ---------------      ----- ------------  ---------------
-     5     -1.075820  2 He s                  2      0.983339  1 H  px         
-     1      0.519507  1 H  s          
+     1      1.210888  1 H  s                  3      1.076639  2 He px         
+     2     -0.697850  2 He s          
 
 
  center of mass
@@ -311,8 +310,8 @@
 
     Atom       Charge   Shell Charges
  -----------   ------   -------------------------------------------------------
-    1 H    1     1.21   0.83  0.38
-    2 He   2     0.79   0.79
+    1 H    1     0.41   0.41
+    2 He   2     1.59   1.56  0.03
 
        Multipole analysis of the density wrt the origin
        ------------------------------------------------
@@ -321,22 +320,22 @@
      -   - - -        -----         ----         -------
      0   0 0 0      1.000000      0.000000      3.000000
 
-     1   1 0 0      1.560347      0.000000      3.779452
+     1   1 0 0      1.231291      0.000000      3.779452
      1   0 1 0     -0.000000      0.000000      0.000000
      1   0 0 1     -0.000000      0.000000      0.000000
 
-     2   2 0 0      1.519993      0.000000      7.142129
+     2   2 0 0      0.903921      0.000000      7.142129
      2   1 1 0     -0.000000      0.000000      0.000000
      2   1 0 1     -0.000000      0.000000      0.000000
-     2   0 2 0     -2.485722      0.000000      0.000000
+     2   0 2 0     -2.126796      0.000000      0.000000
      2   0 1 1     -0.000000      0.000000      0.000000
-     2   0 0 2     -2.485722      0.000000      0.000000
+     2   0 0 2     -2.126796      0.000000      0.000000
 
 
  Parallel integral file used       1 records with       0 large values
 
 
- Task  times  cpu:        0.0s     wall:        0.0s
+ Task  times  cpu:        0.0s     wall:        0.1s
  Summary of allocated global arrays
 -----------------------------------
   No active global arrays
@@ -347,9 +346,9 @@
                          ------------------------------
 
        create   destroy   get      put      acc     scatter   gather  read&inc
-calls:  122      122      387      243      169        0        0        8     
+calls:  119      119      364      229      146        0        0        8     
 number of processes/call 1.00e+00 1.00e+00 1.00e+00 0.00e+00 0.00e+00
-bytes total:             4.03e+04 2.62e+04 5.49e+03 0.00e+00 0.00e+00 3.20e+01
+bytes total:             3.61e+04 2.31e+04 5.15e+03 0.00e+00 0.00e+00 3.20e+01
 bytes remote:            0.00e+00 0.00e+00 0.00e+00 0.00e+00 0.00e+00 0.00e+00
 Max memory consumed for GA by this process: 2600 bytes
 MA_summarize_allocated_blocks: starting scan ...

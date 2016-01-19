@@ -1,0 +1,22 @@
+start hhe
+
+geometry nocenter
+ he 1 0 0
+ h  1 1 0
+ symmetry c1
+end
+
+basis 
+ hellium s
+  0.2   1.0
+ hellium p
+  0.1   1.0
+ hydrogen s
+  0.5   1.0
+end
+charge +1
+scf
+ singlet
+end
+
+task scf energy

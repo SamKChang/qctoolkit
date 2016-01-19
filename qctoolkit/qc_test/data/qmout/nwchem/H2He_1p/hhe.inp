@@ -11,9 +11,9 @@ basis
  hydrogen s
   0.5   1.0
  hellium s
-  0.1   1.0
- hellium p
   0.2   1.0
+ hellium p
+  0.1   1.0
 end
 
 scf

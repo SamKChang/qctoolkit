@@ -1,0 +1,19 @@
+start h
+
+geometry nocenter
+ h 0 0 0
+ h 1 0 0
+ symmetry group c1
+end
+charge -2
+
+basis 
+ hydrogen s
+  0.5   1.0
+end
+
+scf
+ singlet
+end
+
+task scf energy
