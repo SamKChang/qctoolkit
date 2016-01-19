@@ -21,14 +21,37 @@ import numpy as np
 #qmOut = qtk.QMOut('data/qmout/nwchem/H_aug-cc-pvdz/h.out', program='nwchem')
 #qmOut = qtk.QMOut('data/qmout/nwchem/H_cc-pvdz_no-p/h.out', program='nwchem')
 #qmOut = qtk.QMOut('data/qmout/nwchem/H2_1g/h.out', program='nwchem')
-qmOut = qtk.QMOut('data/qmout/nwchem/H2_1a/h2.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H2_1g-4e/h.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H2_1a/h2.out', program='nwchem')
 #qmOut = qtk.QMOut('data/qmout/nwchem/H2_3g/h2.out', program='nwchem')
-#qmOut = qtk.QMOut('data/qmout/nwchem/H2He_3g/h2he.out', program='nwchem')
-#qmOut = qtk.QMOut('data/qmout/nwchem/H2He_3g-1p/h2he.out', program='nwchem')
-#qmOut = qtk.QMOut('data/qmout/nwchem/H2He_1p/hhe.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H2_aug-cc-pvdz/h2.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H2-y_aug-cc-pvdz/h2.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H2-yz_aug-cc-pvdz/h2.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H3_1g-z/h3.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H3_1a/h3.out', program='nwchem')
+qmOut = qtk.QMOut('data/qmout/nwchem/H3_1g-012/h3.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H3_1g-013/h3.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H3_1g-023/h3.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H3_1g-123/h3.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H2_1g-asym-01/h2.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H2_1g-asym-02/h2.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H2_1g-asym-12/h2.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H3_aug-cc-pvdz-2e/h3.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H3_aug-cc-pvdz-4e/h3.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H3_1g-asym-012/h3.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H3_1g-asym-012-2e/h3.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H3_1g-asym-013/h3.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H3_1g-asym-023/h3.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H3_1g-asym-123/h3.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H3_1g-asym/h3.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H4_1g/h4.out', program='nwchem')
 #qmOut = qtk.QMOut('data/qmout/nwchem/HHe_1p/hhe.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/HHe_1p-y/hhe.out', program='nwchem')
 #qmOut = qtk.QMOut('data/qmout/nwchem/HHe_2p/hhe.out', program='nwchem')
 #qmOut = qtk.QMOut('data/qmout/nwchem/HLi_3g/hli.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H2He_1p/hhe.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H2He_3g/h2he.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H2He_3g-1p/h2he.out', program='nwchem')
 #qmOut = qtk.QMOut('data/qmout/nwchem/H2O_aug-cc-pvdz/h2o.out', program='nwchem')
 #qmOut = qtk.QMOut('data/qmout/nwchem/H2O_aug-cc-pvdz_b3lyp/h2o.out', program='nwchem')
 #qmOut = qtk.QMOut('data/qmout/nwchem/water/anDIR-01_00A.out', program='nwchem')
@@ -56,6 +79,7 @@ print ee
 print ee.shape
 
 occ = [i for i in range(qmOut.n_ao) if qmOut.occupation[i]==2][-1] + 1
+print occ
 
 mo = qmOut.mo_vectors
 Eee = 0
@@ -72,7 +96,11 @@ for i in range(ee.shape[0]):
 #            print mo[b,k]
 #            print mo[b,l]
 #            print mo[a,i]*mo[a,j]*mo[b,k]*mo[b,l]*ee[i,j,k,l]
-            Eee += mo[a,i]*mo[a,j]*mo[b,k]*mo[b,l]*ee[i,j,k,l]
+            if occ>1:
+              Eee += 2*mo[a,i]*mo[a,j]*mo[b,k]*mo[b,l]*ee[i,j,k,l]
+              Eee -= mo[a,i]*mo[a,j]*mo[b,k]*mo[b,l]*ee[i,k,j,l]
+            else:
+              Eee += mo[a,i]*mo[a,j]*mo[b,k]*mo[b,l]*ee[i,j,k,l]
 #        Eee += ee[i,j,k,l] * qmOut.mo_vectors
 print qmOut.mo_vectors
 
@@ -80,6 +108,8 @@ print qmOut.n_ao
 
 print Eee
 print qmOut.occupation
+print occ
+print qmOut.mo_eigenvalues
 
 
 #print "(00|00):",
