@@ -1,18 +1,26 @@
 import qctoolkit as qtk
 from general_io import GenericQMInput
 from general_io import GenericQMOutput
-from gcint import gcint
-from gc2int import gc2int
+from veint import veint
+from eeint import eeint
 import numpy as np
 
-def gcMatrix(basis, coord, Z):
+def veMatrix(basis, coord, Z):
   basis_data, center, lm = basisData(basis)
   coord = np.array(coord) * 1.889725989
-  return gcint(basis_data, center, lm, coord, list(Z))
+  return veint(basis_data, center, lm, coord, list(Z))
 
 def eeMatrix(basis):
   basis_data, center, lm = basisData(basis)
-  return gc2int(basis_data, center, lm)
+  return eeint(basis_data, center, lm)
+
+def keMatrix(basis):
+  pass
+
+def nnMatrix(basis):
+  pass
+
+def neMatrix(basis):
 
 def basisData(basis):
   centers = []
