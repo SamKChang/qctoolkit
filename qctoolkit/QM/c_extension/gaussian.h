@@ -29,5 +29,10 @@ void orthogonalize(double*, double*,
 double F(int, double);
 
 // two-center electorn-repulsion integral
-double gc2Matrix(double *,double*,double*,int*,int*,
-                 int,int,int,int,int);
+double veMatrix(double*, double*, double*, 
+                double*, double*, double*,
+                int*, int*, int, int, int, int);
+
+// two-center electorn-repulsion integral
+double eeMatrix(double*, double*, double*, int*, int*,
+                 int, int, int, int, int);
