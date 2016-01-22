@@ -48,3 +48,11 @@ double eeMatrix(double*, double*, double*, int*, int*,
 double neMatrix(double*, double*, double*, int*, int*, int, 
                 double*, double*, double*, int*, int*, int, 
                 int, int, int);
+
+// 2D two-center electorn-repulsion integral
+double nnMatrix(double*, double*, double*, int*, int*,
+                int, int, int);
+
+// one-center electorn-nucleus integral
+double vnMatrix(double*, double*, double*, double*, double*,
+                int*, int*, int, int, int);

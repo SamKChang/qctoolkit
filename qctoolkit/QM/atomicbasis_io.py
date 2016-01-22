@@ -4,12 +4,19 @@ from general_io import GenericQMOutput
 from veint import veint
 from eeint import eeint
 from neint import neint
+from nnint import nnint
+from vnint import vnint
 import numpy as np
 
 def veMatrix(basis, coord, Z):
   basis_data, center, lm = basisData(basis)
   coord = np.array(coord) * 1.889725989
   return veint(basis_data, center, lm, coord, list(Z))
+
+def vnMatrix(basis, coord, Z):
+  basis_data, center, lm = basisData(basis)
+  coord = np.array(coord) * 1.889725989
+  return vnint(basis_data, center, lm, coord, list(Z))
 
 def eeMatrix(basis):
   basis_data, center, lm = basisData(basis)
@@ -19,7 +26,8 @@ def keMatrix(basis):
   pass
 
 def nnMatrix(basis):
-  pass
+  basis_data, center, lm = basisData(basis)
+  return nnint(basis_data, center, lm)
 
 def neMatrix(basis, fit_basis=None):
   if fit_basis is None:
