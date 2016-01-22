@@ -242,7 +242,7 @@ void renormalize(double *center, double *exp, double *cef,
 // nint = densityIntegral(center, exp, cef, ng, lm_xyz, ao);
 double densityIntegral(double *center, double *exp, double *cef, 
                        int *ng, int *lm_xyz, int ao){
-  int i, s, lm[3], t, u, v, i0 = 0;
+  int i, s, lm[3], i0 = 0;
   double p, p2, mu, cef_out;
   double norm;
   double Hx, Hy, Hz, nint = 0;
