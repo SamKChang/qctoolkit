@@ -202,7 +202,8 @@ shared(data)
   free(cef);
   free(ng);
   free(center);
-  free(overlap);
+  free(lm_xyz);
+  //free(overlap);
 
   Py_INCREF(py_out);
   return Py_BuildValue("O", py_out);
