@@ -517,7 +517,6 @@ double vnMatrix(double *R,      //all the rest are input
 
   free(expa);
   free(cefa);
-  printf("returning %e\n", element_a);
   return element_a;
 }
 
