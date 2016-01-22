@@ -19,7 +19,6 @@ int fac2(int n){
   }
 }
 
-// double checked with NWChem overlap matrix 
 /*******************************************
 *  Hermite-Gaussian expansion coefficients *
 *******************************************/
@@ -47,7 +46,6 @@ double Hermite(int mi, int mj, int t, double p2, double mu,
   return Hij;
 }
 
-// double checked with NWChem overlap matrix 
 /************************************
 *  Gaussian normalization constant  *
 ************************************/
@@ -151,11 +149,10 @@ double HCcef(int t, int u, int v, int n,
   return cef;
 }
 
-// double checked with NWChem overlap matrix 
 /********************************************
 *  Overlap integral of two atomic orbitals  *
 ********************************************/
-// aoverlap = aoOverlap(center, exp, cef, ng, lm_xyz, ao, ao);
+// aoverlap = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj);
 double aoOverlap(double *center, double *exp, double *cef, int *ng,
                  int *lm_xyz, int aoi, int aoj){
   int ngi = ng[aoi], ngj = ng[aoj];
@@ -222,7 +219,6 @@ double aoOverlap(double *center, double *exp, double *cef, int *ng,
   return overlap;
 }
 
-// double checked with NWChem overlap matrix
 /************************************
 *  Renormalization of AO expansion  *
 ************************************/
@@ -230,12 +226,81 @@ double aoOverlap(double *center, double *exp, double *cef, int *ng,
 void renormalize(double *center, double *exp, double *cef, 
                  int *ng, int *lm_xyz, int Nao){
   int ao, i, ngo=0;
-  double overlap, gocef;
+  double overlap;
 
   for(ao=0;ao<Nao;ao++){
     overlap = aoOverlap(center, exp, cef, ng, lm_xyz, ao, ao);
     for(i=ngo;i<ngo+ng[ao];i++){
       cef[i] /= sqrt(overlap);
+    }
+    ngo += ng[ao];
+  }
+}
+
+/***********************************
+*  Density normalization integral  *
+***********************************/
+// nint = densityIntegral(center, exp, cef, ng, lm_xyz, ao);
+double densityIntegral(double *center, double *exp, double *cef, 
+                       int *ng, int *lm_xyz, int ao){
+  int i, s, lm[3], null[3], t, u, v, i0 = 0;
+  double p, p2, mu, cef_out;
+  double ci[3];
+  double norm;
+  double Hx, Hy, Hz, nint = 0;
+
+  double *expi = (double*) malloc(ng[ao] * sizeof(double));
+  double *cefi = (double*) malloc(ng[ao] * sizeof(double));
+
+	for(i=0;i<ao;i++) i0 += ng[i];
+  for(s=0;s<3;s++){
+    lm[s] = lm_xyz[s+ao*3];
+    ci[s] = center[s+ao*3];
+  }
+
+  for(i=0;i<ng[ao];i++){
+    expi[i] = exp[i0+i];
+    cefi[i] = cef[i0+i];
+    cef_out = cefi[i];
+    norm = Norm(expi[i], lm);
+    p = expi[i];
+    p2 = 2*p;
+    mu = p;
+    for(t=0;t<lm[0]+1;t++){
+      Hx = Hermite(lm[0], 0, t, p2, mu, 
+                   0, 0, 0);
+      for(u=0;u<lm[1]+1;u++){
+        Hy = Hermite(lm[1], 0, u, p2, mu, 
+                     0, 0, 0);
+        for(v=0;v<lm[2]+1;v++){
+          Hz = Hermite(lm[2], 0, v, p2, mu, 
+                       0, 0, 0);
+          nint += cef_out * norm * Hx*Hy*Hz
+                     * pow(M_PI/p, 1.5);
+        }
+      }
+    }
+  }
+
+  free(expi);
+  free(cefi);
+
+  return nint;
+}
+
+/*****************************************
+*  Renormalization of density expansion  *
+*****************************************/
+// densityRenormalize(center, exp, cef, ng, lm_xyz, Nao);
+void densityRenormalize(double *center, double *exp, double *cef, 
+                        int *ng, int *lm_xyz, int Nao){
+  int ao, i, ngo=0;
+  double nint;
+
+  for(ao=0;ao<Nao;ao++){
+    nint = densityIntegral(center, exp, cef, ng, lm_xyz, ao);
+    for(i=ngo;i<ngo+ng[ao];i++){
+      cef[i] /= nint;
     }
     ngo += ng[ao];
   }
@@ -293,20 +358,19 @@ void orthogonalize(double *overlap, double *center,
 /************************************************
 *  main function for Gaussian-Coulomb integral  *
 ************************************************/
-//veMatrix(data, R, Z, center, exp, cef, ng, 
+//veMatrix(R, Z, center, exp, cef, ng, 
 //         lm_xyz, Nao, N, i, j);
-double veMatrix(double *data,   //output result
-              double *R,      //all the rest are input
-              double *Z, 
-              double *center,
-              double *exp,
-              double *cef,
-              int *ng,
-              int *lm_xyz,
-              int Nao,
-              int N,
-              int aoi,
-              int aoj 
+double veMatrix(double *R,      //all the rest are input
+                double *Z, 
+                double *center,
+                double *exp,
+                double *cef,
+                int *ng,
+                int *lm_xyz,
+                int Nao,
+                int N,
+                int aoi,
+                int aoj 
              ){  
 
   /* input related variables */
@@ -382,7 +446,6 @@ double veMatrix(double *data,   //output result
     }
   }
 
-  //data[aoj+aoi*Nao] = element_ij;
   free(expi);
   free(expj);
   free(cefi);
@@ -390,26 +453,25 @@ double veMatrix(double *data,   //output result
   return element_ij;
 }
 
-
 /************************************************
 *  main function for Gaussian-Coulomb integral  *
 ************************************************/
-// calculate 4D array for 4-center Gaussian-Coulom
+// calculate 4D array for 2-center Gaussian-Coulomb
 // electron-electron repulsion matrix from atomic Gaussian orbitals
 // NOTE: Exchange interaction need to be considered 
 //       to compute two-electron energy
-//eeMatrix(data, center, exp, cef, ng, 
-//         lm_xyz, Nao, N, i, j, k, l);
+// eeMatrix(center, exp, cef, ng, 
+//          lm_xyz, Nao, N, i, j, k, l);
 double eeMatrix(double *center,
-                 double *exp,
-                 double *cef,
-                 int *ng,
-                 int *lm_xyz,
-                 int Nao,
-                 int aoi,
-                 int aoj,
-                 int aok,
-                 int aol
+                double *exp,
+                double *cef,
+                int *ng,
+                int *lm_xyz,
+                int Nao,
+                int aoi,
+                int aoj,
+                int aok,
+                int aol
               ){
 
   /* input related variables */
@@ -559,4 +621,160 @@ double eeMatrix(double *center,
   return element_ijkl;
 }
 
+/****************************************************************
+*  main function for Gaussian-Coulomb density-fitting integral  *
+****************************************************************/
+// calculate 3D array for 2-center Gaussian-Coulomb
+// electron-electron repulsion matrix from atomic Gaussian orbitals
+// expanded by density basis and orbital basis
+// It return 3D array, OUT[a, i, j] where a is the basis index
+// for density gaussian expansion while i,j denote basis index
+// for orbital gaussian expansion
+// NOTE: Exchange interaction need to be considered 
+//       to compute two-electron energy
+// neMatrix(data, center, exp, cef, ng, 
+//          
+//          lm_xyz, Nao, N, i, j, k, l);
+double neMatrix(double *center,
+                double *exp,
+                double *cef,
+                int *ng,
+                int *lm_xyz,
+                int Nao,
+                double *fcenter,
+                double *fexp,
+                double *fcef,
+                int *fng,
+                int *flm_xyz,
+                int fNao,
+                int ana,
+                int aoi,
+                int aoj
+              ){
 
+  /* input related variables */
+  int s, a, i, j, a0 = 0, i0 = 0, j0 = 0;
+  double ca[3], ci[3], cj[3];
+  int lma[3], lmi[3], lmj[3];
+  int nga = fng[ana], ngi = ng[aoi], ngj = ng[aoj];
+  double *expa = (double*) malloc(nga * sizeof(double));
+  double *expi = (double*) malloc(ngi * sizeof(double));
+  double *expj = (double*) malloc(ngj * sizeof(double));
+  double *cefa = (double*) malloc(nga * sizeof(double));
+  double *cefi = (double*) malloc(ngi * sizeof(double));
+  double *cefj = (double*) malloc(ngj * sizeof(double));
+
+  /* gaussian integral variables */
+  double Q[3];
+  double P[3], Pi[3], Pj[3];
+  double PQ[3], PQ2, alpha;
+  double cij[3];
+  int lmij[3];
+  int t1, u1, v1, t2, u2, v2;
+  double q, q2, nu, Na;
+  double p, p2, mu, Ni, Nj, Nij;
+  double x;
+  double Hx1, Hy1, Hz1;
+  double Hx2, Hy2, Hz2;
+  double factor1, factor2, HC_cef; 
+  double element_aij = 0;
+
+  /* setup variables and save to allocated memory */
+  for(s=0;s<ana;s++) a0 += fng[s];
+  for(s=0;s<aoi;s++) i0 += ng[s];
+  for(s=0;s<aoj;s++) j0 += ng[s];
+  for(s=0;s<3;s++){
+    lma[s] = flm_xyz[s + 3*ana];
+    lmi[s] = lm_xyz[s + 3*aoi];
+    lmj[s] = lm_xyz[s + 3*aoj];
+    lmij[s] = lmi[s] + lmj[s];
+    ca[s] = fcenter[s + 3*ana];
+    ci[s] = center[s + 3*aoi];
+    cj[s] = center[s + 3*aoj];
+    cij[s] = ci[s] - cj[s];
+  }
+  /* loop for i_th AO */
+  for(a=0;a<nga;a++){
+    expa[a] = fexp[a0+a];
+    cefa[a] = fcef[a0+a];
+    for(s=0;s<3;s++){
+      Q[s] = ca[s];
+    }
+    Na = cefa[a] * Norm(expa[a], lma);
+    q = expa[a];
+    q2 = 2*q;
+    nu = q;
+    for(i=0;i<ngi;i++){
+      expi[i] = exp[i0+i];
+      cefi[i] = cef[i0+i];
+      Ni = cefi[i] * Norm(expi[i], lmi);
+      /* loop for j_th AO */
+      for(j=0;j<ngj;j++){
+        expj[j] = exp[j0+j];
+        cefj[j] = cef[j0+j];
+        Nj = cefj[j] * Norm(expj[j], lmj);
+        /* variables for first spatial variale, r1 */
+        Nij = Ni * Nj;
+        p = expi[i] + expj[j];
+        p2 = 2*p;
+        mu = expi[i] * expj[j] / p;
+        PQ2 = 0;
+        for(s=0;s<3;s++){
+          P[s] = (expi[i]*ci[s] + expj[j]*cj[s]) / p;
+          Pi[s] = P[s] - ci[s];
+          Pj[s] = P[s] - cj[s];
+          PQ[s] = P[s] - Q[s];
+          PQ2 += PQ[s] * PQ[s];
+        }
+        alpha = p*q / (p+q);
+        x = alpha * PQ2;
+        factor1 = 2*pow(M_PI, 5.0/2.0);
+        factor1 /= p*q * sqrt(p+q);
+        /* Hermite coefficient for x2 */
+        for(t2=0;t2<lma[0]+1;t2++){
+          Hx2 = Hermite(lma[0], 0, t2, q2, nu, 
+                        0, 0, 0);
+          /* Hermite coefficient for y2 */
+          for(u2=0;u2<lma[1]+1;u2++){
+            Hy2 = Hermite(lma[1], 0, u2, q2, nu, 
+                          0, 0, 0);
+            /* Hermite coefficient for z2 */
+            for(v2=0;v2<lma[2]+1;v2++){
+              Hz2 = Hermite(lma[2], 0, v2, q2, nu, 
+                            0, 0, 0);
+              /* Hermite coefficient for x1 */
+              for(t1=0;t1<lmij[0]+1;t1++){
+                Hx1 = Hermite(lmi[0], lmj[0], t1, p2, mu, 
+                              cij[0], Pi[0], Pj[0]);
+                /* Hermite coefficient for y1 */
+                for(u1=0;u1<lmij[1]+1;u1++){
+                  Hy1 = Hermite(lmi[1], lmj[1], u1, p2, mu, 
+                                cij[1], Pi[1], Pj[1]);
+                  /* Hermite coefficient for z1 */
+                  for(v1=0;v1<lmij[2]+1;v1++){
+                    Hz1 = Hermite(lmi[2], lmj[2], v1, p2, mu, 
+                                  cij[2], Pi[2], Pj[2]);
+                    factor2 = Nij*Na*Hx1*Hy1*Hz1*Hx2*Hy2*Hz2;
+                    factor2 *= pow(-1, t2+u2+v2);
+                    /* 2-center integral */
+                    HC_cef = HCcef(t1+t2, u1+u2, v1+v2, 
+                                   0, PQ, 2*alpha, x);
+                    element_aij += factor1*factor2*HC_cef;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  free(expa);
+  free(expi);
+  free(expj);
+  free(cefa);
+  free(cefi);
+  free(cefj);
+
+  return element_aij;
+}

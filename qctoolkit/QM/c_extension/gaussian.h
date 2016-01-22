@@ -12,13 +12,21 @@ int fac2(int);
 // Gaussian normalization constant
 double Norm(float, int*);
 
-//overlap = aoOverlap(center, exp, cef, ng, lm_xyz, ao, ao);
+// overlap = aoOverlap(center, exp, cef, ng, lm_xyz, ao, ao);
 double aoOverlap(double*, double*, double*, int*,
                  int*, int, int);
+
+// nint = densityIntegral(center, exp, cef, ng, lm_xyz, ao, ao);
+double densityIntegral(double*, double*, double*, int*,
+                       int*, int);
 
 // renormalize(center, exp, cef, ng, lm_xyz, Nao);
 void renormalize(double*, double*, double*, 
                  int*, int*, int);
+
+// densityRenormalize(center, exp, cef, ng, lm_xyz, Nao);
+void densityRenormalize(double*, double*, double*, 
+                        int*, int*, int);
 
 // orthogonalize(overlap, center, exp, cef, ng, lm_xyz, Nao);
 void orthogonalize(double*, double*, 
@@ -28,11 +36,15 @@ void orthogonalize(double*, double*,
 // Boys function
 double F(int, double);
 
-// two-center electorn-repulsion integral
-double veMatrix(double*, double*, double*, 
-                double*, double*, double*,
+// one-center electorn-nucleus integral
+double veMatrix(double*, double*, double*, double*, double*,
                 int*, int*, int, int, int, int);
 
-// two-center electorn-repulsion integral
+// 4D two-center electorn-repulsion integral
 double eeMatrix(double*, double*, double*, int*, int*,
-                 int, int, int, int, int);
+                int, int, int, int, int);
+
+// 3D two-center electorn-repulsion integral
+double neMatrix(double*, double*, double*, int*, int*, int, 
+                double*, double*, double*, int*, int*, int, 
+                int, int, int);

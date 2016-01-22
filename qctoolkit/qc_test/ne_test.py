@@ -4,6 +4,7 @@ import qctoolkit as qtk
 from qctoolkit.QM.atomicbasis_io import basisData
 from qctoolkit.QM.atomicbasis_io import veMatrix
 from qctoolkit.QM.atomicbasis_io import eeMatrix
+from qctoolkit.QM.atomicbasis_io import neMatrix
 import numpy as np
 from numpy import tensordot as td
 
@@ -70,10 +71,12 @@ qmOut = qtk.QMOut('data/qmout/nwchem/H3_1g-012/h3.out', program='nwchem')
 #for b in qmOut.basis:
 #  print b
 
-ee = eeMatrix(qmOut.basis)
-ex = np.swapaxes(ee, 1,2)
-fock = 2*ee - ex
-occ = [i for i in range(qmOut.n_ao) if qmOut.occupation[i]==2][-1] + 1
+ne = neMatrix(qmOut.basis)
+print ne
+print ne.shape
+#ex = np.swapaxes(ee, 1,2)
+#fock = 2*ee - ex
+#occ = [i for i in range(qmOut.n_ao) if qmOut.occupation[i]==2][-1] + 1
 #mo = qmOut.mo_vectors
 #Eee = 0
 #for a in range(occ):
@@ -85,13 +88,13 @@ occ = [i for i in range(qmOut.n_ao) if qmOut.occupation[i]==2][-1] + 1
 #            Eee += mo[a,i]*mo[a,j]*mo[b,k]*mo[b,l]*fock[i,j,k,l]
 #print "direct for loop: ",
 #print Eee
-
-# NOTE: order of contraction matters!
-# 0,1,2,3 is correct while 3,2,1,0 is wrong!
-out = td(mo, fock, axes=(1,0))
-out = td(mo, out, axes=(1,1))
-out = td(mo, out, axes=(1,2))
-out = td(mo, out, axes=(1,3))
-Eee = [out[a,a,b,b] for a in range(occ) for b in range(occ)]
-print "tensordot: ",
-print sum(Eee)
+#
+## NOTE: order of contraction matters!
+## 0,1,2,3 is correct while 3,2,1,0 is wrong!
+#out = td(mo, fock, axes=(1,0))
+#out = td(mo, out, axes=(1,1))
+#out = td(mo, out, axes=(1,2))
+#out = td(mo, out, axes=(1,3))
+#Eee = [out[a,a,b,b] for a in range(occ) for b in range(occ)]
+#print "tensordot: ",
+#print sum(Eee)

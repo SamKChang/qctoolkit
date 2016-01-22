@@ -3,6 +3,7 @@ from general_io import GenericQMInput
 from general_io import GenericQMOutput
 from veint import veint
 from eeint import eeint
+from neint import neint
 import numpy as np
 
 def veMatrix(basis, coord, Z):
@@ -20,7 +21,12 @@ def keMatrix(basis):
 def nnMatrix(basis):
   pass
 
-def neMatrix(basis):
+def neMatrix(basis, fit_basis=None):
+  if fit_basis is None:
+    fit_basis = basis
+  basis_data, center, lm = basisData(basis)
+  fbasis_data, fcenter, flm = basisData(fit_basis)
+  return neint(basis_data, center, lm, fbasis_data, fcenter, flm)
 
 def basisData(basis):
   centers = []

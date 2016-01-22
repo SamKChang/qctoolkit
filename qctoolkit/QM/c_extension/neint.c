@@ -12,161 +12,67 @@ double* pyvector_to_Carrayptrs(PyArrayObject *arrayin){
   return (double*) arrayin->data;
 }
 
-///************************************************
-//*  main function for Gaussian-Coulomb integral  *
-//************************************************/
-////veMatrix(data, R, Z, center, exp, cef, ng, 
-////         lm_xyz, Nao, N, i, j);
-//void veMatrix(double *data,   //output result
-//              double *R,      //all the rest are input
-//              double *Z,
-//              double *center,
-//              double *exp,
-//              double *cef,
-//              int *ng,
-//              int *lm_xyz,
-//              int Nao,
-//              int N,
-//              int aoi,
-//              int aoj
-//             ){
-//
-//  /* input related variables */
-//  int i, j, k, i0 = 0, j0 = 0, I;
-//  double ci[3], cj[3];
-//  int lmi[3], lmj[3];
-//  int ngi = ng[aoi], ngj = ng[aoj];
-//  double *expi = (double*) malloc(ngi * sizeof(double));
-//  double *expj = (double*) malloc(ngj * sizeof(double));
-//  double *cefi = (double*) malloc(ngi * sizeof(double));
-//  double *cefj = (double*) malloc(ngj * sizeof(double));
-//
-//  /* gaussian integral variables */
-//  double cI[3], cij[3], P[3], Pi[3], Pj[3], PI[3], PI2;
-//  int lmij[3];
-//  int t, u, v;
-//  double p, p2, mu, ZI, x, HC_cef, Ni, Nj, Nij;
-//  double Hx, Hy, Hz, num, element_ij = 0;
-//
-//  for(i=0;i<aoi;i++) i0 += ng[i];
-//  for(j=0;j<aoj;j++) j0 += ng[j];
-//  for(k=0;k<3;k++){
-//    lmi[k] = lm_xyz[k + 3*aoi];
-//    lmj[k] = lm_xyz[k + 3*aoj];
-//    lmij[k] = lmi[k] + lmj[k];
-//    ci[k] = center[k + 3*aoi];
-//    cj[k] = center[k + 3*aoj];
-//    cij[k] = ci[k] - cj[k];
-//  }
-//  for(i=0;i<ngi;i++){
-//    expi[i] = exp[i0+i];
-//    cefi[i] = cef[i0+i];
-//    for(j=0;j<ngj;j++){
-//      expj[j] = exp[j0+j];
-//      cefj[j] = cef[j0+j];
-//      p = expi[i] + expj[j];
-//      p2 = 2*p;
-//      mu = expi[i] * expj[j] / p;
-//      Ni = cefi[i] * Norm(expi[i], lmi);
-//      Nj = cefj[j] * Norm(expj[j], lmj);
-//      Nij = Ni * Nj;
-//      for(k=0;k<3;k++){
-//        P[k] = (expi[i]*ci[k] + expj[j]*cj[k])/p;
-//        Pi[k] = P[k] - ci[k];
-//        Pj[k] = P[k] - cj[k];
-//      }
-//      for(I=0;I<N;I++){
-//        PI2 = 0;
-//        for(k=0;k<3;k++){
-//          cI[k] = R[k+3*I];
-//          PI[k] = P[k] - cI[k];
-//          PI2 += PI[k] * PI[k];
-//        }
-//        ZI = Z[I];
-//        x = p*PI2;
-//
-//        for(t=0;t<lmij[0]+1;t++){
-//          Hx = Hermite(lmi[0], lmj[0], t, p2, mu, 
-//                       cij[0], Pi[0], Pj[0]);
-//          for(u=0;u<lmij[1]+1;u++){
-//            Hy = Hermite(lmi[1], lmj[1], u, p2, mu, 
-//                         cij[1], Pi[1], Pj[1]);
-//            for(v=0;v<lmij[2]+1;v++){
-//              Hz = Hermite(lmi[2], lmj[2], v, p2, mu, 
-//                           cij[2], Pi[2], Pj[2]);
-//              HC_cef = HCcef(t, u, v, 0, PI, p2, x);
-//              num = ZI*(Nij*Hx*Hy*Hz*HC_cef);
-//              element_ij -= num*(2*M_PI/p);
-//            }
-//          }
-//        }
-//      }
-//    }
-//  }
-//
-//  data[aoj+aoi*Nao] = element_ij;
-//  free(expi);
-//  free(expj);
-//  free(cefi);
-//  free(cefj);
-//}
-
 /*********************
 *  python interface  *
 *********************/
-static PyObject* veint(PyObject* self, PyObject* args){
+static PyObject* neint(PyObject* self, PyObject* args){
 
   /*** input variables ***/
   /* dictionary */
-  PyObject *in_dict;
+  PyObject *in_dict1, *in_dict2;
   PyObject *dictList;
   PyObject *dictList_fast;
   PyObject *pyStr;
   PyObject *item;
-  /* list */
-  PyObject *in_list;
-  PyObject *list_fast;
   /* numpy array */
-  PyArrayObject *in_array1, *in_array2, *in_array3;
+  PyArrayObject *in_array1, *in_array2, *in_array3, *in_array4;
   NpyIter *in_iter;
   NpyIter_IterNextFunc *in_iternext;
   /* C data type for input */
-  int Ngo, Nao;
+  int Ngo, Nao;    // number of gaussian and atomic orbiatls
+  int fNgo, fNao;  // number of gaussian and atomic densities
   int N, itr;
-  double *Z;
-  double *R;
   /* basis function variables */
   double **in_ptr; // address to numpy pointer
+  double **fin_ptr;// address to numpy pointer
   double *center;  // gaussian center
+  double *fcenter; // gaussian center, for density-fitting
   double *cef;     // contraction coefficients
+  double *fcef;    // contraction coefficients, for density-fitting
   int *ng;         // number of gaussians per AO
+  int *fng;        // number of gaussians per atomic density
   double *exp;     // gaussian exponents
+  double *fexp;    // gaussian exponents
   int *lm_xyz;     // angular momentum
+  int *flm_xyz;    // angular momentum, for density-fitting
 
   /* python output variables */
   PyObject *py_out;
-  PyObject *py_out2;
+  //PyObject *py_out2;
   double *data, *overlap;
-  int i, j;
-  int mat_dim[2];
+  double element;
+  int a, i, j;
+  int s, t, u, v, w;
+  int mat_dim[3];
 
   /*  parse numpy array and two integers as argument */
-  if (!PyArg_ParseTuple(args, "OO!O!O!O", 
-                        &in_dict, 
+  if (!PyArg_ParseTuple(args, "OO!O!OO!O!",
+                        &in_dict1, 
                         &PyArray_Type, &in_array1,
                         &PyArray_Type, &in_array2,
+                        &in_dict2, 
                         &PyArray_Type, &in_array3,
-                        &in_list
+                        &PyArray_Type, &in_array4
                        )) return NULL;
   if(in_array1 == NULL) return NULL;
 
   /***********************
   * Construct input data *
   ***********************/
-  /*** access dict_list data ***/
+  /*** access orbital dict_list1 data ***/
   /* exponents */
   pyStr = PyString_FromString("exponents");
-  dictList = PyDict_GetItem(in_dict, pyStr);
+  dictList = PyDict_GetItem(in_dict1, pyStr);
   dictList_fast = PySequence_Fast(
                     dictList, "expected a sequence");
   Ngo = PySequence_Size(dictList);
@@ -178,7 +84,7 @@ static PyObject* veint(PyObject* self, PyObject* args){
   Py_DECREF(dictList_fast);
   /* coefficients */
   pyStr = PyString_FromString("coefficients");
-  dictList = PyDict_GetItem(in_dict, pyStr);
+  dictList = PyDict_GetItem(in_dict1, pyStr);
   dictList_fast = PySequence_Fast(
                     dictList, "expected a sequence");
   cef = (double*) malloc(Ngo * sizeof(double));
@@ -189,7 +95,7 @@ static PyObject* veint(PyObject* self, PyObject* args){
   Py_DECREF(dictList_fast);
   /* number of gaussians per shell */
   pyStr = PyString_FromString("n_gaussians");
-  dictList = PyDict_GetItem(in_dict, pyStr);
+  dictList = PyDict_GetItem(in_dict1, pyStr);
   dictList_fast = PySequence_Fast(
                     dictList, "expected a sequence");
   Nao = PySequence_Size(dictList);
@@ -199,21 +105,49 @@ static PyObject* veint(PyObject* self, PyObject* args){
     ng[i] = PyFloat_AsDouble(item);
   }
   Py_DECREF(dictList_fast);
-  /*** end of dict_list data ***/
+  /*** end of orbital dict_list1 data ***/
 
-  /*** access python list data ***/
-  list_fast = PySequence_Fast(in_list, "expected a sequence");
-  N = PySequence_Size(in_list);
-  Z = (double*) malloc(N * sizeof(double));
-  for(i=0;i<N;i++){
-    item = PySequence_Fast_GET_ITEM(list_fast, i);
-    Z[i] = PyFloat_AsDouble(item);
+  /*** access density dict_list2 data ***/
+  /* exponents */
+  pyStr = PyString_FromString("exponents");
+  dictList = PyDict_GetItem(in_dict2, pyStr);
+  dictList_fast = PySequence_Fast(
+                    dictList, "expected a sequence");
+  fNgo = PySequence_Size(dictList);
+  fexp = (double*) malloc(Ngo * sizeof(double));
+  for(i=0;i<Ngo;i++){
+    item = PySequence_Fast_GET_ITEM(dictList_fast, i);
+    fexp[i] = PyFloat_AsDouble(item);
   }
-  Py_DECREF(list_fast);
-  /*** end of list input data ***/
+  Py_DECREF(dictList_fast);
+  /* coefficients */
+  pyStr = PyString_FromString("coefficients");
+  dictList = PyDict_GetItem(in_dict2, pyStr);
+  dictList_fast = PySequence_Fast(
+                    dictList, "expected a sequence");
+  fcef = (double*) malloc(Ngo * sizeof(double));
+  for(i=0;i<Ngo;i++){
+    item = PySequence_Fast_GET_ITEM(dictList_fast, i);
+    fcef[i] = PyFloat_AsDouble(item);
+  }
+  Py_DECREF(dictList_fast);
+  /* number of gaussians per shell */
+  pyStr = PyString_FromString("n_gaussians");
+  dictList = PyDict_GetItem(in_dict2, pyStr);
+  dictList_fast = PySequence_Fast(
+                    dictList, "expected a sequence");
+  fNao = PySequence_Size(dictList);
+  fng = (int*) malloc(Nao * sizeof(int));
+  for(i=0;i<Nao;i++){
+    item = PySequence_Fast_GET_ITEM(dictList_fast, i);
+    fng[i] = PyFloat_AsDouble(item);
+  }
+  Py_DECREF(dictList_fast);
+  /*** end of density dict_list2 data ***/
 
-  /*** create the iterators, necessary to access numpy array ***/
+  /*** Access numpy array for orbital ***/
   /* center */
+  // create the iterators, necessary to access numpy array
   in_iter = NpyIter_New(in_array1, NPY_ITER_READONLY,
                          NPY_KEEPORDER, NPY_NO_CASTING, NULL);
   if (in_iter == NULL) goto fail;
@@ -248,8 +182,11 @@ static PyObject* veint(PyObject* self, PyObject* args){
     lm_xyz[itr++] = **in_ptr2;
   } while(in_iternext(in_iter));
   NpyIter_Deallocate(in_iter);
+  /*** end of orbital numpy input data ***/
 
-  /* R */
+  /*** Access numpy array for orbital ***/
+  /* fcenter */
+  // create the iterators, necessary to access numpy array
   in_iter = NpyIter_New(in_array3, NPY_ITER_READONLY,
                          NPY_KEEPORDER, NPY_NO_CASTING, NULL);
   if (in_iter == NULL) goto fail;
@@ -260,13 +197,31 @@ static PyObject* veint(PyObject* self, PyObject* args){
   }
   /* interator pointer to actual numpy data */
   in_ptr = (double **) NpyIter_GetDataPtrArray(in_iter);
-  R = (double*) malloc(3 * N * sizeof(double));
+  fcenter = (double*) malloc(3 * Nao * sizeof(double));
   itr=0;
   do {
-    R[itr++] = **in_ptr;
+    fcenter[itr++] = **in_ptr;
   } while(in_iternext(in_iter));
   NpyIter_Deallocate(in_iter);
-  /*** end of numpy input data ***/
+
+  /* flm_xyz */
+  in_iter = NpyIter_New(in_array4, NPY_ITER_READONLY,
+                         NPY_KEEPORDER, NPY_NO_CASTING, NULL);
+  if (in_iter == NULL) goto fail;
+  in_iternext = NpyIter_GetIterNext(in_iter, NULL);
+  if (in_iternext == NULL){
+    NpyIter_Deallocate(in_iter);
+    goto fail;
+  }
+  /* interator pointer to actual numpy data */
+  int **fin_ptr2 = (int **) NpyIter_GetDataPtrArray(in_iter);
+  flm_xyz = (int*) malloc(3 * Nao * sizeof(int));
+  itr=0;
+  do {
+    flm_xyz[itr++] = **fin_ptr2;
+  } while(in_iternext(in_iter));
+  NpyIter_Deallocate(in_iter);
+  /*** end of orbital numpy input data ***/
 
   /***** end of input data construction *****/
 
@@ -274,14 +229,16 @@ static PyObject* veint(PyObject* self, PyObject* args){
   /*******************
   * construct output *
   *******************/
-  mat_dim[0] = Nao;
-  mat_dim[1] = Nao;
+  for(i=1;i<3;i++) mat_dim[i] = Nao;
+  mat_dim[0] = fNao;
   py_out = (PyArrayObject*) 
-           PyArray_FromDims(2, mat_dim, NPY_DOUBLE);
+           PyArray_FromDims(3, mat_dim, NPY_DOUBLE);
   data = pyvector_to_Carrayptrs(py_out);
 
-  /* renormalization */
+  /* renormalization of orbital */
   renormalize(center, exp, cef, ng, lm_xyz, Nao);
+  /* renormalization of density */
+  densityRenormalize(fcenter, fexp, fcef, fng, flm_xyz, fNao);
 
   /* orthogonalize */
   // no effect at the moment, for debug purpose
@@ -290,14 +247,22 @@ static PyObject* veint(PyObject* self, PyObject* args){
   //overlap = pyvector_to_Carrayptrs(py_out2);
   //orthogonalize(overlap, center, exp, cef, ng, lm_xyz, Nao);
 
-  for(i=0;i<Nao;i++){
-    for(j=i;j<Nao;j++){
-      data[j+i*Nao] = veMatrix(R, Z, 
-                      center, exp, cef, ng, lm_xyz, 
-                      Nao, N, i, j);
-      if(j!=i) data[i+j*Nao] = data[j+i*Nao];
+#pragma omp parallel private(a, i, j, s) shared(data)
+{
+  #pragma omp for schedule(dynamic)
+  for(a=0;a<fNao;a++){
+    for(i=0;i<Nao;i++){
+      for(j=i;j<Nao;j++){
+        s = j + i*Nao + a*Nao*Nao;
+        element = neMatrix(center, exp, cef, ng, lm_xyz, Nao,
+                           fcenter, fexp, fcef, fng, flm_xyz, fNao,
+                           a, i, j);
+        data[s] = element;
+        if(j>i) data[i + j*Nao + a*Nao*Nao] = element;
+      }
     }
   }
+} // end of omp loop
 
   /*********************************
   * clean up and return the result *
@@ -306,9 +271,13 @@ static PyObject* veint(PyObject* self, PyObject* args){
   free(cef);
   free(ng);
   free(center);
-  free(R);
-  free(Z);
-  free(overlap);
+  free(lm_xyz);
+  free(fexp);
+  free(fcef);
+  free(fng);
+  free(fcenter);
+  free(flm_xyz);
+  //free(overlap);
 
   Py_INCREF(py_out);
   return Py_BuildValue("O", py_out);
@@ -317,18 +286,18 @@ static PyObject* veint(PyObject* self, PyObject* args){
   fail:
     Py_XDECREF(py_out);
     return NULL;
-}
+} // end of neint function
 
 /*  define functions in module */
-static PyMethodDef VEInt[] ={
-  {"veint", veint, METH_VARARGS,
-      "analytic Gaussian-Coulomb integral"},
+static PyMethodDef NEInt[] ={
+  {"neint", neint, METH_VARARGS,
+   "analytic Gaussian-Coulomb integral for n-psi^2"},
   {NULL, NULL, 0, NULL}
 };
 
 /* module initialization */
-PyMODINIT_FUNC initveint(void){
-  (void) Py_InitModule("veint", VEInt);
+PyMODINIT_FUNC initneint(void){
+  (void) Py_InitModule("neint", NEInt);
   /* IMPORTANT: this must be called */
   import_array();
 }
