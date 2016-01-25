@@ -37,16 +37,28 @@ def neMatrix(basis, fit_basis=None):
   fbasis_data, fcenter, flm = basisData(fit_basis)
   return neint(basis_data, center, lm, fbasis_data, fcenter, flm)
 
-def densityFitting(mo, psi_basis, rho_basis=None):
+def densityMatrix(qmout):
+  psi_basis = qmout.basis
+  occ = [i for i in range(qmout.n_ao)
+         if qmout.occupation[i]==2][-1] + 1
+  mo = qmout.mo_vectors
+  mo_occ = mo[0:occ, :]
+  return np.outer(mo_occ, mo_occ)
+  
+
+def densityFitting(qmout, rho_basis=None):
+  psi_basis = qmout.basis
+  occ = [i for i in range(qmout.n_ao)
+         if qmout.occupation[i]==2][-1] + 1
+  D_matrix = densityMatrix(qmout)
   if rho_basis is None:
     rho_basis = psi_basis
+
   psi_basis_data, psi_center, psi_lm = basisData(psi_basis)
   rho_basis_data, rho_center, rho_lm = basisData(rho_basis)
-
   NN = nnMatrix(rho_basis)
   NE = neMatrix(psi_basis, rho_basis)
-  mo_matrix = td(mo, mo, axes=(1,1))
-  G = td(mo_matrix, NE, axes=([0,1], [1,2]))
+  G = td(D_matrix, NE, axes=([0,1], [1,2]))
   
   return np.linalg.solve(NN, G)
 
