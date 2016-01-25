@@ -113,8 +113,8 @@ static PyObject* neint(PyObject* self, PyObject* args){
   dictList_fast = PySequence_Fast(
                     dictList, "expected a sequence");
   fNgo = PySequence_Size(dictList);
-  fexp = (double*) malloc(Ngo * sizeof(double));
-  for(i=0;i<Ngo;i++){
+  fexp = (double*) malloc(fNgo * sizeof(double));
+  for(i=0;i<fNgo;i++){
     item = PySequence_Fast_GET_ITEM(dictList_fast, i);
     fexp[i] = PyFloat_AsDouble(item);
   }
@@ -124,8 +124,8 @@ static PyObject* neint(PyObject* self, PyObject* args){
   dictList = PyDict_GetItem(in_dict2, pyStr);
   dictList_fast = PySequence_Fast(
                     dictList, "expected a sequence");
-  fcef = (double*) malloc(Ngo * sizeof(double));
-  for(i=0;i<Ngo;i++){
+  fcef = (double*) malloc(fNgo * sizeof(double));
+  for(i=0;i<fNgo;i++){
     item = PySequence_Fast_GET_ITEM(dictList_fast, i);
     fcef[i] = PyFloat_AsDouble(item);
   }
@@ -136,8 +136,8 @@ static PyObject* neint(PyObject* self, PyObject* args){
   dictList_fast = PySequence_Fast(
                     dictList, "expected a sequence");
   fNao = PySequence_Size(dictList);
-  fng = (int*) malloc(Nao * sizeof(int));
-  for(i=0;i<Nao;i++){
+  fng = (int*) malloc(fNao * sizeof(int));
+  for(i=0;i<fNao;i++){
     item = PySequence_Fast_GET_ITEM(dictList_fast, i);
     fng[i] = PyFloat_AsDouble(item);
   }
