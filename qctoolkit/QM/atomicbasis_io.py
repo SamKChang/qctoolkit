@@ -15,7 +15,7 @@ def veMatrix(basis, coord, Z):
   return veint(basis_data, center, lm, coord, list(Z))
 
 def vnMatrix(basis, coord, Z):
-  basis_data, center, lm = basisData(basis)
+  basis_data, center, lm = basisData(basis, density=True)
   coord = np.array(coord) * 1.889725989
   return vnint(basis_data, center, lm, coord, list(Z))
 
@@ -27,14 +27,14 @@ def keMatrix(basis):
   pass
 
 def nnMatrix(basis):
-  basis_data, center, lm = basisData(basis)
+  basis_data, center, lm = basisData(basis, density=True)
   return nnint(basis_data, center, lm)
 
 def neMatrix(basis, fit_basis=None):
   if fit_basis is None:
     fit_basis = basis
   basis_data, center, lm = basisData(basis)
-  fbasis_data, fcenter, flm = basisData(fit_basis)
+  fbasis_data, fcenter, flm = basisData(fit_basis, density=True)
   return neint(basis_data, center, lm, fbasis_data, fcenter, flm)
 
 def densityMatrix(qmout):
@@ -43,7 +43,7 @@ def densityMatrix(qmout):
          if qmout.occupation[i]==2][-1] + 1
   mo = qmout.mo_vectors
   mo_occ = mo[0:occ, :]
-  return np.outer(mo_occ, mo_occ)
+  return np.dot(mo_occ.T, mo_occ)
   
 
 def densityFitting(qmout, rho_basis=None):
@@ -55,14 +55,19 @@ def densityFitting(qmout, rho_basis=None):
     rho_basis = psi_basis
 
   psi_basis_data, psi_center, psi_lm = basisData(psi_basis)
-  rho_basis_data, rho_center, rho_lm = basisData(rho_basis)
+  rho_basis_data, rho_center, rho_lm = \
+    basisData(rho_basis, density=True)
   NN = nnMatrix(rho_basis)
   NE = neMatrix(psi_basis, rho_basis)
+  print D_matrix.shape
+  print NE.shape
   G = td(D_matrix, NE, axes=([0,1], [1,2]))
   
   return np.linalg.solve(NN, G)
 
-def basisData(basis):
+def basisData(basis, **kwargs):
+  if 'density' not in kwargs:
+    kwargs['density'] = False
   centers = []
   exponents = []
   coefficients = []  
@@ -71,7 +76,10 @@ def basisData(basis):
   for ao in basis:
     ng = 0
     for g in range(len(ao['exponents'])):
-      exponents.append(ao['exponents'][g])
+      if not kwargs['density']:
+        exponents.append(ao['exponents'][g])
+      else:
+        exponents.append(2*ao['exponents'][g])
       coefficients.append(ao['coefficients'][g])
       ng = ng + 1
       if g == len(ao['exponents'])-1:
@@ -84,7 +92,11 @@ def basisData(basis):
   out['exponents'] = exponents
   out['coefficients'] = coefficients
   out['n_gaussians'] = n_gaussians
-  return out, np.array(centers), np.array(lm_xyz)
+  if kwargs['density']:
+    lm_xyz = 2*np.array(lm_xyz)
+  else:
+    lm_xyz = np.array(lm_xyz)
+  return out, np.array(centers), lm_xyz
   
 
 class AtomicBasisInput(GenericQMInput):
