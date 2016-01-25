@@ -24,7 +24,12 @@ def eeMatrix(basis):
   return eeint(basis_data, center, lm)
 
 def keMatrix(basis):
-  pass
+  basis_data, center, lm = basisData(basis)
+  return keint(basis_data, center, lm)
+
+def knMatrix(basis):
+  basis_data, center, lm = basisData(basis)
+  return knint(basis_data, center, lm)
 
 def nnMatrix(basis):
   basis_data, center, lm = basisData(basis, density=True)

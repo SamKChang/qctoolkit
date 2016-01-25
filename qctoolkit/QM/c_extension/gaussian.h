@@ -56,3 +56,11 @@ double nnMatrix(double*, double*, double*, int*, int*,
 // one-center electorn-nucleus integral
 double vnMatrix(double*, double*, double*, double*, double*,
                 int*, int*, int, int, int);
+
+// electron wavefunction second order derivative integral
+double keMatrix(double*, double*, double*, double*, double*,
+                int*, int*, int, int, int, int);
+
+// electron density first order derivative integral
+double knMatrix(double*, double*, double*, double*, double*,
+                int*, int*, int, int, int);

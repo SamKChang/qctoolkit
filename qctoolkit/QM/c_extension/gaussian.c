@@ -972,3 +972,182 @@ double nnMatrix(double *center,
 
   return element_ab;
 }
+
+/******************************************************
+*  main function for Gaussian 2nd-derivativeintegral  *
+******************************************************/
+//keMatrix(R, Z, center, exp, cef, ng, 
+//         lm_xyz, Nao, N, i, j);
+double keMatrix(double *R,      //all the rest are input
+                double *Z, 
+                double *center,
+                double *exp,
+                double *cef,
+                int *ng,
+                int *lm_xyz,
+                int Nao,
+                int N,
+                int aoi,
+                int aoj 
+             ){  
+
+  /* input related variables */
+  int i, j, k, i0 = 0, j0 = 0, I;
+  double ci[3], cj[3];
+  int lmi[3], lmj[3];
+  int ngi = ng[aoi], ngj = ng[aoj];
+  double *expi, *expj, *cefi, *cefj;
+  expi = (double*) malloc(ngi * sizeof(double));
+  expj = (double*) malloc(ngj * sizeof(double));
+  cefi = (double*) malloc(ngi * sizeof(double));
+  cefj = (double*) malloc(ngj * sizeof(double));
+
+  /* gaussian integral variables */
+  double cI[3], cij[3], P[3], Pi[3], Pj[3], PI[3], PI2;
+  int lmij[3];
+  int t, u, v;
+  double p, p2, mu, ZI, x, HC_cef, Ni, Nj, Nij;
+  double Hx, Hy, Hz, num, element_ij = 0;
+
+  for(i=0;i<aoi;i++) i0 += ng[i];
+  for(j=0;j<aoj;j++) j0 += ng[j];
+  for(k=0;k<3;k++){
+    lmi[k] = lm_xyz[k + 3*aoi];
+    lmj[k] = lm_xyz[k + 3*aoj];
+    lmij[k] = lmi[k] + lmj[k];
+    ci[k] = center[k + 3*aoi];
+    cj[k] = center[k + 3*aoj];
+    cij[k] = ci[k] - cj[k];
+  }
+  for(i=0;i<ngi;i++){
+    expi[i] = exp[i0+i];
+    cefi[i] = cef[i0+i];
+    for(j=0;j<ngj;j++){
+      expj[j] = exp[j0+j];
+      cefj[j] = cef[j0+j];
+      p = expi[i] + expj[j];
+      p2 = 2*p;
+      mu = expi[i] * expj[j] / p;
+      Ni = cefi[i] * Norm(expi[i], lmi);
+      Nj = cefj[j] * Norm(expj[j], lmj);
+      Nij = Ni * Nj;
+      for(k=0;k<3;k++){
+        P[k] = (expi[i]*ci[k] + expj[j]*cj[k])/p;
+        Pi[k] = P[k] - ci[k];
+        Pj[k] = P[k] - cj[k];
+      }
+      for(I=0;I<N;I++){
+        PI2 = 0;
+        for(k=0;k<3;k++){
+          cI[k] = R[k+3*I];
+          PI[k] = P[k] - cI[k];
+          PI2 += PI[k] * PI[k];
+        }
+        ZI = Z[I];
+        x = p*PI2;
+
+        for(t=0;t<lmij[0]+1;t++){
+          Hx = Hermite(lmi[0], lmj[0], t, p2, mu,
+                       cij[0], Pi[0], Pj[0]);
+          for(u=0;u<lmij[1]+1;u++){
+            Hy = Hermite(lmi[1], lmj[1], u, p2, mu,
+                         cij[1], Pi[1], Pj[1]);
+            for(v=0;v<lmij[2]+1;v++){
+              Hz = Hermite(lmi[2], lmj[2], v, p2, mu,
+                           cij[2], Pi[2], Pj[2]);
+              HC_cef = HCcef(t, u, v, 0, PI, p2, x);
+              num = ZI*(Nij*Hx*Hy*Hz*HC_cef);
+              element_ij -= num*(2*M_PI/p);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  free(expi);
+  free(expj);
+  free(cefi);
+  free(cefj);
+  return element_ij;
+}
+
+/*******************************************************
+*  main function for Gaussian 1st-derivative integral  *
+*******************************************************/
+//knMatrix(R, Z, center, exp, cef, ng, 
+//         lm_xyz, Nao, N, i, j);
+double knMatrix(double *R,      //all the rest are input
+                double *Z, 
+                double *center,
+                double *exp,
+                double *cef,
+                int *ng,
+                int *lm_xyz,
+                int Nao,
+                int N,
+                int ana
+             ){  
+
+  /* input related variables */
+  int s, a, a0 = 0, I;
+  double ca[3];
+  int lma[3];
+  int nga = ng[ana];
+  double *expa, *cefa;
+  expa = (double*) malloc(nga * sizeof(double));
+  cefa = (double*) malloc(nga * sizeof(double));
+
+  /* gaussian integral variables */
+  double cI[3], P[3], PI[3], PI2;
+  int t, u, v;
+  double p, p2, mu, ZI, x, HC_cef, Na;
+  double Hx, Hy, Hz, num, element_a = 0;
+
+  for(s=0;s<ana;s++) a0 += ng[s];
+  for(s=0;s<3;s++){
+    lma[s] = lm_xyz[s + 3*ana];
+    ca[s] = center[s + 3*ana];
+  }
+  for(a=0;a<nga;a++){
+    expa[a] = exp[a0+a];
+    cefa[a] = cef[a0+a];
+    p = expa[a];
+    p2 = 2*p;
+    mu = p;
+    Na = cefa[a] * Norm(expa[a], lma);
+    for(s=0;s<3;s++){
+      P[s] = ca[s];
+    }
+    for(I=0;I<N;I++){
+      PI2 = 0;
+      for(s=0;s<3;s++){
+        cI[s] = R[s + 3*I];
+        PI[s] = P[s] - cI[s];
+        PI2 += PI[s] * PI[s];
+      }
+      ZI = Z[I];
+      x = p*PI2;
+
+      for(t=0;t<lma[0]+1;t++){
+        Hx = Hermite(lma[0], 0, t, p2, mu,
+                     0, 0, 0);
+        for(u=0;u<lma[1]+1;u++){
+          Hy = Hermite(lma[1], 0, u, p2, mu,
+                       0, 0, 0);
+          for(v=0;v<lma[2]+1;v++){
+            Hz = Hermite(lma[2], 0, v, p2, mu,
+                         0, 0, 0);
+            HC_cef = HCcef(t, u, v, 0, PI, p2, x);
+            num = ZI*(Na*Hx*Hy*Hz*HC_cef);
+            element_a -= num*(2*M_PI/p);
+          }
+        }
+      }
+    }
+  }
+
+  free(expa);
+  free(cefa);
+  return element_a;
+}
