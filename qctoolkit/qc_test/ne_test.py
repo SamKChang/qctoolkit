@@ -22,7 +22,7 @@ from numpy import tensordot as td
 #qmOut = qtk.QMOut('data/qmout/nwchem/H_2a_gaussian_basis/h.out', program='nwchem')
 #qmOut = qtk.QMOut('data/qmout/nwchem/H_aug-cc-pvdz/h.out', program='nwchem')
 #qmOut = qtk.QMOut('data/qmout/nwchem/H_cc-pvdz_no-p/h.out', program='nwchem')
-qmOut = qtk.QMOut('data/qmout/nwchem/H2_1g/h.out', program='nwchem')
+#qmOut = qtk.QMOut('data/qmout/nwchem/H2_1g/h.out', program='nwchem')
 #qmOut = qtk.QMOut('data/qmout/nwchem/H2_1g-4e/h.out', program='nwchem')
 #qmOut = qtk.QMOut('data/qmout/nwchem/H2_1a/h2.out', program='nwchem')
 #qmOut = qtk.QMOut('data/qmout/nwchem/H2_3g/h2.out', program='nwchem')
@@ -65,7 +65,7 @@ qmOut = qtk.QMOut('data/qmout/nwchem/H2_1g/h.out', program='nwchem')
 #qmOut = qtk.QMOut('data/qmout/gaussian/H2He_3g-1p/H2He.out', program='gaussian')
 #qmOut = qtk.QMOut('data/qmout/gaussian/H2_3g/H2.out', program='gaussian')
 #qmOut = qtk.QMOut('data/qmout/gaussian/H2_1s1p/H2.out', program='gaussian')
-#qmOut = qtk.QMOut('data/qmout/gaussian/H2O_aug-cc-pvdz/H2O.out', program='gaussian')
+qmOut = qtk.QMOut('data/qmout/gaussian/H2O_aug-cc-pvdz/H2O.out', program='gaussian')
 
 print len(qmOut.basis)
 for b in qmOut.basis:

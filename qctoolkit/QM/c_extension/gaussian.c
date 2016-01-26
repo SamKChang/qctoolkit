@@ -6,6 +6,11 @@
 #include <math.h>
 #include "gaussian.h"
 
+void setZero(double* smallNumber){
+  if(*smallNumber * *smallNumber < 1E-20)
+    *smallNumber = 0.0;
+}
+
 /* 2-factorial function */
 // approximation necessary for large n
 int fac2(int n){
@@ -638,6 +643,7 @@ double eeMatrix(double *center,
             Qk[s] = Q[s] - ck[s];
             Ql[s] = Q[s] - cl[s];
             PQ[s] = P[s] - Q[s];
+            setZero(&PQ[s]);
             PQ2 += PQ[s] * PQ[s];
           }
           alpha = p*q / (p+q);
@@ -796,6 +802,7 @@ double neMatrix(double *center,
           Pi[s] = P[s] - ci[s];
           Pj[s] = P[s] - cj[s];
           PQ[s] = P[s] - Q[s];
+          setZero(&PQ[s]);
           PQ2 += PQ[s] * PQ[s];
         }
         alpha = p*q / (p+q);
@@ -925,6 +932,7 @@ double nnMatrix(double *center,
       PQ2 = 0;
       for(s=0;s<3;s++){
         PQ[s] = P[s] - Q[s];
+        setZero(&PQ[s]);
         PQ2 += PQ[s] * PQ[s];
       }
       alpha = p*q / (p+q);

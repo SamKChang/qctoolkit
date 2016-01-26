@@ -246,7 +246,7 @@ static PyObject* neint(PyObject* self, PyObject* args){
   //overlap = pyvector_to_Carrayptrs(py_out2);
   //orthogonalize(overlap, center, exp, cef, ng, lm_xyz, Nao);
 
-#pragma omp parallel private(a, i, j, s) shared(data)
+#pragma omp parallel private(a, i, j, s, element) shared(data)
 {
   #pragma omp for schedule(dynamic)
   for(a=0;a<fNao;a++){

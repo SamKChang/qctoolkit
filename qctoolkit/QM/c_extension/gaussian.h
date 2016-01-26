@@ -1,3 +1,6 @@
+// set small numbers to zero for numerical stability
+void setZero(double*);
+
 // Hermite-Gaussian expansion coefficients
 double Hermite(int, int, int, double, double,
                double, double, double);
