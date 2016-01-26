@@ -1,6 +1,9 @@
 // set small numbers to zero for numerical stability
 void setZero(double*);
 
+// leading coefficient of gaussian deriative
+void setD2Cef(int, int, double, double*);
+
 // Hermite-Gaussian expansion coefficients
 double Hermite(int, int, int, double, double,
                double, double, double);
@@ -16,8 +19,8 @@ int fac2(int);
 double Norm(float, int*);
 
 // overlap = aoOverlap(center, exp, cef, ng, lm_xyz, ao, ao);
-double aoOverlap(double*, double*, double*, int*,
-                 int*, int, int, int, int, int, int, int, int);
+double aoOverlap(double*, double*, double*, int*, int*, 
+                 int, int, int, int, int, int, int, int, int);
 
 // nint = densityIntegral(center, exp, cef, ng, lm_xyz, ao, ao);
 double densityIntegral(double*, double*, double*, int*,
@@ -61,8 +64,8 @@ double vnMatrix(double*, double*, double*, double*, double*,
                 int*, int*, int, int, int);
 
 // electron wavefunction second order derivative integral
-double keMatrix(double*, double*, double*, double*, double*,
-                int*, int*, int, int, int, int);
+double keMatrix(double*, double*, double*,
+                int*, int*, int, int);
 
 // electron density first order derivative integral
 double knMatrix(double*, double*, double*, double*, double*,

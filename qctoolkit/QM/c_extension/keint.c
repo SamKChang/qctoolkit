@@ -24,18 +24,13 @@ static PyObject* keint(PyObject* self, PyObject* args){
   PyObject *dictList_fast;
   PyObject *pyStr;
   PyObject *item;
-  /* list */
-  PyObject *in_list;
-  PyObject *list_fast;
   /* numpy array */
-  PyArrayObject *in_array1, *in_array2, *in_array3;
+  PyArrayObject *in_array1, *in_array2;
   NpyIter *in_iter;
   NpyIter_IterNextFunc *in_iternext;
   /* C data type for input */
   int Ngo, Nao;
   int N, itr;
-  double *Z;
-  double *R;
   /* basis function variables */
   double **in_ptr; // address to numpy pointer
   double *center;  // gaussian center
@@ -46,18 +41,18 @@ static PyObject* keint(PyObject* self, PyObject* args){
 
   /* python output variables */
   PyObject *py_out;
-  PyObject *py_out2;
+  //PyObject *py_out2;
   double *data, *overlap;
-  int i, j;
+  double element;
+  int i, j, k, l;
+  int s, t, u, v, w;
   int mat_dim[2];
 
   /*  parse numpy array and two integers as argument */
-  if (!PyArg_ParseTuple(args, "OO!O!O!O", 
+  if (!PyArg_ParseTuple(args, "OO!O!",
                         &in_dict, 
                         &PyArray_Type, &in_array1,
-                        &PyArray_Type, &in_array2,
-                        &PyArray_Type, &in_array3,
-                        &in_list
+                        &PyArray_Type, &in_array2
                        )) return NULL;
   if(in_array1 == NULL) return NULL;
 
@@ -102,17 +97,6 @@ static PyObject* keint(PyObject* self, PyObject* args){
   Py_DECREF(dictList_fast);
   /*** end of dict_list data ***/
 
-  /*** access python list data ***/
-  list_fast = PySequence_Fast(in_list, "expected a sequence");
-  N = PySequence_Size(in_list);
-  Z = (double*) malloc(N * sizeof(double));
-  for(i=0;i<N;i++){
-    item = PySequence_Fast_GET_ITEM(list_fast, i);
-    Z[i] = PyFloat_AsDouble(item);
-  }
-  Py_DECREF(list_fast);
-  /*** end of list input data ***/
-
   /*** create the iterators, necessary to access numpy array ***/
   /* center */
   in_iter = NpyIter_New(in_array1, NPY_ITER_READONLY,
@@ -150,23 +134,6 @@ static PyObject* keint(PyObject* self, PyObject* args){
   } while(in_iternext(in_iter));
   NpyIter_Deallocate(in_iter);
 
-  /* R */
-  in_iter = NpyIter_New(in_array3, NPY_ITER_READONLY,
-                         NPY_KEEPORDER, NPY_NO_CASTING, NULL);
-  if (in_iter == NULL) goto fail;
-  in_iternext = NpyIter_GetIterNext(in_iter, NULL);
-  if (in_iternext == NULL){
-    NpyIter_Deallocate(in_iter);
-    goto fail;
-  }
-  /* interator pointer to actual numpy data */
-  in_ptr = (double **) NpyIter_GetDataPtrArray(in_iter);
-  R = (double*) malloc(3 * N * sizeof(double));
-  itr=0;
-  do {
-    R[itr++] = **in_ptr;
-  } while(in_iternext(in_iter));
-  NpyIter_Deallocate(in_iter);
   /*** end of numpy input data ***/
 
   /***** end of input data construction *****/
@@ -175,8 +142,7 @@ static PyObject* keint(PyObject* self, PyObject* args){
   /*******************
   * construct output *
   *******************/
-  mat_dim[0] = Nao;
-  mat_dim[1] = Nao;
+  for(i=0;i<2;i++) mat_dim[i] = Nao;
   py_out = (PyArrayObject*) 
            PyArray_FromDims(2, mat_dim, NPY_DOUBLE);
   data = pyvector_to_Carrayptrs(py_out);
@@ -191,15 +157,12 @@ static PyObject* keint(PyObject* self, PyObject* args){
   //overlap = pyvector_to_Carrayptrs(py_out2);
   //orthogonalize(overlap, center, exp, cef, ng, lm_xyz, Nao);
 
-#pragma omp parallel private(i, j) shared(data)
+//#pragma omp parallel private(i, j) shared(data)
 {
-  #pragma omp for schedule(dynamic)
+//  #pragma omp for schedule(dynamic)
   for(i=0;i<Nao;i++){
     for(j=i;j<Nao;j++){
-                      // NOT YET implemented
-      data[j+i*Nao] = keMatrix(R, Z, 
-                      center, exp, cef, ng, lm_xyz, 
-                      Nao, N, i, j);
+      data[j+i*Nao] = keMatrix(center, exp, cef, ng, lm_xyz, i, j);
       if(j!=i) data[i+j*Nao] = data[j+i*Nao];
     }
   }
@@ -212,9 +175,8 @@ static PyObject* keint(PyObject* self, PyObject* args){
   free(cef);
   free(ng);
   free(center);
-  free(R);
-  free(Z);
-  free(overlap);
+  free(lm_xyz);
+  //free(overlap);
 
   Py_INCREF(py_out);
   return Py_BuildValue("O", py_out);
@@ -223,12 +185,12 @@ static PyObject* keint(PyObject* self, PyObject* args){
   fail:
     Py_XDECREF(py_out);
     return NULL;
-}
+} // end of keint function
 
 /*  define functions in module */
 static PyMethodDef KEInt[] ={
   {"keint", keint, METH_VARARGS,
-      "analytic Gaussian derivative integral"},
+   "analytic Gaussian 2nd derivative integral"},
   {NULL, NULL, 0, NULL}
 };
 

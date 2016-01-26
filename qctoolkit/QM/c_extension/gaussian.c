@@ -11,6 +11,14 @@ void setZero(double* smallNumber){
     *smallNumber = 0.0;
 }
 
+void setD2Cef(int s, int lm, double exp, double* cef){
+  if (s == 2) *cef = 4 * exp * exp;
+  else if (s == 0) *cef = -2 * exp * (2 * lm + 1);
+  else if (s == -2) *cef = lm * (lm - 1);
+  else if (s == 1) *cef = -2 * exp;
+  else if (s == -1) *cef = lm;
+}
+
 /* 2-factorial function */
 // approximation necessary for large n
 int fac2(int n){
@@ -163,18 +171,21 @@ double HCcef(int t, int u, int v, int n,
 *  Overlap integral of two atomic orbitals  *
 ********************************************/
 // aoverlap = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj
-//                      t1, u1, v1, t2, v2, u2);
+//                      flag, t1, u1, v1, t2, v2, u2);
+// t1, u1, v1, t2, v2, u2 are used for kinetic energy integrals
+// it must be set to zero for normalization overlap integral
 double aoOverlap(double *center, double *exp, double *cef, 
-                 int *ng,int *lm_xyz, int aoi, int aoj, 
+                 int *ng,int *lm_xyz, int aoi, int aoj, int flag,
                  int t1, int u1, int v1, int t2, int u2, int v2){
   int ngi = ng[aoi], ngj = ng[aoj];
-  int i, j, k, lmi[3], lmj[3], i0=0, j0=0;
+  int i, j, k, lmi[3], lmj[3], i0 = 0, j0 = 0;
   double p, p2, mu, cef_out;
   double ci[3], cj[3], cij[3];
   double P[3], Pi[3], Pj[3];
   double norm;
-  double Hx, Hy, Hz, overlap = 0;
+  double Hx, Hy, Hz, overlap = 0.0;
   double *expi, *expj, *cefi, *cefj;
+  double factor;
 
   expi = (double*) malloc(ngi * sizeof(double));
   expj = (double*) malloc(ngj * sizeof(double));
@@ -184,36 +195,67 @@ double aoOverlap(double *center, double *exp, double *cef,
 	for(i=0;i<aoi;i++) i0 += ng[i];
   for(j=0;j<aoj;j++) j0 += ng[j];
   for(k=0;k<3;k++){
-    lmi[k] = lm_xyz[k+aoi*3];
-    lmj[k] = lm_xyz[k+aoj*3];
-    ci[k] = center[k+aoi*3];
-    cj[k] = center[k+aoj*3];
+    lmi[k] = lm_xyz[k + aoi * 3];
+    lmj[k] = lm_xyz[k + aoj * 3];
+    ci[k] = center[k + aoi * 3];
+    cj[k] = center[k + aoj * 3];
     cij[k] = ci[k] - cj[k];
   }
 
-  for(i=0;i<ngi;i++){
-    expi[i] = exp[i0+i];
-    cefi[i] = cef[i0+i];
-    for(j=0;j<ngj;j++){
-      expj[j] = exp[j0+j];
-      cefj[j] = cef[j0+j];
-      cef_out = cefi[i]*cefj[j];
+  for(i = 0; i < ngi; i++){
+    expi[i] = exp[i0 + i];
+    cefi[i] = cef[i0 + i];
+    for(j = 0; j < ngj; j++){
+      expj[j] = exp[j0 + j];
+      cefj[j] = cef[j0 + j];
+      cef_out = cefi[i] * cefj[j];
       norm = Norm(expi[i], lmi) * Norm(expj[j], lmj);
       p = expi[i] + expj[j];
       p2 = 2*p;
-      mu = expi[i]*expj[j] / p;
-      for(k=0;k<3;k++){
-        P[k] = (expi[i]*ci[k] + expj[j]*cj[k])/p;
+      mu = expi[i] * expj[j] / p;
+      for(k = 0; k < 3; k++){
+        P[k] = (expi[i] * ci[k] + expj[j] * cj[k]) / p;
         Pi[k] = P[k] - ci[k];
         Pj[k] = P[k] - cj[k];
       }
-      Hx = Hermite(lmi[0], lmj[0], 0, p2, mu, 
+      Hx = Hermite(lmi[0] + t1, lmj[0] + t2, 0, p2, mu, 
                    cij[0], Pi[0], Pj[0]);
-      Hy = Hermite(lmi[1], lmj[1], 0, p2, mu, 
+      Hy = Hermite(lmi[1] + u1, lmj[1] + u2, 0, p2, mu, 
                    cij[1], Pi[1], Pj[1]);
-      Hz = Hermite(lmi[2], lmj[2], 0, p2, mu, 
+      Hz = Hermite(lmi[2] + v1, lmj[2] + v2, 0, p2, mu, 
                    cij[2], Pi[2], Pj[2]);
-      overlap += cef_out * norm * Hx*Hy*Hz * pow(M_PI/p, 1.5);
+      factor = cef_out * norm * Hx*Hy*Hz * pow(M_PI/p, 1.5);
+
+      if (flag != 0){
+        // case: flag==1, derivative on second term
+        if (flag == 1){
+          double cx = 1.0, cy = 1.0, cz = 1.0;
+          setD2Cef(t2, lmj[0], expj[j], &cx);
+          setD2Cef(u2, lmj[1], expj[j], &cy);
+          setD2Cef(v2, lmj[2], expj[j], &cz);
+          printf("(%d %d %d), (%d %d %d) %e: %e %e %e %e\n", 
+                 t2, u2, v2, lmj[0], lmj[1], lmj[2], expj[j],
+                 cx, cy, cz, overlap);
+          factor *= cx * cy * cz;
+        } else if (flag == 2) {
+          double cx1 = 1.0, cy1 = 1.0, cz1 = 1.0;
+          double cx2 = 1.0, cy2 = 1.0, cz2 = 1.0;
+          setD2Cef(t1, lmi[0], expi[i], &cx1);
+          setD2Cef(u1, lmi[1], expi[i], &cy1);
+          setD2Cef(v1, lmi[2], expi[i], &cz1);
+          setD2Cef(t2, lmj[0], expj[j], &cx2);
+          setD2Cef(u2, lmj[1], expj[j], &cy2);
+          setD2Cef(v2, lmj[2], expj[j], &cz2);
+          factor *= cx1 * cx2 * cy1 * cy2 * cz1 * cz2;
+        } else if (flag == 3) {
+          double cx = 1.0, cy = 1.0, cz = 1.0;
+          setD2Cef(t1, lmi[0], expi[i], &cx);
+          setD2Cef(u1, lmi[1], expi[i], &cy);
+          setD2Cef(v1, lmi[2], expi[i], &cz);
+          factor *= cx * cy * cz;
+        }
+      }
+      overlap += factor;
     }
   }
 
@@ -236,7 +278,7 @@ void renormalize(double *center, double *exp, double *cef,
 
   for(ao=0;ao<Nao;ao++){
     overlap = aoOverlap(center, exp, cef, ng, lm_xyz, 
-                        ao, ao, 0, 0, 0, 0, 0, 0);
+                        ao, ao, 0, 0, 0, 0, 0, 0, 0);
     for(i=ngo;i<ngo+ng[ao];i++){
       cef[i] /= sqrt(overlap);
     }
@@ -316,7 +358,7 @@ void densityRenormalize(double *center, double *exp, double *cef,
 //    for(j=0;j<Nao;j++){
 //      overlap[j+i*Nao] = aoOverlap(center, exp, cef, 
 //                                   ng, lm_xyz, i, j,
-//                                   0, 0, 0, 0, 0, 0);
+//                                   0, 0, 0, 0, 0, 0, 0);
 //      if(pow(overlap[j+i*Nao],2) > 0){
 //        printf("S(%d, %d) = %10.8f\n", i+1, j+1, overlap[j+i*Nao]);
 //      }
@@ -990,98 +1032,148 @@ double nnMatrix(double *center,
 ******************************************************/
 //keMatrix(R, Z, center, exp, cef, ng, 
 //         lm_xyz, Nao, N, i, j);
-double keMatrix(double *R,      //all the rest are input
-                double *Z, 
-                double *center,
+double keMatrix(double *center,
                 double *exp,
                 double *cef,
                 int *ng,
                 int *lm_xyz,
-                int Nao,
-                int N,
                 int aoi,
-                int aoj 
-             ){  
+                int aoj){
 
-  /* input related variables */
-  int i, j, k, i0 = 0, j0 = 0, I;
-  double ci[3], cj[3];
-  int lmi[3], lmj[3];
-  int ngi = ng[aoi], ngj = ng[aoj];
-  double *expi, *expj, *cefi, *cefj;
-  expi = (double*) malloc(ngi * sizeof(double));
-  expj = (double*) malloc(ngj * sizeof(double));
-  cefi = (double*) malloc(ngi * sizeof(double));
-  cefj = (double*) malloc(ngj * sizeof(double));
+  double element_ij = 0, tmp;
+  printf("KE[%d %d]:\n", aoi, aoj);
 
-  /* gaussian integral variables */
-  double cI[3], cij[3], P[3], Pi[3], Pj[3], PI[3], PI2;
-  int lmij[3];
-  int t, u, v;
-  double p, p2, mu, ZI, x, HC_cef, Ni, Nj, Nij;
-  double Hx, Hy, Hz, num, element_ij = 0;
+//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj,
+//                  2, 1, 0, 0, 1, 0, 0);
+//  element_ij += tmp;
+//  printf("x1: %e %e\n", tmp, element_ij);
+//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj,
+//                  2, 1, 0, 0, -1, 0, 0);
+//  element_ij += tmp;
+//  printf("x2: %e %e\n", tmp, element_ij);
+//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj,
+//                  2, -1, 0, 0, 1, 0, 0);
+//  element_ij += tmp;
+//  printf("x3: %e %e\n", tmp, element_ij);
+//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj,
+//                  2, -1, 0, 0, -1, 0, 0);
+//  element_ij += tmp;
+//  printf("x4: %e %e\n", tmp, element_ij);
+//
+//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj,
+//                  2, 0, 1, 0, 0, 1, 0);
+//  element_ij += tmp;
+//  printf("y1: %e %e\n", tmp, element_ij);
+//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj,
+//                  2, 0, 1, 0, 0, -1, 0);
+//  element_ij += tmp;
+//  printf("y2: %e %e\n", tmp, element_ij);
+//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj,
+//                  2, 0, -1, 0, 0, 1, 0);
+//  element_ij += tmp;
+//  printf("y3: %e %e\n", tmp, element_ij);
+//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj,
+//                  2, 0, -1, 0, 0, -1, 0);
+//  element_ij += tmp;
+//  printf("y4: %e %e\n", tmp, element_ij);
+//
+//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj,
+//                  2, 0, 0, 1, 0, 0, 1);
+//  element_ij += tmp;
+//  printf("z1: %e %e\n", tmp, element_ij);
+//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj,
+//                  2, 0, 0, 1, 0, 0, -1);
+//  element_ij += tmp;
+//  printf("z2: %e %e\n", tmp, element_ij);
+//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj,
+//                  2, 0, 0, -1, 0, 0, 1);
+//  element_ij += tmp;
+//  printf("z3: %e %e\n", tmp, element_ij);
+//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj,
+//                  2, 0, 0, -1, 0, 0, -1);
+//  element_ij += tmp;
+//  printf("z4: %e %e\n", tmp, element_ij);
+//  element_ij = -element_ij;
 
-  for(i=0;i<aoi;i++) i0 += ng[i];
-  for(j=0;j<aoj;j++) j0 += ng[j];
-  for(k=0;k<3;k++){
-    lmi[k] = lm_xyz[k + 3*aoi];
-    lmj[k] = lm_xyz[k + 3*aoj];
-    lmij[k] = lmi[k] + lmj[k];
-    ci[k] = center[k + 3*aoi];
-    cj[k] = center[k + 3*aoj];
-    cij[k] = ci[k] - cj[k];
-  }
-  for(i=0;i<ngi;i++){
-    expi[i] = exp[i0+i];
-    cefi[i] = cef[i0+i];
-    for(j=0;j<ngj;j++){
-      expj[j] = exp[j0+j];
-      cefj[j] = cef[j0+j];
-      p = expi[i] + expj[j];
-      p2 = 2*p;
-      mu = expi[i] * expj[j] / p;
-      Ni = cefi[i] * Norm(expi[i], lmi);
-      Nj = cefj[j] * Norm(expj[j], lmj);
-      Nij = Ni * Nj;
-      for(k=0;k<3;k++){
-        P[k] = (expi[i]*ci[k] + expj[j]*cj[k])/p;
-        Pi[k] = P[k] - ci[k];
-        Pj[k] = P[k] - cj[k];
-      }
-      for(I=0;I<N;I++){
-        PI2 = 0;
-        for(k=0;k<3;k++){
-          cI[k] = R[k+3*I];
-          PI[k] = P[k] - cI[k];
-          PI2 += PI[k] * PI[k];
-        }
-        ZI = Z[I];
-        x = p*PI2;
+  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
+                  1, 0, 0, 0, 2, 0, 0);
+  element_ij += tmp;
+  printf("x1: %e %e\n", tmp, element_ij);
+  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
+                  1, 0, 0, 0, 0, 0, 0);
+  element_ij += tmp;
+  printf("x2: %e %e\n", tmp, element_ij);
+  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
+                  1, 0, 0, 0, -2, 0, 0);
+  element_ij += tmp;
+  printf("x3: %e %e\n", tmp, element_ij);
 
-        for(t=0;t<lmij[0]+1;t++){
-          Hx = Hermite(lmi[0], lmj[0], t, p2, mu,
-                       cij[0], Pi[0], Pj[0]);
-          for(u=0;u<lmij[1]+1;u++){
-            Hy = Hermite(lmi[1], lmj[1], u, p2, mu,
-                         cij[1], Pi[1], Pj[1]);
-            for(v=0;v<lmij[2]+1;v++){
-              Hz = Hermite(lmi[2], lmj[2], v, p2, mu,
-                           cij[2], Pi[2], Pj[2]);
-              HC_cef = HCcef(t, u, v, 0, PI, p2, x);
-              num = ZI*(Nij*Hx*Hy*Hz*HC_cef);
-              element_ij -= num*(2*M_PI/p);
-            }
-          }
-        }
-      }
-    }
-  }
+  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
+                  1, 0, 0, 0, 0, 2, 0);
+  element_ij += tmp;
+  printf("y1: %e %e\n", tmp, element_ij);
+  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
+                  1, 0, 0, 0, 0, 0, 0);
+  element_ij += tmp;
+  printf("y2: %e %e\n", tmp, element_ij);
+  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
+                   1, 0, 0, 0, 0, -2, 0);
+  element_ij += tmp;
+  printf("y3: %e %e\n", tmp, element_ij);
 
-  free(expi);
-  free(expj);
-  free(cefi);
-  free(cefj);
-  return element_ij;
+  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
+                  1, 0, 0, 0, 0, 0, 2);
+  element_ij += tmp;
+  printf("z1: %e %e\n", tmp, element_ij);
+  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
+                  1, 0, 0, 0, 0, 0, 0);
+  element_ij += tmp;
+  printf("z2: %e %e\n", tmp, element_ij);
+  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
+                  1, 0, 0, 0, 0, 0, -2);
+  element_ij += tmp;
+  printf("z3: %e %e\n", tmp, element_ij);
+
+//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
+//                  3, 2, 0, 0, 0, 0, 0);
+//  element_ij += tmp;
+//  printf("x1: %e %e\n", tmp, element_ij);
+//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
+//                  3, 0, 0, 0, 0, 0, 0);
+//  element_ij += tmp;
+//  printf("x2: %e %e\n", tmp, element_ij);
+//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
+//                  3, -2, 0, 0, 0, 0, 0);
+//  element_ij += tmp;
+//  printf("x3: %e %e\n", tmp, element_ij);
+//
+//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
+//                  3, 0, 2, 0, 0, 0, 0);
+//  element_ij += tmp;
+//  printf("y1: %e %e\n", tmp, element_ij);
+//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
+//                  3, 0, 0, 0, 0, 0, 0);
+//  element_ij += tmp;
+//  printf("y2: %e %e\n", tmp, element_ij);
+//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
+//                   3, 0, -2, 0, 0, 0, 0);
+//  element_ij += tmp;
+//  printf("y3: %e %e\n", tmp, element_ij);
+//
+//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
+//                  3, 0, 0, 2, 0, 0, 0);
+//  element_ij += tmp;
+//  printf("z1: %e %e\n", tmp, element_ij);
+//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
+//                  3, 0, 0, 0, 0, 0, 0);
+//  element_ij += tmp;
+//  printf("z2: %e %e\n", tmp, element_ij);
+//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
+//                  3, 0, 0, -2, 0, 0, 0);
+//  element_ij += tmp;
+//  printf("z3: %e %e\n", tmp, element_ij);
+
+  return -0.5*element_ij;
 }
 
 /*******************************************************
