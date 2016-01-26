@@ -169,8 +169,12 @@ class out(AtomicBasisOutput):
       flagStr = filter(lambda x: flag in x, fchk)[0]
       n_entry = int(filter(None, flagStr.split(' '))[-1])
       ind = fchk.index(flagStr) + 1
-      n_lines = n_entry / 5 + 1
-      if not n_entry % 5: n_lines = n_lines - 1
+      if type is float:
+        factor = 5
+      elif type is int:
+        factor = 6
+      n_lines = n_entry / factor + 1
+      if not n_entry % factor: n_lines = n_lines - 1
       data = []
       for i in range(ind, ind + n_lines):
         dList = list(np.array(filter(None, 
