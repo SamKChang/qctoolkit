@@ -41,3 +41,4 @@ print "Coulomb (exact): ",
 print sum(Eee)
 
 print d
+print path[0]

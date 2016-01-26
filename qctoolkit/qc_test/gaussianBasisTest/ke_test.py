@@ -18,3 +18,5 @@ print ke
 
 D = dm(qmOut)
 print np.trace(np.dot(D, ke))
+
+print path[0]

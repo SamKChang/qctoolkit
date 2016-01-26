@@ -17,3 +17,4 @@ from data import *
 nn = nnMatrix(qmOut.basis)
 print nn
 print nn.shape
+print path[0]

@@ -60,3 +60,4 @@ print aoV.shape
 #print np.dot(X.T,X)
 #print 1/U
 #print U
+print path[0]

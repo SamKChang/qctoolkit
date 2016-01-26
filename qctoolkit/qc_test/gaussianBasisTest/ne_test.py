@@ -24,3 +24,4 @@ print ne.shape
 mo_matrix = td(
   np.atleast_2d(mo[0,:]), np.atleast_2d(mo[0,:]), 
   axes=(1,1))
+print path[0]

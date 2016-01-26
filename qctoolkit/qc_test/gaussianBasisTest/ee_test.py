@@ -25,3 +25,4 @@ out = td(mo, out, axes=(1,3))
 Eee = [out[a,a,b,b] for a in range(occ) for b in range(occ)]
 print "tensordot: ",
 print sum(Eee)
+print path[0]

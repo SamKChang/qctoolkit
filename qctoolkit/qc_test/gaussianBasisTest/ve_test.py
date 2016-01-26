@@ -61,3 +61,5 @@ print np.dot(np.diag(moV), qmOut.occupation)
 #print np.dot(X.T,X)
 #print 1/U
 #print U
+
+print path[0]
