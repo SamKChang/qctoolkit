@@ -1,0 +1,18 @@
+# This is an NWChem movecs file translated by mov2asc
+fa75ea84c9703ff487f8a705b271e6d9
+8757f06ee8d1481cd309804baebbe481
+                                
+scf                 
+Tue Jan 26 21:50:57 2016  
+scf                 
+         1
+ 
+         8
+ao basis
+         1
+         1
+         1
+    0.200000000000000E+01
+    0.781953715886300E+00
+    0.100000000000000E+01
+    0.554654422964099E+00    0.000000000000000E+00

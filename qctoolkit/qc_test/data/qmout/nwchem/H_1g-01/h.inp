@@ -1,0 +1,19 @@
+start h
+
+geometry
+ h 0 0 0
+ symmetry c1
+end
+
+basis 
+ hydrogen s
+  0.1   1.0
+end
+charge -1
+
+scf
+ singlet
+ print "kinetic"
+end
+
+task scf energy

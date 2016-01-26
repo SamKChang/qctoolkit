@@ -3,7 +3,11 @@
 import qctoolkit as qtk
 
 #path=['../data/qmout/nwchem/H_1g/h.out', 'nwchem']
+#path=['../data/qmout/nwchem/H_1g-01/h.out', 'nwchem']
+#path=['../data/qmout/nwchem/H_1g-045/h.out', 'nwchem']
+#path=['../data/qmout/nwchem/H_1g-08/h.out', 'nwchem']
 path=['../data/qmout/nwchem/H_2g/h.out', 'nwchem']
+#path=['../data/qmout/nwchem/H_2g-rev/h.out', 'nwchem']
 #path=['../data/qmout/nwchem/H_1a/h.out', 'nwchem']
 #path=['../data/qmout/nwchem/H_3g/h.out', 'nwchem']
 #path=['../data/qmout/nwchem/H_1p/h.out', 'nwchem']
