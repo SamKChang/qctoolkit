@@ -6,6 +6,7 @@ from eeint import eeint
 from neint import neint
 from nnint import nnint
 from vnint import vnint
+from keint import keint
 import numpy as np
 from numpy import tensordot as td
 
@@ -43,12 +44,15 @@ def neMatrix(basis, fit_basis=None):
   return neint(basis_data, center, lm, fbasis_data, fcenter, flm)
 
 def densityMatrix(qmout):
+  """
+  density matrix for closed shell system
+  """
   psi_basis = qmout.basis
   occ = [i for i in range(qmout.n_ao)
          if qmout.occupation[i]==2][-1] + 1
   mo = qmout.mo_vectors
   mo_occ = mo[0:occ, :]
-  return np.dot(mo_occ.T, mo_occ)
+  return 2*np.dot(mo_occ.T, mo_occ)
   
 
 def densityFitting(qmout, rho_basis=None):
