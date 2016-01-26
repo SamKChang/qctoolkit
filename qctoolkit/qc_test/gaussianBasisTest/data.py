@@ -59,6 +59,7 @@ path=['../data/qmout/nwchem/H_2g/h.out', 'nwchem']
 #path=['../data/qmout/gaussian/H2_3g/H2.out', 'gaussian']
 #path=['../data/qmout/gaussian/H2_1s1p/H2.out', 'gaussian']
 #path=['../data/qmout/gaussian/H2O_aug-cc-pvdz/H2O.out', 'gaussian']
+#path=['../data/qmout/gaussian/OOFCl/OOFCl_0.log', 'gaussian']
 
 qmOut = qtk.QMOut(path[0], program=path[1])
 occ = [i for i in range(qmOut.n_ao) if qmOut.occupation[i]==2][-1] + 1

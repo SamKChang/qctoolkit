@@ -40,5 +40,8 @@ Eee = [out[a,a,b,b] for a in range(occ) for b in range(occ)]
 print "Coulomb (exact): ",
 print sum(Eee)
 
+print "trace of density matrix"
+print np.trace(D_matrix)
+
 print d
 print path[0]

@@ -38,7 +38,7 @@
 
     hostname        = R700
     program         = nwchem
-    date            = Sun Nov 29 07:35:22 2015
+    date            = Tue Jan 26 16:37:40 2016
 
     compiled        = Thu_Oct_22_13:27:42_2015
     source          = /home/samio/src/quantumChemistry/nwchem-6.6
@@ -158,8 +158,18 @@
  hydrogen                user specified              2        4   1s1p
 
 
+ ====================================
+ Begin kinetic 1-e integrals
+ ====================================
+1eke          1   H  s     1   H  s           0.75000000
+1eke          2   H  p     2   H  p           0.50000000
+1eke          3   H  p     3   H  p           0.50000000
+1eke          4   H  p     4   H  p           0.50000000
+ ====================================
+ End kinetic 1-e integrals
+ ====================================
 
- Forming initial guess at       0.1s
+ Forming initial guess at       0.0s
 
 
       Superposition of Atomic Density Guess
@@ -179,7 +189,7 @@
  LUMO         =       0.896419
 
 
- Starting SCF solution at       0.1s
+ Starting SCF solution at       0.0s
 
 
 
@@ -197,7 +207,7 @@
 
  Integral file          = ./h.aoints.0
  Record size in doubles =  65536        No. of integs per rec  =  43688
- Max. records in memory =      2        Max. records in file   =  29882
+ Max. records in memory =      2        Max. records in file   =  12666
  No. of bits per label  =      8        No. of bits per value  =     64
 
 

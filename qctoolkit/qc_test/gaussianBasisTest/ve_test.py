@@ -31,8 +31,8 @@ from data import *
 
 ##print nwOut.Z
 aoV = veMatrix(qmOut.basis, qmOut.R, qmOut.Z)
-moV = np.dot(qmOut.mo_vectors,np.dot(aoV, qmOut.mo_vectors.T))
-print aoV
+#moV = np.dot(qmOut.mo_vectors,np.dot(aoV, qmOut.mo_vectors.T))
+print aoV.shape
 #aoVx = np.dot(X.T, np.dot(aoV, X))
 #moVx = np.dot(nwOut.mo_vectors,np.dot(aoVx, nwOut.mo_vectors.T))
 #

@@ -14,9 +14,12 @@ for b in qmOut.basis:
   print b
 
 ke = keMatrix(qmOut.basis)
+print "kinetic energy matrix"
 print ke
 
 D = dm(qmOut)
+print "density matrix"
+print D
 print np.trace(np.dot(D, ke))
 
 print path[0]
