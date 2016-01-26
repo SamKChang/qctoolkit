@@ -157,9 +157,11 @@ double HCcef(int t, int u, int v, int n,
 /********************************************
 *  Overlap integral of two atomic orbitals  *
 ********************************************/
-// aoverlap = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj);
-double aoOverlap(double *center, double *exp, double *cef, int *ng,
-                 int *lm_xyz, int aoi, int aoj){
+// aoverlap = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj
+//                      t1, u1, v1, t2, v2, u2);
+double aoOverlap(double *center, double *exp, double *cef, 
+                 int *ng,int *lm_xyz, int aoi, int aoj, 
+                 int t1, int u1, int v1, int t2, int u2, int v2){
   int ngi = ng[aoi], ngj = ng[aoj];
   int i, j, k, lmi[3], lmj[3], i0=0, j0=0;
   double p, p2, mu, cef_out;
@@ -228,7 +230,8 @@ void renormalize(double *center, double *exp, double *cef,
   double overlap;
 
   for(ao=0;ao<Nao;ao++){
-    overlap = aoOverlap(center, exp, cef, ng, lm_xyz, ao, ao);
+    overlap = aoOverlap(center, exp, cef, ng, lm_xyz, 
+                        ao, ao, 0, 0, 0, 0, 0, 0);
     for(i=ngo;i<ngo+ng[ao];i++){
       cef[i] /= sqrt(overlap);
     }
@@ -307,7 +310,8 @@ void densityRenormalize(double *center, double *exp, double *cef,
 //  for(i=0;i<Nao;i++){
 //    for(j=0;j<Nao;j++){
 //      overlap[j+i*Nao] = aoOverlap(center, exp, cef, 
-//                                   ng, lm_xyz, i, j);
+//                                   ng, lm_xyz, i, j,
+//                                   0, 0, 0, 0, 0, 0);
 //      if(pow(overlap[j+i*Nao],2) > 0){
 //        printf("S(%d, %d) = %10.8f\n", i+1, j+1, overlap[j+i*Nao]);
 //      }

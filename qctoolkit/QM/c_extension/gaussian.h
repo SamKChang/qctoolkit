@@ -14,7 +14,7 @@ double Norm(float, int*);
 
 // overlap = aoOverlap(center, exp, cef, ng, lm_xyz, ao, ao);
 double aoOverlap(double*, double*, double*, int*,
-                 int*, int, int);
+                 int*, int, int, int, int, int, int, int, int);
 
 // nint = densityIntegral(center, exp, cef, ng, lm_xyz, ao, ao);
 double densityIntegral(double*, double*, double*, int*,
