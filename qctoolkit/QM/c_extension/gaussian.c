@@ -227,47 +227,15 @@ double aoOverlap(double *center, double *exp, double *cef,
       factor = cef_out * norm * Hx*Hy*Hz * pow(M_PI/p, 1.5);
 
       if (flag != 0){
-        printf("(%d %d %d) ", t2, u2, v2);
         double cx = 1.0, cy = 1.0, cz = 1.0;       
         if(flag == 1){
           setD2Cef(t2, lmj[0], expj[j], &cx);
-          printf("%d %d %e %e %e\n", t2, lmj[0], expj[j], cx, factor);
         } else if(flag == 2) {
           setD2Cef(u2, lmj[1], expj[j], &cy);
-          printf("%d %d %e %e %e yo\n", u2, lmj[1], expj[j], cy, factor);
         } else if(flag == 3) {
           setD2Cef(v2, lmj[2], expj[j], &cz);
-          printf("%d %d %e %e %e yo yo\n", v2, lmj[2], expj[j], cz, factor);
-//        // case: flag==1, derivative on second term
-//        if (flag == 1){
-//          double cx = 1.0, cy = 1.0, cz = 1.0;
-//          setD2Cef(t2, lmj[0], expj[j], &cx);
-//          printf("%d %d %e %e\n", t2, lmj[0], expj[j], cx);
-//          setD2Cef(u2, lmj[1], expj[j], &cy);
-//          printf("%d %d %e %e\n", u2, lmj[1], expj[j], cy);
-//          setD2Cef(v2, lmj[2], expj[j], &cz);
-//          printf("%d %d %e %e\n", v2, lmj[2], expj[j], cz);
-//          factor *= cx * cy * cz;
-//        } else if (flag == 2) {
-//          double cx1 = 1.0, cy1 = 1.0, cz1 = 1.0;
-//          double cx2 = 1.0, cy2 = 1.0, cz2 = 1.0;
-//          setD2Cef(t1, lmi[0], expi[i], &cx1);
-//          setD2Cef(u1, lmi[1], expi[i], &cy1);
-//          setD2Cef(v1, lmi[2], expi[i], &cz1);
-//          setD2Cef(t2, lmj[0], expj[j], &cx2);
-//          setD2Cef(u2, lmj[1], expj[j], &cy2);
-//          setD2Cef(v2, lmj[2], expj[j], &cz2);
-//          factor *= cx1 * cx2 * cy1 * cy2 * cz1 * cz2;
-//        } else if (flag == 3) {
-//          double cx = 1.0, cy = 1.0, cz = 1.0;
-//          setD2Cef(t1, lmi[0], expi[i], &cx);
-//          setD2Cef(u1, lmi[1], expi[i], &cy);
-//          setD2Cef(v1, lmi[2], expi[i], &cz);
-//          factor *= cx * cy * cz;
         }
-        printf(" before: %e, after ", factor);
         factor *= cx * cy * cz;
-        printf("%e\n", factor);
       }
       overlap += factor;
     }
@@ -1054,139 +1022,25 @@ double keMatrix(double *center,
                 int aoi,
                 int aoj){
 
-  double element_ij = 0, tmp;
-  printf("KE[%d %d]:\n", aoi, aoj);
-
-//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj,
-//                  2, 1, 0, 0, 1, 0, 0);
-//  element_ij += tmp;
-//  printf("x1: %e %e\n", tmp, element_ij);
-//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj,
-//                  2, 1, 0, 0, -1, 0, 0);
-//  element_ij += tmp;
-//  printf("x2: %e %e\n", tmp, element_ij);
-//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj,
-//                  2, -1, 0, 0, 1, 0, 0);
-//  element_ij += tmp;
-//  printf("x3: %e %e\n", tmp, element_ij);
-//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj,
-//                  2, -1, 0, 0, -1, 0, 0);
-//  element_ij += tmp;
-//  printf("x4: %e %e\n", tmp, element_ij);
-//
-//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj,
-//                  2, 0, 1, 0, 0, 1, 0);
-//  element_ij += tmp;
-//  printf("y1: %e %e\n", tmp, element_ij);
-//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj,
-//                  2, 0, 1, 0, 0, -1, 0);
-//  element_ij += tmp;
-//  printf("y2: %e %e\n", tmp, element_ij);
-//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj,
-//                  2, 0, -1, 0, 0, 1, 0);
-//  element_ij += tmp;
-//  printf("y3: %e %e\n", tmp, element_ij);
-//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj,
-//                  2, 0, -1, 0, 0, -1, 0);
-//  element_ij += tmp;
-//  printf("y4: %e %e\n", tmp, element_ij);
-//
-//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj,
-//                  2, 0, 0, 1, 0, 0, 1);
-//  element_ij += tmp;
-//  printf("z1: %e %e\n", tmp, element_ij);
-//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj,
-//                  2, 0, 0, 1, 0, 0, -1);
-//  element_ij += tmp;
-//  printf("z2: %e %e\n", tmp, element_ij);
-//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj,
-//                  2, 0, 0, -1, 0, 0, 1);
-//  element_ij += tmp;
-//  printf("z3: %e %e\n", tmp, element_ij);
-//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj,
-//                  2, 0, 0, -1, 0, 0, -1);
-//  element_ij += tmp;
-//  printf("z4: %e %e\n", tmp, element_ij);
-//  element_ij = -element_ij;
-
-  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
-                  1, 0, 0, 0, 2, 0, 0);
-  element_ij += tmp;
-  printf("x1: %e %e\n", tmp, element_ij);
-  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
-                  1, 0, 0, 0, 0, 0, 0);
-  element_ij += tmp;
-  printf("x2: %e %e\n", tmp, element_ij);
-  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
-                  1, 0, 0, 0, -2, 0, 0);
-  element_ij += tmp;
-  printf("x3: %e %e\n", tmp, element_ij);
-
-  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
-                  2, 0, 0, 0, 0, 2, 0);
-  element_ij += tmp;
-  printf("y1: %e %e\n", tmp, element_ij);
-  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
-                  2, 0, 0, 0, 0, 0, 0);
-  element_ij += tmp;
-  printf("y2: %e %e\n", tmp, element_ij);
-  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
-                  2, 0, 0, 0, 0, -2, 0);
-  element_ij += tmp;
-  printf("y3: %e %e\n", tmp, element_ij);
-
-  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
-                  3, 0, 0, 0, 0, 0, 2);
-  element_ij += tmp;
-  printf("z1: %e %e\n", tmp, element_ij);
-  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
-                  3, 0, 0, 0, 0, 0, 0);
-  element_ij += tmp;
-  printf("z2: %e %e\n", tmp, element_ij);
-  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
-                  3, 0, 0, 0, 0, 0, -2);
-  element_ij += tmp;
-  printf("z3: %e %e\n", tmp, element_ij);
-
-//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
-//                  3, 2, 0, 0, 0, 0, 0);
-//  element_ij += tmp;
-//  printf("x1: %e %e\n", tmp, element_ij);
-//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
-//                  3, 0, 0, 0, 0, 0, 0);
-//  element_ij += tmp;
-//  printf("x2: %e %e\n", tmp, element_ij);
-//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
-//                  3, -2, 0, 0, 0, 0, 0);
-//  element_ij += tmp;
-//  printf("x3: %e %e\n", tmp, element_ij);
-//
-//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
-//                  3, 0, 2, 0, 0, 0, 0);
-//  element_ij += tmp;
-//  printf("y1: %e %e\n", tmp, element_ij);
-//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
-//                  3, 0, 0, 0, 0, 0, 0);
-//  element_ij += tmp;
-//  printf("y2: %e %e\n", tmp, element_ij);
-//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
-//                   3, 0, -2, 0, 0, 0, 0);
-//  element_ij += tmp;
-//  printf("y3: %e %e\n", tmp, element_ij);
-//
-//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
-//                  3, 0, 0, 2, 0, 0, 0);
-//  element_ij += tmp;
-//  printf("z1: %e %e\n", tmp, element_ij);
-//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
-//                  3, 0, 0, 0, 0, 0, 0);
-//  element_ij += tmp;
-//  printf("z2: %e %e\n", tmp, element_ij);
-//  tmp = aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
-//                  3, 0, 0, -2, 0, 0, 0);
-//  element_ij += tmp;
-//  printf("z3: %e %e\n", tmp, element_ij);
-
+  double element_ij = 0;
+  element_ij += aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
+                          1, 0, 0, 0, 2, 0, 0);
+  element_ij += aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
+                          1, 0, 0, 0, 0, 0, 0);
+  element_ij += aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
+                          1, 0, 0, 0, -2, 0, 0);
+  element_ij += aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
+                          2, 0, 0, 0, 0, 2, 0);
+  element_ij += aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
+                          2, 0, 0, 0, 0, 0, 0);
+  element_ij += aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
+                          2, 0, 0, 0, 0, -2, 0);
+  element_ij += aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
+                          3, 0, 0, 0, 0, 0, 2);
+  element_ij += aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
+                          3, 0, 0, 0, 0, 0, 0);
+  element_ij += aoOverlap(center, exp, cef, ng, lm_xyz, aoi, aoj, 
+                          3, 0, 0, 0, 0, 0, -2);
   return -0.5*element_ij;
 }
 
