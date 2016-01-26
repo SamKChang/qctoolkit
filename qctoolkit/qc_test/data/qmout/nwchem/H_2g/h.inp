@@ -14,6 +14,7 @@ end
 charge -1
 scf
  singlet
+ print "kinetic"
 end
 
 task scf energy

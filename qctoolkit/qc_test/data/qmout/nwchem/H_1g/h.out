@@ -38,7 +38,7 @@
 
     hostname        = R700
     program         = nwchem
-    date            = Sun Nov 29 09:57:17 2015
+    date            = Tue Jan 26 14:29:18 2016
 
     compiled        = Thu_Oct_22_13:27:42_2015
     source          = /home/samio/src/quantumChemistry/nwchem-6.6
@@ -156,6 +156,13 @@
  hydrogen                user specified              1        1   1s
 
 
+ ====================================
+ Begin kinetic 1-e integrals
+ ====================================
+1eke          1   H  s     1   H  s           0.75000000
+ ====================================
+ End kinetic 1-e integrals
+ ====================================
 
  Forming initial guess at       0.0s
 
@@ -194,7 +201,7 @@
 
  Integral file          = ./h.aoints.0
  Record size in doubles =  65536        No. of integs per rec  =  43688
- Max. records in memory =      2        Max. records in file   =  29856
+ Max. records in memory =      2        Max. records in file   =  12666
  No. of bits per label  =      8        No. of bits per value  =     64
 
 
@@ -269,7 +276,7 @@
  Parallel integral file used       1 records with       0 large values
 
 
- Task  times  cpu:        0.0s     wall:        0.1s
+ Task  times  cpu:        0.0s     wall:        0.0s
  Summary of allocated global arrays
 -----------------------------------
   No active global arrays
