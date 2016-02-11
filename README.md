@@ -41,6 +41,7 @@ be obtained by the --record flag during install
 * CPMD
 * VASP
 * NWChem
+* (horton)
 
 **Required libraries**:
 * OpenMP
