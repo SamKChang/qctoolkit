@@ -174,7 +174,7 @@ class inp(PlanewaveInput):
       poscar.close()
       potcar.close()
 
-    os.chdir(cwd)
+      os.chdir(cwd)
 
 class out(PlanewaveOutput):
   """
