@@ -10,6 +10,7 @@ import periodictable as pt
 import collections
 
 class Molecule(object):
+
   # used for pymol numeration
   mol_id = 0
   def __init__(self, mol=None, **kwargs):
@@ -132,8 +133,8 @@ class Molecule(object):
     self.segments = []
     if 'quiet' not in kwargs or not kwargs['quiet']:
       qtk.report("Molecule", 
-                "finding bonds with cutoff ratio", 
-                ratio)
+                 "finding bonds with cutoff ratio", 
+                 ratio)
     def to_graph(l):
       G = networkx.Graph()
       for part in l:
@@ -236,17 +237,14 @@ class Molecule(object):
     new_mol.type_list = \
       [new_mol.type_list[i] for i in index_list]
     new_mol.string = np.array(new_mol.string)[index_list].tolist()
-    if 'check_charge' not in kwargs or kwargs['check_charge']:
-      # need to check charge
-      unpaired = new_mol.getValenceElectrons() % 2
-      if unpaired == 1:
-        if 'charge_saturation' not in kwargs:
-          print "yo! setting segments, unpaired=True, no setting"
-          new_mol.setChargeMultiplicity(-1, 1)
-        else:
-          assert type(kwargs['charge_saturation']) is int
-          charge = kwargs['charge_saturation']
-          new_mol.setChargeMultiplicity(charge, 1)
+    unpaired = new_mol.getValenceElectrons() % 2
+    if unpaired == 1:
+      if 'charge_saturation' not in kwargs:
+        new_mol.setChargeMultiplicity(-1, 1, **kwargs)
+      else:
+        assert type(kwargs['charge_saturation']) is int
+        charge = kwargs['charge_saturation']
+        new_mol.setChargeMultiplicity(charge, 1, **kwargs)
     return new_mol
 
   def getCenter(self):
@@ -639,14 +637,14 @@ class Molecule(object):
       name = ''
     out = sys.stdout if not name else open(name,"w")
     if len(self.segments) == 0:
-      self.find_bonds(quiet=True, check_charge=False)
+      self.find_bonds(quiet=True)
     print >> out, "%-10s%s" % ('COMPND', self.stoichiometry())
     print >> out, "%-10s%s" % ('AUTHOR', 'QCTOOLKIT')
     chain = 1
     itr = 1
 
     def connect(molecule, shift, connection):
-      molecule.find_bonds(quiet=True, check_charge=False)
+      molecule.find_bonds(quiet=True)
       for i in molecule.bonds.iterkeys():
         bond = molecule.bonds[i]
         ai = bond['index_begin'] + shift
@@ -713,19 +711,3 @@ class Molecule(object):
     self.Z = np.array(Z)
 
     inp.close()
-
-#def test_molecule_IO():
-#  import glob
-#  path = os.path.realpath(__file__)
-#  path = re.sub('[a-zA-Z0-9\.]*$', '', path)
-#  mol_list = glob.glob(path + 'data/unittest/molecule/*')
-#  assert len(mol_list) > 0
-#  mols = []
-#  for mol_file in mol_list:
-#    mols.append(Molecule(mol_file))
-#  assert len(mol_list) == len(mols)
-#  for mol in mols:
-#    print mol
-#    print mol.R
-#    print mol.N
-#    assert mol.N > 0
