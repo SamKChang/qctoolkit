@@ -1,14 +1,14 @@
 #!/usr/bin/python
 
 import qctoolkit as qtk
-from qctoolkit.QM.atomicbasis_io import basisData
-from qctoolkit.QM.atomicbasis_io import veMatrix
-from qctoolkit.QM.atomicbasis_io import eeMatrix
-from qctoolkit.QM.atomicbasis_io import neMatrix
-from qctoolkit.QM.atomicbasis_io import nnMatrix
-from qctoolkit.QM.atomicbasis_io import vnMatrix
-from qctoolkit.QM.atomicbasis_io import densityFitting as df
-from qctoolkit.QM.atomicbasis_io import densityMatrix as dm
+from qctoolkit.QM.gaussianbasis_io import basisData
+from qctoolkit.QM.gaussianbasis_io import veMatrix
+from qctoolkit.QM.gaussianbasis_io import eeMatrix
+from qctoolkit.QM.gaussianbasis_io import neMatrix
+from qctoolkit.QM.gaussianbasis_io import nnMatrix
+from qctoolkit.QM.gaussianbasis_io import vnMatrix
+from qctoolkit.QM.gaussianbasis_io import densityFitting as df
+from qctoolkit.QM.gaussianbasis_io import densityMatrix as dm
 from data import *
 import numpy as np
 from numpy import tensordot as td

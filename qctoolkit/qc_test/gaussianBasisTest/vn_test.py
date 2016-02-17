@@ -1,8 +1,8 @@
 #!/usr/bin/python
 
 import qctoolkit as qtk
-from qctoolkit.QM.atomicbasis_io import basisData
-from qctoolkit.QM.atomicbasis_io import vnMatrix
+from qctoolkit.QM.gaussianbasis_io import basisData
+from qctoolkit.QM.gaussianbasis_io import vnMatrix
 import numpy as np
 from data import *
 

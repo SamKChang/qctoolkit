@@ -1,14 +1,14 @@
 import qctoolkit as qtk
-from qctoolkit.QM.atomicbasis_io import AtomicBasisInput
-from qctoolkit.QM.atomicbasis_io import AtomicBasisOutput
+from qctoolkit.QM.gaussianbasis_io import GaussianBasisInput
+from qctoolkit.QM.gaussianbasis_io import GaussianBasisOutput
 import os, sys, copy, shutil, re
 import numpy as np
 import qctoolkit.QM.qmjob as qmjob
 import periodictable as pt
 
-class inp(AtomicBasisInput):
+class inp(GaussianBasisInput):
   def __init__(self, molecule, **kwargs):
-    AtomicBasisInput.__init__(self, molecule, **kwargs)
+    GaussianBasisInput.__init__(self, molecule, **kwargs)
     self.setting.update(kwargs)
 
   def run(self, name=None, **kwargs):
@@ -23,7 +23,7 @@ class inp(AtomicBasisInput):
     except:
       qtk.warning("qmjob finished unexpectedly for '" + \
                   name + "'")
-      out = AtomicBasisOutput(program='nwchem')
+      out = GaussianBasisOutput(program='nwchem')
     finally:
       os.chdir(cwd)
     return out
@@ -143,13 +143,13 @@ class inp(AtomicBasisInput):
       inp.close()
 
 
-class out(AtomicBasisOutput):
+class out(GaussianBasisOutput):
   """
   directly parse vasp xml output, 'vasprun.xml'
   converged energy, system info, and scf steps are extracted
   """
   def __init__(self, qmout=None, **kwargs):
-    AtomicBasisOutput.__init__(self, qmout, **kwargs)
+    GaussianBasisOutput.__init__(self, qmout, **kwargs)
     if qmout:
       outfile = open(qmout, 'r')
       data = outfile.readlines()
