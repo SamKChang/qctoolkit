@@ -713,3 +713,19 @@ class Molecule(object):
     self.Z = np.array(Z)
 
     inp.close()
+
+#def test_molecule_IO():
+#  import glob
+#  path = os.path.realpath(__file__)
+#  path = re.sub('[a-zA-Z0-9\.]*$', '', path)
+#  mol_list = glob.glob(path + 'data/unittest/molecule/*')
+#  assert len(mol_list) > 0
+#  mols = []
+#  for mol_file in mol_list:
+#    mols.append(Molecule(mol_file))
+#  assert len(mol_list) == len(mols)
+#  for mol in mols:
+#    print mol
+#    print mol.R
+#    print mol.N
+#    assert mol.N > 0

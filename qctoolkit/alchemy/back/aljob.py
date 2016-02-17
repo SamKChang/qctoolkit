@@ -1,5 +1,5 @@
 import qctoolkit as qtk
-import qctoolkit.QM.cpmd as cpmd
+import qctoolkit.QM.qmcode.cpmd as cpmd
 from qctoolkit.QM.qmdir import qmDir
 import subprocess as sp
 import os, re, shutil

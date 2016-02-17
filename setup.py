@@ -2,6 +2,7 @@ from setuptools import setup
 from distutils.core import Extension
 from Cython.Build import cythonize
 import numpy as np
+import glob, os
 
 # to enable openmp, use:
 #  extra_compile_args=['-fopenmp', '-fpic']
@@ -116,6 +117,11 @@ c_module = [Extension(name = "qctoolkit.ML.kernel_matrix",
               include_dirs = [np.get_include()]),
            ]
 
+data_inc=[]
+for root, sub_dir, files in os.walk('qctoolkit/data/unittest'):
+  file_list = [root + '/' + data_file for data_file in files]
+  data_inc.append((root, file_list))
+
 setup(name='qctoolkit',
   version='0.1.1',
   description='quantum chemistry tool kit',
@@ -133,6 +139,7 @@ setup(name='qctoolkit',
     'qctoolkit.projects.Basel',
     'qctoolkit.projects.Basel.p01_AlGaAs',
     'qctoolkit.data',
+    'qctoolkit.data/unittest',
     'qctoolkit.data.elements',
     'qctoolkit.data.PP',
     'qctoolkit.data.PP.cpmd',
@@ -146,7 +153,9 @@ setup(name='qctoolkit',
     'qctoolkit.properties',
   ],
   package_data={'': ['elements/elements.yml', 
-                     'data/PP/cpmd/*.psp']},
+                     'data/PP/cpmd/*.psp',
+                    ]},
+  data_files = data_inc,
   include_package_data=True,
   ext_modules = cythonize(c_module)
 )
