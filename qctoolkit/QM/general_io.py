@@ -19,23 +19,33 @@ class InpContent(object):
     self.content.append(string)
 
   def close(self):
-    if self.file_name:
-      name = self.prefix + self.name + self.suffix + self.extension
-      full_dir_path = os.path.join(self.path, self.root_dir)
-      full_path = os.path.join(full_dir_path, name)
-      if not os.path.exists(full_dir_path):
-        os.makedirs(full_dir_path)
-      if os.path.exists(full_path):
-        qtk.prompt(name + ' exists, overwrite?')
-        try:
-          os.remove(name)
-        except:
-          qtk.exit("can not remove file: " + name)
+    if self.output:
+      name = self.file_name
+      if self.prefix:
+        name = self.prefix + name
+      if self.suffix:
+        name = name + self.suffix 
+      if self.extension:
+        name = name + '.' + self.extension
+      full_dir_path = self.path
+      if self.root_dir:
+        full_dir_path = os.path.join(self.path, self.root_dir)
+      if name:
+        full_path = os.path.join(full_dir_path, name)
+        if not os.path.exists(full_dir_path):
+          os.makedirs(full_dir_path)
+        if os.path.exists(full_path):
+          qtk.prompt(name + ' exists, overwrite?')
+          try:
+            os.remove(name)
+          except:
+            qtk.exit("can not remove file: " + name)
 
-    inp = sys.stdout if not self.file_name else open(full_path, 'w')
+    inp = sys.stdout if not self.output else open(full_path, 'w')
     for string in self.content:
-      inp.write(string)
-    if self.file_name:
+      if string:
+        inp.write(string)
+    if self.output:
       inp.close()
 
 class GenericQMInput(object):
@@ -114,7 +124,10 @@ class GenericQMInput(object):
     inp = InpContent(name, **self.setting)
     molecule = copy.deepcopy(self.molecule)
     self.cm_check(molecule)
-    return inp, molecule
+    if 'no_molecule' in kwargs and kwargs['no_molecule']:
+      return inp
+    else:
+      return inp, molecule
 
 class GenericQMOutput(object):
   def __init__(self, output=None, **kwargs):

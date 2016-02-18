@@ -60,6 +60,9 @@ class inp(PlanewaveInput):
       outFile.write(' LMAX=%s\n %3d\n' % (lmax, n))
       self.pp_files.append(re.sub('\*', '', PPStr))
 
+    if name:
+      self.setting['output'] = True
+
     inp, molecule = \
       super(PlanewaveInput, self).write(name, **self.setting)
 

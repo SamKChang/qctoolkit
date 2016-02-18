@@ -29,22 +29,20 @@ class inp(PlanewaveInput):
     
   def write(self, name=None):
     molecule = copy.deepcopy(self.molecule)
-    self.cm_check(molecule)
+    self.setting['root_dir'] = name
+    self.setting['no_molecule'] = False
     if name:
-      cwd = os.getcwd()
-      if os.path.exists(name) and not qtk.setting.no_warning:
-        qtk.prompt(name + ' exists, overwrite?')
-        try:
-          shutil.rmtree(name)
-        except:
-          qtk.exit("can not remove folder: " + name)
-      os.mkdir(name)
-      os.chdir(name)
-
-    incar   = open('INCAR',  'w') if name else sys.stdout
-    kpoints = open('KPOINTS','w') if name else sys.stdout
-    poscar  = open('POSCAR', 'w') if name else sys.stdout
-    potcar  = open('POTCAR', 'w') if name else sys.stdout
+      self.setting['output'] = True
+      name = os.path.splitext(name)[0]
+    incar, molecule = \
+      super(PlanewaveInput, self).write('INCAR', **self.setting)
+    self.setting['no_molecule'] = True
+    kpoints = \
+      super(PlanewaveInput, self).write('KPOINTS', **self.setting)
+    poscar = \
+      super(PlanewaveInput, self).write('POSCAR', **self.setting)
+    potcar = \
+      super(PlanewaveInput, self).write('POTCAR', **self.setting)
 
     # !!!!!!!!!!! TODO !!!!!!!!!!!
     # Center molecule
@@ -97,84 +95,80 @@ class inp(PlanewaveInput):
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # write to INCAR and generate POTCAR
     qtk.report("vasp.inp", "writing", "INCAR")
-    print >> incar, "SYSTEM = %s" % self.setting['info']
-    print >> incar, "ISMEAR = 0"
-    print >> incar, "IBRION = 2"
+    incar.write("SYSTEM = %s\n" % self.setting['info'])
+    incar.write("ISMEAR = 0\n")
+    incar.write("IBRION = 2\n")
     if 'scf_step' in self.setting:
       incar.write('NELM = %d\n' % self.setting['scf_step'])
     if 'vdw' in self.setting:
       vdw = self.setting['vdw'].lower()
       if vdw != 'none':
         if vdw=='d2':
-          print >> incar, "IVDW = 10"
+          incar.write("IVDW = 10\n")
         elif vdw=='d3':
-          print >> incar, "IVDW = 11"
+          incar.write("IVDW = 11\n")
         elif vdw=='d3-bj':
-          print >> incar, "IVDW = 12"
+          incar.write("IVDW = 12\n")
         elif vdw=='mbd':
-          print >> incar, "IVDW = 202"
+          incar.write("IVDW = 202\n")
         elif vdw=='mbd_iter':
-          print >> incar, "IVDW = 212"
+          incar.write("IVDW = 212\n")
         else:
           qtk.exit("VDW '%s' is not supported for VASP" % vdw)
     if molecule.charge != 0:
       nve = molecule.getValenceElectrons()
-      print >> incar, "NELECT = %d" % (nve)
+      incar.write("NELECT = %d\n" % (nve))
     if 'save_density'not in self.setting\
     or self.setting['save_density']:
-      print >> incar, "LCHARG = .FALSE."
+      incar.write("LCHARG = .FALSE.\n")
     if 'scalapack' not in self.setting:
-      print >> incar, "LSCALAPACK = .FALSE."
+      incar.write("LSCALAPACK = .FALSE.\n")
     elif not self.setting['scalapack']:
-      print >> incar, "LSCALAPACK = .FALSE."
+      incar.write("LSCALAPACK = .FALSE.\n")
+    incar.close()
 
     # !!!!!!!!!!!!!!!!
     # write to KPOINTS
     qtk.report("vasp.inp", "writin", "KPOINTS")
     if 'kmesh' not in self.setting:
-      print >> kpoints, "Gamma-point only"
-      print >> kpoints, " 1       ! one k-point"
-      print >> kpoints, "rec      ! in units of reciprocal vector"
-      print >> kpoints, " 0 0 0 1 ! coordinates and weight"
+      kpoints.write("Gamma-point only\n")
+      kpoints.write(" 1       ! one k-point\n")
+      kpoints.write("rec      ! in units of reciprocal vector\n")
+      kpoints.write(" 0 0 0 1 ! coordinates and weight\n")
+    kpoints.close()
 
     # !!!!!!!!!!!!!!!
     # write to POSCAR
     qtk.report("vasp.inp", "writing", "POSCAR")
-    print >> poscar, self.setting['info']
-    print >> poscar, "1.0"
+    poscar.write(self.setting['info'] + '\n')
+    poscar.write("1.0\n")
     self.celldm2lattice()
     for i in range(3):
       for j in range(3):
-        print >> poscar, " %7.4f" % self.setting['lattice'][i,j],
-      print >> poscar, "! lattic vector a(%d)" %i
+        poscar.write(" %7.4f" % self.setting['lattice'][i,j])
+      poscar.write(" ! lattic vector a(%d)\n" %i)
     for n in n_list:
-      print >> poscar, n,
-    print >> poscar, "! number of atoms in order of POTCAR"
-    print >> poscar, "cart ! cartesian coordinates"
+      poscar.write(str(n) + ' ')
+    poscar.write("! number of atoms in order of POTCAR\n")
+    poscar.write("cart ! cartesian coordinates\n")
     for R in R_list:
       for X in R:
-        print >> poscar, " %7.4f" % X,
-      print >> poscar
+        poscar.write(" %7.4f" % X)
+      poscar.write("\n")
+    poscar.close()
 
     # !!!!!!!!!!!!!!!
     # write to POTCAR
     qtk.report("vasp.inp", "writing", "POTCAR")
     for PP_file in PPPath:
-      qtk.report("vasp.inp.POTCAR: ", PP_file)
+      qtk.report("vasp.inp.POTCAR", PP_file)
       if name:
         with open(PP_file) as PP:
           for line in PP:
-            print >> potcar, line,
+            potcar.write(str(line))
       else:
-        print >> potcar, "cat %s" % PP_file
-
-    if name:
-      incar.close()
-      kpoints.close()
-      poscar.close()
-      potcar.close()
-
-      os.chdir(cwd)
+        potcar.write("cat %s\n" % PP_file)
+    potcar.close()
 
 class out(PlanewaveOutput):
   """

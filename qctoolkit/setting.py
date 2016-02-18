@@ -52,6 +52,7 @@ file_setup = {
                'extension' : None,
                'root_dir' : None,
                'path' : os.getcwd(),
+               'output' : False,
              }
 # VASP setting
 vasp_pp = '/home/samio/Works/PhD/packages/VASP/PP'
