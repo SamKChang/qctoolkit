@@ -206,27 +206,8 @@ class Molecule(object):
       new_mol = self.getSegment(segment, **kwargs)
       self.segments.append(new_mol)
 
-  def clone(self):
-    new_mol = Molecule()
-    new_mol.N = self.N
-    new_mol.R = copy.deepcopy(self.R)
-    new_mol.Z = copy.deepcopy(self.Z)
-    new_mol.type_list = copy.deepcopy(self.type_list)
-    new_mol.string = copy.deepcopy(self.string)
-    new_mol.name = copy.deepcopy(self.name)
-    new_mol.charge = self.charge
-    new_mol.multiplicity = self.multiplicity
-    new_mol.index = copy.deepcopy(self.index)
-    new_mol.bonds = copy.deepcopy(self.bonds)
-    new_mol.bond_types = copy.deepcopy(self.bond_types)
-    new_mol.string = copy.deepcopy(self.string)
-    new_mol.segments = []
-    new_mol.scale = False   
-    new_mol.celldm = False  
-    return new_mol
-
   def getSegment(self, index_list, **kwargs):
-    new_mol = self.clone()
+    new_mol = copy.deepcopy(self)
     new_mol.charge = 0
     if type(index_list) != list:
       index_list = [index_list]
@@ -469,10 +450,6 @@ class Molecule(object):
     self.type_list = np.array([_T for _R, _T, _Z, _S in new])
     self.Z = np.array([_Z for _R, _T, _Z, _S in new])
     self.string = np.array([_S for _R, _T, _Z, _S in new])
-#    self.type_list = [tmpType for tmpR, tmpType, tmpZ in new]
-#    self.Z = [tmpZ for tmpR, tmpType, tmpZ in new]
-#    self.string = [tmpStr for tmpR, tmpType, tmpZ in new]
- 
    
     index_a = np.insert(self.Z, 0, 0)
     index_b = np.insert(self.Z, len(self.Z), 0)
