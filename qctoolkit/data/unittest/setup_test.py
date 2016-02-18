@@ -1,5 +1,5 @@
 import qctoolkit as qtk
-import glob, re, os, copy
+import glob, re, os, copy, shutil
 import numpy as np
 
 def setup(**kwargs):

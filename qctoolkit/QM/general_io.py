@@ -36,14 +36,22 @@ class InpContent(object):
         full_dir_path = os.path.join(self.path, self.root_dir)
       if name:
         full_path = os.path.join(full_dir_path, name)
-        if not os.path.exists(full_dir_path):
-          os.makedirs(full_dir_path)
         if os.path.exists(full_path):
-          qtk.prompt(name + ' exists, overwrite?')
+          qtk.prompt(full_path + ' exists, overwrite?')
           try:
-            os.remove(name)
+            os.remove(full_path)
+          except OSError:
+            shutil.rmtree(full_path)
           except:
             qtk.exit("can not remove file: " + name)
+        if not os.path.exists(full_dir_path):
+          os.makedirs(full_dir_path)
+        if self.restart_file:
+          if os.path.exists(self.restart_file):
+            shutil.copy(self.setting['restart_file'], name)
+          else:
+            qtk.warning("restart file: %s not found..."\
+                        % self.restart_file)
 
     inp = sys.stdout if not self.output else open(full_path, 'w')
     for string in self.content:

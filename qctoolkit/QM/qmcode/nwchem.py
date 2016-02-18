@@ -127,6 +127,9 @@ class inp(GaussianBasisInput):
 
     inp.close()
 
+    if name:
+      return name + '.' + self.setting['extension']
+
 
 class out(GaussianBasisOutput):
   """

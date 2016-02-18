@@ -172,6 +172,8 @@ class inp(PlanewaveInput):
         potcar.write("cat %s\n" % PP_file)
     potcar.close()
 
+    if name: return name
+
 class out(PlanewaveOutput):
   """
   directly parse vasp xml output, 'vasprun.xml'
