@@ -74,7 +74,7 @@ def report(title, *texts, **kwargs):
   sys.stdout.flush()
 
 def prompt(text):
-  if not no_warning:
+  if not qtk.setting.no_warning:
     frame = inspect.stack()[1]
     module = inspect.getmodule(frame[0])
     name = module.__name__

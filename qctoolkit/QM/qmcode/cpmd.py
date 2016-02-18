@@ -41,20 +41,6 @@ class inp(PlanewaveInput):
     return out
 
   def write(self, name=None):
-    molecule = copy.deepcopy(self.molecule)
-    self.cm_check(molecule)
-    if name:
-      out = os.path.splitext(name)
-      if out[-1] != '.inp':
-        name = out[0] + '.inp'
-      if os.path.exists(name) and not qtk.setting.no_warning:
-        qtk.prompt(name + ' exists, overwrite?')
-        try:
-          os.remove(name)
-        except:
-          qtk.exit("can not remove file: " + name)
-    inp = sys.stdout if not name else open(name, 'w')
-
     def PPString(mol, i, n, outFile):
       ppstr = re.sub('\*', '', mol.string[i])
       if ppstr:
@@ -73,6 +59,10 @@ class inp(PlanewaveInput):
         lmax = 'F'
       outFile.write(' LMAX=%s\n %3d\n' % (lmax, n))
       self.pp_files.append(re.sub('\*', '', PPStr))
+
+    inp, molecule = \
+      super(PlanewaveInput, self).write(name, **self.setting)
+
 
     inp.write('&INFO\n')
     inp.write(' ' + self.setting['info'] + '\n')
@@ -183,8 +173,7 @@ class inp(PlanewaveInput):
         inp.write('\n')
     inp.write('&END\n')
 
-    if name:
-      inp.close()
+    inp.close()
 
 #  # read structure from CPMD input
 #  def read_cpmdinp(self, name):

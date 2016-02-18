@@ -1,56 +1,68 @@
 import qctoolkit as qtk
-import re, os, shutil, copy
+import re, os, shutil, copy, sys
 import numpy as np
+
+class InpContent(object):
+  def __init__(self, name, **kwargs):
+    self.content = []
+    self.file_name = name
+
+    setup = copy.deepcopy(qtk.setting.file_setup)
+
+    for string, value in setup.iteritems():
+      if string in kwargs:
+        setattr(self, string, kwargs[string])
+      else:
+        setattr(self, string, value)
+
+  def write(self, string):
+    self.content.append(string)
+
+  def close(self):
+    if self.file_name:
+      name = self.prefix + self.name + self.suffix + self.extension
+      full_dir_path = os.path.join(self.path, self.root_dir)
+      full_path = os.path.join(full_dir_path, name)
+      if not os.path.exists(full_dir_path):
+        os.makedirs(full_dir_path)
+      if os.path.exists(full_path):
+        qtk.prompt(name + ' exists, overwrite?')
+        try:
+          os.remove(name)
+        except:
+          qtk.exit("can not remove file: " + name)
+
+    inp = sys.stdout if not self.file_name else open(full_path, 'w')
+    for string in self.content:
+      inp.write(string)
+    if self.file_name:
+      inp.close()
 
 class GenericQMInput(object):
   def __init__(self, molecule, **kwargs):
     self.setting = kwargs
-    if 'program' not in kwargs:
-      self.setting['program'] = qtk.setting.qmcode
-    else:
-      self.setting['program'] = kwargs['program']
-    self.molecule = qtk.Structure(molecule, **kwargs)
+    self.molecule = molecule
 
-    if 'info' not in kwargs:
-      self.setting['info'] = self.molecule.name
-    if 'theory' not in kwargs:
-      self.setting['theory'] = 'pbe'
-    if 'mode' not in kwargs:
-      self.setting['mode'] = 'single_point'
-    if 'scf_step' not in kwargs:
-      self.setting['scf_step'] = 1000
-    if 'wf_convergence' not in kwargs:
-      self.setting['wf_convergence'] = 1E-5
-    if 'fix_molecule' not in kwargs:
-      self.setting['fix_molecule'] = True
-    if 'unit' not in kwargs:
-      self.setting['unit'] = 'angstrom'
-    if re.match(self.setting['mode'].lower(), 'md'):
-      if 'T' not in kwargs:
-        self.setting['T'] = 298
-      if 'thermostat' not in kwargs:
-        self.setting['thermostat'] = 'Nose-Hoover'
-      if 'T_tolerance' not in kwargs:
-        self.setting['T_tolerance'] = 0.1
-      if 'sample_period' not in kwargs:
-        self.setting['sample_period'] = 10
-      if 'md_step' not in kwargs:
-        self.setting['md_step'] = 1000
+    # local variable to construct 'setting' for parsing
+    setup = copy.deepcopy(qtk.setting.qm_setup)
+    md_setup = copy.deepcopy(qtk.setting.md_setup)
 
-    if self.setting['mode'] == 'geopt':
-      self.setting['geometry_convergence'] = 1E-4
+    for string, value in setup.iteritems():
+      if string in kwargs:
+        self.setting[string] = kwargs[string]
+      else:
+        self.setting[string] = value
 
-#    if 'save_density' in kwargs:
-#      self.setting['save_density'] = kwargs['save_density']
-#    if 'save_restart' in kwargs:
-#      self.setting['save_restart'] = kwargs['save_restart']
-#    if 'restart' in kwargs:
-#      self.setting['restart'] = kwargs['restart']
-#
-#    if 'prefix' in kwargs:
-#      self.setting['prefix'] = kwargs['prefix']
-#    if 'suffix' in kwargs:
-#      self.setting['suffix'] = kwargs['suffix']
+    if self.setting['mode'] == 'md':
+      for string, value in md_setup.iteritems():
+        if string in kwargs:
+          self.setting[string] = kwargs[string]
+        else:
+          self.setting[string] = value
+
+    if self.setting['mode'] != 'geopt':
+      del self.setting['geometry_convergence']
+    self.setting['info'] = self.molecule.name
 
   def __repr__(self):
     return self.molecule.name + ': ' + self.setting['program']
@@ -95,8 +107,14 @@ class GenericQMInput(object):
   def run(self):
     raise NotImplementedError("Please Implement run method")
 
-  def write(self):
-    raise NotImplementedError("Please Implement write method")
+  def write(self, name, **kwargs):
+    self.setting.update(kwargs)
+    if name:
+      name = os.path.splitext(name)[0]
+    inp = InpContent(name, **self.setting)
+    molecule = copy.deepcopy(self.molecule)
+    self.cm_check(molecule)
+    return inp, molecule
 
 class GenericQMOutput(object):
   def __init__(self, output=None, **kwargs):

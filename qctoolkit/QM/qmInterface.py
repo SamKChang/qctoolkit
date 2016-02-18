@@ -10,10 +10,12 @@ def QMInp(molecule, **kwargs):
     kwargs['program'] = qtk.setting.qmcode
 
   if kwargs['program'].lower() == 'cpmd':
+    kwargs['extension'] = 'inp'
     return cpmd.inp(molecule, **kwargs)
   elif kwargs['program'].lower() == 'vasp':
     return vasp.inp(molecule, **kwargs)
   elif kwargs['program'].lower() == 'nwchem':
+    kwargs['extension'] = 'inp'
     return nwchem.inp(molecule, **kwargs)
 
 def QMOut(out=None, **kwargs):
