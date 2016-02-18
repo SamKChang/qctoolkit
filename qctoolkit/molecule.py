@@ -41,6 +41,7 @@ class Molecule(object):
     if self.name: return self.name
     else: return 'generic Molecule object'
 
+  # tested
   def __add__(self, other):
     out = Molecule()
     out.N = self.N + other.N
@@ -52,6 +53,7 @@ class Molecule(object):
     out.name = self.name + "_" + other.name
     return out
 
+  # tested
   def addAtom(self, element, coord):
     def getAtom(element):
       if len(element)<2:
@@ -82,8 +84,6 @@ class Molecule(object):
       self.type_list.append(e.symbol)
       Z.append(e.number)
     self.Z = np.array(Z)
-      
-    
 
   def view(self, name=None):
     tmp = copy.deepcopy(self)
@@ -120,14 +120,13 @@ class Molecule(object):
     except AttributeError:
       pass
 
-
+  # tested
   def distance(self, i, j):
-    i -= 1
-    j -= 1
     Ri = self.R[i]
     Rj = self.R[j]
     return np.linalg.norm(Ri - Rj)
 
+  # tested
   def find_bonds(self, ratio=setting.bond_ratio, **kwargs):
     del self.segments
     self.segments = []
@@ -206,6 +205,7 @@ class Molecule(object):
       new_mol = self.getSegment(segment, **kwargs)
       self.segments.append(new_mol)
 
+  # tested
   def getSegment(self, index_list, **kwargs):
     new_mol = copy.deepcopy(self)
     new_mol.charge = 0
@@ -228,13 +228,16 @@ class Molecule(object):
         new_mol.setChargeMultiplicity(charge, 1, **kwargs)
     return new_mol
 
+  # tested
   def getCenter(self):
     return np.sum(self.R, axis=0)/self.N
 
+  # tested
   def getCenterOfCharge(self):
     weighted = self.R * np.array(self.Z).reshape([self.N,1])
     return np.sum(weighted, axis=0)/float(sum(self.Z))
 
+  # tested
   def getCenterOfMass(self):
     mass_list = [qtk.n2m(elem) for elem in self.type_list]
     weighted = self.R * np.array(mass_list).reshape([self.N,1])
@@ -245,6 +248,7 @@ class Molecule(object):
       return max(self.R[:,i]) - min(self.R[:,i])
     return np.array([size(i) for i in range(3)])
 
+  # tested
   def principalAxes(self, **kwargs):
     weight = [qtk.n2m(elem) for elem in self.type_list]
     center = self.getCenterOfMass()
@@ -274,13 +278,13 @@ class Molecule(object):
     qtk.report("Molecule", "resulting celldm:", celldm)
     return celldm
 
+  # tested
   def setAtom(self, index, **kwargs):
     newZ = self.Z
     if type(index) is int:
       index = [index]
     if 'element' in kwargs:
       for i in index:
-        i -= 1
         assert i>=0
         if 'element' in kwargs:
           Z = qtk.n2Z(kwargs['element'])
@@ -289,23 +293,14 @@ class Molecule(object):
         newZ[i] = Z
         self.type_list[i] = qtk.Z2n(Z)
     if 'string' in kwargs:
-      minZ = min(self.Z)-1
+      minZ = min(min(self.Z)-1, 0)
       for i in index:
         self.string[i] = kwargs['string']
         newZ[i] = minZ
     self.Z = newZ
 
-  def flip_atom(self, index, element):
-    index -= 1
-    if index <= self.N:
-      self.type_list[index] = qtk.qAtomName(element)
-      self.Z[index] = qtk.qAtomicNumber(element)
-    else:
-      print "index:%d out of range, nothing has happend"\
-            % int(index+1)
-
-  def remove_atom(self, index):
-    index -= 1
+  # tested
+  def removeAtom(self, index):
     if index <= self.N - 1:
       self.N -= 1
       self.R = np.delete(self.R, index, 0)
@@ -313,19 +308,22 @@ class Molecule(object):
       self.type_list = list(np.delete(self.type_list, index))
     else:
       print "index:%d out of range, nothing has happend"\
-            % index+1
+            % index
 
-  def isolate_atoms(self, index_list, **kwargs):
+  # tested
+  def isolateAtoms(self, index_list, **kwargs):
     if type(index_list) != list:
       index_list = [index_list]
-    index_list = map(lambda a: a-1, index_list)
     self.N = len(index_list)
     self.R = np.array([self.R[i] for i in index_list])
     self.Z = np.array([self.Z[i] for i in index_list])
     self.type_list = \
       [self.type_list[i] for i in index_list]
     self.string = np.array(self.string)[index_list].tolist()
-    # need to check charge
+
+  # tested
+  def setCharge(self, **kwargs):
+    self.charge = 0
     unpaired = self.getValenceElectrons() % 2
     if unpaired == 1:
       if 'charge_saturation' not in kwargs:
@@ -335,6 +333,7 @@ class Molecule(object):
         charge = kwargs['charge_saturation']
         self.setChargeMultiplicity(charge, 1)
 
+  # tested
   def have_bond(self, type_a, type_b):
     result = False
     if '0' not in self.bonds:
@@ -353,6 +352,7 @@ class Molecule(object):
         result = True
     return result
 
+  # tested
   def center(self, center_coord):
     center_matrix = np.kron(
       np.transpose(np.atleast_2d(np.ones(self.N))),
@@ -360,18 +360,21 @@ class Molecule(object):
     )
     self.R = self.R - center_coord
 
+  # tested
   def shift(self, shift_vector):
     shift_matrix = np.kron(
       np.transpose(np.atleast_2d(np.ones(self.N))),
-      shift_vector
+                   np.array(shift_vector)
     )
     self.R = self.R + shift_matrix
 
+  # tested
   def getValenceElectrons(self):
     ve = np.vectorize(qtk.n2ve)
     nve = sum(ve(self.type_list)) - self.charge
     return nve
 
+  # tested
   def setChargeMultiplicity(self, c, m, **kwargs):
     if type(c) == int or type(c) == float:
       self.charge = c
@@ -396,6 +399,7 @@ class Molecule(object):
     R_tmp = copy.deepcopy(self.R)
     self.R = np.dot(qtk.R(angle, u),R_tmp.T).T
 
+  # tested
   def align(self, u=None, **kwargs):
     center = self.getCenterOfMass()
     self.center(center)
@@ -423,24 +427,19 @@ class Molecule(object):
   def twist(self):
     print "not yet implemented"
 
-  def extract(self, target):
-    if type(target) == int:
-      targets = target - 1
-    elif type(target) == list and type(target[0]) == int:
-      targets = [ind-1 for ind in target]
-    return self.type_list[targets], self.R[targets]
-
-  def stretch(self, stretch_targets, direction_indices, distance):
-    if type(stretch_targets)==list:
-      targets = [target - 1 for target in stretch_targets]
-    else:
-      targets = [stretch_targets - 1]
-    direction = [self.R[index - 1] for index in direction_indices]
+  # tested
+  def stretch(self, targets, direction_indices, distance):
+    if type(targets) is not list:
+      targets = [targets]
+    direction = [self.R[index] for index in direction_indices]
     vector = direction[1] - direction[0]
     vector = distance * vector/np.linalg.norm(vector)
     template = np.zeros([self.N,1])
     template[targets] = 1
-    shift = np.kron(vector, template)
+    ref = copy.deepcopy(self.R)
+    ref[targets,:] = 0
+    ref = self.R - ref
+    shift = np.kron(vector, template) - ref
     self.R += shift
 
   def sort(self):
@@ -470,6 +469,7 @@ class Molecule(object):
                       self.R[:,order[0]]))
     self.R = self.R[ind]
 
+  # tested
   # general interface to dertermine file type
   def read(self, name, **kwargs):
     if os.path.exists(name):
@@ -496,6 +496,7 @@ class Molecule(object):
     else:
       qtk.exit("file: '" + name + "' not found")
       
+  # tested
   # read structrue from xyz
   def read_xyz(self, name, **kwargs):
 
@@ -528,6 +529,7 @@ class Molecule(object):
 
     xyz_in.close()
 
+  # tested
   # read structrue from cyl crystal format
   def read_cyl(self, name, **kwargs):
 
@@ -559,6 +561,7 @@ class Molecule(object):
 
     xyz_in.close()
 
+  # tested
   def stoichiometry(self, **kwargs):
     elements = collections.Counter(sorted(self.Z))
     data = zip(elements.keys(), elements.values())
@@ -580,8 +583,8 @@ class Molecule(object):
       self.write_xyz(*args, **kwargs)
     elif kwargs['format'] == 'pdb':
       self.write_pdb(*args, **kwargs)
-    elif kwargs['format'] == 'cyl':
-      self.write_cyl(*args, **kwargs)
+    #elif kwargs['format'] == 'cyl':
+    #  self.write_cyl(*args, **kwargs)
     else:
       qtk.exit("output format: " + kwargs['format'] \
                + " not reconized")
