@@ -18,10 +18,14 @@ purpose chemistry tool kit.
 * The package depends on [NumPy](http://www.numpy.org/),
   [pandas](http://pandas.pydata.org/), 
   and [matplotlib](http://matplotlib.org/). 
-* To install: ```sudo python setup.py install```
-* To remove:  Manually remove all system files. List of files can 
+* To install: ```cd /path/to/qctoolkit && python setup.py install --user```
+* To remove:  Manually remove all created files. List of files can 
 be obtained by the --record flag during install
-```sudo python setup.py install --record fileList.txt```All files
+```python setup.py install --user --record fileList.txt```All files
+* **Note** all code are writen with **2-space indentation**. 
+  To change it according to pep8 standard, use the following command:
+```cd /path/to/qctoolkit && find . -name "*.py"|xargs -n 1 autopep8 --in-place```
+  where ```autopep8``` can be installed simply via ```pip install autopep8 --user```
 
 **Dependent Python packages**:
 * numpy 1.9.2

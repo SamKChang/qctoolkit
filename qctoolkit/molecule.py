@@ -10,6 +10,73 @@ import periodictable as pt
 import collections
 
 class Molecule(object):
+  """
+  Molecule class for basic molecule operation
+
+  args: 
+    mol(str), molecule file
+
+  attributes: 
+    N(int), number of atoms
+    R(np.array), coordinate array
+    Z(list(int/float)), list of nuclear charges
+    type_list
+    charge
+    multiplicity
+    bonds
+    bond_types
+    segments
+    name
+
+  methods:
+    connectivity/property:
+      stoichiometry(format=)
+      findBonds(ratio=None) --- get all connected atom pairs within
+                                cutoff distance = atom radius*ratio
+                                where ratio is set to default 1.1
+      haveBond('A', 'B') --- return True/False depends on the 
+                             existance of connection A-B
+                             where A, B are element symbols
+      setChargeMultiplicity(c, m) --- set charge multiplicity to c, m
+      setCharge(c) --- set charge to c, under same multiplicity
+      getValenceElectrons() --- return number of valence electrons
+    geometry operation:
+      distance(i, j) --- return distance (angstrom) between 
+                         atom i and j
+      center(coord) --- shift molecule such that coord becomes 
+                        zero vector. It can be used for centering 
+                        selected atom: R = R - coord
+      shift(vector) --- shift molecule by vector: R = R + vector
+      align(vector, axis) --- align vecotr to axis, axis is set to
+                              [1,0,0] by default. It takes 0=x, 1=y,
+                              2=z, or a 3D vector
+      stretch([i,j], [s,t], d) --- stretch atom i,j along direction of
+                                   atom s,t to distance d
+      rotate() ---
+      twist() ---
+      getCenter() --- return 3x1 array of center of coordinates
+      getCenterOfCharge() --- return 3x1 array of center of charge
+      getCenterOfMass() --- return 3x1 array of center of mass
+      principalAxes() --- return eigenvalue/vectors of 
+                          momentum of inertia tensor
+    modify molecule:
+      addAtoms(list_str, list_coord) --- add atoms in list_str with 
+                                         coordinates list_coord
+      removeAtoms(list_ind) --- remove list of atoms in list_ind
+      setAtoms(list_ind, list_str) --- set list of atoms to strings
+                                       in list_str. Used for user 
+                                       define atom symbols
+      isolateAtoms(list_ind) --- keep only the atoms listed in list_ind
+    basic IO:
+      read()
+      read_xyz()
+      read_cyl()
+      read_pdb() --- not yet implemented
+      write()
+      write_xyz()
+      write_cyl() --- not yet implemented
+      write_pdb()
+  """
 
   # used for pymol numeration
   mol_id = 0
@@ -53,38 +120,6 @@ class Molecule(object):
     out.name = self.name + "_" + other.name
     return out
 
-  # tested
-  def addAtom(self, element, coord):
-    def getAtom(element):
-      if len(element)<2:
-        try:
-          atom = getattr(pt, element.title())
-          return atom
-        except:
-          qtk.exit("element %s not found." % element.title())
-      else:
-        try:
-          atom = getattr(pt, element.lower())
-          return atom
-        except:
-          qtk.exit("element %s not found." % element.lower())
-    
-    if type(element) is str:
-      element = [element]
-      coord = [coord]
-    Z = list(self.Z)
-    for i in range(len(element)):
-      e = getAtom(element[i])
-      r = coord[i]
-      if self.N == 0:
-        self.R = np.array(r)
-      else:
-        self.R = np.vstack([self.R, np.array(r)])
-      self.N = self.N + 1
-      self.type_list.append(e.symbol)
-      Z.append(e.number)
-    self.Z = np.array(Z)
-
   def view(self, name=None):
     tmp = copy.deepcopy(self)
     if self.celldm and self.scale:
@@ -111,23 +146,23 @@ class Molecule(object):
     pymol.cmd.load(tmp_file)
     os.remove(tmp_file)
 
-  def cyl2xyz(self):
-    try:
-      for i in range(3):
-        self.R[:,i] = self.R[:,i] * self.celldm[i]\
-                     / float(self.scale[i])
-      self.scale = []
-    except AttributeError:
-      pass
+  # tested
+  def stoichiometry(self, **kwargs):
+    elements = collections.Counter(sorted(self.Z))
+    data = zip(elements.keys(), elements.values())
+    data.sort(key=lambda tup: tup[0])
+    if 'format' not in kwargs:
+      kwargs['format'] = 'string'
+    if kwargs['format'] == 'list':
+      return data
+    elif kwargs['format'] == 'string':
+      out = ''
+      for element in data:
+        out = out + qtk.Z2n(element[0]) + str(element[1])
+      return out
 
   # tested
-  def distance(self, i, j):
-    Ri = self.R[i]
-    Rj = self.R[j]
-    return np.linalg.norm(Ri - Rj)
-
-  # tested
-  def find_bonds(self, ratio=setting.bond_ratio, **kwargs):
+  def findBonds(self, ratio=setting.bond_ratio, **kwargs):
     del self.segments
     self.segments = []
     if 'quiet' not in kwargs or not kwargs['quiet']:
@@ -229,115 +264,10 @@ class Molecule(object):
     return new_mol
 
   # tested
-  def getCenter(self):
-    return np.sum(self.R, axis=0)/self.N
-
-  # tested
-  def getCenterOfCharge(self):
-    weighted = self.R * np.array(self.Z).reshape([self.N,1])
-    return np.sum(weighted, axis=0)/float(sum(self.Z))
-
-  # tested
-  def getCenterOfMass(self):
-    mass_list = [qtk.n2m(elem) for elem in self.type_list]
-    weighted = self.R * np.array(mass_list).reshape([self.N,1])
-    return np.sum(weighted, axis=0)/float(sum(mass_list))
-
-  def getBox(self):
-    def size(i):
-      return max(self.R[:,i]) - min(self.R[:,i])
-    return np.array([size(i) for i in range(3)])
-
-  # tested
-  def principalAxes(self, **kwargs):
-    weight = [qtk.n2m(elem) for elem in self.type_list]
-    center = self.getCenterOfMass()
-    self.center(center)
-
-    inertia = np.zeros([3,3])
-    I0 = 0
-    for i in range(3):
-      I0 = I0 + sum(self.R[:,i]**2 * weight)
-    for i in range(3):
-      coord_i = self.R[:,i]
-      inertia[i,i] = I0 - sum(coord_i**2 * weight)
-      for j in range(i+1,3):
-        coord_j = self.R[:,j]
-        inertia[i,j] = -sum(coord_i*coord_j*weight)
-        inertia[j,i] = inertia[i,j]
-    I, U = np.linalg.eigh(inertia)
-    self.shift(center)
-    #return sorted(I,reverse=True), U[I.argsort()[::-1]]
-    return I, U
-
-  def setMargin(self, margin):
-    qtk.report("Molecule", "setup margin:", margin)
-    self.shift([margin - np.min(self.R[:,i]) for i in range(3)])
-    celldm = [margin + np.max(self.R[:,i]) for i in range(3)]
-    celldm.extend([0,0,0])
-    qtk.report("Molecule", "resulting celldm:", celldm)
-    return celldm
-
-  # tested
-  def setAtom(self, index, **kwargs):
-    newZ = self.Z
-    if type(index) is int:
-      index = [index]
-    if 'element' in kwargs:
-      for i in index:
-        assert i>=0
-        if 'element' in kwargs:
-          Z = qtk.n2Z(kwargs['element'])
-        elif 'Z' in kwargs:
-          Z = kwargs['Z']
-        newZ[i] = Z
-        self.type_list[i] = qtk.Z2n(Z)
-    if 'string' in kwargs:
-      minZ = min(min(self.Z)-1, 0)
-      for i in index:
-        self.string[i] = kwargs['string']
-        newZ[i] = minZ
-    self.Z = newZ
-
-  # tested
-  def removeAtom(self, index):
-    if index <= self.N - 1:
-      self.N -= 1
-      self.R = np.delete(self.R, index, 0)
-      self.Z = np.delete(self.Z, index)
-      self.type_list = list(np.delete(self.type_list, index))
-    else:
-      print "index:%d out of range, nothing has happend"\
-            % index
-
-  # tested
-  def isolateAtoms(self, index_list, **kwargs):
-    if type(index_list) != list:
-      index_list = [index_list]
-    self.N = len(index_list)
-    self.R = np.array([self.R[i] for i in index_list])
-    self.Z = np.array([self.Z[i] for i in index_list])
-    self.type_list = \
-      [self.type_list[i] for i in index_list]
-    self.string = np.array(self.string)[index_list].tolist()
-
-  # tested
-  def setCharge(self, **kwargs):
-    self.charge = 0
-    unpaired = self.getValenceElectrons() % 2
-    if unpaired == 1:
-      if 'charge_saturation' not in kwargs:
-        self.setChargeMultiplicity(-1, 1)
-      else:
-        assert type(kwargs['charge_saturation']) is int
-        charge = kwargs['charge_saturation']
-        self.setChargeMultiplicity(charge, 1)
-
-  # tested
-  def have_bond(self, type_a, type_b):
+  def haveBond(self, type_a, type_b):
     result = False
     if '0' not in self.bonds:
-      self.find_bonds()
+      self.findBonds()
     if qtk.n2Z(type_a) > qtk.n2Z(type_b):
       atom_begin = qtk.n2Z(type_b)
       atom_end = qtk.n2Z(type_a)
@@ -351,22 +281,6 @@ class Molecule(object):
         print self.bonds[key]['atom_end']
         result = True
     return result
-
-  # tested
-  def center(self, center_coord):
-    center_matrix = np.kron(
-      np.transpose(np.atleast_2d(np.ones(self.N))),
-      center_coord
-    )
-    self.R = self.R - center_coord
-
-  # tested
-  def shift(self, shift_vector):
-    shift_matrix = np.kron(
-      np.transpose(np.atleast_2d(np.ones(self.N))),
-                   np.array(shift_vector)
-    )
-    self.R = self.R + shift_matrix
 
   # tested
   def getValenceElectrons(self):
@@ -395,37 +309,39 @@ class Molecule(object):
           qtk.prompt(msg + "\nsuppress warning py no_warning=True,"\
                     + " continue?")
 
-  def rotate(self, angle, u):
-    R_tmp = copy.deepcopy(self.R)
-    self.R = np.dot(qtk.R(angle, u),R_tmp.T).T
+  # tested
+  def setCharge(self, **kwargs):
+    self.charge = 0
+    unpaired = self.getValenceElectrons() % 2
+    if unpaired == 1:
+      if 'charge_saturation' not in kwargs:
+        self.setChargeMultiplicity(-1, 1)
+      else:
+        assert type(kwargs['charge_saturation']) is int
+        charge = kwargs['charge_saturation']
+        self.setChargeMultiplicity(charge, 1)
 
   # tested
-  def align(self, u=None, **kwargs):
-    center = self.getCenterOfMass()
-    self.center(center)
-    if 'axis' not in kwargs:
-      kwargs['axis'] = 0
-    if kwargs['axis'] == 0:
-      v = np.array([1,0,0])
-    elif kwargs['axis'] == 1:
-      v = np.array([0,1,0])
-    elif kwargs['axis'] == 2:
-      v = np.array([0,0,1])
+  def distance(self, i, j):
+    Ri = self.R[i]
+    Rj = self.R[j]
+    return np.linalg.norm(Ri - Rj)
 
-    if u is None:
-      U = self.principalAxes()[1]
-      self.R = np.dot(self.R, U)
-    else:      
-      u = np.array(u)
-      n1 = np.linalg.norm(u)
-      n2 = np.linalg.norm(v)
-      angle = np.arccos(np.dot(u, v)/(n1*n2))
-      axis = np.cross(u, v)
-      axis = axis / np.linalg.norm(axis)
-      self.rotate(angle, axis)
+  # tested
+  def center(self, center_coord):
+    center_matrix = np.kron(
+      np.transpose(np.atleast_2d(np.ones(self.N))),
+      center_coord
+    )
+    self.R = self.R - center_coord
 
-  def twist(self):
-    print "not yet implemented"
+  # tested
+  def shift(self, shift_vector):
+    shift_matrix = np.kron(
+      np.transpose(np.atleast_2d(np.ones(self.N))),
+                   np.array(shift_vector)
+    )
+    self.R = self.R + shift_matrix
 
   # tested
   def stretch(self, targets, direction_indices, distance):
@@ -441,6 +357,176 @@ class Molecule(object):
     ref = self.R - ref
     shift = np.kron(vector, template) - ref
     self.R += shift
+
+  # tested
+  def align(self, u=None, **kwargs):
+    center = self.getCenterOfMass()
+    self.center(center)
+    if 'axis' not in kwargs:
+      v = np.array([1,0,0])
+    else:
+      if type(kwargs['axis']) is int:
+        assert kwargs['axis'] >= 0 and kwargs['axis'] < 3
+        if kwargs['axis'] == 0:
+          v = np.array([1,0,0])
+        elif kwargs['axis'] == 1:
+          v = np.array([0,1,0])
+        elif kwargs['axis'] == 2:
+          v = np.array([0,0,1])
+      else:
+        v = np.array(kwargs['axis'])
+        assert v.shape == (3,)
+
+    if u is None:
+      U = self.principalAxes()[1]
+      self.R = np.dot(self.R, U)
+    else:      
+      u = np.array(u)
+      n1 = np.linalg.norm(u)
+      n2 = np.linalg.norm(v)
+      angle = np.arccos(np.dot(u, v)/(n1*n2))
+      axis = np.cross(u, v)
+      axis = axis / np.linalg.norm(axis)
+      self.rotate(angle, axis)
+
+  def rotate(self, angle, u):
+    R_tmp = copy.deepcopy(self.R)
+    self.R = np.dot(qtk.R(angle, u),R_tmp.T).T
+
+  def twist(self):
+    print "not yet implemented"
+
+  # tested
+  def getCenter(self):
+    return np.sum(self.R, axis=0)/self.N
+
+  # tested
+  def getCenterOfCharge(self):
+    weighted = self.R * np.array(self.Z).reshape([self.N,1])
+    return np.sum(weighted, axis=0)/float(sum(self.Z))
+
+  # tested
+  def getCenterOfMass(self):
+    mass_list = [qtk.n2m(elem) for elem in self.type_list]
+    weighted = self.R * np.array(mass_list).reshape([self.N,1])
+    return np.sum(weighted, axis=0)/float(sum(mass_list))
+
+  # tested
+  def principalAxes(self, **kwargs):
+    weight = [qtk.n2m(elem) for elem in self.type_list]
+    center = self.getCenterOfMass()
+    self.center(center)
+
+    inertia = np.zeros([3,3])
+    I0 = 0
+    for i in range(3):
+      I0 = I0 + sum(self.R[:,i]**2 * weight)
+    for i in range(3):
+      coord_i = self.R[:,i]
+      inertia[i,i] = I0 - sum(coord_i**2 * weight)
+      for j in range(i+1,3):
+        coord_j = self.R[:,j]
+        inertia[i,j] = -sum(coord_i*coord_j*weight)
+        inertia[j,i] = inertia[i,j]
+    I, U = np.linalg.eigh(inertia)
+    self.shift(center)
+    #return sorted(I,reverse=True), U[I.argsort()[::-1]]
+    return I, U
+
+  # tested
+  def addAtoms(self, element, coord):
+    def getAtom(element):
+      if len(element)<2:
+        try:
+          atom = getattr(pt, element.title())
+          return atom
+        except:
+          qtk.exit("element %s not found." % element.title())
+      else:
+        try:
+          atom = getattr(pt, element.lower())
+          return atom
+        except:
+          qtk.exit("element %s not found." % element.lower())
+    
+    if type(element) is str:
+      element = [element]
+      coord = [coord]
+    Z = list(self.Z)
+    for i in range(len(element)):
+      e = getAtom(element[i])
+      r = coord[i]
+      if self.N == 0:
+        self.R = np.array(r)
+      else:
+        self.R = np.vstack([self.R, np.array(r)])
+      self.N = self.N + 1
+      self.type_list.append(e.symbol)
+      Z.append(e.number)
+    self.Z = np.array(Z)
+
+  # tested
+  def setAtoms(self, index, **kwargs):
+    newZ = self.Z
+    if type(index) is int:
+      index = [index]
+    if 'element' in kwargs:
+      for i in index:
+        assert i>=0
+        if 'element' in kwargs:
+          Z = qtk.n2Z(kwargs['element'])
+        elif 'Z' in kwargs:
+          Z = kwargs['Z']
+        newZ[i] = Z
+        self.type_list[i] = qtk.Z2n(Z)
+    if 'string' in kwargs:
+      minZ = min(min(self.Z)-1, 0)
+      for i in index:
+        self.string[i] = kwargs['string']
+        newZ[i] = minZ
+    self.Z = newZ
+
+  # tested
+  def removeAtoms(self, indices):
+    if type(indices) is int:
+      indices = [indices]
+    indices.sort()
+    i_max = indices[-1]
+    if i_max <= self.N - 1:
+      for i in range(len(indices)):
+        index = indices[len(indices) - 1 - i]
+        self.N -= 1
+        self.R = np.delete(self.R, index, 0)
+        self.Z = np.delete(self.Z, index)
+        self.type_list = list(np.delete(self.type_list, index))
+    else:
+      msg = "index:%d out of range:%d, nothing has happend"\
+            % (index, self.N)
+      qtk.warning(msg)
+
+  # tested
+  def isolateAtoms(self, index_list, **kwargs):
+    if type(index_list) != list:
+      index_list = [index_list]
+    self.N = len(index_list)
+    self.R = np.array([self.R[i] for i in index_list])
+    self.Z = np.array([self.Z[i] for i in index_list])
+    self.type_list = \
+      [self.type_list[i] for i in index_list]
+    self.string = np.array(self.string)[index_list].tolist()
+
+  def getBox(self):
+    def size(i):
+      return max(self.R[:,i]) - min(self.R[:,i])
+    return np.array([size(i) for i in range(3)])
+
+  def setMargin(self, margin):
+    qtk.report("Molecule", "setup margin:", margin)
+    self.shift([margin - np.min(self.R[:,i]) for i in range(3)])
+    celldm = [margin + np.max(self.R[:,i]) for i in range(3)]
+    celldm.extend([0,0,0])
+    qtk.report("Molecule", "resulting celldm:", celldm)
+    return celldm
 
   def sort(self):
     new = sorted(zip(self.R, self.type_list, self.Z, self.string), 
@@ -468,6 +554,15 @@ class Molecule(object):
                       self.R[:,order[1]],\
                       self.R[:,order[0]]))
     self.R = self.R[ind]
+
+  def cyl2xyz(self):
+    try:
+      for i in range(3):
+        self.R[:,i] = self.R[:,i] * self.celldm[i]\
+                     / float(self.scale[i])
+      self.scale = []
+    except AttributeError:
+      pass
 
   # tested
   # general interface to dertermine file type
@@ -562,20 +657,6 @@ class Molecule(object):
     xyz_in.close()
 
   # tested
-  def stoichiometry(self, **kwargs):
-    elements = collections.Counter(sorted(self.Z))
-    data = zip(elements.keys(), elements.values())
-    data.sort(key=lambda tup: tup[0])
-    if 'format' not in kwargs:
-      kwargs['format'] = 'string'
-    if kwargs['format'] == 'list':
-      return data
-    elif kwargs['format'] == 'string':
-      out = ''
-      for element in data:
-        out = out + qtk.Z2n(element[0]) + str(element[1])
-      return out
-
   def write(self, *args, **kwargs):
     if 'format' not in kwargs:
       kwargs['format'] = 'xyz'
@@ -589,6 +670,7 @@ class Molecule(object):
       qtk.exit("output format: " + kwargs['format'] \
                + " not reconized")
 
+  # tested
   # write xyz format to file
   def write_xyz(self, *args, **kwargs):
     if len(args) == 1:
@@ -608,6 +690,7 @@ class Molecule(object):
     if not re.match("",name):
       out.close()
 
+  # tested
   # write pdb format to file
   # amino acid is not implemented!
   def write_pdb(self, *args, **kwargs):
@@ -617,14 +700,14 @@ class Molecule(object):
       name = ''
     out = sys.stdout if not name else open(name,"w")
     if len(self.segments) == 0:
-      self.find_bonds(quiet=True)
+      self.findBonds(quiet=True)
     print >> out, "%-10s%s" % ('COMPND', self.stoichiometry())
     print >> out, "%-10s%s" % ('AUTHOR', 'QCTOOLKIT')
     chain = 1
     itr = 1
 
     def connect(molecule, shift, connection):
-      molecule.find_bonds(quiet=True)
+      molecule.findBonds(quiet=True)
       for i in molecule.bonds.iterkeys():
         bond = molecule.bonds[i]
         ai = bond['index_begin'] + shift
@@ -652,42 +735,3 @@ class Molecule(object):
     print >> out, "END"
     if not re.match("",name):
       out.close()
-
-
-  # read structure from CPMD input
-  def read_cpmdinp(self, name):
- 
-    self.N = 0
-    #self.NType = 0
-    #NTypeName = []
-    coord = []
-    Z = []
-    type_list = []
-
-    element_p = re.compile('\*([A-Za-z]*)_')
-    pp_p = re.compile('^\*')
-    inp = open(name, 'r')
-    while True:
-      line = inp.readline()
-      if not line: break
-      if(re.match("&ATOMS",line)):
-        while not (re.match("&END",line)):
-          line = inp.readline()
-          if(re.match(pp_p,line)):
-            #self.NType += 1
-            element = element_p.match(line).group(1)
-            #NTypeName.append(element)
-            inp.readline()
-            N = int(inp.readline())
-            for i in xrange(0, N):
-              self.N += 1
-              line = inp.readline()
-              coord.append([float(x) for x in line.split()])
-              type_list.append(element)
-              Z.append(qtk.n2Z(element))
-    self.R = np.vstack(coord)
-    #self.NTypeName = np.array(NTypeName)
-    self.type_list = type_list
-    self.Z = np.array(Z)
-
-    inp.close()

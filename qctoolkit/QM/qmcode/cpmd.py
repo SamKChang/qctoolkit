@@ -186,6 +186,44 @@ class inp(PlanewaveInput):
     if name:
       inp.close()
 
+#  # read structure from CPMD input
+#  def read_cpmdinp(self, name):
+# 
+#    self.N = 0
+#    #self.NType = 0
+#    #NTypeName = []
+#    coord = []
+#    Z = []
+#    type_list = []
+#
+#    element_p = re.compile('\*([A-Za-z]*)_')
+#    pp_p = re.compile('^\*')
+#    inp = open(name, 'r')
+#    while True:
+#      line = inp.readline()
+#      if not line: break
+#      if(re.match("&ATOMS",line)):
+#        while not (re.match("&END",line)):
+#          line = inp.readline()
+#          if(re.match(pp_p,line)):
+#            #self.NType += 1
+#            element = element_p.match(line).group(1)
+#            #NTypeName.append(element)
+#            inp.readline()
+#            N = int(inp.readline())
+#            for i in xrange(0, N):
+#              self.N += 1
+#              line = inp.readline()
+#              coord.append([float(x) for x in line.split()])
+#              type_list.append(element)
+#              Z.append(qtk.n2Z(element))
+#    self.R = np.vstack(coord)
+#    #self.NTypeName = np.array(NTypeName)
+#    self.type_list = type_list
+#    self.Z = np.array(Z)
+#
+#    inp.close()
+
 class out(PlanewaveOutput):
   def __init__(self, qmout, **kwargs):
     PlanewaveOutput.__init__(self, qmout, **kwargs)
