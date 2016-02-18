@@ -15,6 +15,10 @@ class InpContent(object):
       else:
         setattr(self, string, value)
 
+    if 'output' not in kwargs:
+      if self.file_name or self.root_dir:
+        self.output = True
+
   def write(self, string):
     self.content.append(string)
 

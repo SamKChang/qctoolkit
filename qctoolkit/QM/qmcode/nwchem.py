@@ -29,22 +29,8 @@ class inp(GaussianBasisInput):
     return out
     
   def write(self, name=None):
-    molecule = copy.deepcopy(self.molecule)
-    self.cm_check(molecule)
-    if name:
-      nameStr = re.sub('\.inp', '', name)
-      out = os.path.splitext(name)
-      if out[1] != '.inp':
-        name = out[0] + '.inp'
-      if os.path.exists(name) and not qtk.setting.no_warning:
-        qtk.prompt(name + ' exists, overwrite?')
-        try:
-          os.remove(name)
-        except:
-          qtk.exit("can not remove file: " + name)
-    else:
-      nameStr = re.sub('\.inp', '', molecule.name)
-    inp = sys.stdout if not name else open(name, 'w')
+    inp, molecule = \
+      super(GaussianBasisInput, self).write(name, **self.setting)
 
     # mode setup
     if self.setting['mode'] == 'single_point':
@@ -77,8 +63,8 @@ class inp(GaussianBasisInput):
       module = 'tce'
 
     # print file
-    inp.write('title %s\n' % nameStr)
-    inp.write('start %s\n' % nameStr)
+    inp.write('title %s\n' % name)
+    inp.write('start %s\n' % name)
     inp.write('echo\n')
     if self.setting['fix_molecule']\
     and self.setting['fix_molecule']:
@@ -139,8 +125,7 @@ class inp(GaussianBasisInput):
 
     inp.write('\ntask %s %s\n' % (module, operation))
 
-    if name:
-      inp.close()
+    inp.close()
 
 
 class out(GaussianBasisOutput):

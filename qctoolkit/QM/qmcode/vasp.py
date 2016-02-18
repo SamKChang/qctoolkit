@@ -34,6 +34,8 @@ class inp(PlanewaveInput):
     if name:
       self.setting['output'] = True
       name = os.path.splitext(name)[0]
+    else: 
+      self.setting['output'] = False
     incar, molecule = \
       super(PlanewaveInput, self).write('INCAR', **self.setting)
     self.setting['no_molecule'] = True
