@@ -20,7 +20,7 @@ class inp(PlanewaveInput):
     name = self.create_folder(name)
     cwd = os.getcwd()
     os.chdir(name)
-    inp = name + '.inp'
+    inp = name
     self.write(inp)
     if not qtk.setting.cpmd_pp:
       self.pp_path = pkg_resources.resource_filename(\
@@ -45,7 +45,7 @@ class inp(PlanewaveInput):
     self.cm_check(molecule)
     if name:
       out = os.path.splitext(name)
-      if out[1] != '.inp':
+      if out[-1] != '.inp':
         name = out[0] + '.inp'
       if os.path.exists(name) and not qtk.setting.no_warning:
         qtk.prompt(name + ' exists, overwrite?')

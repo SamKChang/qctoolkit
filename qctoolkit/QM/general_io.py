@@ -55,20 +55,22 @@ class GenericQMInput(object):
   def __repr__(self):
     return self.molecule.name + ': ' + self.setting['program']
 
+  # interface to Molecule class
   def view(self, name=None):
     self.molecule.view(name)
 
-  def setAtom(self, *args, **kwargs):
-    self.molecule.setAtom(*args, **kwargs)
+  def setAtoms(self, *args, **kwargs):
+    self.molecule.setAtoms(*args, **kwargs)
 
-  def removeAtom(self, index):
-    self.molecule.remove_atom(index)
+  def removeAtoms(self, index):
+    self.molecule.removeAtoms(index)
 
   def isolateAtoms(self, indices):
-    self.molecule.isolate_atoms(indices)
+    self.molecule.isolateAtoms(indices)
 
   def setChargeMultiplicity(self, *args, **kwargs):
     self.molecule.setChargeMultiplicity(*args, **kwargs)
+  # end of interface
 
   def create_folder(self, name=None):
     if not name:
