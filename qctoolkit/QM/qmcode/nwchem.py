@@ -6,6 +6,7 @@ import numpy as np
 import qctoolkit.QM.qmjob as qmjob
 import periodictable as pt
 import universal as univ
+import collections
 
 class inp(GaussianBasisInput):
   def __init__(self, molecule, **kwargs):
@@ -14,7 +15,8 @@ class inp(GaussianBasisInput):
 
   def run(self, name=None, **kwargs):
     self.setting.update(kwargs)
-    univ.runCode(self, GaussianBasisInput, name, **self.setting)
+    out = univ.runCode(self, GaussianBasisInput, name, **self.setting)
+    return out
     
   def write(self, name=None):
     inp, molecule = \
@@ -118,24 +120,21 @@ class inp(GaussianBasisInput):
     return univ.writeReturn(inp, name, **self.setting)
 
 class out(GaussianBasisOutput):
-  """
-  directly parse vasp xml output, 'vasprun.xml'
-  converged energy, system info, and scf steps are extracted
-  """
   def __init__(self, qmout=None, **kwargs):
     GaussianBasisOutput.__init__(self, qmout, **kwargs)
     if qmout:
       outfile = open(qmout, 'r')
       data = outfile.readlines()
+      outfile.close()
       Et = filter(lambda x: 'Total' in x and 'energy' in x, data)
       try:
         self.Et = float(Et[-1].split( )[-1])
       except:
         self.Et = np.nan
       # necessary for opening *.movecs file
-      n_basis = filter(lambda x: ' functions ' in x, data)
+      n_basis = filter(lambda x: 'functions' in x, data)
       try:
-        self.n_basis = int(n_basis[-1].split('=')[1])
+        self.n_basis = int(n_basis[-1].split(':')[1])
       except:
         self.n_basis = np.nan
 
@@ -188,6 +187,9 @@ class out(GaussianBasisOutput):
       self.type_list = [re.split(r'[\._]',
         filter(None, s.split(' '))[0])[0].title()\
         for s in coordStr]
+      self.type_list_unique = list(
+        collections.OrderedDict.fromkeys(self.type_list)
+      )
       self.R = np.array([filter(None, s.split(' '))[1:4]\
         for s in coordStr]).astype(float)
       self.N = len(self.R)
@@ -196,10 +198,10 @@ class out(GaussianBasisOutput):
 
       _N.append(0)
       self.basis = []
-      for i in range(len(self.type_list)):
-        e = self.type_list[i]
+      for i in range(len(self.type_list_unique)):
+        e = self.type_list_unique[i]
         center = self.R_bohr[i]
-        ind = self.type_list.index(e)
+        ind = self.type_list_unique.index(e)
         bfn_base = {}
         bfn_base['atom'] = e
         bfn_base['center'] = center

@@ -14,4 +14,4 @@ def runCode(self, parrent, name, **kwargs):
   new_name = None
   if 'new_name' in kwargs:
     new_name = self.setting['new_name']
-  worker.start(inp, new_name)
+  return worker.start(inp, new_name)

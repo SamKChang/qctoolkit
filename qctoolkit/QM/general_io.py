@@ -42,7 +42,18 @@ class InpContent(object):
   def write(self, string):
     self.content.append(string)
 
-  def close(self):
+  def cleanPath(self, path):
+    if os.path.exists(path):
+      qtk.prompt(path + ' exists, overwrite?')
+      try:
+        os.remove(path)
+      except OSError:
+        shutil.rmtree(path)
+      except:
+        qtk.warning("can not remove file: " + path)
+    
+
+  def close(self, **kwargs):
     """
     finalize input content by either 1) creating folder, 
     coping dependent files and write input content to file 
@@ -66,14 +77,9 @@ class InpContent(object):
         full_dir_path = os.path.join(self.path, self.root_dir)
       if name:
         full_path = os.path.join(full_dir_path, name)
-        if os.path.exists(full_path):
-          qtk.prompt(full_path + ' exists, overwrite?')
-          try:
-            os.remove(full_path)
-          except OSError:
-            shutil.rmtree(full_path)
-          except:
-            qtk.exit("can not remove file: " + name)
+        if 'no_cleanup' not in kwargs or not kwargs['no_cleanup']:
+          self.cleanPath(full_dir_path)
+        self.cleanPath(full_path)
         if not os.path.exists(full_dir_path):
           os.makedirs(full_dir_path)
         self.final_path = full_dir_path
@@ -108,17 +114,18 @@ class QMWorker(object):
       run_setup = copy.deepcopy(self.setting)
       del run_setup['program']
 
-      out = qmjob.QMRun(self.name, self.qmcode, **run_setup)
-      os.chdir(cwd)
- 
-#      try:
-#        out = qmjob.QMRun(self.name, self.qmcode, **run_setup)
-#      except:
-#        qtk.warning("qmjob finished unexpectedly for '" + \
-#                    self.name + "'")
-#        out = GenericQMOutput()
-#      finally:
-#        os.chdir(cwd)
+      if 'debug' in self.setting and self.setting['debug']:
+        out = qmjob.QMRun(self.name, self.qmcode, **run_setup)
+        os.chdir(cwd)
+      else:
+        try:
+          out = qmjob.QMRun(self.name, self.qmcode, **run_setup)
+        except:
+          qtk.warning("qmjob finished unexpectedly for '" + \
+                      self.name + "'")
+          out = GenericQMOutput()
+        finally:
+          os.chdir(cwd)
 
       return out
     else:

@@ -16,7 +16,7 @@ class inp(PlanewaveInput):
     self.setting.update(kwargs)
     self.setting['no_subfolder'] = True
     self.setting['new_name'] = self.molecule.name
-    univ.runCode(self, PlanewaveInput, name, **self.setting)
+    return univ.runCode(self, PlanewaveInput, name, **self.setting)
 
   def write(self, name=None):
     molecule = copy.deepcopy(self.molecule)
@@ -128,7 +128,7 @@ class inp(PlanewaveInput):
       kpoints.write(" 1       ! one k-point\n")
       kpoints.write("rec      ! in units of reciprocal vector\n")
       kpoints.write(" 0 0 0 1 ! coordinates and weight\n")
-    kpoints.close()
+    kpoints.close(no_cleanup=True)
 
     # !!!!!!!!!!!!!!!
     # write to POSCAR
@@ -148,7 +148,7 @@ class inp(PlanewaveInput):
       for X in R:
         poscar.write(" %7.4f" % X)
       poscar.write("\n")
-    poscar.close()
+    poscar.close(no_cleanup=True)
 
     # !!!!!!!!!!!!!!!
     # write to POTCAR
@@ -161,7 +161,7 @@ class inp(PlanewaveInput):
             potcar.write(str(line))
       else:
         potcar.write("cat %s\n" % PP_file)
-    potcar.close()
+    potcar.close(no_cleanup=True)
 
     if name: return incar, name
 

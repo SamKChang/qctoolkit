@@ -18,7 +18,7 @@ class inp(PlanewaveInput):
 
   def run(self, name=None, **kwargs):
     self.setting.update(kwargs)
-    univ.runCode(self, PlanewaveInput, name, **self.setting)
+    return univ.runCode(self, PlanewaveInput, name, **self.setting)
 
   def write(self, name=None):
     def PPString(mol, i, n, outFile):
