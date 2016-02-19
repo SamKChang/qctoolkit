@@ -9,6 +9,10 @@ import universal as univ
 import collections
 
 class inp(GaussianBasisInput):
+  """
+  nwchem input class. 
+  """
+  __doc__ = GaussianBasisInput.__doc__ + __doc__
   def __init__(self, molecule, **kwargs):
     GaussianBasisInput.__init__(self, molecule, **kwargs)
     self.setting.update(kwargs)

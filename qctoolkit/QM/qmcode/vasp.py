@@ -118,7 +118,7 @@ class inp(PlanewaveInput):
       incar.write("LSCALAPACK = .FALSE.\n")
     elif not self.setting['scalapack']:
       incar.write("LSCALAPACK = .FALSE.\n")
-    incar.close()
+    incar.close(cleanup_root=True)
 
     # !!!!!!!!!!!!!!!!
     # write to KPOINTS
@@ -128,7 +128,7 @@ class inp(PlanewaveInput):
       kpoints.write(" 1       ! one k-point\n")
       kpoints.write("rec      ! in units of reciprocal vector\n")
       kpoints.write(" 0 0 0 1 ! coordinates and weight\n")
-    kpoints.close(no_cleanup=True)
+    kpoints.close()
 
     # !!!!!!!!!!!!!!!
     # write to POSCAR
@@ -148,7 +148,7 @@ class inp(PlanewaveInput):
       for X in R:
         poscar.write(" %7.4f" % X)
       poscar.write("\n")
-    poscar.close(no_cleanup=True)
+    poscar.close()
 
     # !!!!!!!!!!!!!!!
     # write to POTCAR
@@ -161,7 +161,7 @@ class inp(PlanewaveInput):
             potcar.write(str(line))
       else:
         potcar.write("cat %s\n" % PP_file)
-    potcar.close(no_cleanup=True)
+    potcar.close()
 
     if name: return incar, name
 

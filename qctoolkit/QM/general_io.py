@@ -52,7 +52,6 @@ class InpContent(object):
       except:
         qtk.warning("can not remove file: " + path)
     
-
   def close(self, **kwargs):
     """
     finalize input content by either 1) creating folder, 
@@ -77,7 +76,7 @@ class InpContent(object):
         full_dir_path = os.path.join(self.path, self.root_dir)
       if name:
         full_path = os.path.join(full_dir_path, name)
-        if 'no_cleanup' not in kwargs or not kwargs['no_cleanup']:
+        if 'cleanup_root' in kwargs and kwargs['cleanup_root']:
           self.cleanPath(full_dir_path)
         self.cleanPath(full_path)
         if not os.path.exists(full_dir_path):
@@ -132,6 +131,22 @@ class QMWorker(object):
       qtk.exit("InpContent not finalized, no inp name?")
 
 class GenericQMInput(object):
+  """
+  From GenericQMInput:
+  holder class of general QM job. It initiates by Molecule class and
+  the choice of qmcode (default at qtk.setting.qmcode). 
+
+  attributes:
+    setting(dict) --- contain all qm setup
+    molecule(Molecule) --- for geometry, atom types, charges
+
+  methods:
+    write(name) --- write input file into a file/foler called 'name'
+                    extension, prefix, suffix can be set by kwargs
+    run(name) --- create a folder call 'name', go into that folder,
+                  write an input file, start qmjob
+  ===
+  """
   def __init__(self, molecule, **kwargs):
     self.setting = kwargs
     self.molecule = molecule
@@ -159,34 +174,6 @@ class GenericQMInput(object):
 
   def __repr__(self):
     return self.molecule.name + ': ' + self.setting['program']
-
-  # interface to Molecule class
-  def view(self, name=None):
-    self.molecule.view(name)
-
-  def setAtoms(self, *args, **kwargs):
-    self.molecule.setAtoms(*args, **kwargs)
-
-  def removeAtoms(self, index):
-    self.molecule.removeAtoms(index)
-
-  def isolateAtoms(self, indices):
-    self.molecule.isolateAtoms(indices)
-
-  def setChargeMultiplicity(self, *args, **kwargs):
-    self.molecule.setChargeMultiplicity(*args, **kwargs)
-  # end of interface
-
-  def create_folder(self, name=None):
-    if not name:
-      name = self.molecule.name
-    if os.path.exists(name) and not qtk.setting.no_warning:
-      qtk.prompt(name + ' exists, overwrite?')
-      shutil.rmtree(name)
-    os.mkdir(name)
-    if 'restart_file' in self.setting:
-      shutil.copy(self.setting['restart_file'], name)
-    return name
 
   def cm_check(self, mol):
     ve = mol.getValenceElectrons()

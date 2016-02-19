@@ -8,6 +8,10 @@ import numpy as np
 import universal as univ
 
 class inp(PlanewaveInput):
+  """
+  cpmd input class.
+  """
+  __doc__ = PlanewaveInput.__doc__ + __doc__
   def __init__(self, molecule, **kwargs):
     PlanewaveInput.__init__(self, molecule, **kwargs)
     self.setting.update(**kwargs)

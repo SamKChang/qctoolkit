@@ -9,10 +9,12 @@ cpu_count = mp.cpu_count()
 memory = float(virtual_memory().total)/10**9
 qmcode = 'cpmd'
 mdcode = 'cpmd'
+#run_qmtest = False
+run_qmtest = True
 
 # geometry setting
-bond_ratio = 1.1
-pw_margin = 3
+bond_ratio = 1.1  # for Molecule.findBond function
+pw_margin = 3     # for planewave box setup
 
 # MPI setting
 mpistr = 'mpirun -np'
@@ -20,6 +22,7 @@ ompthreads = 1
 ompstr = '-x OMP_NUM_THREADS=%d' % ompthreads
 
 # QM executables
+libgbasis = '/home/samio/src/science/nwchem-6.6/src/basis/libraries'
 # default setup for qm jobs
 qm_setup = {
              'program' : qmcode,
@@ -61,7 +64,7 @@ vasp_exe = 'vasp'
 # CPMD setting
 cpmd_exe = 'cpmd.x'
 cpmd_cpmd2cube = 'cpmd2cube.x'
-cpmd_pp = ''
+cpmd_pp = '/home/samio/Works/PhD/packages/CPMD/PP'
 # NWChem setting
 nwchem_exe = 'nwchem'
 nwchem_mov2asc = 'mov2asc'

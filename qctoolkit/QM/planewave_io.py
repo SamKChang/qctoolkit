@@ -4,6 +4,12 @@ from general_io import GenericQMOutput
 import numpy as np
 
 class PlanewaveInput(GenericQMInput):
+  """
+  From PlanwaveInput:
+  generic class holder for plane wave qmcode. It provide basic
+  default settings.
+  """
+  __doc__ = GenericQMInput.__doc__ + __doc__
   def __init__(self, molecule, **kwargs):
     GenericQMInput.__init__(self, molecule, **kwargs)
 

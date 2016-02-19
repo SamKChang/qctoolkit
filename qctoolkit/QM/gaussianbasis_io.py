@@ -117,6 +117,13 @@ def basisData(basis, **kwargs):
   
 
 class GaussianBasisInput(GenericQMInput):
+  """
+  From GaussianBasis Input:
+  generic class holder for gaussian basis qmcode. It provide basic
+  default settings.
+  ===
+  """
+  __doc__ = GenericQMInput.__doc__ + __doc__
   def __init__(self, molecule, **kwargs):
     GenericQMInput.__init__(self, molecule, **kwargs)
 

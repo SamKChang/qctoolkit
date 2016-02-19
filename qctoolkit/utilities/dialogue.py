@@ -14,7 +14,6 @@ class bcolors:
   BOLD = '\033[1m'
   UNDERLINE = '\033[4m'
 
-
 def exit(text):
   frame = inspect.stack()[1]
   module = inspect.getmodule(frame[0])
