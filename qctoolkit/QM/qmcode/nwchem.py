@@ -137,10 +137,16 @@ class out(GaussianBasisOutput):
         self.Et = np.nan
       # necessary for opening *.movecs file
       n_basis = filter(lambda x: 'functions' in x, data)
-      try:
-        self.n_basis = int(n_basis[-1].split(':')[1])
-      except:
-        self.n_basis = np.nan
+      if ':' in n_basis[-1]:
+        try:
+          self.n_basis = int(n_basis[-1].split(':')[1])
+        except:
+          self.n_basis = np.nan
+      elif '=' in n_basis[-1]:
+        try:
+          self.n_basis = int(n_basis[-1].split('=')[1])
+        except:
+          self.n_basis = np.nan
 
       ######################################
       # extract basis function information #
