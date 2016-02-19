@@ -162,6 +162,7 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
       exe = setting.nwchem_mov2asc
       nb = qio_out.n_basis
       out = re.sub('\.movecs','.modat',f)
+      print nb
       exestr = "%s %d %s %s" % (exe, nb, f, out)
       run = sp.Popen(exestr, shell=True)
       run.wait()

@@ -46,7 +46,7 @@ class inp(GaussianBasisInput):
       'rhf', 'rohf', 'uhf',
     }
     tce = {
-      'mp2', 'ccsd', 'ccsd(t)',
+      'mp2', 'mp3', 'mp4', 'ccsd', 'ccsdt',
     }
     if self.setting['theory'] in dft:
       module = 'dft'
@@ -55,6 +55,10 @@ class inp(GaussianBasisInput):
       module = 'scf'
     elif self.setting['theory'] in tce:
       module = 'tce'
+    else:
+      qtk.exit("theory %s is not implemented" % self.setting['theory'])
+
+    mul_dict = {1: 'singlet', 2: 'doublet', 3: 'triplet'}
 
     # print file
     inp.write('title %s\n' % name)
@@ -106,12 +110,26 @@ class inp(GaussianBasisInput):
             self.setting['basis_set'].upper()),
           )
     inp.write('end\n\n')
+
     if module == 'dft':
       inp.write('dft\n')
       inp.write(' xc %s\n' % xc)
       inp.write('end\n\n')
+
     elif module == 'scf':
-      pass
+      inp.write('scf\n')
+      if molecule.multiplicity <=3:
+        inp.write(' %s\n' % mul_dict[molecule.multiplicity])
+        inp.write(' %s\n' % self.setting['theory'])
+      else:
+        qtk.exit('multiplicity > 3 is not yet implemented')
+      inp.write('end\n\n')
+
+    if module == 'tce':
+      inp.write('tce\n')
+      inp.write(' %s\n' % self.setting['theory'])
+      inp.write('end\n\n')
+
     if molecule.charge != 0:
       inp.write('charge % 5.2f\n' % molecule.charge)
     if molecule.multiplicity != 1:
@@ -135,6 +153,12 @@ class out(GaussianBasisOutput):
         self.Et = float(Et[-1].split( )[-1])
       except:
         self.Et = np.nan
+      try:
+        _Et = filter(lambda x: 'total' in x and 'energy' in x, data)
+        _Et = float(_Et[-1].split( )[-1])
+        self.Et = _Et
+      except:
+        pass
       # necessary for opening *.movecs file
       n_basis = filter(lambda x: 'functions' in x, data)
       if ':' in n_basis[-1]:

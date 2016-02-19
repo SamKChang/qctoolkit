@@ -51,7 +51,7 @@ def test_h2o_pbe():
   else:
     gn = '\033[92m'
     ec = '\033[0m'
-    raise SkipTest("\n %sSkipping run_test%s for speed! To turn on, " \
+    raise SkipTest("\n %sSkipping h2o_pbe%s for speed! To turn on, " \
                    % (gn, ec) + "set setting.run_qmtest=True")
 
 def test_cleanup():

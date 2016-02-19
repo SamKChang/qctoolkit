@@ -149,7 +149,7 @@ class GenericQMInput(object):
   """
   def __init__(self, molecule, **kwargs):
     self.setting = kwargs
-    self.molecule = molecule
+    self.molecule = copy.deepcopy(molecule)
 
     # local variable to construct 'setting' for parsing
     setup = copy.deepcopy(qtk.setting.qm_setup)
