@@ -2,6 +2,7 @@ import qctoolkit as qtk
 import qmcode.cpmd as cpmd
 import qmcode.vasp as vasp
 import qmcode.nwchem as nwchem
+import qmcode.bigdft as bigdft
 import qmcode.gaussian as gaussian
 
 def QMInp(molecule, **kwargs):
@@ -17,6 +18,9 @@ def QMInp(molecule, **kwargs):
   elif kwargs['program'].lower() == 'nwchem':
     kwargs['extension'] = 'inp'
     return nwchem.inp(molecule, **kwargs)
+  elif kwargs['program'].lower() == 'bigdft':
+    kwargs['extension'] = 'yaml'
+    return bigdft.inp(molecule, **kwargs)
 
 def QMOut(out=None, **kwargs):
 
@@ -33,5 +37,7 @@ def QMOut(out=None, **kwargs):
     return nwchem.out(out)
   elif kwargs['program'].lower() == 'gaussian':
     return gaussian.out(out)
+  elif kwargs['program'].lower() == 'bigdft':
+    return bigdft.out(out)
   else:
     qtk.exit("program: %s not reconized" % kwargs['program'])
