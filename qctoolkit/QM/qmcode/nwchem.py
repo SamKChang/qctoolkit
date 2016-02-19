@@ -5,6 +5,7 @@ import os, sys, copy, shutil, re
 import numpy as np
 import qctoolkit.QM.qmjob as qmjob
 import periodictable as pt
+import universal as univ
 
 class inp(GaussianBasisInput):
   def __init__(self, molecule, **kwargs):
@@ -12,21 +13,8 @@ class inp(GaussianBasisInput):
     self.setting.update(kwargs)
 
   def run(self, name=None, **kwargs):
-    # creat_folder routine check default name
-    name = self.create_folder(name)
-    cwd = os.getcwd()
-    os.chdir(name)
-    inp = name + '.inp'
-    self.write(inp)
-    try:
-      out = qmjob.QMRun(inp, 'nwchem', **kwargs)
-    except:
-      qtk.warning("qmjob finished unexpectedly for '" + \
-                  name + "'")
-      out = GaussianBasisOutput(program='nwchem')
-    finally:
-      os.chdir(cwd)
-    return out
+    self.setting.update(kwargs)
+    univ.runCode(self, GaussianBasisInput, name, **self.setting)
     
   def write(self, name=None):
     inp, molecule = \
@@ -127,9 +115,7 @@ class inp(GaussianBasisInput):
 
     inp.close()
 
-    if name:
-      return name + '.' + self.setting['extension']
-
+    return univ.writeReturn(inp, name, **self.setting)
 
 class out(GaussianBasisOutput):
   """

@@ -5,6 +5,7 @@ import sys, os, re, copy, shutil
 import qctoolkit.QM.qmjob as qmjob
 import pkg_resources
 import numpy as np
+import universal as univ
 
 class inp(PlanewaveInput):
   def __init__(self, molecule, **kwargs):
@@ -16,29 +17,8 @@ class inp(PlanewaveInput):
       self.setting['pp_type'] = 'Goedecker'
 
   def run(self, name=None, **kwargs):
-    # creat_folder routine check default name
-    name = self.create_folder(name)
-    cwd = os.getcwd()
-    os.chdir(name)
-    inp = name
-    self.write(inp)
-    if not qtk.setting.cpmd_pp:
-      self.pp_path = pkg_resources.resource_filename(\
-        'qctoolkit.data.PP.cpmd', '')
-    else:
-      self.pp_path = qtk.setting.cpmd_pp
-    for f in self.pp_files:
-      pp = os.path.join(self.pp_path, f)
-      shutil.copyfile(pp, f)
-    try:
-      out = qmjob.QMRun(inp, 'cpmd', **kwargs)
-    except:
-      qtk.warning("qmjob finished unexpectedly for '" + \
-                  name + "'")
-      out = PlanewaveOutput(program='cpmd')
-    finally:
-      os.chdir(cwd)
-    return out
+    self.setting.update(kwargs)
+    univ.runCode(self, PlanewaveInput, name, **self.setting)
 
   def write(self, name=None):
     def PPString(mol, i, n, outFile):
@@ -175,46 +155,7 @@ class inp(PlanewaveInput):
 
     inp.close()
 
-    if name:
-      return name + '.' + self.setting['extension']
-
-#  # read structure from CPMD input
-#  def read_cpmdinp(self, name):
-# 
-#    self.N = 0
-#    #self.NType = 0
-#    #NTypeName = []
-#    coord = []
-#    Z = []
-#    type_list = []
-#
-#    element_p = re.compile('\*([A-Za-z]*)_')
-#    pp_p = re.compile('^\*')
-#    inp = open(name, 'r')
-#    while True:
-#      line = inp.readline()
-#      if not line: break
-#      if(re.match("&ATOMS",line)):
-#        while not (re.match("&END",line)):
-#          line = inp.readline()
-#          if(re.match(pp_p,line)):
-#            #self.NType += 1
-#            element = element_p.match(line).group(1)
-#            #NTypeName.append(element)
-#            inp.readline()
-#            N = int(inp.readline())
-#            for i in xrange(0, N):
-#              self.N += 1
-#              line = inp.readline()
-#              coord.append([float(x) for x in line.split()])
-#              type_list.append(element)
-#              Z.append(qtk.n2Z(element))
-#    self.R = np.vstack(coord)
-#    #self.NTypeName = np.array(NTypeName)
-#    self.type_list = type_list
-#    self.Z = np.array(Z)
-#
-#    inp.close()
+    return univ.writeReturn(inp, name, **self.setting)
 
 class out(PlanewaveOutput):
   def __init__(self, qmout, **kwargs):

@@ -5,6 +5,7 @@ import os, sys, copy, shutil, re
 import numpy as np
 import qctoolkit.QM.qmjob as qmjob
 import xml.etree.ElementTree as ET
+import universal as univ
 
 class inp(PlanewaveInput):
   def __init__(self, molecule, **kwargs):
@@ -12,21 +13,11 @@ class inp(PlanewaveInput):
     self.setting.update(kwargs)
 
   def run(self, name=None, **kwargs):
-    if not name:
-      name = self.molecule.name
-    cwd = os.getcwd()
-    self.write(name)
-    os.chdir(name)
-    try:
-      out = qmjob.QMRun(name, 'vasp', **kwargs)
-    except:
-      qtk.warning("qmjob finished unexpectedly for '" + \
-                  name + "'")
-      out = PlanewaveOutput(program='vasp')
-    finally:
-      os.chdir(cwd)
-    return out
-    
+    self.setting.update(kwargs)
+    self.setting['no_subfolder'] = True
+    self.setting['new_name'] = self.molecule.name
+    univ.runCode(self, PlanewaveInput, name, **self.setting)
+
   def write(self, name=None):
     molecule = copy.deepcopy(self.molecule)
     self.setting['root_dir'] = name
@@ -172,7 +163,7 @@ class inp(PlanewaveInput):
         potcar.write("cat %s\n" % PP_file)
     potcar.close()
 
-    if name: return name
+    if name: return incar, name
 
 class out(PlanewaveOutput):
   """

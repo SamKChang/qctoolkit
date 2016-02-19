@@ -11,6 +11,25 @@ import qctoolkit.setting as setting
 # all code dependent part should be wrapped here
 # inp is passed as relative path to the calling script path
 def QMRun(inp, program=setting.qmcode, **kwargs):
+  """
+  interface to run qmcode with written inp files. It manages to start
+  qmcode in **cwd**, write to output, collect result, 
+  clean up scratch, tmp files according to setup. 
+  However, each code require different implementation.
+
+  input:
+    inp(str): path to input file
+    code(str): qmcode to run, default set to setting.qmcode
+
+  kwargs (optional):
+    threads=n(int): number of threads per job
+    bigmem=Boolean: big memory request, implemented for CPMD and others
+
+    CPMD:
+      save_restart=Boolean
+      scr=/path/to/scratch
+  """
+
   if 'threads' in kwargs:
     _threads = kwargs['threads']
   else:
@@ -30,9 +49,10 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
   ###########################################
   # SYSTEM CALL SUBPROCESS: Running mpi job #
   ###########################################
-  # switch to working directory for each calculation
-  # MUST switch pack by calling 'os.chdir(cwd)' at the end
   def compute(exestr, outpath, threads_per_job):
+    """
+    initiate a single MPI job, wait for it, and write to output
+    """
     outfile = open(outpath, "w")
     run = sp.Popen("%s %d %s %s"\
                    % (setting.mpistr, threads_per_job,
@@ -64,26 +84,14 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
     compute(exestr, out, _threads)
 
     # clean up files
-    try:
-      os.remove('LATEST')
-    except OSError:
-      pass
-    try:
-      os.remove('GEOMETRY.scale')
-    except OSError:
-      pass
-    try:
-      os.remove('GEOMETRY')
-    except OSError:
-      pass
-    try:
-      os.remove('KPTS_GENERATION')
-    except OSError:
-      pass
-    try:
-      os.remove('RESTART')
-    except OSError:
-      pass
+    files = glob.glob('*')
+    tmp = filter(\
+      lambda x: '.out' not in x \
+                and '.inp' not in x\
+                and '.xyz' not in x\
+                and 'RESTART' not in x, files
+    )
+    for f in tmp: os.remove(f)
     if not _save_restart:
       rst_list = glob.glob("RESTART*")
       for rfile in rst_list:
@@ -162,9 +170,13 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
         os.remove(f)
 
     return qio_out
-    
 
   # !!!!! TODO LIST !!!!! #
+  #########################
+  # BigDFT IMPLEMENTATION #
+  #########################
+  elif program.lower() == 'bigdft':
+    ut.exit("ERROR! program '%s' not implemented" % program)
   #############################
   # Gaussian09 IMPLEMENTATION #
   #############################
@@ -174,11 +186,6 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
   # QuantumESPRESSO IMPLEMENTATION #
   ##################################
   elif program.lower() == 'pwscf':
-    ut.exit("ERROR! program '%s' not implemented" % program)
-  #########################
-  # NwChem IMPLEMENTATION #
-  #########################
-  elif program.lower() == 'nwchem':
     ut.exit("ERROR! program '%s' not implemented" % program)
   #########################
   # GAMESS IMPLEMENTATION #

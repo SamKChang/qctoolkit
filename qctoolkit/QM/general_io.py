@@ -1,11 +1,31 @@
 import qctoolkit as qtk
 import re, os, shutil, copy, sys
 import numpy as np
+import qctoolkit.QM.qmjob as qmjob
 
 class InpContent(object):
+  """
+  general input file content object. It manages checking existance, 
+  creating folder, copy necessary files, 
+  append extension/prefix/suffix, writing file or print to screen
+
+  Attribute: (default at qtk.setting.file_setup)
+    prefix(str),
+    suffix(str),
+    extension(str),
+    root_dir(str),
+    path(str),
+    output(boolean),
+    dependent_files(list str)
+    finalized(boolean),
+    final_path(str)
+    final_name(str)
+  """
+
   def __init__(self, name, **kwargs):
     self.content = []
     self.file_name = name
+    self.finalized = False
 
     setup = copy.deepcopy(qtk.setting.file_setup)
 
@@ -23,6 +43,15 @@ class InpContent(object):
     self.content.append(string)
 
   def close(self):
+    """
+    finalize input content by either 1) creating folder, 
+    coping dependent files and write input content to file 
+    with correct name or 2) print to screen
+
+    Note that is returns full path to the file is writes to 
+    for posprocessing
+    """
+
     if self.output:
       name = self.file_name
       if self.prefix:
@@ -31,6 +60,7 @@ class InpContent(object):
         name = name + self.suffix 
       if self.extension:
         name = name + '.' + self.extension
+      self.final_name = name
       full_dir_path = self.path
       if self.root_dir:
         full_dir_path = os.path.join(self.path, self.root_dir)
@@ -46,12 +76,12 @@ class InpContent(object):
             qtk.exit("can not remove file: " + name)
         if not os.path.exists(full_dir_path):
           os.makedirs(full_dir_path)
-        if self.restart_file:
-          if os.path.exists(self.restart_file):
-            shutil.copy(self.setting['restart_file'], name)
+        self.final_path = full_dir_path
+        for dep in self.dependent_files:
+          if os.path.exists(dep):
+            shutil.copy(dep, full_dir_path)
           else:
-            qtk.warning("restart file: %s not found..."\
-                        % self.restart_file)
+            qtk.warning("dependent file: %s not found" % dep)
 
     inp = sys.stdout if not self.output else open(full_path, 'w')
     for string in self.content:
@@ -59,6 +89,40 @@ class InpContent(object):
         inp.write(string)
     if self.output:
       inp.close()
+      self.finalized = True
+
+class QMWorker(object):
+  def __init__(self, qmcode, **kwargs):
+    self.qmcode = qmcode
+    self.setting = kwargs
+
+  def start(self, InpClass, new_name=None):
+    self.inp = InpClass
+    if not new_name:
+      self.name = self.inp.final_name
+    else:
+      self.name = new_name
+    if self.inp.finalized:
+      cwd = os.getcwd()
+      os.chdir(self.inp.final_path)
+      run_setup = copy.deepcopy(self.setting)
+      del run_setup['program']
+
+      out = qmjob.QMRun(self.name, self.qmcode, **run_setup)
+      os.chdir(cwd)
+ 
+#      try:
+#        out = qmjob.QMRun(self.name, self.qmcode, **run_setup)
+#      except:
+#        qtk.warning("qmjob finished unexpectedly for '" + \
+#                    self.name + "'")
+#        out = GenericQMOutput()
+#      finally:
+#        os.chdir(cwd)
+
+      return out
+    else:
+      qtk.exit("InpContent not finalized, no inp name?")
 
 class GenericQMInput(object):
   def __init__(self, molecule, **kwargs):
@@ -126,8 +190,11 @@ class GenericQMInput(object):
             "are not compatible"
       qtk.exit(msg)
 
-  def run(self):
-    raise NotImplementedError("Please Implement run method")
+  def run(self, qmcode, name=None, **kwargs):
+    if not name:
+      name = self.molecule.name
+    self.setting.update(**kwargs)
+    return QMWorker(self.setting['program'], **self.setting), name
 
   def write(self, name, **kwargs):
     self.setting.update(kwargs)

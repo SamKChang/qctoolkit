@@ -20,7 +20,7 @@ def test_general_inp_render():
         for mode in modes:
           inp = qtk.QMInp(mol, mode=mode, theory=theory, program=code)
           inp.write()
-          tmp_inp = inp.write(tmp_name)
+          tmp_obj, tmp_inp = inp.write(tmp_name)
           try:
             os.remove(tmp_inp)
           except OSError:
