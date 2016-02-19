@@ -24,7 +24,8 @@ class inp(PlanewaveInput):
     self.setting.update(kwargs)
     return univ.runCode(self, PlanewaveInput, name, **self.setting)
 
-  def write(self, name=None):
+  def write(self, name=None, **kwargs):
+    self.setting.update(kwargs)
     def PPString(mol, i, n, outFile):
       ppstr = re.sub('\*', '', mol.string[i])
       if ppstr:

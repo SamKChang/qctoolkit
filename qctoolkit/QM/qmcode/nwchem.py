@@ -22,7 +22,8 @@ class inp(GaussianBasisInput):
     out = univ.runCode(self, GaussianBasisInput, name, **self.setting)
     return out
     
-  def write(self, name=None):
+  def write(self, name=None, **kwargs):
+    self.setting.update(kwargs)
     inp, molecule = \
       super(GaussianBasisInput, self).write(name, **self.setting)
 
@@ -46,7 +47,9 @@ class inp(GaussianBasisInput):
       'rhf', 'rohf', 'uhf',
     }
     tce = {
-      'mp2', 'mp3', 'mp4', 'ccsd', 'ccsdt',
+      'mp2', 'mp3', 'mp4', 
+      'ccsd', 'ccsdt', 'lccsd',
+      'cisd', 'cisdt',
     }
     if self.setting['theory'] in dft:
       module = 'dft'
@@ -114,11 +117,14 @@ class inp(GaussianBasisInput):
     if module == 'dft':
       inp.write('dft\n')
       inp.write(' xc %s\n' % xc)
+      if molecule.multiplicity > 1:
+        inp.write(' odft\n')
+        inp.write(' mult %d\n' % molecule.multiplicity)
       inp.write('end\n\n')
 
     elif module == 'scf':
       inp.write('scf\n')
-      if molecule.multiplicity <=3:
+      if molecule.multiplicity <= 3:
         inp.write(' %s\n' % mul_dict[molecule.multiplicity])
         inp.write(' %s\n' % self.setting['theory'])
       else:
@@ -126,14 +132,22 @@ class inp(GaussianBasisInput):
       inp.write('end\n\n')
 
     if module == 'tce':
+      _mult = False
+      if molecule.multiplicity > 1:
+        _mult = True
+        inp.write('scf\n')
+        inp.write(' %s\n' % mul_dict[molecule.multiplicity])
+        inp.write(' rohf\n')
+        inp.write('end\n\n')
       inp.write('tce\n')
+      if _mult: inp.write(' scf\n')
       inp.write(' %s\n' % self.setting['theory'])
       inp.write('end\n\n')
 
     if molecule.charge != 0:
       inp.write('charge % 5.2f\n' % molecule.charge)
-    if molecule.multiplicity != 1:
-      inp.write('multiplicity %d\n' % molecule.multiplicity)
+#    if molecule.multiplicity != 1:
+#      inp.write('multiplicity %d\n' % molecule.multiplicity)
 
     inp.write('\ntask %s %s\n' % (module, operation))
 

@@ -18,7 +18,8 @@ class inp(PlanewaveInput):
     self.setting['new_name'] = self.molecule.name
     return univ.runCode(self, PlanewaveInput, name, **self.setting)
 
-  def write(self, name=None):
+  def write(self, name=None, **kwargs):
+    self.setting.update(kwargs)
     molecule = copy.deepcopy(self.molecule)
     self.setting['root_dir'] = name
     self.setting['no_molecule'] = False

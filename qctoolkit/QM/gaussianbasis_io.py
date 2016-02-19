@@ -76,8 +76,6 @@ def densityFitting(qmout, rho_basis=None):
     basisData(rho_basis, density=True)
   NN = nnMatrix(rho_basis)
   NE = neMatrix(psi_basis, rho_basis)
-  print D_matrix.shape
-  print NE.shape
   G = td(D_matrix, NE, axes=([0,1], [1,2]))
   
   return np.linalg.solve(NN, G)

@@ -8,8 +8,13 @@ modes = ['single_point', 'geopt']
 pw_theory = ['pbe', 'blyp', 'lda']
 g_theory = ['pbe', 'pbe0', 'blyp', 'b3lyp', 'bp91', 'bp86', 'pw91',
             'rhf', 'rohf', 'uhf', 
-            'mp2', 'ccsd', 'ccsd(t)',
+            'mp2', 'ccsd', 'ccsdt',
            ]
+tce = [
+        'mp2', 'mp3', 'mp4',
+        'ccsd', 'ccsdt', 'lccsd',
+        'cisd', 'cisdt',
+      ]
 
 tmp_str = 'qct_test_qm_'
 
@@ -30,29 +35,47 @@ def test_general_inp_render():
   testRun(pw_list, pw_theory)
   testRun(g_list, g_theory)
 
-def test_h2o_pbe():
+def test_h2_pbe_allcode():
   if qtk.setting.run_qmtest:
     codes = ['nwchem', 'cpmd', 'vasp']
-    results = [-76.2982, -17.1334, -0.5220]
-    mol = setup(mol='h2o.xyz')[0]
+    mol = setup(mol='h2.xyz')[0]
     for i in range(len(codes)):
       code = codes[i]
-      Et = results[i]
       name = tmp_str + code
       inp = qtk.QMInp(mol, program=code)
       out = inp.run(name, threads = 2)
-      print i
-      print code
-      print name
-      print out.Et
-      print Et
-      print abs(out.Et - Et)
-      assert abs(out.Et - Et) < 1E-4
   else:
     gn = '\033[92m'
     ec = '\033[0m'
-    raise SkipTest("\n %sSkipping h2o_pbe%s for speed! To turn on, " \
+    raise SkipTest("\n %sSkipping qm tests%s for speed! To turn on, " \
                    % (gn, ec) + "set setting.run_qmtest=True")
+
+def test_h2_tce_singlet():
+  if qtk.setting.run_qmtest:
+    mol = setup(mol='h2.xyz')[0]
+    Et = []
+    for cc in tce:
+      name = tmp_str + cc + "_singlet"
+      inp = qtk.QMInp(mol, theory=cc, program='nwchem')
+      out = inp.run(name)
+      Et.append(out.Et)
+      print Et
+  else:
+    raise SkipTest
+
+def test_h2_tce_doublet():
+  if qtk.setting.run_qmtest:
+    mol = setup(mol='h2.xyz')[0]
+    mol.setChargeMultiplicity(-1, 2)
+    Et = []
+    for cc in tce:
+      name = tmp_str + cc + "doublet"
+      inp = qtk.QMInp(mol, theory=cc, program='nwchem')
+      out = inp.run(name)
+      Et.append(out.Et)
+      print Et
+  else:
+    raise SkipTest
 
 def test_cleanup():
   tmp_files = glob.glob(tmp_str + '*')

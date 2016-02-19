@@ -9,8 +9,8 @@ cpu_count = mp.cpu_count()
 memory = float(virtual_memory().total)/10**9
 qmcode = 'cpmd'
 mdcode = 'cpmd'
-#run_qmtest = False
-run_qmtest = True
+run_qmtest = False
+#run_qmtest = True
 
 # geometry setting
 bond_ratio = 1.1  # for Molecule.findBond function
@@ -58,6 +58,9 @@ file_setup = {
                'output' : False,
                'dependent_files' : [],
              }
+dft_list = ['pbe', 'pbe0', 'blyp', 'b3lyp', 'bp91', 'bp86', 'pw91']
+cc_list = ['mp2', 'mp3', 'mp4', 'ccsd', 'ccsdt', 
+           'lccsd', 'cisd', 'cisdt']
 # VASP setting
 vasp_pp = '/home/samio/Works/PhD/packages/VASP/PP'
 vasp_exe = 'vasp'
