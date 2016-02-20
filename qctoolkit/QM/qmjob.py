@@ -176,7 +176,17 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
   # BigDFT IMPLEMENTATION #
   #########################
   elif program.lower() == 'bigdft':
-    ut.exit("ERROR! program '%s' not implemented" % program)
+    if 'exe' in kwargs:
+      exe = kwargs['exe']
+    else:
+      exe = setting.bigdft_exe
+    inp = os.path.splitext(inp)[0]
+    exestr = "%s %s" % (exe, inp)
+    qmoutput = inp + '.out'
+    compute(exestr, qmoutput, _threads)
+    qio_out = qio.QMOut(qmoutput, program='bigdft')
+
+    return qio_out
   #############################
   # Gaussian09 IMPLEMENTATION #
   #############################
