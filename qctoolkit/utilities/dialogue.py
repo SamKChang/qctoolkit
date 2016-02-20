@@ -24,7 +24,7 @@ def exit(text):
   sys.exit(msg)
   
 def warning(text):
-  if not qtk.setting.quiet:
+  if qtk.setting.no_warning or not qtk.setting.quiet:
     msg = bcolors.WARNING + text + bcolors.ENDC
     print msg
   sys.stdout.flush()

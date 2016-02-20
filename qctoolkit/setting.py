@@ -58,6 +58,12 @@ file_setup = {
                'output' : False,
                'dependent_files' : [],
              }
+planewave_setup = {
+                    'periodic': True,
+                    'symmetry': 'orthorhombic',
+                    'cutoff': 'mt',
+                  }
+
 dft_list = ['pbe', 'pbe0', 'blyp', 'b3lyp', 'bp91', 'bp86', 'pw91']
 cc_list = ['mp2', 'mp3', 'mp4', 'ccsd', 'ccsdt', 
            'lccsd', 'cisd', 'cisdt']
@@ -72,4 +78,5 @@ cpmd_pp = '/home/samio/Works/PhD/packages/CPMD/PP'
 nwchem_exe = 'nwchem'
 nwchem_mov2asc = 'mov2asc'
 # BigDFT setting
-bigdft_exp = 'bigdft'
+bigdft_exe = 'bigdft'
+bigdft_pp = '/home/samio/Works/PhD/packages/BigDFT/PP'

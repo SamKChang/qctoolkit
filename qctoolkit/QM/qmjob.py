@@ -59,6 +59,9 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
       ompstr = '-x OMP_NUM_THREADS=%d' % kwargs['omp']
 
     outfile = open(outpath, "w")
+    cmd = "%s %d %s %s"% (setting.mpistr, 
+                          threads_per_job, 
+                          ompstr, exestr)
     run = sp.Popen("%s %d %s %s"\
                    % (setting.mpistr, threads_per_job, ompstr, exestr), 
                    shell=True,
@@ -187,7 +190,7 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
     inp = os.path.splitext(inp)[0]
     exestr = "%s %s" % (exe, inp)
     qmoutput = inp + '.out'
-    compute(exestr, qmoutput, 1, omp=_threads)
+    compute(exestr, qmoutput, _threads)
     qio_out = qio.QMOut(qmoutput, program='bigdft')
 
     return qio_out

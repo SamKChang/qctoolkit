@@ -1,0 +1,22 @@
+title anDIR-01_00A
+start anDIR-01_00A
+echo
+
+geometry units angstrom nocenter
+symmetry group c1
+ H          9.2319  11.8462  10.9618 
+ H         10.5112  11.0418  10.9785 
+ O          9.5518  10.9436  10.9832 
+end
+
+basis
+ H        library  H 6-31G
+ O        library  O 6-31G
+end
+
+dft
+ xc xpbe96 cpbe96
+end
+
+
+task dft energy

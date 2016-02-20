@@ -33,8 +33,10 @@ def convE(source, units, separator=None):
     'kj/mol': 'kJ/mol',
     'kjmol': 'kJ/mol',
     'kjm': 'kJ/mol',
+    'kj': 'kJ/mol', # assume no kilo Joule!
     'kcal/mol': 'kcal/mol',
     'kcalmol': 'kcal/mol',
+    'kcal': 'kcal/mol', # assume no kcal!
     'kcm': 'kcal/mol',
     'ev': 'eV',
     'cminv': 'cmInv',

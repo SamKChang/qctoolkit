@@ -1,15 +1,19 @@
 from setup_test import *
 from nose.plugins.skip import Skip, SkipTest
 import numpy as np
+qtk.setting.no_warning = True
+qtk.setting.quiet = True
 
 pw_list = ['cpmd', 'vasp']
 g_list = ['nwchem']
+wl_list = ['bigdft']
 modes = ['single_point', 'geopt']
 pw_theory = ['pbe', 'blyp', 'lda']
 g_theory = ['pbe', 'pbe0', 'blyp', 'b3lyp', 'bp91', 'bp86', 'pw91',
             'rhf', 'rohf', 'uhf', 
             'mp2', 'ccsd', 'ccsdt',
            ]
+wl_theory = ['pbe', 'pbe0', 'pbesol']
 tce = [
         'mp2', 'mp3', 'mp4',
         'ccsd', 'ccsdt', 'lccsd',
@@ -32,12 +36,15 @@ def test_general_inp_render():
             os.remove(tmp_inp)
           except OSError:
             shutil.rmtree(tmp_inp)
+            print tmp_name
+            print tmp_inp
   testRun(pw_list, pw_theory)
   testRun(g_list, g_theory)
+  testRun(wl_list, wl_theory)
 
 def test_h2_pbe_allcode():
   if qtk.setting.run_qmtest:
-    codes = ['nwchem', 'cpmd', 'vasp']
+    codes = ['nwchem', 'cpmd', 'vasp', 'bigdft']
     mol = setup(mol='h2.xyz')[0]
     for i in range(len(codes)):
       code = codes[i]
