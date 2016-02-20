@@ -51,10 +51,10 @@ class inp(WaveletInput):
           }
 
     posinp = {
-               'unit': 'angstroem',
+               'units': 'angstroem',
              }
     positions = []
-    posinp['position'] = positions
+    posinp['positions'] = positions
     for i in range(molecule.N):
       entry = {molecule.type_list[i]: yList(list(molecule.R[i]))}
       positions.append(entry)
@@ -83,7 +83,7 @@ class out(WaveletOutput):
     data = qmout.readlines()
     tmp = filter(lambda x: 'Energies' in x,  data)
     ind = data.index(tmp[-1])
-    string = data[inp] + data[inp + 1]
+    string = data[ind] + data[ind + 1]
     string = re.sub('\n', '', string)
     string = re.sub('.*{', '', string)
     string = re.sub('}.*', '', string)
@@ -97,4 +97,4 @@ class out(WaveletOutput):
     self.detail = Et
 
     tmp = filter(lambda x: 'Energy (Hartree)' in x, data)
-    self.Et = float(tmp.split(':')[1])
+    self.Et = float(tmp[-1].split(':')[1])
