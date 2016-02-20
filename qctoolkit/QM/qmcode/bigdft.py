@@ -24,8 +24,24 @@ class inp(WaveletInput):
   def write(self, name=None, **kwargs):
     self.setting.update(kwargs)
     self.setting['yaml'] = True
+    self.setting['root_dir'] = name
     inp, molecule = \
       super(WaveletInput, self).write(name, **self.setting)
+
+    dft_list = {
+                 'lda': 1,
+                 'pbe': 11,
+                 'pbexc': -101130,
+                 'pbesol': -116133,
+                 'pbe0': -406,
+                 'blyp': -106131,
+                 'b3lyp': -402,
+               }
+    
+    if self.setting['theory'] in dft_list:
+      theory = dft_list[self.setting['theory']]
+    else:
+      qtk.exit("theory: %s not implemented" % self.setting['theory'])
  
     def yList(data):
       _ = ' bracket '
@@ -40,6 +56,24 @@ class inp(WaveletInput):
       out = re.sub(" bracket '", ']', out)
       out = re.sub("'", '', out)
       return out
+
+    self.pp_path = None
+    if 'pp_path' not in self.setting:
+      self.pp_path = qtk.setting.bigdft_pp
+    else:
+      self.pp_path = self.setting['pp_path']
+
+    pp_base = ['pbe']
+    if 'pp_theory' not in self.setting:
+      self.setting['pp_theory'] = self.setting['theory']
+    pp_dir = None
+    for base in pp_base:
+      if base in self.setting['pp_theory']:
+        pp_dir = os.path.join(self.pp_path, base)
+    if not pp_dir:
+      qtk.warning('PP is not implemented for theory:%s. '+\
+                  'To include, set pp_theory=implemented_theory,'+\
+                  ' e.g. pbe')
       
     dft = {
             'hgrids': 'fast',
@@ -47,17 +81,21 @@ class inp(WaveletInput):
             'nrepmax': 'accurate',
             'output_wf': 1,
             'disablesym': 'Yes',
-            'ixc': 11,
+            'ixc': theory,
           }
 
     posinp = {
                'units': 'angstroem',
              }
     positions = []
+    pp_files = []
     posinp['positions'] = positions
     for i in range(molecule.N):
       entry = {molecule.type_list[i]: yList(list(molecule.R[i]))}
       positions.append(entry)
+      pp_file = os.path.join(pp_dir, 
+                             'psppar.' + molecule.type_list[i])
+      pp_files.append(pp_file)
 
     data = {}
     data['dft'] = dft
@@ -66,9 +104,9 @@ class inp(WaveletInput):
     content = reformat(yaml.dump(data, default_flow_style=False))
 
     inp.write(content)
-    inp.close()
+    inp.close(dependent_files=pp_files)
 
-    return univ.writeReturn(inp, name, **self.setting)
+    if name: return inp, name
 
 class out(WaveletOutput):
   def __init__(self, qmout, **kwargs):
@@ -88,7 +126,7 @@ class out(WaveletOutput):
     string = re.sub('.*{', '', string)
     string = re.sub('}.*', '', string)
     string = re.sub(' *', '', string)
-    tmp = string.split(',')
+    tmp = filter(None, string.split(','))
     self.scf_step = len(tmp)
     Et = {}
     for entry in tmp:

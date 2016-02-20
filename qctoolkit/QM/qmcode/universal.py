@@ -8,7 +8,7 @@ def runCode(self, parrent, name, **kwargs):
   worker, name = \
     super(parrent, self).run(kwargs['program'], name, **kwargs)
 
-  if not 'no_subfolder' in kwargs or not kwargs['no_subfolder']:
+  if 'no_subfolder' not in kwargs or not kwargs['no_subfolder']:
     self.setting['root_dir'] = name
   inp, name = self.write(name)
   new_name = None

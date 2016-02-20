@@ -63,6 +63,8 @@ class InpContent(object):
     """
 
     if self.output:
+
+      # process file name
       name = self.file_name
       if self.prefix:
         name = self.prefix + name
@@ -72,16 +74,23 @@ class InpContent(object):
         name = name + '.' + self.extension
       self.final_name = name
       full_dir_path = self.path
+
+      # process directory name and clean up
       if self.root_dir:
         full_dir_path = os.path.join(self.path, self.root_dir)
       if name:
         full_path = os.path.join(full_dir_path, name)
-        if 'cleanup_root' in kwargs and kwargs['cleanup_root']:
-          self.cleanPath(full_dir_path)
+        if not 'no_cleanup' in kwargs or not kwargs['no_cleanup']:
+          if self.root_dir:
+            self.cleanPath(full_dir_path)
         self.cleanPath(full_path)
         if not os.path.exists(full_dir_path):
           os.makedirs(full_dir_path)
         self.final_path = full_dir_path
+
+        # copy dependent files
+        if 'dependent_files' in kwargs:
+          self.dependent_files = kwargs['dependent_files']
         for dep in self.dependent_files:
           if os.path.exists(dep):
             shutil.copy(dep, full_dir_path)

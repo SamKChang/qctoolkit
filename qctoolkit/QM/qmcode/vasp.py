@@ -14,13 +14,12 @@ class inp(PlanewaveInput):
 
   def run(self, name=None, **kwargs):
     self.setting.update(kwargs)
-    self.setting['no_subfolder'] = True
+    self.setting['no_subfolder'] = False
     self.setting['new_name'] = self.molecule.name
     return univ.runCode(self, PlanewaveInput, name, **self.setting)
 
   def write(self, name=None, **kwargs):
     self.setting.update(kwargs)
-    molecule = copy.deepcopy(self.molecule)
     self.setting['root_dir'] = name
     self.setting['no_molecule'] = False
     if name:
@@ -53,7 +52,7 @@ class inp(PlanewaveInput):
       if os.path.exists(path):
         PPPath.append(path)
       else:
-        qtk.exit("PP file: " + path + "not found")
+        qtk.exit("PP file: " + path + " not found")
 
     def getNlist(atom_number):
       n_list.append(atom_number)
@@ -68,10 +67,11 @@ class inp(PlanewaveInput):
     type_list = molecule.type_list
     Z = molecule.Z
 
-    if not qtk.setting.vasp_pp:
-      qtk.exit("vasp pp_path not set")
-    else:
+    self.pp_path = None
+    if 'pp_path' not in self.setting:
       self.pp_path = qtk.setting.vasp_pp
+    else:
+      self.pp_path = self.setting['pp_path']
 
     for atom_type in xrange(0,len(type_index)-1):
       type_n = type_index[atom_type+1] - type_index[atom_type]
@@ -119,7 +119,7 @@ class inp(PlanewaveInput):
       incar.write("LSCALAPACK = .FALSE.\n")
     elif not self.setting['scalapack']:
       incar.write("LSCALAPACK = .FALSE.\n")
-    incar.close(cleanup_root=True)
+    incar.close()
 
     # !!!!!!!!!!!!!!!!
     # write to KPOINTS
@@ -129,7 +129,7 @@ class inp(PlanewaveInput):
       kpoints.write(" 1       ! one k-point\n")
       kpoints.write("rec      ! in units of reciprocal vector\n")
       kpoints.write(" 0 0 0 1 ! coordinates and weight\n")
-    kpoints.close()
+    kpoints.close(no_cleanup=True)
 
     # !!!!!!!!!!!!!!!
     # write to POSCAR
@@ -149,7 +149,7 @@ class inp(PlanewaveInput):
       for X in R:
         poscar.write(" %7.4f" % X)
       poscar.write("\n")
-    poscar.close()
+    poscar.close(no_cleanup=True)
 
     # !!!!!!!!!!!!!!!
     # write to POTCAR
@@ -162,7 +162,7 @@ class inp(PlanewaveInput):
             potcar.write(str(line))
       else:
         potcar.write("cat %s\n" % PP_file)
-    potcar.close()
+    potcar.close(no_cleanup=True)
 
     if name: return incar, name
 

@@ -49,16 +49,20 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
   ###########################################
   # SYSTEM CALL SUBPROCESS: Running mpi job #
   ###########################################
-  def compute(exestr, outpath, threads_per_job):
+  def compute(exestr, outpath, threads_per_job, **kwargs):
     """
     initiate a single MPI job, wait for it, and write to output
     """
+    ompstr = setting.ompstr
+    if 'omp' in kwargs:
+      assert type(kwargs['omp']) is int
+      ompstr = '-x OMP_NUM_THREADS=%d' % kwargs['omp']
+
     outfile = open(outpath, "w")
     run = sp.Popen("%s %d %s %s"\
-                   % (setting.mpistr, threads_per_job,
-                      setting.ompstr, exestr), 
-                     shell=True,
-                     stdout=outfile)
+                   % (setting.mpistr, threads_per_job, ompstr, exestr), 
+                   shell=True,
+                   stdout=outfile)
     # wait each mpijob to finish before lauching another
     # otherwise all mpijobs will be launched simutaniously
     run.wait()
@@ -183,7 +187,7 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
     inp = os.path.splitext(inp)[0]
     exestr = "%s %s" % (exe, inp)
     qmoutput = inp + '.out'
-    compute(exestr, qmoutput, _threads)
+    compute(exestr, qmoutput, 1, omp=_threads)
     qio_out = qio.QMOut(qmoutput, program='bigdft')
 
     return qio_out
