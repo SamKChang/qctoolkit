@@ -1,0 +1,9 @@
+---
+ units: angstroem
+ positions:
+ - H: [0.0, 0.0, 0.0]
+ - H: [0.74, 0.0, 0.0]
+ properties:
+   info:
+   - Geometry + metaData forces
+   format: yaml

@@ -84,6 +84,46 @@ def test_h2_tce_doublet():
   else:
     raise SkipTest
 
+def test_QMOut_operations():
+  path = os.path.realpath(__file__)
+  path = re.sub('[a-zA-Z0-9\._\-]*$', '', path)
+  qmdict = {'nwchem':'n', 'cpmd':'c', 'vasp':'v', 'bigdft':'b'}
+  unit_dict = {'Hartree':1, 'eV':27.211396132, 'kcal/mol':627.509469}
+  root = os.path.join(path, 'test_data/qmout/')
+  out = []
+  Et = []
+  for code, symb in qmdict.iteritems():
+    stem = 'h2' + symb
+    out_file = stem + '.out'
+    path_dir = os.path.join(root, stem)
+    path_out = os.path.join(path_dir, out_file)
+    qmout = qtk.QMOut(path_out, program=code)
+    out.append(qmout)
+    Et.append(qmout.Et)
+
+  new_list1 = []
+  new_list2 = []
+  new_E1 = []
+  new_E2 = []
+  for i in range(len(out)-1):
+    new_list1.append(out[i+1] + out[i])
+    new_list2.append(out[i+1] - out[i])
+    new_E1.append(Et[i+1] + Et[i])
+    new_E2.append(Et[i+1] - Et[i])
+
+  for i in range(len(new_list1)):
+    out1 = new_list1[i]
+    out2 = new_list2[i]
+    E1 = new_E1[i]
+    E2 = new_E2[i]
+    for unit, factor in unit_dict.iteritems():
+      out1.inUnit(unit)
+      out1.inUnit(unit)
+      out2.inUnit(unit)
+      out2.inUnit(unit)
+      assert out1.Et == E1 * factor
+      assert out2.Et == E2 * factor
+
 def test_cleanup():
   tmp_files = glob.glob(tmp_str + '*')
   for tmp in tmp_files:

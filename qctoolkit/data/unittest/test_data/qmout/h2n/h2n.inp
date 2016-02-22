@@ -1,0 +1,20 @@
+title h2n
+start h2n
+echo
+
+geometry units angstrom nocenter
+symmetry group c1
+ H          0.0000   0.0000   0.0000 
+ H          0.7400   0.0000   0.0000 
+end
+
+basis
+ H        library  H 6-31G
+end
+
+dft
+ xc xpbe96 cpbe96
+end
+
+
+task dft energy

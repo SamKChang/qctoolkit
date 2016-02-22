@@ -71,7 +71,7 @@ def convE(source, units, separator=None):
     returnError('output', unit[1])
   else:
     unit1 = EhKey[unit[1].lower()]
-  return source * Eh[unit1]
+  return source * Eh[unit1], unit1
 
 def imported(module):
   try:

@@ -1,0 +1,9 @@
+h2
+1.0
+  6.7400  0.0000  0.0000 ! lattic vector a(0)
+  0.0000  6.0000  0.0000 ! lattic vector a(1)
+  0.0000  0.0000  6.0000 ! lattic vector a(2)
+2 ! number of atoms in order of POTCAR
+cart ! cartesian coordinates
+  3.0000  3.0000  3.0000
+  3.7400  3.0000  3.0000

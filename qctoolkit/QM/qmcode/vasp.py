@@ -15,7 +15,10 @@ class inp(PlanewaveInput):
   def run(self, name=None, **kwargs):
     self.setting.update(kwargs)
     self.setting['no_subfolder'] = False
-    self.setting['new_name'] = self.molecule.name
+    if not name:
+      self.setting['new_name'] = self.molecule.name
+    else:
+      self.setting['new_name'] = name
     return univ.runCode(self, PlanewaveInput, name, **self.setting)
 
   def write(self, name=None, **kwargs):
@@ -176,7 +179,7 @@ class out(PlanewaveOutput):
     if qmoutXML:
       tree = ET.parse(qmoutXML)
       self.xml = tree.getroot()
-      self.Et = qtk.convE(float(self.xml[-2][-5][1].text),
-                          'eV-Eh', '-')
+      self.Et, self.unit = qtk.convE(float(self.xml[-2][-5][1].text),
+                                     'eV-Eh', '-')
       self.info = self.xml[0][1].text
       self.SCFStep = len(self.xml[-2])-9

@@ -1,0 +1,17 @@
+  #---------------------------------------------------------------------- Minimal input file
+  #This file indicates the minimal set of input variables which has to be given to perform 
+  #the run. The code would produce the same output if this file is used as input.
+ dft:
+   hgrids: fast
+   rmult: [3.5, 9.0]
+   ixc: PBE (ABINIT)
+   nrepmax: accurate
+   output_wf: 1
+   disablesym: Yes
+ posinp:
+   positions:
+   - H: [0.0, 0.0, 0.0]
+   - H: [0.74, 0.0, 0.0]
+   units: angstroem
+   properties:
+     format: yaml

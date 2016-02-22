@@ -227,10 +227,8 @@ class GenericQMOutput(object):
   def inUnit(self, unit):
     unitStr = self.unit + '-' + unit
     if not unitStr.lower() == 'eh-eh':
-      new_E = qtk.convE(self.Et, unitStr, '-')
-      self.Et = new_E
-      return new_E
-    else: return self.Et
+      self.Et, self.unit = qtk.convE(self.Et, unitStr, '-')
+    return self.Et
 
   def __add__(self, other):
     out = copy.deepcopy(self)

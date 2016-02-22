@@ -1,0 +1,12 @@
+dft:
+  disablesym: Yes
+  hgrids: fast
+  ixc: 11
+  nrepmax: accurate
+  output_wf: 1
+  rmult: [3.5, 9.0]
+posinp:
+  positions:
+  - H: [0.0, 0.0, 0.0]
+  - H: [0.74, 0.0, 0.0]
+  units: angstroem
