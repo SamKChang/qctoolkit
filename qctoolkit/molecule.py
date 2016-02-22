@@ -90,7 +90,7 @@ class Molecule(object):
     # nuclear charges
     self.Z = []
     # moelcule charge
-    self.charge = None
+    self.charge = 0
     self.multiplicity = 1
     # index of different atoms
     self.index = 0
@@ -98,8 +98,8 @@ class Molecule(object):
     self.bond_types = {}
     self.string = []
     self.segments = []
-    self.scale = None
-    self.celldm = None
+    self.scale = False
+    self.celldm = False
     self.name = ''
     if mol:
       self.read(mol, **kwargs)
@@ -596,31 +596,36 @@ class Molecule(object):
 
   def read_xyz(self, name):
     xyz = open(name, 'r')
-    data = xyz.readlines()
-    data = [line.replace('\t', ' ') for line in data]
-    print data
+    content = xyz.readlines()
+    xyz.close()
+    content = [line.replace('\t', ' ') for line in content]
 
     prop_list = ['charge', 'celldm', 'scale']
     for prop in prop_list:
       try:
-        prop_str = filter(lambda x: prop in x, data)[0]
+        prop_str = filter(lambda x: prop in x, content)[0]
         prop_data = prop_str.split(' ')
         del(prop_data[0])
         if len(prop_data) == 1:
           setattr(self, prop, float(prop_data[0]))
         elif len(prop_data) > 1:
           setattr(self, prop, [float(_) for _ in prop_data])
+        else:
+          del(b)
       except:
         setattr(self, prop, False)
     if not self.charge: self.charge = 0
 
-    self.N = int(data[0])
-    coord_list = data[2 : self.N + 2]
+    self.N = int(content[0])
+    coord_list = content[2 : self.N + 2]
     coord = [filter(None,[a for a in entry.split(' ')]) 
              for entry in coord_list]
-    self.type_list = list(np.array(coord)[:,0])
+    type_list = list(np.array(coord)[:,0])
+    self.type_list = [str(elem) for elem in type_list]
     self.Z = [qtk.n2Z(elem) for elem in self.type_list]
-    self.R = np.array(coord)[:,1:4].astype(np.float)
+    self.Z = np.array(self.Z)
+    self.R = np.array(coord)[:,1:4].astype(float)
+
 
 #    if self.scale:
 #      self.R_scale = self.R
@@ -659,40 +664,41 @@ class Molecule(object):
 #    self.R = np.vstack(coord)
 #    self.type_list = type_list
 #    self.Z = np.array(Z)
+#    if not self.charge: self.charge = 0
 #
 #    xyz_in.close()
 #
-#  # tested
-#  # read structrue from cyl crystal format
-#  def read_cyl(self, name, **kwargs):
-#
-#    # local array varaible for easy append function
-#    coord = []
-#    type_list = []
-#    Z = []
-#
-#    # open xyz file
-#    xyz_in = open(name, 'r')
-#    self.N = int(xyz_in.readline())
-#    self.celldm = map(float,re.sub("[\n\t]", "",xyz_in.readline())\
-#                  .split(' '))
-#    self.scale = map(int,re.sub("[\n\t]", "",xyz_in.readline())\
-#                         .split(' '))
-#
-#    # loop through every line in xyz file
-#    for i in xrange(0, self.N):
-#      data = re.sub("[\n\t]", "",xyz_in.readline()).split(' ')
-#      # remove empty elements
-#      data = filter(None, data)
-#      type_list.append(data[0])
-#      Z.append(qtk.n2Z(data[0]))
-#      crd = [float(data[1]),float(data[2]),float(data[3])]
-#      coord.append(crd)
-#    self.R = np.vstack(coord)
-#    self.type_list = type_list
-#    self.Z = np.array(Z)
-#
-#    xyz_in.close()
+  # tested
+  # read structrue from cyl crystal format
+  def read_cyl(self, name, **kwargs):
+
+    # local array varaible for easy append function
+    coord = []
+    type_list = []
+    Z = []
+
+    # open xyz file
+    xyz_in = open(name, 'r')
+    self.N = int(xyz_in.readline())
+    self.celldm = map(float,re.sub("[\n\t]", "",xyz_in.readline())\
+                  .split(' '))
+    self.scale = map(int,re.sub("[\n\t]", "",xyz_in.readline())\
+                         .split(' '))
+
+    # loop through every line in xyz file
+    for i in xrange(0, self.N):
+      data = re.sub("[\n\t]", "",xyz_in.readline()).split(' ')
+      # remove empty elements
+      data = filter(None, data)
+      type_list.append(data[0])
+      Z.append(qtk.n2Z(data[0]))
+      crd = [float(data[1]),float(data[2]),float(data[3])]
+      coord.append(crd)
+    self.R = np.vstack(coord)
+    self.type_list = type_list
+    self.Z = np.array(Z)
+
+    xyz_in.close()
 
   # tested
   def write(self, *args, **kwargs):
