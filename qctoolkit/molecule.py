@@ -90,7 +90,7 @@ class Molecule(object):
     # nuclear charges
     self.Z = []
     # moelcule charge
-    self.charge = 0
+    self.charge = None
     self.multiplicity = 1
     # index of different atoms
     self.index = 0
@@ -98,8 +98,8 @@ class Molecule(object):
     self.bond_types = {}
     self.string = []
     self.segments = []
-    self.scale = False
-    self.celldm = False
+    self.scale = None
+    self.celldm = None
     self.name = ''
     if mol:
       self.read(mol, **kwargs)
@@ -516,6 +516,9 @@ class Molecule(object):
     self.string = np.array(self.string)[index_list].tolist()
 
   def getBox(self):
+    """
+    return box dimension spanned by the coordinates
+    """
     def size(i):
       return max(self.R[:,i]) - min(self.R[:,i])
     return np.array([size(i) for i in range(3)])
@@ -572,7 +575,7 @@ class Molecule(object):
       if re.match('\.xyz', extension):
         self.read_xyz(name, **kwargs)
       elif re.match('\.cyl', extension):
-        self.read_cyl(name, **kwargs)
+        self.read_xyz(name, **kwargs)
       elif name == 'VOID':
         pass
       elif 'format' in kwargs and kwargs['format']=='cpmdinp':
@@ -590,71 +593,106 @@ class Molecule(object):
           self.charge = kwargs['charge_saturation']
     else:
       qtk.exit("file: '" + name + "' not found")
+
+  def read_xyz(self, name):
+    xyz = open(name, 'r')
+    data = xyz.readlines()
+    data = [line.replace('\t', ' ') for line in data]
+    print data
+
+    prop_list = ['charge', 'celldm', 'scale']
+    for prop in prop_list:
+      try:
+        prop_str = filter(lambda x: prop in x, data)[0]
+        prop_data = prop_str.split(' ')
+        del(prop_data[0])
+        if len(prop_data) == 1:
+          setattr(self, prop, float(prop_data[0]))
+        elif len(prop_data) > 1:
+          setattr(self, prop, [float(_) for _ in prop_data])
+      except:
+        setattr(self, prop, False)
+    if not self.charge: self.charge = 0
+
+    self.N = int(data[0])
+    coord_list = data[2 : self.N + 2]
+    coord = [filter(None,[a for a in entry.split(' ')]) 
+             for entry in coord_list]
+    self.type_list = list(np.array(coord)[:,0])
+    self.Z = [qtk.n2Z(elem) for elem in self.type_list]
+    self.R = np.array(coord)[:,1:4].astype(np.float)
+
+#    if self.scale:
+#      self.R_scale = self.R
+#      tpl = np.ones(self.R.shape)
+#      self.R = copy.deepcopy()
+
+  
       
-  # tested
-  # read structrue from xyz
-  def read_xyz(self, name, **kwargs):
-
-    # caution! no format check. 
-    # correct xyz format is assumed
-
-    # local array varaible for easy append function
-    coord = []
-    type_list = []
-    Z = []
-
-    # open xyz file
-    xyz_in = open(name, 'r')
-    self.N = int(xyz_in.readline())
-    xyz_in.readline()
-
-    # loop through every line in xyz file
-    for i in xrange(0, self.N):
-      line = re.sub('\t',' ',xyz_in.readline())
-      data = re.sub("[\n\t]", "",line).split(' ')
-      # remove empty elements
-      data = filter(None, data)
-      type_list.append(data[0])
-      Z.append(qtk.n2Z(data[0]))
-      crd = [float(data[1]),float(data[2]),float(data[3])]
-      coord.append(crd)
-    self.R = np.vstack(coord)
-    self.type_list = type_list
-    self.Z = np.array(Z)
-
-    xyz_in.close()
-
-  # tested
-  # read structrue from cyl crystal format
-  def read_cyl(self, name, **kwargs):
-
-    # local array varaible for easy append function
-    coord = []
-    type_list = []
-    Z = []
-
-    # open xyz file
-    xyz_in = open(name, 'r')
-    self.N = int(xyz_in.readline())
-    self.celldm = map(float,re.sub("[\n\t]", "",xyz_in.readline())\
-                  .split(' '))
-    self.scale = map(int,re.sub("[\n\t]", "",xyz_in.readline())\
-                         .split(' '))
-
-    # loop through every line in xyz file
-    for i in xrange(0, self.N):
-      data = re.sub("[\n\t]", "",xyz_in.readline()).split(' ')
-      # remove empty elements
-      data = filter(None, data)
-      type_list.append(data[0])
-      Z.append(qtk.n2Z(data[0]))
-      crd = [float(data[1]),float(data[2]),float(data[3])]
-      coord.append(crd)
-    self.R = np.vstack(coord)
-    self.type_list = type_list
-    self.Z = np.array(Z)
-
-    xyz_in.close()
+#  # tested
+#  # read structrue from xyz
+#  def read_xyz(self, name, **kwargs):
+#
+#    # caution! no format check. 
+#    # correct xyz format is assumed
+#
+#    # local array varaible for easy append function
+#    coord = []
+#    type_list = []
+#    Z = []
+#
+#    # open xyz file
+#    xyz_in = open(name, 'r')
+#    self.N = int(xyz_in.readline())
+#    xyz_in.readline()
+#
+#    # loop through every line in xyz file
+#    for i in xrange(0, self.N):
+#      line = re.sub('\t',' ',xyz_in.readline())
+#      data = re.sub("[\n\t]", "",line).split(' ')
+#      # remove empty elements
+#      data = filter(None, data)
+#      type_list.append(data[0])
+#      Z.append(qtk.n2Z(data[0]))
+#      crd = [float(data[1]),float(data[2]),float(data[3])]
+#      coord.append(crd)
+#    self.R = np.vstack(coord)
+#    self.type_list = type_list
+#    self.Z = np.array(Z)
+#
+#    xyz_in.close()
+#
+#  # tested
+#  # read structrue from cyl crystal format
+#  def read_cyl(self, name, **kwargs):
+#
+#    # local array varaible for easy append function
+#    coord = []
+#    type_list = []
+#    Z = []
+#
+#    # open xyz file
+#    xyz_in = open(name, 'r')
+#    self.N = int(xyz_in.readline())
+#    self.celldm = map(float,re.sub("[\n\t]", "",xyz_in.readline())\
+#                  .split(' '))
+#    self.scale = map(int,re.sub("[\n\t]", "",xyz_in.readline())\
+#                         .split(' '))
+#
+#    # loop through every line in xyz file
+#    for i in xrange(0, self.N):
+#      data = re.sub("[\n\t]", "",xyz_in.readline()).split(' ')
+#      # remove empty elements
+#      data = filter(None, data)
+#      type_list.append(data[0])
+#      Z.append(qtk.n2Z(data[0]))
+#      crd = [float(data[1]),float(data[2]),float(data[3])]
+#      coord.append(crd)
+#    self.R = np.vstack(coord)
+#    self.type_list = type_list
+#    self.Z = np.array(Z)
+#
+#    xyz_in.close()
 
   # tested
   def write(self, *args, **kwargs):

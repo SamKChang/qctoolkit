@@ -97,6 +97,13 @@ class inp(WaveletInput):
                              'psppar.' + molecule.type_list[i])
       pp_files.append(pp_file)
 
+    if 'box' in self.setting:
+      box = copy.deepcopy(self.setting['box'])
+      if box[1] <= 0:
+        box[1] = '.inf'
+      posinp['cell'] = yList(box)
+        
+
     data = {}
     data['dft'] = dft
     data['posinp'] = posinp

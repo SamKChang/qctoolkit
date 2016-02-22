@@ -1,6 +1,8 @@
 import qctoolkit as qtk
 from general_io import GenericQMInput
 from general_io import GenericQMOutput
+import universal as univ
+import copy
 
 class WaveletInput(GenericQMInput):
   """
@@ -14,6 +16,16 @@ class WaveletInput(GenericQMInput):
     GenericQMInput.__init__(self, molecule, **kwargs)
 
     self.setting.update(kwargs)
+
+    if 'periodic' not in self.setting:
+      self.setting['periodic'] = False
+    if 'celldm' in self.setting and self.setting['celldm']:
+      self.setting['periodic'] = True
+
+    if self.setting['periodic'] and 'box' not in self.setting:
+      univ.getCelldm(self)
+      box = copy.deepcopy(self.setting['celldm'][:3])
+      self.setting['box'] = box
 
 class WaveletOutput(GenericQMOutput):
   def __init__(self, output=None, **kwargs):

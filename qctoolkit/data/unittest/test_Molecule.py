@@ -24,6 +24,11 @@ def test_IO():
   # test for read and __add__ function
   mols = setup()
   for mol in mols:
+    print mol.N
+    print mol.R
+    print mol.Z
+    print mol.type_list
+    print mol
     assert mol.N > 0
     assert mol.R.shape == (mol.N, 3)
   new = mols[0] + mols[1]

@@ -29,6 +29,7 @@ def test_general_inp_render():
     for code in codes:
       for theory in theories:
         for mode in modes:
+          print '\n... doing %s %s %s' % (code, theory, mode)
           inp = qtk.QMInp(mol, mode=mode, theory=theory, program=code)
           inp.write()
           tmp_obj, tmp_inp = inp.write(tmp_name)

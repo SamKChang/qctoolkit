@@ -1,6 +1,7 @@
 import qctoolkit as qtk
 from general_io import GenericQMInput
 from general_io import GenericQMOutput
+import universal as univ
 import numpy as np
 
 class PlanewaveInput(GenericQMInput):
@@ -25,25 +26,8 @@ class PlanewaveInput(GenericQMInput):
       self.setting['isolation'] = 'mt'
     self.pp_files = []
     self.pp_path = ''
-  
-    # celldm can always be overwritten
-    if 'celldm' not in kwargs:
-      # for the case of molecule xyz input (molecule)
-      # set default orthorombic celldm
-      if not self.molecule.celldm:
-        box = self.molecule.getBox()
-        # set defualt margin in specified in setting.py, 
-        # grow with box size
-        if 'margin' not in kwargs:
-          m = qtk.setting.pw_margin
-          self.setting['margin'] = max(m, max(box)/5.)
-        edge = np.array([min(self.molecule.R[:,i])\
-          for i in range(3)])
-        self.molecule.shift(self.setting['margin']-edge)
-        box = 2*self.setting['margin'] + box
-        self.setting['celldm'] = np.append(box, [0, 0, 0])
-      else:
-        self.setting['celldm'] = self.molecule.celldm
+
+    univ.getCelldm(self) 
 
   def celldm2lattice(self):
     cd = self.setting['celldm']
