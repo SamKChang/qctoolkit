@@ -7,6 +7,9 @@ import qmcode.gaussian as gaussian
 
 def QMInp(molecule, **kwargs):
 
+  if type(molecule) is str:
+    molecule = qtk.Molecule(molecule, **kwargs)
+
   if 'program' not in kwargs:
     kwargs['program'] = qtk.setting.qmcode
 

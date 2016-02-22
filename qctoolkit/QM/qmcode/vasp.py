@@ -11,17 +11,20 @@ class inp(PlanewaveInput):
   def __init__(self, molecule, **kwargs):
     PlanewaveInput.__init__(self, molecule, **kwargs)
     self.setting.update(kwargs)
+    self.backup()
 
   def run(self, name=None, **kwargs):
-    self.setting.update(kwargs)
-    self.setting['no_subfolder'] = False
+    kwargs['no_subfolder'] = False
     if not name:
-      self.setting['new_name'] = self.molecule.name
+      kwargs['new_name'] = self.molecule.name
     else:
-      self.setting['new_name'] = name
+      kwargs['new_name'] = name
+    self.setting.update(kwargs)
     return univ.runCode(self, PlanewaveInput, name, **self.setting)
 
   def write(self, name=None, **kwargs):
+    if 'no_reset' not in kwargs or not kwargs['no_reset']:
+      self.reset()
     self.setting.update(kwargs)
     self.setting['root_dir'] = name
     self.setting['no_molecule'] = False

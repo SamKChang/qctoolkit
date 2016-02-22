@@ -17,15 +17,13 @@ class WaveletInput(GenericQMInput):
 
     self.setting.update(kwargs)
 
-    if 'periodic' not in self.setting:
-      self.setting['periodic'] = False
-    if 'celldm' in self.setting and self.setting['celldm']:
-      self.setting['periodic'] = True
-
-    if self.setting['periodic'] and 'box' not in self.setting:
+    if self.setting['periodic']:
       univ.getCelldm(self)
       box = copy.deepcopy(self.setting['celldm'][:3])
       self.setting['box'] = box
+    else:
+      self.setting['box'] = False
+      self.setting['celldm'] = False
 
 class WaveletOutput(GenericQMOutput):
   def __init__(self, output=None, **kwargs):

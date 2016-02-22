@@ -70,12 +70,14 @@ class Molecule(object):
     basic IO:
       read()
       read_xyz()
-      read_cyl()
       read_pdb() --- not yet implemented
       write()
       write_xyz()
-      write_cyl() --- not yet implemented
       write_pdb()
+
+    QM related:
+      getSize() --- return 1x3 array where each component denotes
+                    the space spanned by the molecule
   """
 
   # used for pymol numeration
@@ -98,6 +100,7 @@ class Molecule(object):
     self.bond_types = {}
     self.string = []
     self.segments = []
+    self.periodic = False
     self.scale = False
     self.celldm = False
     self.name = ''
@@ -122,7 +125,7 @@ class Molecule(object):
 
   def view(self, name=None):
     tmp = copy.deepcopy(self)
-    if self.celldm and self.scale:
+    if self.scale:
       try:
         for i in range(3):
           tmp.R[:,i] = tmp.R[:,i] * tmp.celldm[i]\
@@ -165,10 +168,9 @@ class Molecule(object):
   def findBonds(self, ratio=setting.bond_ratio, **kwargs):
     del self.segments
     self.segments = []
-    if 'quiet' not in kwargs or not kwargs['quiet']:
-      qtk.report("Molecule", 
-                 "finding bonds with cutoff ratio", 
-                 ratio)
+    qtk.report("Molecule", 
+               "finding bonds with cutoff ratio", 
+               ratio)
     def to_graph(l):
       G = networkx.Graph()
       for part in l:
@@ -305,9 +307,8 @@ class Molecule(object):
               "and %d valence electrons " % nve +\
               "\n(with charge %3.1f) " % float(self.charge) +\
               "are not compatible"
-        if not ('no_warning' in kwargs and kwargs['no_warning']):
-          qtk.prompt(msg + "\nsuppress warning py no_warning=True,"\
-                    + " continue?")
+        qtk.prompt(msg + "\nsuppress warning py no_warning=True,"\
+                  + " continue?")
 
   # tested
   def setCharge(self, **kwargs):
@@ -515,7 +516,8 @@ class Molecule(object):
       [self.type_list[i] for i in index_list]
     self.string = np.array(self.string)[index_list].tolist()
 
-  def getBox(self):
+  # tested
+  def getSize(self):
     """
     return box dimension spanned by the coordinates
     """
@@ -531,6 +533,7 @@ class Molecule(object):
     qtk.report("Molecule", "resulting celldm:", celldm)
     return celldm
 
+  # tested
   def sort(self):
     new = sorted(zip(self.R, self.type_list, self.Z, self.string), 
                  key=operator.itemgetter(2))
@@ -574,12 +577,6 @@ class Molecule(object):
       stem, extension = os.path.splitext(name)
       if re.match('\.xyz', extension):
         self.read_xyz(name, **kwargs)
-      elif re.match('\.cyl', extension):
-        self.read_xyz(name, **kwargs)
-      elif name == 'VOID':
-        pass
-      elif 'format' in kwargs and kwargs['format']=='cpmdinp':
-        self.read_cpmdinp(name)
       else:
         qtk.exit("suffix " + extension + " is not reconized")
 
@@ -594,7 +591,7 @@ class Molecule(object):
     else:
       qtk.exit("file: '" + name + "' not found")
 
-  def read_xyz(self, name):
+  def read_xyz(self, name, **kwargs):
     xyz = open(name, 'r')
     content = xyz.readlines()
     xyz.close()
@@ -610,11 +607,10 @@ class Molecule(object):
           setattr(self, prop, float(prop_data[0]))
         elif len(prop_data) > 1:
           setattr(self, prop, [float(_) for _ in prop_data])
-        else:
-          del(b)
       except:
         setattr(self, prop, False)
     if not self.charge: self.charge = 0
+    if self.celldm or self.scale: self.periodic = True
 
     self.N = int(content[0])
     coord_list = content[2 : self.N + 2]
@@ -626,79 +622,23 @@ class Molecule(object):
     self.Z = np.array(self.Z)
     self.R = np.array(coord)[:,1:4].astype(float)
 
-
-#    if self.scale:
-#      self.R_scale = self.R
-#      tpl = np.ones(self.R.shape)
-#      self.R = copy.deepcopy()
-
-  
-      
-#  # tested
-#  # read structrue from xyz
-#  def read_xyz(self, name, **kwargs):
-#
-#    # caution! no format check. 
-#    # correct xyz format is assumed
-#
-#    # local array varaible for easy append function
-#    coord = []
-#    type_list = []
-#    Z = []
-#
-#    # open xyz file
-#    xyz_in = open(name, 'r')
-#    self.N = int(xyz_in.readline())
-#    xyz_in.readline()
-#
-#    # loop through every line in xyz file
-#    for i in xrange(0, self.N):
-#      line = re.sub('\t',' ',xyz_in.readline())
-#      data = re.sub("[\n\t]", "",line).split(' ')
-#      # remove empty elements
-#      data = filter(None, data)
-#      type_list.append(data[0])
-#      Z.append(qtk.n2Z(data[0]))
-#      crd = [float(data[1]),float(data[2]),float(data[3])]
-#      coord.append(crd)
-#    self.R = np.vstack(coord)
-#    self.type_list = type_list
-#    self.Z = np.array(Z)
-#    if not self.charge: self.charge = 0
-#
-#    xyz_in.close()
-#
-  # tested
-  # read structrue from cyl crystal format
-  def read_cyl(self, name, **kwargs):
-
-    # local array varaible for easy append function
-    coord = []
-    type_list = []
-    Z = []
-
-    # open xyz file
-    xyz_in = open(name, 'r')
-    self.N = int(xyz_in.readline())
-    self.celldm = map(float,re.sub("[\n\t]", "",xyz_in.readline())\
-                  .split(' '))
-    self.scale = map(int,re.sub("[\n\t]", "",xyz_in.readline())\
-                         .split(' '))
-
-    # loop through every line in xyz file
-    for i in xrange(0, self.N):
-      data = re.sub("[\n\t]", "",xyz_in.readline()).split(' ')
-      # remove empty elements
-      data = filter(None, data)
-      type_list.append(data[0])
-      Z.append(qtk.n2Z(data[0]))
-      crd = [float(data[1]),float(data[2]),float(data[3])]
-      coord.append(crd)
-    self.R = np.vstack(coord)
-    self.type_list = type_list
-    self.Z = np.array(Z)
-
-    xyz_in.close()
+    self.box = False
+    if self.celldm:
+      self.periodic = True
+      angle = self.celldm[3:]
+      angle_sum = sum([abs(entry) for entry in angle])
+      if angle_sum == 0:
+        self.box = self.celldm[:3]
+        
+      if self.scale:
+        if angle_sum == 0:
+          self.R_scale = self.R
+          factor = np.array(self.box) / np.array(self.scale)
+          factor = np.kron(factor, np.ones((self.N, 1)))
+          self.R = self.R * factor
+        else:
+          msg = 'non cubic box with scale is not supported'
+          qtk.warning(msg)
 
   # tested
   def write(self, *args, **kwargs):

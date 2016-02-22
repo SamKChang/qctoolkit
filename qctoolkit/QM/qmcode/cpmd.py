@@ -19,12 +19,15 @@ class inp(PlanewaveInput):
       self.setting['ks_states'] = kwargs['ks_states']
     if 'pp_type' not in kwargs:
       self.setting['pp_type'] = 'Goedecker'
+    self.backup()
 
   def run(self, name=None, **kwargs):
     self.setting.update(kwargs)
     return univ.runCode(self, PlanewaveInput, name, **self.setting)
 
   def write(self, name=None, **kwargs):
+    if 'no_reset' not in kwargs or not kwargs['no_reset']:
+      self.reset()
     self.setting.update(kwargs)
     def PPString(mol, i, n, outFile):
       ppstr = re.sub('\*', '', mol.string[i])
@@ -47,6 +50,10 @@ class inp(PlanewaveInput):
 
     inp, molecule = \
       super(PlanewaveInput, self).write(name, **self.setting)
+
+    if molecule.scale:
+      molecule.R = molecule.R_scale
+      self.setting['scale'] = molecule.scale
 
 
     inp.write('&INFO\n')
@@ -115,7 +122,7 @@ class inp(PlanewaveInput):
         inp.write(' POISSON SOLVER TUCKERMAN\n')
     if self.setting['unit'].lower() == 'angstrom':
       inp.write(' ANGSTROM\n')
-    inp.write(' CELL ABSOLUTE\n')
+    inp.write(' CELL ABSOLUTE\n ')
     for d in self.setting['celldm']:
       inp.write(' %6.3f'% float(d))
     inp.write('\n')
@@ -138,7 +145,7 @@ class inp(PlanewaveInput):
     if molecule.charge != 0:
       inp.write(' CHARGE\n  %d\n' % molecule.charge)
     if molecule.multiplicity != 1:
-      inp.write(' MULTIPLICITY\n  %d\n' % molecule.charge)
+      inp.write(' MULTIPLICITY\n  %d\n' % molecule.multiplicity)
     inp.write('&END\n\n')
 
     inp.write('&ATOMS\n')

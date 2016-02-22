@@ -16,13 +16,15 @@ class inp(GaussianBasisInput):
   def __init__(self, molecule, **kwargs):
     GaussianBasisInput.__init__(self, molecule, **kwargs)
     self.setting.update(kwargs)
+    self.backup()
 
   def run(self, name=None, **kwargs):
     self.setting.update(kwargs)
-    out = univ.runCode(self, GaussianBasisInput, name, **self.setting)
-    return out
+    return univ.runCode(self, GaussianBasisInput, name, **self.setting)
     
   def write(self, name=None, **kwargs):
+    if 'no_reset' not in kwargs or not kwargs['no_reset']:
+      self.reset()
     self.setting.update(kwargs)
     inp, molecule = \
       super(GaussianBasisInput, self).write(name, **self.setting)

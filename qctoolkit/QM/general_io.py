@@ -2,6 +2,7 @@ import qctoolkit as qtk
 import re, os, shutil, copy, sys
 import numpy as np
 import qctoolkit.QM.qmjob as qmjob
+import universal as univ
 
 class InpContent(object):
   """
@@ -34,6 +35,7 @@ class InpContent(object):
         setattr(self, string, kwargs[string])
       else:
         setattr(self, string, value)
+
 
     if 'output' not in kwargs:
       if self.file_name or self.root_dir:
@@ -157,7 +159,8 @@ class GenericQMInput(object):
   ===
   """
   def __init__(self, molecule, **kwargs):
-    self.setting = kwargs
+
+    self.setting = copy.deepcopy(kwargs)
     self.molecule = copy.deepcopy(molecule)
 
     # local variable to construct 'setting' for parsing
@@ -169,6 +172,9 @@ class GenericQMInput(object):
         self.setting[string] = kwargs[string]
       else:
         self.setting[string] = value
+    if self.molecule.periodic:
+      if 'periodic' not in kwargs:
+        self.setting['periodic'] = True
 
     if self.setting['mode'] == 'md':
       for string, value in md_setup.iteritems():
@@ -180,6 +186,14 @@ class GenericQMInput(object):
     if self.setting['mode'] != 'geopt':
       del self.setting['geometry_convergence']
     self.setting['info'] = self.molecule.name
+
+  def reset(self):
+    self.setting.update(self.setting_backup)
+    self.molecule = copy.deepcopy(self.molecule_backup)
+
+  def backup(self):
+    self.setting_backup = copy.deepcopy(self.setting)
+    self.molecule_backup = copy.deepcopy(self.molecule)
 
   def __repr__(self):
     return self.molecule.name + ': ' + self.setting['program']
@@ -194,13 +208,18 @@ class GenericQMInput(object):
       qtk.exit(msg)
 
   def run(self, qmcode, name=None, **kwargs):
+    self.setting.update(kwargs)
     if not name:
       name = self.molecule.name
-    self.setting.update(**kwargs)
     return QMWorker(self.setting['program'], **self.setting), name
 
   def write(self, name, **kwargs):
     self.setting.update(kwargs)
+    if not self.setting['periodic']:
+      prop_list = ['celldm', 'scale', 'box']
+      for prop in prop_list:
+        if prop in self.setting:
+          self.setting[prop] = False
     if name:
       name = os.path.splitext(name)[0]
     inp = InpContent(name, **self.setting)
@@ -255,7 +274,6 @@ class GenericQMOutput(object):
         out.Et = self.Et + qtk.convE(other.Et, unitStr, '-')
       out.scp_step = max(self.scf_step, other.scf_step)
     elif type(other) is (int or float):
-      print type(other)
       out.Et = self.Et - other
     else:
       out.Et = np.nan

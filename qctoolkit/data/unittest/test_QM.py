@@ -43,6 +43,31 @@ def test_general_inp_render():
   testRun(g_list, g_theory)
   testRun(wl_list, wl_theory)
 
+def test_general_inp_render_file():
+  path = os.path.realpath(__file__)
+  path = re.sub('[a-zA-Z0-9\._\-]*$', '', path)
+  mol = glob.glob(path + 'test_data/molecules/h2o.xyz')[0]
+  tmp_name = tmp_str + 'inp_frender_' + str(os.getpid())
+  def testRun(codes, theories):
+    for code in codes:
+      for theory in theories:
+        for mode in modes:
+          print '\n... doing %s %s %s' % (code, theory, mode)
+          inp = qtk.QMInp(mol, mode=mode, theory=theory, program=code)
+          assert inp.setting['theory'] == theory
+          assert inp.setting['program'] == code
+          inp.write()
+          tmp_obj, tmp_inp = inp.write(tmp_name)
+          try:
+            os.remove(tmp_inp)
+          except OSError:
+            shutil.rmtree(tmp_inp)
+            print tmp_name
+            print tmp_inp
+  testRun(pw_list, pw_theory)
+  testRun(g_list, g_theory)
+  testRun(wl_list, wl_theory)
+
 def test_h2_pbe_allcode():
   if qtk.setting.run_qmtest:
     codes = ['nwchem', 'cpmd', 'vasp', 'bigdft']

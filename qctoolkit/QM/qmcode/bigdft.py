@@ -16,12 +16,15 @@ class inp(WaveletInput):
   def __init__(self, molecule, **kwargs):
     WaveletInput.__init__(self, molecule, **kwargs)
     self.setting.update(**kwargs)
+    self.backup()
 
   def run(self, name=None, **kwargs):
     self.setting.update(kwargs)
     return univ.runCode(self, WaveletInput, name, **self.setting)
 
   def write(self, name=None, **kwargs):
+    if 'no_reset' not in kwargs or not kwargs['no_reset']:
+      self.reset()
     self.setting.update(kwargs)
     self.setting['yaml'] = True
     self.setting['root_dir'] = name
@@ -79,7 +82,6 @@ class inp(WaveletInput):
             'hgrids': 'fast',
             'rmult': yList([3.5, 9.0]),
             'nrepmax': 'accurate',
-            'output_wf': 1,
             'disablesym': 'Yes',
             'ixc': theory,
           }
@@ -97,7 +99,7 @@ class inp(WaveletInput):
                              'psppar.' + molecule.type_list[i])
       pp_files.append(pp_file)
 
-    if 'box' in self.setting:
+    if 'box' in self.setting and self.setting['box']:
       box = copy.deepcopy(self.setting['box'])
       if box[1] <= 0:
         box[1] = '.inf'

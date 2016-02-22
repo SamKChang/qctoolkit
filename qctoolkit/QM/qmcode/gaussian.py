@@ -10,6 +10,7 @@ class inp(GaussianBasisInput):
   def __init__(self, molecule, **kwargs):
     GaussianBasisInput.__init__(self, molecule, **kwargs)
     self.setting.update(kwargs)
+    self.backup()
 
   def run(self, name=None, **kwargs):
     pass
@@ -31,6 +32,7 @@ class inp(GaussianBasisInput):
     
   def write(self, name=None):
     pass
+#    self.reset()
 #    molecule = copy.deepcopy(self.molecule)
 #    self.cm_check(molecule)
 #    if name:
