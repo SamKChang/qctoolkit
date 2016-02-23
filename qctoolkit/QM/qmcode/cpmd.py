@@ -26,8 +26,6 @@ class inp(PlanewaveInput):
     return univ.runCode(self, PlanewaveInput, name, **self.setting)
 
   def write(self, name=None, **kwargs):
-    if 'reset' in kwargs and kwargs['reset']:
-      self.reset()
     self.setting.update(kwargs)
     def PPString(mol, i, n, outFile):
       ppstr = re.sub('\*', '', mol.string[i])

@@ -23,8 +23,6 @@ class inp(WaveletInput):
     return univ.runCode(self, WaveletInput, name, **self.setting)
 
   def write(self, name=None, **kwargs):
-    if 'reset' in kwargs and kwargs['reset']:
-      self.reset()
     self.setting.update(kwargs)
     self.setting['yaml'] = True
     self.setting['root_dir'] = name
@@ -87,6 +85,8 @@ class inp(WaveletInput):
             'disablesym': 'Yes',
             'ixc': theory,
           }
+    if self.setting['save_wf']:
+      dft['output_wf'] = 1
     if self.setting['save_density']:
       dft['output_denspot'] = 21
     if self.setting['restart']:

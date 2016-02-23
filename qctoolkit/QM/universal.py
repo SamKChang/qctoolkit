@@ -6,7 +6,7 @@ def getCelldm(self):
     if not self.molecule.celldm:
       size = self.molecule.getSize()
       if 'margin' not in self.setting:
-        m = qtk.setting.pw_margin
+        m = qtk.setting.box_margin
         self.setting['margin'] = max(m, max(size)/5.)
       edge = np.array([min(self.molecule.R[:,i])\
         for i in range(3)])

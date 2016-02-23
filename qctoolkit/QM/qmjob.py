@@ -164,6 +164,7 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
     tmp = filter(\
       lambda x: '.out' not in x \
                 and '.inp' not in x\
+                and '.cube' not in x\
                 and '.movecs' not in x, files
     )
     for f in tmp: os.remove(f)

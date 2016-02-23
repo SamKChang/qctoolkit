@@ -23,11 +23,11 @@ class inp(GaussianBasisInput):
     return univ.runCode(self, GaussianBasisInput, name, **self.setting)
     
   def write(self, name=None, **kwargs):
-    if 'reset' in kwargs and kwargs['reset']:
-      self.reset()
     self.setting.update(kwargs)
+    univ.cornerCube(self)
     inp, molecule = \
       super(GaussianBasisInput, self).write(name, **self.setting)
+
 
     # mode setup
     if self.setting['mode'] == 'single_point':
@@ -148,10 +148,51 @@ class inp(GaussianBasisInput):
 
     if molecule.charge != 0:
       inp.write('charge % 5.2f\n' % molecule.charge)
-#    if molecule.multiplicity != 1:
-#      inp.write('multiplicity %d\n' % molecule.multiplicity)
 
     inp.write('\ntask %s %s\n' % (module, operation))
+
+    if self.setting['save_density']:
+      total_wf = int(sum(self.molecule.Z) / 2)
+      valence_wf = self.molecule.getValenceElectrons() / 2 
+      wf_list = reversed([total_wf - i for i in range(valence_wf)])
+      cubeout = 'qmout'
+      if name: cubeout = name
+      inp.write('\ndplot\n')
+      inp.write(' output %s_density.cube\n' % cubeout)
+      inp.write(' vectors %s.movecs\n' % name)
+      inp.write(' LimitXYZ\n')
+      for i in range(3):
+        for j in range(2):
+          inp.write(' % 8.4f' % self.molecule.grid[i][j])
+        inp.write('  %d\n' % self.molecule.grid[i][2])
+      inp.write(' gaussian\n')
+      inp.write(' spin total\n')
+      inp.write(' orbitals; %d\n' % valence_wf)
+      for i in wf_list:
+        inp.write(' %d' % i)
+      inp.write('\nend\n')
+      inp.write('task dplot\n\n')
+
+    if self.setting['save_wf']:
+      for occ in self.setting['save_wf']:
+        if not self.molecule.grid:
+          self.setGrid()
+        cubeout = 'qmout'
+        if name: cubeout = name
+        inp.write('\ndplot\n')
+        inp.write(' output %s_wf%02d.cube\n' % (cubeout, occ))
+        inp.write(' vectors %s.movecs\n' % cubeout)
+        inp.write(' LimitXYZ\n')
+        for i in range(3):
+          for j in range(2):
+            inp.write(' % 8.4f' % self.molecule.grid[i][j])
+          inp.write('  %d\n' % self.molecule.grid[i][2])
+        inp.write(' gaussian\n')
+        inp.write(' spin total\n')
+        inp.write(' orbitals view\n')
+        inp.write('  1; %d\n' % occ)
+        inp.write('end\n')
+        inp.write('task dplot\n\n')
 
     inp.close()
 

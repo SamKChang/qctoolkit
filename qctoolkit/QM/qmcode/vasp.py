@@ -23,8 +23,6 @@ class inp(PlanewaveInput):
     return univ.runCode(self, PlanewaveInput, name, **self.setting)
 
   def write(self, name=None, **kwargs):
-    if 'reset' in kwargs and kwargs['reset']:
-      self.reset()
     self.setting.update(kwargs)
     self.setting['root_dir'] = name
     self.setting['no_molecule'] = False

@@ -14,7 +14,7 @@ run_qmtest = False
 
 # geometry setting
 bond_ratio = 1.1  # for Molecule.findBond function
-pw_margin = 3     # for planewave box setup
+box_margin = 3     # for planewave box setup
 
 # MPI setting
 mpistr = 'mpirun -np'
@@ -34,6 +34,8 @@ qm_setup = {
              'fix_molecule' : True,
              'unit' : 'angstrom',
              'save_density' : False,
+             'save_wf': False,
+             'corner_cube': False,
              'save_restart' : False,
              'restart' : False,
              'prefix' : None,
@@ -81,4 +83,5 @@ nwchem_exe = 'nwchem'
 nwchem_mov2asc = 'mov2asc'
 # BigDFT setting
 bigdft_exe = 'bigdft'
+bigdft_tool_exe = 'bigdft-tool'
 bigdft_pp = '/home/samio/Works/PhD/packages/BigDFT/PP'

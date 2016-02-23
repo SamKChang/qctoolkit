@@ -51,7 +51,7 @@ class Eb(object):
       self.mol_AB = self.mol_AB + molecules[s]
     # construct ligand A and pocket B
     if 'margin' not in kwargs:
-      kwargs['margin'] = qtk.setting.pw_margin
+      kwargs['margin'] = qtk.setting.box_margin
     self.celldm = self.mol_AB.setMargin(kwargs['margin'])
     self.mol_AB.find_bonds(**kwargs)
     self.mol_A = self.mol_AB.segments[ligand]

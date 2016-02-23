@@ -103,6 +103,7 @@ class Molecule(object):
     self.periodic = False
     self.scale = False
     self.celldm = False
+    self.grid = False
     self.name = ''
     if mol:
       self.read(mol, **kwargs)
@@ -516,7 +517,7 @@ class Molecule(object):
       [self.type_list[i] for i in index_list]
     self.string = np.array(self.string)[index_list].tolist()
 
-  # tested
+  # tested by qminp
   def getSize(self):
     """
     return box dimension spanned by the coordinates
@@ -525,15 +526,31 @@ class Molecule(object):
       return max(self.R[:,i]) - min(self.R[:,i])
     return np.array([size(i) for i in range(3)])
 
-  def setMargin(self, margin):
-    qtk.report("Molecule", "setup margin:", margin)
-    self.shift([margin - np.min(self.R[:,i]) for i in range(3)])
-    celldm = [margin + np.max(self.R[:,i]) for i in range(3)]
-    celldm.extend([0,0,0])
-    qtk.report("Molecule", "resulting celldm:", celldm)
-    return celldm
+  def setGrid(self, margin=None, **kwargs):
+    if not margin: 
+      margin = qtk.setting.box_margin
+    mol_max = [max(self.R[:,i]) + margin for i in range(3)]
+    mol_min = [min(self.R[:,i]) - margin for i in range(3)]
+    size = self.getSize() + 2*np.array([margin, margin, margin])
 
-  # tested
+    if 'step' not in kwargs:
+      step = [int(size[i] / 0.12) for i in range(3)]
+    else:
+      step = kwargs['step']
+
+    self.grid = [[mol_min[i], mol_max[i], step[i]] for i in range(3)]
+    return self.grid
+
+  def setCelldm(self, margin=None):
+    if not self.periodic:
+      if not margin:
+        margin = qtk.setting.box_margin
+      self.box = self.getSize() + 2*np.array([margin, margin, margin])
+      self.celldm = copy.deepcopy(self.box)
+      self.celldm.extend([0, 0, 0])
+    return self.celldm
+
+  # tested by qminp
   def sort(self):
     new = sorted(zip(self.R, self.type_list, self.Z, self.string), 
                  key=operator.itemgetter(2))
@@ -550,7 +567,7 @@ class Molecule(object):
     if index_a[-1] == index_b[-1] and index_a[-1] == 0:
       self.index = sorted(np.insert(self.index, \
                                     0, len(self.index)))
-
+  # tested by qminp
   def sort_coord(self, **kwargs):
     if 'order' in kwargs:
       order = kwargs['order']
@@ -560,15 +577,6 @@ class Molecule(object):
                       self.R[:,order[1]],\
                       self.R[:,order[0]]))
     self.R = self.R[ind]
-
-  def cyl2xyz(self):
-    try:
-      for i in range(3):
-        self.R[:,i] = self.R[:,i] * self.celldm[i]\
-                     / float(self.scale[i])
-      self.scale = []
-    except AttributeError:
-      pass
 
   # tested
   # general interface to dertermine file type

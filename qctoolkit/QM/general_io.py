@@ -222,14 +222,38 @@ class GenericQMInput(object):
     return QMWorker(self.setting['program'], **self.setting), name
 
   def write(self, name, **kwargs):
+
+    if 'reset' in kwargs and kwargs['reset']:
+      del kwargs['reset']
+      self.reset()
+      kwargs.update(self.setting)
+
     self.setting.update(kwargs)
+
+    # unify output name
+    if name:
+      name = os.path.splitext(name)[0]
+
+    # unify periodicity
+    cell_check = False
+    if 'celldm' in self.setting:
+      cell_check = copy.deepcopy(self.setting['celldm'])
+      if type(cell_check) is np.ndarray:
+        cell_check = True
     if not self.setting['periodic']:
       prop_list = ['celldm', 'scale', 'box']
       for prop in prop_list:
         if prop in self.setting:
           self.setting[prop] = False
-    if name:
-      name = os.path.splitext(name)[0]
+    elif not cell_check:
+      self.setting['celldm'] = self.setCelldm()
+      self.setting['box'] = self.setting['celldm'][:3]
+
+    # unify wavefunction output
+    if 'save_wf' in self.setting\
+    and type(self.setting['save_wf']) is int:
+      self.setting['save_wf'] = [self.setting['save_wf']]
+
     inp = InpContent(name, **self.setting)
     molecule = copy.deepcopy(self.molecule)
     self.cm_check(molecule)

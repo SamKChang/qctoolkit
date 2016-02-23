@@ -39,7 +39,7 @@ class AIMDInp(GenericMDInput):
         # set defualt margin in specified in setting.py, 
         # grow with box size
         if 'margin' not in kwargs:
-          m = qtk.setting.pw_margin
+          m = qtk.setting.box_margin
           self.setting['margin'] = max(m, max(box)/5.)
         edge = np.array([min(self.molecule.R[:,i])\
           for i in range(3)])
