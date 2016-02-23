@@ -36,7 +36,6 @@ class InpContent(object):
       else:
         setattr(self, string, value)
 
-
     if 'output' not in kwargs:
       if self.file_name or self.root_dir:
         self.output = True
@@ -186,6 +185,15 @@ class GenericQMInput(object):
     if self.setting['mode'] != 'geopt':
       del self.setting['geometry_convergence']
     self.setting['info'] = self.molecule.name
+
+    method_list = [
+                    method for method in dir(molecule)\
+                    if callable(getattr(molecule, method))
+                  ]
+    method_list = filter(lambda x: '__' not in x, method_list)
+    method_list = filter(lambda x: 'write' not in x, method_list)
+    for method in method_list:
+      setattr(self, method, getattr(self.molecule, method))
 
   def reset(self):
     self.setting.update(self.setting_backup)

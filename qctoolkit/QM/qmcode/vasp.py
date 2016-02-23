@@ -23,7 +23,7 @@ class inp(PlanewaveInput):
     return univ.runCode(self, PlanewaveInput, name, **self.setting)
 
   def write(self, name=None, **kwargs):
-    if 'no_reset' not in kwargs or not kwargs['no_reset']:
+    if 'reset' in kwargs and kwargs['reset']:
       self.reset()
     self.setting.update(kwargs)
     self.setting['root_dir'] = name

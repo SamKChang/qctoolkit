@@ -40,6 +40,7 @@ qm_setup = {
              'suffix' : None,
              'extension' : None,
              'periodic': False,
+             'restart': False,
            }
 # default setup for qmmm jobs
 md_setup = {

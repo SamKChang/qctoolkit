@@ -23,13 +23,15 @@ class inp(WaveletInput):
     return univ.runCode(self, WaveletInput, name, **self.setting)
 
   def write(self, name=None, **kwargs):
-    if 'no_reset' not in kwargs or not kwargs['no_reset']:
+    if 'reset' in kwargs and kwargs['reset']:
       self.reset()
     self.setting.update(kwargs)
     self.setting['yaml'] = True
     self.setting['root_dir'] = name
     inp, molecule = \
       super(WaveletInput, self).write(name, **self.setting)
+
+    dep_files = []
 
     dft_list = {
                  'lda': 1,
@@ -85,6 +87,15 @@ class inp(WaveletInput):
             'disablesym': 'Yes',
             'ixc': theory,
           }
+    if self.setting['save_density']:
+      dft['output_denspot'] = 21
+    if self.setting['restart']:
+      dft['InputPsiId'] = 12
+      # incldue restart path...
+    if self.molecule.charge:
+      dft['ncharge'] = self.molecule.charge
+    if self.molecule.multiplicity > 1:
+      dft['nspin'] = 2
 
     posinp = {
                'units': 'angstroem',
@@ -109,11 +120,12 @@ class inp(WaveletInput):
     data = {}
     data['dft'] = dft
     data['posinp'] = posinp
+    dep_files.extend(pp_files)
 
     content = reformat(yaml.dump(data, default_flow_style=False))
 
     inp.write(content)
-    inp.close(dependent_files=pp_files)
+    inp.close(dependent_files=dep_files)
 
     if name: return inp, name
 
