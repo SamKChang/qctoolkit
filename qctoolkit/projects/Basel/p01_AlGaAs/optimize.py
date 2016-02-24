@@ -94,7 +94,7 @@ def AlGaX_EvOpt(structure, vacancy_ind, ccs_span, **kwargs):
     freeAtomOut = qtk.QMOut('freeAtom/freeAtom.out',
                             program=inpp.setting['program'])
   else:
-    freeAtomOut = qtk.QMRun('freeAtom.inp', 
+    freeAtomOut = qtk.QMRun('freeAtom', chdir=True,
                             program=inpp.setting['program'],
                             threads=_threads,
                             save_restart = True,
