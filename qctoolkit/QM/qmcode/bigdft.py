@@ -86,6 +86,11 @@ class inp(WaveletInput):
           }
     if self.setting['save_wf']:
       dft['output_wf'] = 1
+      wf_list = self.setting['save_wf']
+      if max(wf_list) > self.getValenceElectrons() / 2:
+        nv = int(max(wf_list) - self.getValenceElectrons() / 2)
+        dft['norbv'] = nv
+        dft['nplot'] = nv
     if self.setting['save_density']:
       dft['output_denspot'] = 21
     if self.setting['restart']:
@@ -126,7 +131,7 @@ class inp(WaveletInput):
     inp.write(content)
     inp.close(dependent_files=dep_files)
 
-    if name: return inp, name
+    return inp
 
 class out(WaveletOutput):
   def __init__(self, qmout, **kwargs):

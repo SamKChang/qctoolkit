@@ -538,7 +538,10 @@ class Molecule(object):
     else:
       step = kwargs['step']
 
+    print type(self)
+    print self.grid
     self.grid = [[mol_min[i], mol_max[i], step[i]] for i in range(3)]
+    print self.grid
     return self.grid
 
   def setCelldm(self, margin=None):

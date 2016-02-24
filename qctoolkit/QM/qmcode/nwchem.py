@@ -23,11 +23,10 @@ class inp(GaussianBasisInput):
     return univ.runCode(self, GaussianBasisInput, name, **self.setting)
     
   def write(self, name=None, **kwargs):
-    self.setting.update(kwargs)
-    univ.cornerCube(self)
     inp, molecule = \
       super(GaussianBasisInput, self).write(name, **self.setting)
-
+    self.setting.update(kwargs)
+    univ.cornerCube(self)
 
     # mode setup
     if self.setting['mode'] == 'single_point':
@@ -195,8 +194,7 @@ class inp(GaussianBasisInput):
         inp.write('task dplot\n\n')
 
     inp.close()
-
-    return univ.writeReturn(inp, name, **self.setting)
+    return inp
 
 class out(GaussianBasisOutput):
   def __init__(self, qmout=None, **kwargs):

@@ -16,17 +16,24 @@ class inp(PlanewaveInput):
     PlanewaveInput.__init__(self, molecule, **kwargs)
     self.setting.update(**kwargs)
     if 'ks_states' in kwargs:
-      self.setting['ks_states'] = kwargs['ks_states']
+      self.setting['mode'] = kwargs['ks_states']
     if 'pp_type' not in kwargs:
       self.setting['pp_type'] = 'Goedecker'
     self.backup()
 
   def run(self, name=None, **kwargs):
+    kwargs['no_subfolder'] = False
+    if not name:
+      kwargs['new_name'] = self.molecule.name
+    else:
+      kwargs['new_name'] = name
     self.setting.update(kwargs)
     return univ.runCode(self, PlanewaveInput, name, **self.setting)
 
   def write(self, name=None, **kwargs):
     self.setting.update(kwargs)
+    self.setting['root_dir'] = name
+    self.setting['reset'] = True
 
     def PPString(mol, i, n, outFile):
       ppstr = re.sub('\*', '', mol.string[i])
@@ -47,10 +54,14 @@ class inp(PlanewaveInput):
       outFile.write(' LMAX=%s\n %3d\n' % (lmax, n))
       self.pp_files.append(re.sub('\*', '', PPStr))
 
-    def writeInp(outname=None, **setting):
+    def writeInp(name=None, **setting):
+      setting['no_update'] = True
       inp, molecule = \
         super(PlanewaveInput, self).write(name, **setting)
   
+      if 'ks_states' in setting and 'ks_states':
+        setting['mode'] = 'ks_states'
+ 
       if molecule.scale:
         molecule.R = molecule.R_scale
         setting['scale'] = molecule.scale
@@ -71,7 +82,7 @@ class inp(PlanewaveInput):
         inp.write(' OPTIMIZE WAVEFUNCTION\n')
       elif setting['mode'].lower() == 'geopt':
         inp.write(' OPTIMIZE GEOMETRY\n')
-      elif setting['mode'].lower() == 'kseg':
+      elif setting['mode'].lower() == 'ks_states':
         if not setting['restart']:
           setting['restart'] = True
         inp.write(' KOHN-SHAM ENERGIES\n  %d\n'\
@@ -170,14 +181,40 @@ class inp(PlanewaveInput):
           inp.write('\n')
       inp.write('&END\n')
   
-      inp.close()
+      if 'no_cleanup' in setting and setting['no_cleanup']:
+        inp.close(no_cleanup=True)
+      else:
+        inp.close()
+
+      return inp
   
-      return univ.writeReturn(inp, name, **setting)
+      #return univ.writeReturn(inp, name, **setting)
 
+    inp = None
     setting = copy.deepcopy(self.setting)
-    writeInp(name, **setting)
+    if 'save_wf' in setting and setting['save_wf']:
+      if type(setting['save_wf']) is int:
+        setting['save_wf'] = [setting['save_wf']]
+      wf_list = setting['save_wf']
+      del setting['save_wf']
+      max_wf = max(wf_list)
+      if max_wf > self.getValenceElectrons() / 2:
+        setting['no_subfolder'] = False
+        setting['save_restart'] = True
+        sub_name = name
+        if name:
+          sub_name = name + '_01'
+        inp = writeInp(sub_name, **setting)
+        setting['ks_states'] = max_wf - self.getValenceElectrons() / 2
+        setting['no_cleanup'] = True
+        setting['save_wf'] = wf_list
+        if name:
+          sub_name = name + '_02'
+        writeInp(sub_name, **setting)
+    else:
+      inp = writeInp(name, **setting)
 
-    if name: return inp, name
+    return inp
 
 class out(PlanewaveOutput):
   def __init__(self, qmout, **kwargs):

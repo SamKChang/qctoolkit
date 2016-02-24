@@ -86,9 +86,15 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
         ut.delete(inpname, 'FILEPATH', 2)
         ut.insert(inpname, 'CPMD', ' FILEPATH\n  %s' % scrdir)
 
-    out = os.path.splitext(inp)[0] + '.out'
-    exestr = "%s %s" % (exe, inp)
-    compute(exestr, out, _threads)
+    inp_list = sorted(glob.glob('*.inp'))
+    for job in inp_list:
+      out = os.path.splitext(job)[0] + '.out'
+      exestr = "%s %s" % (exe, job)
+      compute(exestr, out, _threads)
+      if os.path.exists('RESTART.1'):
+        if os.path.exists('RESTART'):
+          os.remove('RESTART')
+        os.link('RESTART.1', 'RESTART')
 
     # clean up files
     files = glob.glob('*')

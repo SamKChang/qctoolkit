@@ -23,6 +23,7 @@ class inp(PlanewaveInput):
     return univ.runCode(self, PlanewaveInput, name, **self.setting)
 
   def write(self, name=None, **kwargs):
+    self.reset()
     self.setting.update(kwargs)
     self.setting['root_dir'] = name
     self.setting['no_molecule'] = False
@@ -127,7 +128,7 @@ class inp(PlanewaveInput):
 
     # !!!!!!!!!!!!!!!!
     # write to KPOINTS
-    qtk.report("vasp.inp", "writin", "KPOINTS")
+    qtk.report("vasp.inp", "writing", "KPOINTS")
     if 'kmesh' not in self.setting:
       kpoints.write("Gamma-point only\n")
       kpoints.write(" 1       ! one k-point\n")
@@ -168,7 +169,7 @@ class inp(PlanewaveInput):
         potcar.write("cat %s\n" % PP_file)
     potcar.close(no_cleanup=True)
 
-    if name: return incar, name
+    return incar
 
 class out(PlanewaveOutput):
   """

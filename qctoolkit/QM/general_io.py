@@ -198,7 +198,7 @@ class GenericQMInput(object):
       setattr(self, method, getattr(self.molecule, method))
 
   def reset(self):
-    self.setting.update(self.setting_backup)
+    self.setting = copy.deepcopy(self.setting_backup)
     self.molecule = copy.deepcopy(self.molecule_backup)
 
   def backup(self):
@@ -225,10 +225,9 @@ class GenericQMInput(object):
 
   def write(self, name, **kwargs):
 
-    if 'reset' in kwargs and kwargs['reset']:
-      del kwargs['reset']
+    if 'no_reset' in kwargs and kwargs['no_reset']:
       self.reset()
-      kwargs.update(self.setting)
+    kwargs.update(self.setting)
 
     # unify output name/directory
     if name:
@@ -264,8 +263,9 @@ class GenericQMInput(object):
     else:
       setting['root_dir'] = kwargs['root_dir']
       del kwargs['root_dir']
-       
-    self.setting.update(kwargs)
+
+    if 'no_update' not in kwargs or not kwargs['no_update']:
+      self.setting.update(kwargs)
 
     inp = InpContent(name, **setting)
     molecule = copy.deepcopy(self.molecule)

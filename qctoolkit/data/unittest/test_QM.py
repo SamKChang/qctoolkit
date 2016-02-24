@@ -32,17 +32,18 @@ def test_general_inp_render():
           print '\n... doing %s %s %s' % (code, theory, mode)
           inp = qtk.QMInp(mol, mode=mode, theory=theory, program=code)
           inp.write()
-          tmp_obj, tmp_inp = inp.write(tmp_name)
-          try:
-            os.remove(tmp_inp)
-          except OSError:
-            try:
-              shutil.rmtree(tmp_inp)
-            except OSError:
-              print tmp_name
-              print tmp_inp
-              print glob.glob('*')
-              shutil.rmtree(tmp_name)
+          inp.write(tmp_name)
+          shutil.rmtree(tmp_name)
+#          try:
+#            os.remove(tmp_name)
+#          except OSError:
+#            try:
+#              shutil.rmtree(tmp_inp)
+#            except OSError:
+#              print tmp_name
+#              print tmp_inp
+#              print glob.glob('*')
+#              shutil.rmtree(tmp_name)
   testRun(pw_list, pw_theory)
   testRun(g_list, g_theory)
   testRun(wl_list, wl_theory)
@@ -61,17 +62,18 @@ def test_general_inp_render_file():
           assert inp.setting['theory'] == theory
           assert inp.setting['program'] == code
           inp.write()
-          tmp_obj, tmp_inp = inp.write(tmp_name)
-          try:
-            os.remove(tmp_inp)
-          except OSError:
-            try:
-              shutil.rmtree(tmp_inp)
-            except OSError:
-              print tmp_name
-              print tmp_inp
-              print glob.glob('*')
-              shutil.rmtree(tmp_name)
+          inp.write(tmp_name)
+          shutil.rmtree(tmp_name)
+#          try:
+#            os.remove(tmp_inp)
+#          except OSError:
+#            try:
+#              shutil.rmtree(tmp_inp)
+#            except OSError:
+#              print tmp_name
+#              print tmp_inp
+#              print glob.glob('*')
+#              shutil.rmtree(tmp_name)
   testRun(pw_list, pw_theory)
   testRun(g_list, g_theory)
   testRun(wl_list, wl_theory)
@@ -158,10 +160,10 @@ def test_QMOut_operations():
       assert out1.Et == E1 * factor
       assert out2.Et == E2 * factor
 
-#def test_cleanup():
-#  tmp_files = glob.glob(tmp_str + '*')
-#  for tmp in tmp_files:
-#    try:
-#      os.remove(tmp)
-#    except OSError:
-#      shutil.rmtree(tmp)
+def test_cleanup():
+  tmp_files = glob.glob(tmp_str + '*')
+  for tmp in tmp_files:
+    try:
+      os.remove(tmp)
+    except OSError:
+      shutil.rmtree(tmp)
