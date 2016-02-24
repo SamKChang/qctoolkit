@@ -612,8 +612,8 @@ class Molecule(object):
     for prop in prop_list:
       try:
         prop_str = filter(lambda x: prop in x, content)[0]
+        prop_str = re.sub('.*:', '', prop_str)
         prop_data = prop_str.split(' ')
-        del(prop_data[0])
         if len(prop_data) == 1:
           setattr(self, prop, float(prop_data[0]))
         elif len(prop_data) > 1:
@@ -644,6 +644,7 @@ class Molecule(object):
       if self.scale:
         if angle_sum == 0:
           self.R_scale = self.R
+          print np.array(self.scale)
           factor = np.array(self.box) / np.array(self.scale)
           factor = np.kron(factor, np.ones((self.N, 1)))
           self.R = self.R * factor

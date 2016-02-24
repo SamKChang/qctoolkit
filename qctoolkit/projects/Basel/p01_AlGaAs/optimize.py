@@ -8,7 +8,7 @@ def AlGaX_EvOpt(structure, vacancy_ind, ccs_span, **kwargs):
   if 'QMInp' in kwargs:
     baseinp = kwargs['QMInp']
   else:
-    baseinp = qtk.QMInp(structure, 'cpmd')
+    baseinp = qtk.QMInp(structure, program='cpmd')
   if 'T' in kwargs:
     _T = kwargs['T']
   else:
@@ -68,31 +68,34 @@ def AlGaX_EvOpt(structure, vacancy_ind, ccs_span, **kwargs):
 
   molp = qtk.Molecule()
   inpp.structure = molp.read(structure)
-  inpp.setInfo('Ev_per_ref')
-  inpp.write('pref.inp')
+  inpp.setting['info'] = 'Ev_per_ref'
+  inpp.write('pref')
 
   inpv = copy.deepcopy(baseinp)
-  inpv.removeAtom(vacancy_ind)
-  inpv.setChargeMultiplicity(inpp.inp.structure.charge, 2)
-  inpv.setInfo('Ev_vac_ref')
-  inpv.write('vref.inp')
+  inpv.removeAtoms(vacancy_ind)
+  inpv.setChargeMultiplicity(-1, 1)
+  inpv.setting['info'] = 'Ev_vac_ref'
+  inpv.write('vref')
 
   inpa = copy.deepcopy(baseinp)  
   inpa.isolateAtoms(vacancy_ind)
-  inpa.setChargeMultiplicity(inpp.inp.structure.charge, 2)
-  inpa.setInfo('freeAtom')
-  inpa.write('freeAtom.inp')
+  inpa.setChargeMultiplicity(1, 1)
+  inpa.setting['info'] = 'freeAtom'
+  if not os.path.exists('freeAtom'):
+    inpa.write('freeAtom')
   
-  qtk.QMRun('pref.inp', inpp.program,
-            threads=_threads,
+  qtk.QMRun('pref', inpp.setting['program'],
+            threads=_threads, chdir=True,
             save_restart = True)
-  qtk.QMRun('vref.inp', inpp.program,
-            threads=_threads,
+  qtk.QMRun('vref', inpp.setting['program'],
+            threads=_threads, chdir=True,
             save_restart = True)
   if os.path.exists('freeAtom'):
-    freeAtomOut = qtk.QMOut('freeAtom/freeAtom.out',inpp.program)
+    freeAtomOut = qtk.QMOut('freeAtom/freeAtom.out',
+                            inpp.setting['program'])
   else:
-    freeAtomOut = qtk.QMRun('freeAtom.inp', inpp.program,
+    freeAtomOut = qtk.QMRun('freeAtom.inp', 
+                            inpp.setting['program'],
                             threads=_threads,
                             save_restart = True,
                             QMReturn=True)

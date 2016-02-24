@@ -144,7 +144,7 @@ class inp(PlanewaveInput):
       inp.write('\n')
       inp.write(' CUTOFF\n  %.1f\n' % setting['cutoff'])
       if 'scale' in setting:
-        inp.write(' SCALE\n  SX=%d SY=%d SZ=%d\n' %\
+        inp.write(' SCALE SX=%d SY=%d SZ=%d\n' %\
           (setting['scale'][0],
            setting['scale'][1],
            setting['scale'][2]))

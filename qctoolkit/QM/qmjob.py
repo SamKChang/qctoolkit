@@ -46,6 +46,10 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
   else:
     _save_restart = False
 
+  if 'chdir' in kwargs and kwargs['chdir']:
+    cwd = os.getcwd()
+    os.chdir(inp)
+
   ###########################################
   # SYSTEM CALL SUBPROCESS: Running mpi job #
   ###########################################
@@ -128,8 +132,6 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
     else:
       qio_out = None
 
-    return qio_out
-
   #######################
   # VASP IMPLEMENTATION #
   #######################
@@ -154,8 +156,6 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
 
     os.rename(qmoutput, 'STDOUT')
     shutil.copyfile('vasprun.xml', qmoutput)
-
-    return qio_out
 
   #########################
   # NWChem IMPLEMENTATION #
@@ -190,8 +190,6 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
       if not _save_restart:
         os.remove(f)
 
-    return qio_out
-
   # !!!!! TODO LIST !!!!! #
   #########################
   # BigDFT IMPLEMENTATION #
@@ -207,7 +205,6 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
     compute(exestr, qmoutput, _threads)
     qio_out = qio.QMOut(qmoutput, program='bigdft')
 
-    return qio_out
   #############################
   # Gaussian09 IMPLEMENTATION #
   #############################
@@ -227,3 +224,7 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
 
   else: 
     ut.exit("ERROR! program '%s' not recognized" % program)
+
+  if 'cwd' in locals():
+    os.chdir(cwd)
+  return qio_out

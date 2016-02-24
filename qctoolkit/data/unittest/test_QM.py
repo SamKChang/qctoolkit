@@ -34,16 +34,6 @@ def test_general_inp_render():
           inp.write()
           inp.write(tmp_name)
           shutil.rmtree(tmp_name)
-#          try:
-#            os.remove(tmp_name)
-#          except OSError:
-#            try:
-#              shutil.rmtree(tmp_inp)
-#            except OSError:
-#              print tmp_name
-#              print tmp_inp
-#              print glob.glob('*')
-#              shutil.rmtree(tmp_name)
   testRun(pw_list, pw_theory)
   testRun(g_list, g_theory)
   testRun(wl_list, wl_theory)
@@ -64,16 +54,6 @@ def test_general_inp_render_file():
           inp.write()
           inp.write(tmp_name)
           shutil.rmtree(tmp_name)
-#          try:
-#            os.remove(tmp_inp)
-#          except OSError:
-#            try:
-#              shutil.rmtree(tmp_inp)
-#            except OSError:
-#              print tmp_name
-#              print tmp_inp
-#              print glob.glob('*')
-#              shutil.rmtree(tmp_name)
   testRun(pw_list, pw_theory)
   testRun(g_list, g_theory)
   testRun(wl_list, wl_theory)
