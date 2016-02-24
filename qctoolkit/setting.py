@@ -43,6 +43,8 @@ qm_setup = {
              'extension' : None,
              'periodic': False,
              'restart': False,
+             'setting_backup': False,
+             'molecule_backup': False,
            }
 # default setup for qmmm jobs
 md_setup = {
@@ -61,6 +63,7 @@ file_setup = {
                'path' : os.getcwd(),
                'output' : False,
                'dependent_files' : [],
+               'finalized': False,
              }
 planewave_setup = {
                     'periodic': True,

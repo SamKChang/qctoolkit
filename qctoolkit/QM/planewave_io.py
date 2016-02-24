@@ -40,6 +40,11 @@ class PlanewaveInput(GenericQMInput):
   def shift(self, coord):
     self.molecule.shift(coord)
 
+  def write(self, name=None, **kwargs):
+    inp, molecule = \
+      super(GenericQMInput, self).write(name, **setting)
+    return inp, molecule
+
 class PlanewaveOutput(GenericQMOutput):
   def __init__(self, output=None, **kwargs):
     GenericQMOutput.__init__(self, output, **kwargs)

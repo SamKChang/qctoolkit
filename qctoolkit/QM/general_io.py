@@ -26,7 +26,6 @@ class InpContent(object):
   def __init__(self, name, **kwargs):
     self.content = []
     self.file_name = name
-    self.finalized = False
 
     setup = copy.deepcopy(qtk.setting.file_setup)
 
@@ -36,6 +35,10 @@ class InpContent(object):
       else:
         setattr(self, string, value)
 
+    if 'dependent_files' in kwargs:
+      self.dependent_files = kwargs['dependent_files']
+      if type(self.dependent_files) is not list:
+        self.dependent_files = [self.dependent_files]
     if 'output' not in kwargs:
       if self.file_name:
         self.output = True
@@ -93,12 +96,10 @@ class InpContent(object):
 
         # copy dependent files
         if 'dependent_files' in kwargs:
-          self.dependent_files = kwargs['dependent_files']
-        for dep in self.dependent_files:
-          if os.path.exists(dep):
-            shutil.copy(dep, full_dir_path)
-          else:
-            qtk.warning("dependent file: %s not found" % dep)
+          self.dependent_files.extend(kwargs['dependent_files'])
+        for dep in set(self.dependent_files):
+          assert os.path.exists(dep)
+          shutil.copy(dep, full_dir_path)
 
     inp = sys.stdout if not self.output else open(full_path, 'w')
     for string in self.content:
@@ -198,8 +199,9 @@ class GenericQMInput(object):
       setattr(self, method, getattr(self.molecule, method))
 
   def reset(self):
-    self.setting = copy.deepcopy(self.setting_backup)
-    self.molecule = copy.deepcopy(self.molecule_backup)
+    if self.setting_backup:
+      self.setting = copy.deepcopy(self.setting_backup)
+      self.molecule = copy.deepcopy(self.molecule_backup)
 
   def backup(self):
     self.setting_backup = copy.deepcopy(self.setting)
