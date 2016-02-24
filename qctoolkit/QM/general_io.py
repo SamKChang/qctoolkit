@@ -37,8 +37,10 @@ class InpContent(object):
         setattr(self, string, value)
 
     if 'output' not in kwargs:
-      if self.file_name or self.root_dir:
+      if self.file_name:
         self.output = True
+    if 'root_dir' in kwargs:
+      self.root_dir = kwargs['root_dir']
 
   def write(self, string):
     self.content.append(string)
@@ -228,9 +230,7 @@ class GenericQMInput(object):
       self.reset()
       kwargs.update(self.setting)
 
-    self.setting.update(kwargs)
-
-    # unify output name
+    # unify output name/directory
     if name:
       name = os.path.splitext(name)[0]
 
@@ -254,9 +254,23 @@ class GenericQMInput(object):
     and type(self.setting['save_wf']) is int:
       self.setting['save_wf'] = [self.setting['save_wf']]
 
-    inp = InpContent(name, **self.setting)
+    # set default root_dir ONLY if it is not set
+    setting = copy.deepcopy(self.setting)
+    if 'root_dir' not in kwargs:
+      if name:
+        setting['root_dir'] = name
+      else:
+        setting['root_dir'] = self.molecule.name
+    else:
+      setting['root_dir'] = kwargs['root_dir']
+      del kwargs['root_dir']
+       
+    self.setting.update(kwargs)
+
+    inp = InpContent(name, **setting)
     molecule = copy.deepcopy(self.molecule)
     self.cm_check(molecule)
+
     if 'no_molecule' in kwargs and kwargs['no_molecule']:
       return inp
     else:

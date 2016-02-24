@@ -96,7 +96,9 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
       lambda x: '.out' not in x \
                 and '.inp' not in x\
                 and '.xyz' not in x\
-                and 'RESTART' not in x, files
+                and 'RESTART' not in x\
+                and 'DENSITY' not in x\
+                and 'SPINDEN' not in x, files
     )
     for f in tmp: os.remove(f)
     if not _save_restart:
@@ -104,10 +106,12 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
       for rfile in rst_list:
         os.remove(rfile)
 
-    if os.path.exists('DENSITY'):
+    densities = glob.glob('*DEN*')
+    for i in range(len(densities)):
       exe = setting.cpmd_cpmd2cube
-      log = open('DENSITY.log', 'w')
-      run = sp.Popen("%s -fullmesh DENSITY" % exe, 
+      log_name = densities[i] + '_%02d.log' % i
+      log = open(log_name, 'w')
+      run = sp.Popen("%s -fullmesh %s" % (exe, densities[i]), 
                shell=True,
                stdout=log)
       run.wait()

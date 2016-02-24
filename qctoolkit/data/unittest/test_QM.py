@@ -36,9 +36,13 @@ def test_general_inp_render():
           try:
             os.remove(tmp_inp)
           except OSError:
-            shutil.rmtree(tmp_inp)
-            print tmp_name
-            print tmp_inp
+            try:
+              shutil.rmtree(tmp_inp)
+            except OSError:
+              print tmp_name
+              print tmp_inp
+              print glob.glob('*')
+              shutil.rmtree(tmp_name)
   testRun(pw_list, pw_theory)
   testRun(g_list, g_theory)
   testRun(wl_list, wl_theory)
@@ -61,9 +65,13 @@ def test_general_inp_render_file():
           try:
             os.remove(tmp_inp)
           except OSError:
-            shutil.rmtree(tmp_inp)
-            print tmp_name
-            print tmp_inp
+            try:
+              shutil.rmtree(tmp_inp)
+            except OSError:
+              print tmp_name
+              print tmp_inp
+              print glob.glob('*')
+              shutil.rmtree(tmp_name)
   testRun(pw_list, pw_theory)
   testRun(g_list, g_theory)
   testRun(wl_list, wl_theory)
@@ -150,10 +158,10 @@ def test_QMOut_operations():
       assert out1.Et == E1 * factor
       assert out2.Et == E2 * factor
 
-def test_cleanup():
-  tmp_files = glob.glob(tmp_str + '*')
-  for tmp in tmp_files:
-    try:
-      os.remove(tmp)
-    except OSError:
-      shutil.rmtree(tmp)
+#def test_cleanup():
+#  tmp_files = glob.glob(tmp_str + '*')
+#  for tmp in tmp_files:
+#    try:
+#      os.remove(tmp)
+#    except OSError:
+#      shutil.rmtree(tmp)

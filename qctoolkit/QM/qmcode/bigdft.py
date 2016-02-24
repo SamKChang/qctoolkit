@@ -25,7 +25,6 @@ class inp(WaveletInput):
   def write(self, name=None, **kwargs):
     self.setting.update(kwargs)
     self.setting['yaml'] = True
-    self.setting['root_dir'] = name
     inp, molecule = \
       super(WaveletInput, self).write(name, **self.setting)
 
