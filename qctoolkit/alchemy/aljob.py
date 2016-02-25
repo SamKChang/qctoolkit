@@ -14,10 +14,9 @@ def Al1st(qminp, **setting):
       qminp = qtk.QMInp(qminp, **setting)
   if 'program' not in setting:
     setting['program'] = qtk.setting.qmcode
-  else:
-    setting['program'] = qminp.setting['program']
+  qminp.setting['scf_step'] = 1
 
-  name = None
+  name = qminp.molecule.name
   if 'out_dir' in setting:
     name = setting['out_dir']
     del setting['out_dir']
@@ -37,4 +36,5 @@ def Al1st(qminp, **setting):
   if setting['program'] == 'nwchem':
     pass
 
-  return qminp.run(name, **setting)
+  qmout = qminp.run(name, **setting)
+  return qmout

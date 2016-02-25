@@ -60,7 +60,6 @@ class GeneticOptimizer(opt.Optimizer):
 
       for i in range(len(pop_list)):
         fit.append(qout.get())
-      print fit
       fit = list(np.array(sorted(
               fit, key=operator.itemgetter(1)))[:,0])
       output = np.array(fit)
@@ -103,4 +102,5 @@ class GeneticOptimizer(opt.Optimizer):
       new_fit, new_out = self.fitness(new_pop)
       self.merge(new_pop, new_fit, new_out)
       self.pop_sort()
+      print '????'
       self.push(self.fit[0], self.out[0], self.pop[0])

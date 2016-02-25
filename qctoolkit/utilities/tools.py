@@ -2,6 +2,7 @@ from math import pi ,sin, cos
 import qctoolkit.molecule as qg
 import numpy as np
 import qctoolkit as qtk
+import yaml
 
 def R(theta, u):
   return np.array(

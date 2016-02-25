@@ -5,6 +5,12 @@ import qctoolkit.alchemy as qal
 import copy, shutil, os, glob
 
 def AlGaX_EvOpt(structure, vacancy_ind, ccs_span, **kwargs):
+
+  qm_setting = {}
+  if 'qm_setting' in kwargs:
+    qm_setting = kwargs['qm_setting']
+  qm_setting['save_restart'] = True
+
   if 'QMInp' in kwargs:
     baseinp = kwargs['QMInp']
   else:
@@ -44,95 +50,64 @@ def AlGaX_EvOpt(structure, vacancy_ind, ccs_span, **kwargs):
   else:
     _optimizer = 'MC'
 
-
-  def clean_file(old_file):
-    try:
-      os.remove(old_file)
-    except:
-      pass
-  def clean_folder(old_folder):
-    try:
-      shutil.rmtree(old_folder)
-    except:
-      pass
-
-  for to_clean in glob.glob('*.inp'):
-    clean_file(to_clean)
-#  clean_folder('pref')
-#  clean_folder('freeAtom')
-#  clean_folder('vref')
-
   ccs = qcs.MoleculeSpan(structure, ccs_span)
 
-  inpp = copy.deepcopy(baseinp)
-
-  molp = qtk.Molecule()
-  inpp.structure = molp.read(structure)
+  inpp = qtk.QMInp(structure, **qm_setting)
   inpp.setting['info'] = 'Ev_per_ref'
-  inpp.write('pref')
+  if not os.path.exists('pref/pref.out'):
+    inpp.run('pref')
 
-  inpv = copy.deepcopy(baseinp)
+  inpv = qtk.QMInp(structure, **qm_setting)
   inpv.removeAtoms(vacancy_ind)
-  inpv.setChargeMultiplicity(-1, 1)
+  inpv.setChargeMultiplicity(0, 2)
   inpv.setting['info'] = 'Ev_vac_ref'
-  inpv.write('vref')
+  if not os.path.exists('vref/pref.out'):
+    inpv.run('vref')
 
-  inpa = copy.deepcopy(baseinp)  
+  inpa = qtk.QMInp(structure, **qm_setting)
   inpa.isolateAtoms(vacancy_ind)
-  inpa.setChargeMultiplicity(1, 1)
+  inpa.setChargeMultiplicity(0, 2)
   inpa.setting['info'] = 'freeAtom'
-  if not os.path.exists('freeAtom'):
-    inpa.write('freeAtom')
-  
-  qtk.QMRun('pref', inpp.setting['program'],
-            threads=_threads, chdir=True,
-            save_restart = True)
-  qtk.QMRun('vref', inpp.setting['program'],
-            threads=_threads, chdir=True,
-            save_restart = True)
-  if os.path.exists('freeAtom'):
-    freeAtomOut = qtk.QMOut('freeAtom/freeAtom.out',
-                            program=inpp.setting['program'])
-  else:
-    freeAtomOut = qtk.QMRun('freeAtom', chdir=True,
-                            program=inpp.setting['program'],
-                            threads=_threads,
-                            save_restart = True,
-                            QMReturn=True)
+  if not os.path.exists('freeAtom/freeAtom.out'):
+    inpa.run('freeAtom')
+  freeAtomOut = qtk.QMOut('freeAtom/freeAtom.out')
 
   tmp , init_ccs_coord = ccs.random()
-  input_list = [ccs, vacancy_ind, 
-                {'QMInp':baseinp, 
-                 'pref':'pref', 'vref':'vref',
-                 'freeAtomE':freeAtomOut.Et, 
-                 'threads':_threadspj}]
 
+  qm_setting['threads'] = _threadspj
+  penalty_setting = {
+                      'QMInp':baseinp,
+                      'freeAtomE':freeAtomOut.Et, 
+                      'qm_setting': qm_setting,
+                    }
+  if 'alchemy' in kwargs and kwargs['alchemy']:
+    penalty_setting['pref'] = 'pref'
+    penalty_setting['vref'] = 'vref'
+  input_list = [ccs, vacancy_ind, penalty_setting]
+  
   def genCCSInp():
     _coord = ccs.random()[1]
     return _coord
  
+  op_setting = {
+                 'power': 1, 
+                 'log_file': logfile,
+                 'target': _target,
+                 'parallel': _parallel,
+                 'T': _T,
+               }
+
+  qtk.report('start optimizer')
   if _optimizer == 'MC':
     cylopt = qop.MonteCarlo(Ev_ccs, input_list, genCCSInp, 
-                            power=1, log_file=logfile, T=_T,
-                            target=_target, parallel=_parallel
-                           )
+                            **op_setting)
   elif _optimizer == 'GA':
     cylopt = qop.GeneticOptimizer(Ev_ccs, input_list, genCCSInp, 
                                   ccs.mate, _population_size,
-                                  power=1, log_file=logfile,
-                                  target=_target,
-                                  parallel=_parallel
-                                 )
+                                  **op_setting)
+  qtk.report('optimizer initialized')
 
   cylopt.run()
-
-#  qcs.optimize.mc(Ev_ccs, init_ccs_coord, ccs, input_list, 
-#                  target=_target, T=_T)
-#
-#  out = Ev_ccs(init_ccs_coord, ccs, vacancy_ind, QMInp=inpp,
-#               pref='pref', vref='vref', 
-#               freeAtomE=freeAtomOut.Et,
-#               threads = _threads)
 
 def Ev_ccs(ccs_coord, ccs_span, vacancy_index, **kwargs):
   """
@@ -148,7 +123,10 @@ def Ev_ccs(ccs_coord, ccs_span, vacancy_index, **kwargs):
              + "system without vacancies.\n"\
              + "It is necessary for inp settings")
   base_inp = kwargs['QMInp']
-  base_inp.debug()
+
+  qm_setting = {}
+  if 'qm_setting' in kwargs:
+    qm_setting = kwargs['qm_setting']
 
   if 'pref' in kwargs and 'vref' in kwargs:
     alchem = True
@@ -156,64 +134,54 @@ def Ev_ccs(ccs_coord, ccs_span, vacancy_index, **kwargs):
     vacancy_ref = kwargs['vref']
   elif 'pref' not in kwargs and 'vref' not in kwargs:
     alchem = False
-  else:
-    qtk.exit("either 'pref' or 'vref' is missing in kwargs for"\
-             "alchemical runs.")
-  if 'freeAtomE' in kwargs:
-    freeE = kwargs['freeAtomE']
-  else:
-    freeE = 0
+
+  freeE = qtk.QMOut('freeAtom/freeAtom.out')
+  freeE.inUnit('ev')
 
   if 'threads' in kwargs:
     _threads = kwargs['threads']
   else:
     _threads = 1
 
-  _target = 0
+  inp_wov = qtk.QMInp(ccs_span.generate(**ccs_coord))
+  inp_wv = qtk.QMInp(ccs_span.generate(**ccs_coord))
 
-  inp_wov = copy.deepcopy(base_inp)
-  inp_wv = copy.deepcopy(base_inp)
-  inp_wov.inp.structure = ccs_span.generate(**ccs_coord)
-  inp_wv.inp.structure = ccs_span.generate(**ccs_coord)
-
-  inp_wv.removeAtom(vacancy_index)
-  inp_wv.setChargeMultiplicity(inp_wov.inp.structure.charge, 2)
+  inp_wv.removeAtoms(vacancy_index)
+  inp_wv.setChargeMultiplicity(0, 2)
 
   perfect = 'ev_perfect' + str(os.getpid())
   vacancy = 'ev_vacancy' + str(os.getpid())
   perfectinp = perfect + '.inp'
   vacancyinp = vacancy + '.inp'
+  inp_wov.molecule.name = perfectinp
+  inp_wv.molecule.name = vacancyinp
 
   if os.path.exists(perfect):
     shutil.rmtree(perfect)
   if os.path.exists(vacancy):
     shutil.rmtree(vacancy)
 
-  inp_wov.write(perfectinp, no_warning=True)
-  inp_wv.write(vacancyinp, no_warning=True)
-
+  print ccs_coord
   if alchem:
-    out_wov = qal.FirstOrderRun(perfectinp, inp_wov.program,
-                                threads=_threads,
-                                ref_path=perfect_ref,
-                                cleanup=True,
-                                alchemRefPrefix='')
+    out_wov = qal.Al1st(inp_wov, ref_dir=perfect_ref, **qm_setting)
+    out_wv = qal.Al1st(inp_wv, ref_dir=vacancy_ref, **qm_setting)
   else:
-    out_wov = qtk.QMRun(perfectinp, inp_wov.program,
-                        cleanup=True,
-                        threads=_threads)
-  os.remove(perfectinp)
+    out_wov = inp_wov.run(**qm_setting)
+    out_wv = inp_wv.run(**qm_setting)
+  try:
+    os.remove(perfectinp)
+    os.remove(vacancyinp)
+  except OSError:
+    shutil.rmtree(perfectinp)
+    shutil.rmtree(vacancyinp)
 
-  if alchem:
-    out_wv = qal.FirstOrderRun(vacancyinp, inp_wv.program,
-                               threads=_threads,
-                               ref_path=vacancy_ref,
-                               cleanup=True,
-                               alchemRefPrefix='')
-  else:
-    out_wv = qtk.QMRun(vacancyinp, inp_wv.program,
-                        cleanup=True,
-                        threads=_threads)
-  os.remove(vacancyinp)
+  out_wov.inUnit('ev')
+  out_wv.inUnit('ev')
 
-  return (out_wov.Et - out_wv.Et - freeE) - _target
+  final = out_wov - out_wv - freeE
+
+  msg = str(out_wov.Et) + '-(' + str(out_wv.Et) + \
+        '+' + str(freeE.Et) + ') = ' + str(final.Et)
+  qtk.report('trial Ev', msg)
+
+  return final.Et

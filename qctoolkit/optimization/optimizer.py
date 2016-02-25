@@ -140,9 +140,9 @@ class Optimizer(object):
     output = list(zip(self.penalty[:size], self.coord[:size]))
     self.penalty = self.penalty[size:]
     self.coord = self.coord[size:]
-#    for line in output:
-#      print >> self.logfile, "% 10.6E %s" % (line[0], line[1])
-#      self.logfile.flush()
+    for line in output:
+      print >> self.logfile, "% 10.6E %s" % (line[0], line[1])
+      self.logfile.flush()
 
   # !!!!!!!!!!!!!!!!!!!!!!!!!!
   # update penalty/coord lists

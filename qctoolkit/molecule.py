@@ -482,7 +482,7 @@ class Molecule(object):
         except:
           qtk.exit("element %s not found." % element.lower())
     
-    if type(element) is str:
+    if type(element) is not list:
       element = [element]
       coord = [coord]
     Z = list(self.Z)
