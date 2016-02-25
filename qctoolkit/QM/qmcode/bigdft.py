@@ -78,7 +78,6 @@ class inp(WaveletInput):
                   ' e.g. pbe')
       
     dft = {
-            'hgrids': 'fast',
             'rmult': yList([3.5, 9.0]),
             'nrepmax': 'accurate',
             'disablesym': 'Yes',
@@ -119,6 +118,8 @@ class inp(WaveletInput):
       if box[1] <= 0:
         box[1] = '.inf'
       posinp['cell'] = yList(box)
+    else:
+      dft['hgrids'] = 'fast'
         
 
     data = {}
@@ -153,11 +154,15 @@ class out(WaveletOutput):
     string = re.sub(' *', '', string)
     tmp = filter(None, string.split(','))
     self.scf_step = len(tmp)
-    Et = {}
+    Ecomp = {}
     for entry in tmp:
       name, value = entry.split(':')
-      Et[name] = value
-    self.detail = Et
+      Ecomp[name] = value
+    self.detail = Ecomp
 
-    tmp = filter(lambda x: 'Energy (Hartree)' in x, data)
-    self.Et = float(tmp[-1].split(':')[1])
+    pattern = re.compile('^.*iter:.*EKS.*$')
+    tmp = filter(pattern.match, data)
+    Et = [float(re.match('.*EKS:(.*), gnrm.*', 
+                         entry)\
+                        .groups(0)[0]) for entry in tmp]
+    self.Et = Et[-1]

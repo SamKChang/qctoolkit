@@ -142,7 +142,7 @@ def test_h2o_edit():
   assert mol.Z[0] == 3
   assert mol.Z[1] == 0 # artifitial atom with Z<=0
 
-def test_h2o_geometry():
+def test_h2o_periodic_crystal():
   mol = setup(mol='h2o.xyz')[0]
   v = mol.R[1] - mol.R[2]
   mol.align(v)
@@ -151,3 +151,8 @@ def test_h2o_geometry():
   for i in range(1,6):
     mol.stretch(1,[2,1],i)
     assert mol.R[1,0] == i
+
+def test_crystal():
+  mol = setup(mol='periodic_algaas.xyz')[0]
+  assert mol.celldm
+  assert mol.scale

@@ -98,8 +98,10 @@ class InpContent(object):
         if 'dependent_files' in kwargs:
           self.dependent_files.extend(kwargs['dependent_files'])
         for dep in set(self.dependent_files):
-          assert os.path.exists(dep)
-          shutil.copy(dep, full_dir_path)
+          if os.path.exists(dep):
+            shutil.copy(dep, full_dir_path)
+          else:
+            qtk.warning('dependent file: %s not found' % dep)
 
     inp = sys.stdout if not self.output else open(full_path, 'w')
     for string in self.content:

@@ -269,6 +269,8 @@ class Molecule(object):
   # tested
   def haveBond(self, type_a, type_b):
     result = False
+    type_a = type_a.title()
+    type_b = type_b.title()
     if '0' not in self.bonds:
       self.findBonds()
     if qtk.n2Z(type_a) > qtk.n2Z(type_b):
@@ -278,10 +280,8 @@ class Molecule(object):
       atom_begin = qtk.n2Z(type_a)
       atom_end = qtk.n2Z(type_b)
     for key in self.bonds:
-      if self.bonds[key]['atom_begin'] == atom_begin and \
-         self.bonds[key]['atom_end'] == atom_end:
-        print self.bonds[key]['atom_begin'],
-        print self.bonds[key]['atom_end']
+      if self.bonds[key]['atom_begin'] == atom_begin \
+      and self.bonds[key]['atom_end'] == atom_end:
         result = True
     return result
 
@@ -390,6 +390,37 @@ class Molecule(object):
       axis = np.cross(u, v)
       axis = axis / np.linalg.norm(axis)
       self.rotate(angle, axis)
+
+  def alignSVD(self, mol, ref_list=None, tar_list=None):
+    if type(mol) is str:
+      try:
+        mol = qtk.Molecule(mol)
+      except:
+        qtk.exit("error when reading molecule file: %s" % mol)
+    assert issubclass(mol.__class__, qtk.Molecule)
+    if not ref_list:
+      ref_list = [i for i in range(self.N)]
+    if not tar_list:
+      tar_list = copy.deepcopy(ref_list)
+
+    lst_a = self.R[ref_list]
+    lst_b = mol.R[tar_list]
+    center_a = np.mean(lst_a, axis=0)
+    center_b = np.mean(lst_b, axis=0)
+    na = len(lst_a)
+    nb = len(lst_b)
+    crd_a = self.R - np.kron(center_a, np.ones((self.N, 1)))
+    crd_b = mol.R - np.kron(center_b, np.ones((mol.N, 1)))
+    ref_a = lst_a - np.kron(center_a, np.ones((na, 1)))
+    ref_b = lst_b - np.kron(center_a, np.ones((nb, 1)))
+
+    H = np.dot(np.transpose(ref_a), ref_b)
+    U, s, V = np.linalg.svd(H)
+    R = np.dot(np.transpose(V), np.transpose(U))
+    self.R = np.transpose(
+      np.dot(R, np.transpose(crd_a))) + \
+      np.kron(center_b, np.ones((na, 1))
+    )
 
   def rotate(self, angle, u):
     R_tmp = copy.deepcopy(self.R)
@@ -538,10 +569,7 @@ class Molecule(object):
     else:
       step = kwargs['step']
 
-    print type(self)
-    print self.grid
     self.grid = [[mol_min[i], mol_max[i], step[i]] for i in range(3)]
-    print self.grid
     return self.grid
 
   def setCelldm(self, margin=None):
@@ -614,6 +642,7 @@ class Molecule(object):
         prop_str = filter(lambda x: prop in x, content)[0]
         prop_str = re.sub('.*:', '', prop_str)
         prop_data = prop_str.split(' ')
+        prop_data = filter(None, prop_data)
         if len(prop_data) == 1:
           setattr(self, prop, float(prop_data[0]))
         elif len(prop_data) > 1:
@@ -644,7 +673,6 @@ class Molecule(object):
       if self.scale:
         if angle_sum == 0:
           self.R_scale = self.R
-          print np.array(self.scale)
           factor = np.array(self.box) / np.array(self.scale)
           factor = np.kron(factor, np.ones((self.N, 1)))
           self.R = self.R * factor

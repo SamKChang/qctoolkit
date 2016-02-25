@@ -87,7 +87,7 @@ class inp(PlanewaveInput):
           setting['restart'] = True
         inp.write(' KOHN-SHAM ENERGIES\n  %d\n'\
           % setting['ks_states'])
-      elif setting['mode'].lower() == 'BOMD':
+      elif setting['mode'].lower() == 'md':
         inp.write(' MOLECULAR DYNAMICS BO\n')
       if re.match(setting['mode'], 'md'):
         inp.write(' TRAJECTORY SAMPLE XYZ\n  %d\n'\
