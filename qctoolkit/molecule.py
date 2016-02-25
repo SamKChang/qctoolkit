@@ -351,7 +351,7 @@ class Molecule(object):
       targets = [targets]
     direction = [self.R[index] for index in direction_indices]
     vector = direction[1] - direction[0]
-    vector = distance * vector/np.linalg.norm(vector)
+    vector = distance * vector/np.linalg.norm(vector) + direction[0]
     template = np.zeros([self.N,1])
     template[targets] = 1
     ref = copy.deepcopy(self.R)
