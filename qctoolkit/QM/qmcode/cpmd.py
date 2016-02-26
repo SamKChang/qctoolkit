@@ -221,6 +221,12 @@ class out(PlanewaveOutput):
     PlanewaveOutput.__init__(self, qmout, **kwargs)
     self.info = ''
     if qmout:
+      root = os.path.split(os.path.abspath(qmout))[0]
+      mol_path = os.path.join(root, 'GEOMETRY.xyz')
+      try:
+        self.molecule = qtk.Molecule(mol_path)
+      except:
+        pass
       self.getEt(qmout)
 
   def getEt(self, name):
