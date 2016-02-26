@@ -21,6 +21,7 @@ class InpContent(object):
     finalized(boolean),
     final_path(str)
     final_name(str)
+    self.reset()
   """
 
   def __init__(self, name, **kwargs):
@@ -44,6 +45,7 @@ class InpContent(object):
         self.output = True
     if 'root_dir' in kwargs:
       self.root_dir = kwargs['root_dir']
+    self.path = os.path.abspath(sys.path[0])
 
   def write(self, string):
     self.content.append(string)

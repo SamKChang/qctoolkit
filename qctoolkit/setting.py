@@ -60,7 +60,6 @@ file_setup = {
                'suffix' : None,
                'extension' : None,
                'root_dir' : None,
-               'path' : os.getcwd(),
                'output' : False,
                'dependent_files' : [],
                'finalized': False,
