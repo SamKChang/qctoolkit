@@ -45,7 +45,7 @@ class InpContent(object):
         self.output = True
     if 'root_dir' in kwargs:
       self.root_dir = kwargs['root_dir']
-    self.path = os.path.abspath(sys.path[0])
+    self.path = os.getcwd()
 
   def write(self, string):
     self.content.append(string)
