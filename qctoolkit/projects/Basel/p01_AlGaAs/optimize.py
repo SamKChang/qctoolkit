@@ -61,7 +61,7 @@ def AlGaX_EvOpt(structure, vacancy_ind, ccs_span, **kwargs):
   inpv.removeAtoms(vacancy_ind)
   inpv.setChargeMultiplicity(0, 2)
   inpv.setting['info'] = 'Ev_vac_ref'
-  if not os.path.exists('vref/pref.out'):
+  if not os.path.exists('vref/vref.out'):
     inpv.run('vref')
 
   inpa = qtk.QMInp(structure, **qm_setting)
