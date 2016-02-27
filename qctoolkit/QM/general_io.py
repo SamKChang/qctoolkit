@@ -268,6 +268,7 @@ class GenericQMInput(object):
         setting['root_dir'] = self.molecule.name
     else:
       setting['root_dir'] = kwargs['root_dir']
+      print setting['root_dir']
       del kwargs['root_dir']
 
     if 'no_update' not in kwargs or not kwargs['no_update']:

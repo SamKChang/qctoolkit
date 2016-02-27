@@ -32,7 +32,8 @@ class inp(PlanewaveInput):
 
   def write(self, name=None, **kwargs):
     self.setting.update(kwargs)
-    self.setting['root_dir'] = name
+    if 'root_dir' not in kwargs:
+      self.setting['root_dir'] = name
     self.setting['reset'] = True
 
     def PPString(mol, i, n, outFile):

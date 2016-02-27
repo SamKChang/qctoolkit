@@ -23,10 +23,10 @@ class inp(GaussianBasisInput):
     return univ.runCode(self, GaussianBasisInput, name, **self.setting)
     
   def write(self, name=None, **kwargs):
-    inp, molecule = \
-      super(GaussianBasisInput, self).write(name, **self.setting)
     self.setting.update(kwargs)
     univ.cornerCube(self)
+    inp, molecule = \
+      super(GaussianBasisInput, self).write(name, **self.setting)
 
     # mode setup
     if self.setting['mode'] == 'single_point':
