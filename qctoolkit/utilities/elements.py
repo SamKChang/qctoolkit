@@ -32,13 +32,19 @@ def n2ve(Zn):
 def Z2n(Z):
   if type_list.has_key(Z):
     return type_list[Z]
+  elif type(Z) is float:
+    return 'ATOM_%4.2f' % Z
+    qtk.warning('Z2n: atomic number not defined, return HETATM')
+  elif type(Z) is int:
+    return 'ATOM_%d' % Z
+    qtk.warning('Z2n: atomic number not defined, return HETATM')
   else:
     qtk.exit("Z2n: atomic number " + str(Z) + " is not defined")
     #return Z
   
 def n2Z(Zn):
   if z_list.has_key(Zn):
-    return z_list[Zn]
+    return float(z_list[Zn])
   else:
     qtk.warning("n2Z: element type " + str(Zn) +\
                 " is not defined, returning nuclear charge 0")

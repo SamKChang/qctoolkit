@@ -5,11 +5,21 @@ import copy
 pp_setting = {
                'program': 'cpmd',
                'xc': 'pbe',
-               'method': 'goedecker',
+               'type': 'goedecker',
              }
+param = {
+          'Z': 0,
+          'ZV': 0,
+          'xc': 'pbe',
+          'Cn': 0,
+          'Ci': [],
+          'r_loc': 0,
+          'r_nl': [],
+          'h_ij': [],
+        }
 class PP(object):
   def __init__(self, path=None, **kwargs):
-    self.param = {}
+    self.param = copy.deepcopy(param)
     self.setting = {}
     self.info = ''
 

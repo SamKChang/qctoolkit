@@ -9,7 +9,7 @@ xc_dict = {
           }
 
 def read(self, path):
-  if self.setting['method'] == 'goedecker':
+  if self.setting['type'] == 'goedecker':
     rev_dict = {v: k for k, v in xc_dict.items()}
     atom = re.compile('^ *&ATOM.*$')
     pot = re.compile('^ *&POTENTIAL.*$')

@@ -482,28 +482,33 @@ class Molecule(object):
       self.N = self.N + 1
       self.type_list.append(e.symbol)
       Z.append(e.number)
+      self.string.append('')
     self.Z = np.array(Z)
 
   # tested
   def setAtoms(self, index, **kwargs):
-    newZ = self.Z
     if type(index) is int:
       index = [index]
-    if 'element' in kwargs:
+    if 'element' in kwargs or 'Z' in kwargs:
       for i in index:
-        assert i>=0
         if 'element' in kwargs:
-          Z = qtk.n2Z(kwargs['element'])
+          if type(kwargs['element']) is str:
+            Z = qtk.n2Z(kwargs['element'])
+          elif type(kwargs['element']) is int\
+          or type(kwargs['element']) is float:
+            Z = kwargs['element']
         elif 'Z' in kwargs:
           Z = kwargs['Z']
-        newZ[i] = Z
+        print Z
+        self.Z[i] = Z
+        print self.Z[i]
+        print self.Z
         self.type_list[i] = qtk.Z2n(Z)
     if 'string' in kwargs:
       minZ = min(min(self.Z)-1, 0)
       for i in index:
         self.string[i] = kwargs['string']
-        newZ[i] = minZ
-    self.Z = newZ
+        self.Z[i] = minZ
 
   # tested
   def removeAtoms(self, indices):
@@ -566,6 +571,9 @@ class Molecule(object):
       self.celldm = copy.deepcopy(self.box)
       self.celldm.extend([0, 0, 0])
     return self.celldm
+
+  def copy(self):
+    return copy.deepcopy(self)
 
   # tested by qminp
   def sort(self):
