@@ -468,26 +468,12 @@ class Molecule(object):
 
   # tested
   def addAtoms(self, element, coord):
-    def getAtom(element):
-      if len(element)<2:
-        try:
-          atom = getattr(pt, element.title())
-          return atom
-        except:
-          qtk.exit("element %s not found." % element.title())
-      else:
-        try:
-          atom = getattr(pt, element.lower())
-          return atom
-        except:
-          qtk.exit("element %s not found." % element.lower())
-    
     if type(element) is not list:
       element = [element]
       coord = [coord]
     Z = list(self.Z)
     for i in range(len(element)):
-      e = getAtom(element[i])
+      e = getattr(pt, element[i].title())
       r = coord[i]
       if self.N == 0:
         self.R = np.array(r)
