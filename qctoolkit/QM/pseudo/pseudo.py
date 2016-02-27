@@ -66,9 +66,19 @@ class PP(object):
   def __add__(self, other):
     assert type(other) is type(self)
     assert self.param['xc'] == other.param['xc']
+
+    def vecResize(vec, n):
+      tmp = [0 for i in range(n)]
+      tmp[:len(vec)] = vec
+      return copy.deepcopy(tmp)
+
     cn = max(self.param['Cn'], other.param['Cn'])
     h1 = [len(h) for h in self.param['h_ij']]
     h2 = [len(h) for h in other.param['h_ij']]
+    if len(h1) < len(h2):
+      h1 = vecResize(h1, len(h2))
+    elif len(h2) < len(h1):
+      h2 = vecResize(h2, len(h1))
     hn = [max(i) for i in zip(h1, h2)]
     self.resize(cn, hn)
     other.resize(cn, hn)

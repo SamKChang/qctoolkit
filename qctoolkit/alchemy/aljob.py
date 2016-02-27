@@ -1,5 +1,6 @@
 import qctoolkit as qtk
-import os, re, shutil
+import os, re, shutil, copy
+from qctoolkit.QM.pseudo.pseudo import PP
 
 def Al1st(qminp, **setting):
   assert 'ref_dir' in setting
@@ -38,3 +39,12 @@ def Al1st(qminp, **setting):
 
   qmout = qminp.run(name, **setting)
   return qmout
+
+def mutatePP(pp1, pp2, fraction):
+  pp1 = pp1*(1-fraction)
+  pp2 = pp2*fraction
+  pp = pp1 + pp2
+  if fraction > 0.5:
+    pp.param['Z'] = pp2.param['Z']
+
+  return pp

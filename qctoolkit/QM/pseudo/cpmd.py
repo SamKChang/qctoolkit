@@ -37,8 +37,8 @@ def read(self, path):
       elif pot.match(pp[i]):
         self.param['l_max'] = int(pp[i+2].split()[0])
         self.param['r_loc'] = float(pp[i+3].split()[0])
-        self.param['C_n'] = int(pp[i+4].split()[0])
-        Ci = pp[i+4].split()[1:self.param['C_n']+1]
+        self.param['Cn'] = int(pp[i+4].split()[0])
+        Ci = pp[i+4].split()[1:self.param['Cn']+1]
         self.param['Ci'] = [float(c) for c in Ci]
         i += 5
         dim = 0
@@ -77,14 +77,18 @@ def write(self, name=None):
   out.write('    GOEDECKER\n')
   out.write('  %-33d LMAX\n' % self.param['l_max'])
   out.write('   %12.9f%25s\n' % (self.param['r_loc'], 'RC'))
-  out.write('  %d ' % self.param['C_n'])
+  out.write('  %d ' % self.param['Cn'])
   for c in self.param['Ci']:
     out.write(' %12.9f ' % c)
   for i in range(len(self.param['h_ij'])):
     h_ij = self.param['h_ij'][i]
     r_nl = self.param['r_nl'][i]
-    upper = [list(v) for v in np.triu(h_ij)]
-    elem = [e for v in upper for e in v if e]
+    elem = []
+    for j in range(len(h_ij)):
+      for k in range(j, len(h_ij)):
+        elem.append(h_ij[k, j])
+    #upper = [list(v) for v in np.triu(h_ij)]
+    #elem = [e for v in upper for e in v if e]
     out.write('\n% 15.9f %2d' % (r_nl, len(h_ij)))
     for e in elem:
       out.write(' %12.9f' % e)
