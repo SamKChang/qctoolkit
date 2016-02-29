@@ -200,7 +200,13 @@ class GenericQMInput(object):
     method_list = filter(lambda x: '__' not in x, method_list)
     method_list = filter(lambda x: 'write' not in x, method_list)
     for method in method_list:
-      setattr(self, method, getattr(self.molecule, method))
+      if method != 'setCelldm':
+        setattr(self, method, getattr(self.molecule, method))
+
+  def setCelldm(self, celldm=None, **kwargs):
+    self.setting['celldm'] = self.molecule.setCelldm(celldm, **kwargs)
+    self.setting['box'] = self.setting['celldm'][:3]
+    return self.setting['celldm']
 
   def reset(self):
     if self.setting_backup:
@@ -246,7 +252,8 @@ class GenericQMInput(object):
       if type(cell_check) is np.ndarray:
         cell_check = True
     if not self.setting['periodic']:
-      prop_list = ['celldm', 'scale', 'box']
+      #prop_list = ['celldm', 'scale', 'box']
+      prop_list = ['scale', 'box']
       for prop in prop_list:
         if prop in self.setting:
           self.setting[prop] = False
@@ -268,7 +275,6 @@ class GenericQMInput(object):
         setting['root_dir'] = self.molecule.name
     else:
       setting['root_dir'] = kwargs['root_dir']
-      print setting['root_dir']
       del kwargs['root_dir']
 
     if 'no_update' not in kwargs or not kwargs['no_update']:

@@ -3,8 +3,10 @@ from qctoolkit.QM.planewave_io import PlanewaveInput
 from qctoolkit.QM.planewave_io import PlanewaveOutput
 import sys, os, re, copy, shutil
 import qctoolkit.QM.qmjob as qmjob
+from qctoolkit.QM.pseudo.pseudo import PP
 import pkg_resources
 import numpy as np
+import urllib2
 import universal as univ
 
 class inp(PlanewaveInput):
@@ -41,14 +43,42 @@ class inp(PlanewaveInput):
       if ppstr:
         PPStr = '*' + ppstr
       elif 'vdw' in self.setting\
-       and self.setting['vdw'].lower == 'dcacp':
+      and self.setting['vdw'].lower == 'dcacp':
+        # PPStr: Element_qve_dcacp_theory.psp
         PPStr = '*'+mol.type_list[i] + '_dcacp_' +\
           self.setting['theory'].lower() + '.psp'
       else:
+        # PPStr: Element_qve_theory.psp
         nve = qtk.n2ve(mol.type_list[i])
         PPStr = '*'+mol.type_list[i] + '_q%d_' % nve +\
           self.setting['theory'].lower() + '.psp'
       outFile.write(PPStr + '\n')
+      pp_file_str = re.sub('\*', '', PPStr)
+      xc = self.setting['theory'].lower()
+      if xc == 'lda':
+        xc = 'pade'
+      try:
+        pp_path = os.path.join(xc, 
+          mol.type_list[i].title() + '-q' +\
+          str(qtk.n2ve(mol.type_list[i]))
+        )
+        pp_file = os.path.join(qtk.setting.cpmd_pp_url, pp_path)
+        saved_pp_path = os.path.join(qtk.setting.cpmd_pp, pp_file_str)
+        if not os.path.exists(saved_pp_path):
+          if pp_file:
+            qtk.prompt('pp file %s not found in %s. ' \
+                       % (pp_file_str, qtk.setting.cpmd_pp) + \
+                       'but found in cp2k page, download?')
+            new_pp = os.path.join(qtk.setting.cpmd_pp, pp_file_str)
+            pp_content = urllib2.urlopen(pp_file).read()
+            new_pp_file = open(new_pp, 'w')
+            new_pp_file.write(pp_content)
+            new_pp_file.close()
+            pp_file = new_pp
+      except:
+        qtk.warning('something wrong with pseudopotential')
+      pp_file = os.path.join(qtk.setting.cpmd_pp, pp_file_str)
+      pp = PP(pp_file)
 
       if self.setting['pp_type'].title() == 'Goedecker':
         lmax = 'F'

@@ -113,13 +113,17 @@ class inp(WaveletInput):
                              'psppar.' + molecule.type_list[i])
       pp_files.append(pp_file)
 
-    if 'box' in self.setting and self.setting['box']:
-      box = copy.deepcopy(self.setting['box'])
-      if box[1] <= 0:
-        box[1] = '.inf'
-      posinp['cell'] = yList(box)
-    else:
-      dft['hgrids'] = 'fast'
+    # need to be modified with periodic setting
+    if self.setting['periodic']:
+      if 'box' in self.setting and self.setting['box']:
+        box = copy.deepcopy(self.setting['box'])
+        if box[1] <= 0:
+          box[1] = '.inf'
+        posinp['cell'] = yList(box)
+      else:
+        qtk.warning('genbox is necessary')
+#    else:
+#      dft['hgrids'] = 'fast'
         
 
     data = {}

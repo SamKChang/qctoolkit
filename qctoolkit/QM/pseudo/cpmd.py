@@ -1,11 +1,14 @@
 import re, os
+import urllib2
 import numpy as np
 from qctoolkit.QM.general_io import InpContent
 
 xc_dict = {
             'pbe': 1134,
+            'lda': 900,
             'blyp': 1312,
             'factor': 0.6666666667,
+            'bp': 1111,
           }
 
 def read(self, path):
@@ -14,7 +17,10 @@ def read(self, path):
     atom = re.compile('^ *&ATOM.*$')
     pot = re.compile('^ *&POTENTIAL.*$')
     end = re.compile('^ *&END.*$')
-    pp_file = open(path)
+    try:
+      pp_file = urllib2.urlopen(path).readlines()
+    except:
+      pp_file = open(path)
     pp = pp_file.readlines()
     i = 0
     while i < len(pp):
@@ -66,7 +72,7 @@ def write(self, name=None):
   out.write('&ATOM\n')
   out.write(' Z  = %4.2f\n' % self.param['Z'])
   out.write(' ZV = %4.2f\n' % self.param['ZV'])
-  out.write(' XC = %4d    %12.10f\n'\
+  out.write(' XC = %04d    %12.10f\n'\
              % (xc_dict[self.param['xc']], xc_dict['factor']))
   out.write(' TYPE = NORMCONSERVING GOEDECKER\n')
   out.write('&END\n')
