@@ -427,12 +427,27 @@ class Molecule(object):
       np.kron(center_b, np.ones((na, 1))
     )
 
+  def alignAtoms(self, ind1, ind2, ind3):
+    self.align(self.R[ind2] - self.R[ind1])
+    v = np.cross(self.R[ind2] - self.R[ind1], [0, 1, 0])
+    self.align(v, axis=1)
+    self.center(self.R[ind1])
+    
+
   def rotate(self, angle, u):
     R_tmp = copy.deepcopy(self.R)
     self.R = np.dot(qtk.R(angle, u),R_tmp.T).T
 
-  def twist(self):
-    print "not yet implemented"
+  def twist(self, targets, vec_ind, angle_degree):
+    angle = angle_degree / 180.0 * np.pi
+    center = copy.deepcopy(self.R[vec_ind[0]])
+    self.center(self.R[vec_ind[0]])
+    R_part = copy.deepcopy(self.R[targets])
+    vector = self.R[vec_ind[1]] - self.R[vec_ind[0]]
+    vector = vector / np.linalg.norm(vector)
+    R_part = np.dot(qtk.R(angle, vector), R_part.T).T
+    self.R[targets] = R_part
+    self.shift(center)
 
   # tested
   def getCenter(self):
@@ -568,13 +583,20 @@ class Molecule(object):
     self.grid = [[mol_min[i], mol_max[i], step[i]] for i in range(3)]
     return self.grid
 
-  def setCelldm(self, margin=None):
-    if not self.periodic:
-      if not margin:
-        margin = qtk.setting.box_margin
-      self.box = self.getSize() + 2*np.array([margin, margin, margin])
-      self.celldm = copy.deepcopy(self.box)
-      self.celldm.extend([0, 0, 0])
+  def setCelldm(self, celldm=None, **kwargs):
+    if not celldm:
+      if not self.periodic:
+        if 'margin' not in kwargs:
+          margin = qtk.setting.box_margin
+        else:
+          margin = kwargs['margin']
+        self.box = self.getSize() + \
+                   2*np.array([margin, margin, margin])
+        self.celldm = copy.deepcopy(self.box)
+        self.celldm.extend([0, 0, 0])
+    else:
+      self.celldm = celldm
+      self.box = celldm[:3]
     return self.celldm
 
   def copy(self):
@@ -670,14 +692,12 @@ class Molecule(object):
         self.box = self.celldm[:3]
         
       if self.scale:
-        if angle_sum == 0:
-          self.R_scale = self.R
-          factor = np.array(self.box) / np.array(self.scale)
-          factor = np.kron(factor, np.ones((self.N, 1)))
-          self.R = self.R * factor
-        else:
-          msg = 'non cubic box with scale is not supported'
-          qtk.warning(msg)
+        self.R_scale = copy.deepcopy(self.R)
+        angles = self.celldm[3:]
+        lattice = [self.celldm[i]/self.scale[i] for i in range(3)]
+        lattice.extend(angles)
+        fm = qtk.fractionalMatrix(lattice)
+        self.R = np.dot(fm, self.R.T).T
 
   # tested
   def write(self, *args, **kwargs):
@@ -695,23 +715,28 @@ class Molecule(object):
 
   # tested
   # write xyz format to file
-  def write_xyz(self, *args, **kwargs):
-    if len(args) == 1:
-      name = args[0]
-    else: name = ''
+  def write_xyz(self, name=None, **kwargs):
     out = sys.stdout if not name else open(name,"w")
 
-    #if len(self.type_list) != self.N:
-    #tlist = np.vectorize(qtk.Z2n)
-    #self.type_list = list(tlist(self.Z))
-
-    print >>out, str(self.N)+"\n"
-    for I in xrange(0, self.N):
-      print >>out, "%-2s " % self.type_list[I],
-      print >>out, " ".join("% 8.4f" % i for i in self.R[I][:])
-
-    if not re.match("",name):
-      out.close()
+    if 'fractional' in kwargs and kwargs['name']:
+      if self.celldm and self.scale:
+        print >>out, str(self.N)+"\n"
+        for I in xrange(0, self.N):
+          print >>out, "%-2s " % self.type_list[I],
+          print >>out, " ".join("% 8.4f" % i \
+            for i in self.R_scale[I][:])
+      else:
+        del kwargs['fractional']
+        qtk.warning('celldm or scale not set, print cartician')
+        self.write(name, **kwargs)
+    else:
+      print >>out, str(self.N)+"\n"
+      for I in xrange(0, self.N):
+        print >>out, "%-2s " % self.type_list[I],
+        print >>out, " ".join("% 8.4f" % i for i in self.R[I][:])
+  
+      if not re.match("",name):
+        out.close()
 
   # tested
   # write pdb format to file

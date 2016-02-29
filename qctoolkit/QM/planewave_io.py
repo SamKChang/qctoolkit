@@ -29,16 +29,17 @@ class PlanewaveInput(GenericQMInput):
 
     univ.getCelldm(self) 
 
+
   def celldm2lattice(self):
     cd = self.setting['celldm']
-    if cd[3]==0 and cd[4]==0 and cd[5]==0:
-      self.setting['lattice'] = np.array([[cd[0],   0.0,   0.0],
-                                          [  0.0, cd[1],   0.0],
-                                          [  0.0,   0.0, cd[2]]])
-  def center(self, coord):
-    self.molecule.center(coord)
-  def shift(self, coord):
-    self.molecule.shift(coord)
+    angles = self.celldm[3:]
+    if self.scale:
+      lattice = [self.celldm[i]/self.scale[i] for i in range(3)]
+    else:
+      lattice = [self.celldm[i] for i in range(3)]
+    lattice.extend(angles)
+    fm = qtk.fractionalMatrix(lattice)
+    self.setting['lattice'] = np.dot(fm, np.eye(3)).T
 
   def write(self, name=None, **kwargs):
     inp, molecule = \

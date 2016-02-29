@@ -17,6 +17,27 @@ def R(theta, u):
       cos(theta) + u[2]**2 * (1-cos(theta))]]
   )
 
+def fractionalMatrix(celldm_list):
+  a = celldm_list[0]
+  b = celldm_list[1]
+  c = celldm_list[2]
+  ca = celldm_list[3] # cos(alpha)
+  cb = celldm_list[4] # cos(beta)
+  cc = celldm_list[5] # cos(gamma)
+
+  sa = np.sqrt(1-ca**2) # sin(alpha) = sqrt(1-cos(alpha)^2)
+  sc = np.sqrt(1-cc**2) # sin(gamma) = sqrt(1-cos(gamma)^2)
+  cw = (cb - ca*cc)/(sa*sc)
+  sw = np.sqrt(1-cw**2)
+
+  return np.array(
+    [
+      [a * sc * sw, 0, 0],
+      [a * cc, b, c * ca],
+      [a * sc * cw, 0, c * sa],
+    ]
+  )
+
 def convE(source, units, separator=None):
   def returnError(ioStr, unitStr):
     msg = 'supported units are:\n'
