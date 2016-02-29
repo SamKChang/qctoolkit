@@ -80,6 +80,7 @@ vasp_exe = 'vasp'
 cpmd_exe = 'cpmd.x'
 cpmd_cpmd2cube = 'cpmd2cube.x'
 cpmd_pp = '/home/samio/Works/PhD/packages/CPMD/PP'
+cpmd_pp_url = 'http://cp2k.web.psi.ch/potentials/Goedecker-Teter-Hutter/cpmd/'
 # NWChem setting
 nwchem_exe = 'nwchem'
 nwchem_mov2asc = 'mov2asc'
