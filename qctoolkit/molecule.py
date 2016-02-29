@@ -50,6 +50,9 @@ class Molecule(object):
       align(vector, axis) --- align vecotr to axis, axis is set to
                               [1,0,0] by default. It takes 0=x, 1=y,
                               2=z, or a 3D vector
+      alignSVD(mol, ref_list=[], tar_list=[]) --- align to mol according
+                                                  to SVD minimization
+                                                  default ref_list = tar_list = all
       stretch([i,j], [s,t], d) --- stretch atom i,j along direction of
                                    atom s,t to distance d
       rotate() ---
@@ -407,16 +410,21 @@ class Molecule(object):
     lst_b = mol.R[tar_list]
     center_a = np.mean(lst_a, axis=0)
     center_b = np.mean(lst_b, axis=0)
-    na = len(lst_a)
-    nb = len(lst_b)
+    #na = len(lst_a)
+    na = self.N
+    #nb = len(lst_b)
+    nb = mol.N
     crd_a = self.R - np.kron(center_a, np.ones((self.N, 1)))
     crd_b = mol.R - np.kron(center_b, np.ones((mol.N, 1)))
-    ref_a = lst_a - np.kron(center_a, np.ones((na, 1)))
-    ref_b = lst_b - np.kron(center_a, np.ones((nb, 1)))
+    ref_a = lst_a - np.kron(center_a, np.ones((len(lst_a), 1)))
+    ref_b = lst_b - np.kron(center_a, np.ones((len(lst_b), 1)))
 
     H = np.dot(np.transpose(ref_a), ref_b)
     U, s, V = np.linalg.svd(H)
     R = np.dot(np.transpose(V), np.transpose(U))
+    print na
+    print np.ones((na, 1))
+    print center_b
     self.R = np.transpose(
       np.dot(R, np.transpose(crd_a))) + \
       np.kron(center_b, np.ones((na, 1))
