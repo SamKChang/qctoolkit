@@ -422,9 +422,6 @@ class Molecule(object):
     H = np.dot(np.transpose(ref_a), ref_b)
     U, s, V = np.linalg.svd(H)
     R = np.dot(np.transpose(V), np.transpose(U))
-    print na
-    print np.ones((na, 1))
-    print center_b
     self.R = np.transpose(
       np.dot(R, np.transpose(crd_a))) + \
       np.kron(center_b, np.ones((na, 1))
