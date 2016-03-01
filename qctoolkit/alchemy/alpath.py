@@ -137,7 +137,7 @@ class AlPath(object):
     if 'l' in kwargs: 
       del kwargs['l']
     out = []
-    for l in np.arange(0,1,dl):
+    for l in np.arange(0,1.01,dl):
       l_str = '_%03d' % (l * 100)
       new_name = name + l_str
       kwargs['l'] = l
