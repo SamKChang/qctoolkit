@@ -390,9 +390,10 @@ class Molecule(object):
       n1 = np.linalg.norm(u)
       n2 = np.linalg.norm(v)
       angle = np.arccos(np.dot(u, v)/(n1*n2))
-      axis = np.cross(u, v)
-      axis = axis / np.linalg.norm(axis)
-      self.rotate(angle, axis)
+      if angle > 0:
+        axis = np.cross(u, v)
+        axis = axis / np.linalg.norm(axis)
+        self.rotate(angle, axis)
 
   def alignSVD(self, mol, ref_list=None, tar_list=None):
     if type(mol) is str:
