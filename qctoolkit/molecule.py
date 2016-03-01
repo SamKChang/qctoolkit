@@ -429,9 +429,15 @@ class Molecule(object):
     )
 
   def alignAtoms(self, ind1, ind2, ind3):
+    self.center(self.R[ind1])
     self.align(self.R[ind2] - self.R[ind1])
-    v = np.cross(self.R[ind2] - self.R[ind1], [0, 1, 0])
-    self.align(v, axis=1)
+    self.center(self.R[ind1])
+    if self.R[ind3][1] > 0:
+      tangent = self.R[ind3][2]/self.R[ind3][1]
+    else:
+      tangent = np.inf
+    angle = np.arctan(tangent)
+    self.rotate(-angle, [1,0,0])
     self.center(self.R[ind1])
     
 
