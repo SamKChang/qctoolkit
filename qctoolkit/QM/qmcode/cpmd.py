@@ -12,6 +12,9 @@ import universal as univ
 class inp(PlanewaveInput):
   """
   cpmd input class.
+  Note!! automatic PP download for DCACPs is not yet done
+  but if the PPs are in the right location with right name
+  automatic interpolation would work in principle
   """
   __doc__ = PlanewaveInput.__doc__ + __doc__
   def __init__(self, molecule, **kwargs):
@@ -37,53 +40,6 @@ class inp(PlanewaveInput):
     if 'root_dir' not in kwargs:
       self.setting['root_dir'] = name
     self.setting['reset'] = True
-
-    def PPString(mol, i, n, outFile):
-      ppstr = re.sub('\*', '', mol.string[i])
-      if ppstr:
-        PPStr = '*' + ppstr
-      elif 'vdw' in self.setting\
-      and self.setting['vdw'].lower == 'dcacp':
-        # PPStr: Element_qve_dcacp_theory.psp
-        PPStr = '*'+mol.type_list[i] + '_dcacp_' +\
-          self.setting['theory'].lower() + '.psp'
-      else:
-        # PPStr: Element_qve_theory.psp
-        nve = qtk.n2ve(mol.type_list[i])
-        PPStr = '*'+mol.type_list[i] + '_q%d_' % nve +\
-          self.setting['theory'].lower() + '.psp'
-      outFile.write(PPStr + '\n')
-      pp_file_str = re.sub('\*', '', PPStr)
-      xc = self.setting['theory'].lower()
-      if xc == 'lda':
-        xc = 'pade'
-      try:
-        pp_path = os.path.join(xc, 
-          mol.type_list[i].title() + '-q' +\
-          str(qtk.n2ve(mol.type_list[i]))
-        )
-        pp_file = os.path.join(qtk.setting.cpmd_pp_url, pp_path)
-        saved_pp_path = os.path.join(qtk.setting.cpmd_pp, pp_file_str)
-        if not os.path.exists(saved_pp_path):
-          if pp_file:
-            qtk.prompt('pp file %s not found in %s. ' \
-                       % (pp_file_str, qtk.setting.cpmd_pp) + \
-                       'but found in cp2k page, download?')
-            new_pp = os.path.join(qtk.setting.cpmd_pp, pp_file_str)
-            pp_content = urllib2.urlopen(pp_file).read()
-            new_pp_file = open(new_pp, 'w')
-            new_pp_file.write(pp_content)
-            new_pp_file.close()
-            pp_file = new_pp
-      except:
-        qtk.warning('something wrong with pseudopotential')
-      pp_file = os.path.join(qtk.setting.cpmd_pp, pp_file_str)
-      pp = PP(pp_file)
-
-      if self.setting['pp_type'].title() == 'Goedecker':
-        lmax = 'F'
-      outFile.write(' LMAX=%s\n %3d\n' % (lmax, n))
-      self.pp_files.append(re.sub('\*', '', PPStr))
 
     def writeInp(name=None, **setting):
       setting['no_update'] = True
@@ -203,7 +159,7 @@ class inp(PlanewaveInput):
       for atom_type in xrange(0,len(type_index)-1):
         # number of each atom type
         type_n = type_index[atom_type+1] - type_index[atom_type]
-        PPString(molecule, type_index[atom_type], type_n, inp)
+        PPString(self, molecule, type_index[atom_type], type_n, inp)
         for I in\
         xrange(type_index[atom_type],type_index[atom_type+1]):
           inp.write('  ')
@@ -211,6 +167,10 @@ class inp(PlanewaveInput):
             inp.write(' % 8.4f' % molecule.R[I,i])
           inp.write('\n')
       inp.write('&END\n')
+
+      for pp in self.pp_files:
+        pp_file = os.path.join(qtk.setting.cpmd_pp, pp)
+        inp.dependent_files.append(pp_file)
   
       if 'no_cleanup' in setting and setting['no_cleanup']:
         inp.close(no_cleanup=True)
@@ -302,3 +262,104 @@ class out(PlanewaveOutput):
       elif (re.match(Et_cpmd, line)) and done and converged:
         self.Et = float(Et_cpmd.match(line).group(1))
         finished = True
+
+# not used by PP object but by QMInp cpmd parts
+def PPString(inp, mol, i, n, outFile):
+  """
+  append PP file names to inp.pp_files
+  """
+  alchemy = re.compile('^\w*2\w*_\d\d\d$')
+  ppstr = re.sub('\*', '', mol.string[i])
+  if ppstr:
+    PPStr = '*' + ppstr
+    pp_root, pp_ext = os.path.split(ppstr)
+    if pp_ext != 'psp':
+      PPStr = PPStr + '.psp'
+  elif 'vdw' in inp.setting\
+  and inp.setting['vdw'].lower == 'dcacp':
+    # PPStr: Element_qve_dcacp_theory.psp
+    PPStr = '*'+mol.type_list[i] + '_dcacp_' +\
+      inp.setting['theory'].lower() + '.psp'
+  else:
+    # PPStr: Element_qve_theory.psp
+    nve = qtk.n2ve(mol.type_list[i])
+    PPStr = '*'+mol.type_list[i] + '_q%d_' % nve +\
+      inp.setting['theory'].lower() + '.psp'
+  outFile.write(PPStr + '\n')
+  pp_file_str = re.sub('\*', '', PPStr)
+  xc = inp.setting['theory'].lower()
+  if not mol.string[i]:
+    PPCheck(xc, mol.type_list[i].title(), pp_file_str)
+  elif alchemy.match(mol.string[i]):
+    alchemyPP(xc, pp_file_str)
+  pp_file = os.path.join(qtk.setting.cpmd_pp, pp_file_str)
+
+  if inp.setting['pp_type'].title() == 'Goedecker':
+    lmax = 'F'
+  outFile.write(' LMAX=%s\n %3d\n' % (lmax, n))
+  inp.pp_files.append(re.sub('\*', '', PPStr))
+
+# not used by PP object but by QMInp cpmd parts
+def PPCheck(xc, element, pp_file_str, **kwargs):
+  if xc == 'lda':
+    xc = 'pade'
+  ne = qtk.n2ve(element)
+  try:
+    pp_path = os.path.join(xc, element + '-q' + str(qtk.n2ve(element)))
+    pp_file = os.path.join(qtk.setting.cpmd_pp_url, pp_path)
+    saved_pp_path = os.path.join(qtk.setting.cpmd_pp, pp_file_str)
+    if not os.path.exists(saved_pp_path):
+      if pp_file:
+        new_pp = os.path.join(qtk.setting.cpmd_pp, pp_file_str)
+        pp_content = urllib2.urlopen(pp_file).read()
+        qtk.prompt('pp file %s not found in %s. ' \
+                   % (pp_file_str, qtk.setting.cpmd_pp) + \
+                   'but found in cp2k page, download?')
+        new_pp_file = open(new_pp, 'w')
+        new_pp_file.write(pp_content)
+        new_pp_file.close()
+        pp_file = new_pp
+    return saved_pp_path
+  except:
+    qtk.warning('something wrong with pseudopotential')
+
+def alchemyPP(xc, pp_file_str):
+  pp_path = os.path.join(qtk.setting.cpmd_pp, pp_file_str)
+  if not os.path.exists(pp_path):
+    root, _ = os.path.splitext(pp_file_str)
+    element_str = re.sub('_.*', '', root)
+    fraction = float(re.sub('.*_', '', root))/100
+    element1 = re.sub('2.*', '', element_str)
+    element2 = re.sub('.*2', '', element_str)
+    str1 = element1 + "_q" + str(qtk.n2ve(element1)) +\
+           "_" + xc + '.psp'
+    str2 = element2 + "_q" + str(qtk.n2ve(element2)) +\
+           "_" + xc + '.psp'
+    pp1 = PP(PPCheck(xc, element1, str1))
+    pp2 = PP(PPCheck(xc, element2, str2))
+    pp = mutatePP(pp1, pp2, fraction)
+    pp.write(pp_path)
+
+def mutatePP(pp1, pp2, fraction):
+  if type(pp1) is str:
+    if pp1.upper() == 'VOID':
+      pp1 = PP()
+    else:
+      pp1 = PP(pp1)
+  if type(pp2) is str:
+    if pp2.upper() == 'VOID':
+      pp2 = PP()
+    else:
+      pp2 = PP(pp2)
+  pp1 = pp1*(1-fraction)
+  pp2 = pp2*fraction
+  pp = pp1 + pp2
+  if pp1.param['Z']*pp2.param['Z'] > 0:
+    if fraction > 0.5:
+      pp.param['Z'] = pp2.param['Z']
+  else:
+    if pp1.param['Z'] == 0:
+      pp.param['Z'] = pp2.param['Z']
+    else:
+      pp.param['Z'] = pp1.param['Z']
+  return pp

@@ -7,10 +7,21 @@ from aljob import mutatePP
 class AlPath(object):
   def __init__(self, ref, tar, **kwargs):
     self.setting = kwargs
+    if 'pp_string' not in kwargs:
+      self.setting['pp_string'] = 'pbe'
     self.ref = univ.toInp(ref, **self.setting)
     self.tar = univ.toInp(tar, **self.setting)
     self.name = self.ref.molecule.name + '_' + self.tar.molecule.name
     self.mutation = {}
+
+    qm_setting = {}
+    if 'qm_setting' in self.setting:
+      qm_setting.update(kwargs['qm_setting'])
+    if 'qm_setting' in kwargs:
+      qm_setting.update(kwargs['qm_setting'])
+    if 'program' not in qm_setting:
+      qm_setting['program'] = self.ref.setting['program']
+    self.qm_setting = qm_setting
 
     # !!!!!!!!!!!!!!!!!!!!!!!
     # construct mutation list
@@ -21,7 +32,8 @@ class AlPath(object):
     to_void = True
     ref_ind = []
     tar_ind = []
-    mutation_ind = [ref_ind, tar_ind]
+    mutation_fix = []
+    mutation_ind = ref_ind
     mutation_ref = []
     mutation_tar = []
     mutation_crd = []
@@ -29,11 +41,11 @@ class AlPath(object):
     # loop through every atom in reference system
     for i in range(ref.N):
       Zi = ref.type_list[i]
-      Ri = ref.R[i]
+      Ri = copy.deepcopy(ref.R[i])
       # loop through every atom in target system
       for j in range(tar.N):
         # every atom-pair distance
-        Rj = tar.R[j]
+        Rj = copy.deepcopy(tar.R[j])
         diff = np.linalg.norm(Ri-Rj)
         # search for atoms at same location
         if diff < 10E-6:
@@ -45,6 +57,8 @@ class AlPath(object):
             mutation_ref.append(Zi)
             mutation_tar.append(Zj)
             mutation_crd.append(Ri)
+          else:
+            mutation_fix.append(i)
       # when no distance matched, set atom target to void
       if to_void:
         ref_ind.append(i)
@@ -55,52 +69,77 @@ class AlPath(object):
     N = ref.N
     for j in range(tar.N):
       if tar_list[j]:
-        tar_ind.append(j)
+        ref_ind.append(j)
         mutation_ref.append('VOID')
         mutation_tar.append(tar.type_list[j])
         mutation_crd.append(tar.R[j])
     for k in range(len(mutation_ref)):
       string = mutation_ref[k] + '2' + mutation_tar[k]
+      if self.setting['pp_string']:
+        string = string + '_' + self.setting['pp_string']
       mutation_string.append(string)
     self.mutation ={
                      'ind': mutation_ind,
                      'ref': mutation_ref,
                      'tar': mutation_tar,
                      'crd': mutation_crd,
+                     'fix': mutation_fix,
                      'string': mutation_string,
                    }
+
 
   def __repr__(self):
     return self.name
 
-  def write(self, name=None, **kwargs):
+  def setLambda(self, **kwargs):
     if 'l' not in kwargs:
       kwargs['l'] = 0.2
     lambda_string = '_%03d' % (kwargs['l']*100)
+    del kwargs['l']
     mol = self.ref.molecule.copy()
     mol.name = self.name + lambda_string
     N = mol.N
-    mutation_list = copy.deepcopy(self.mutation['ind'][0])
-    for i in self.mutation['ind'][1]:
-      ind = N + i
-      print ind, mol.N, i
-      print self.mutation['tar']
-      atom = self.mutation['tar'][ind]
-      crd = self.mutation['crd'][ind]
-      mol.addAtoms(atom, crd)
-      mutation_list.append(ind)
-    for string in set(self.mutation['string']):
-      str_ind = [i for i in range(len(self.mutation['string']))\
-                 if self.mutation['string'][i] == string]
-      string = string + lambda_string
-      mol.setAtoms(str_ind, string=string)
+    for i in range(len(self.mutation['ind'])):
+      if i >= N:
+        mol.addAtoms(self.mutation['tar'][i], 
+                     self.mutation['crd'][i])
+      ind = self.mutation['ind'][i]
+      pp_string = self.mutation['string'][i] + lambda_string
+      mol.setAtoms(ind, string=pp_string)
+    return mol
 
-    qm_setting = {}
-    if 'qm_setting' in self.setting:
-      qm_setting.update(kwargs['qm_setting'])
-    if 'qm_setting' in kwargs:
-      qm_setting.update(kwargs['qm_setting'])
-    if 'program' not in qm_setting:
-      qm_setting['program'] = self.ref.setting['program']
-    inp = qtk.QMInp(mol, **qm_setting)
+  def write(self, name=None, **kwargs):
+    molecule = self.setLambda(**kwargs)
+    self.qm_setting.update(kwargs)
+    inp = qtk.QMInp(molecule, **self.qm_setting)
     inp.write(name)
+
+  def writeAll(self, name, **kwargs):
+    if 'dl' not in kwargs:
+      dl = 0.2
+    if 'l' in kwargs: 
+      del kwargs['l']
+    for l in np.arange(0,1,dl):
+      l_str = '_%03d' % (l * 100)
+      new_name = name + l_str
+      kwargs['l'] = l
+      self.write(new_name, **kwargs)
+
+  def run(self, name=None, **kwargs):
+    molecule = self.setLambda(**kwargs)
+    self.qm_setting.update(kwargs)
+    inp = qtk.QMInp(molecule, **self.qm_setting)
+    return inp.run(name)
+
+  def runAll(self, name=None, **kwargs):
+    if 'dl' not in kwargs:
+      dl = 0.2
+    if 'l' in kwargs: 
+      del kwargs['l']
+    out = []
+    for l in np.arange(0,1,dl):
+      l_str = '_%03d' % (l * 100)
+      new_name = name + l_str
+      kwargs['l'] = l
+      out.append(self.run(new_name, **kwargs))
+    return out

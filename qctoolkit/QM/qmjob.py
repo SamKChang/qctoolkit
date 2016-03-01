@@ -105,6 +105,7 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
     tmp = filter(\
       lambda x: '.out' not in x \
                 and '.inp' not in x\
+                and '.psp' not in x\
                 and '.xyz' not in x\
                 and 'RESTART' not in x\
                 and 'DENSITY' not in x\

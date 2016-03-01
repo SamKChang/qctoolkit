@@ -1,2 +1,2 @@
-from qmresults import *
+#from qmresults import *
 from cube import CUBE

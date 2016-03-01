@@ -1,3 +1,4 @@
+import qctoolkit as qtk
 import re, os
 import urllib2
 import numpy as np

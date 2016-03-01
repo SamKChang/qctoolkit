@@ -32,11 +32,15 @@ class PlanewaveInput(GenericQMInput):
 
   def celldm2lattice(self):
     cd = self.setting['celldm']
-    angles = self.celldm[3:]
-    if self.scale:
-      lattice = [self.celldm[i]/self.scale[i] for i in range(3)]
+    if 'scale' in self.setting:
+      sc = self.setting['scale']
     else:
-      lattice = [self.celldm[i] for i in range(3)]
+      sc = False
+    angles = cd[3:]
+    if sc:
+      lattice = [cd[i]/sc[i] for i in range(3)]
+    else:
+      lattice = [cd[i] for i in range(3)]
     lattice.extend(angles)
     fm = qtk.fractionalMatrix(lattice)
     self.setting['lattice'] = np.dot(fm, np.eye(3)).T

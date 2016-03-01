@@ -1,4 +1,4 @@
-import cpmd 
+import cpmd
 import numpy as np
 import copy
 
@@ -17,6 +17,7 @@ param = {
           'r_nl': [],
           'h_ij': [],
         }
+
 class PP(object):
   def __init__(self, path=None, **kwargs):
     self.param = copy.deepcopy(param)

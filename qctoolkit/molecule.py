@@ -526,10 +526,7 @@ class Molecule(object):
             Z = kwargs['element']
         elif 'Z' in kwargs:
           Z = kwargs['Z']
-        print Z
         self.Z[i] = Z
-        print self.Z[i]
-        print self.Z
         self.type_list[i] = qtk.Z2n(Z)
     if 'string' in kwargs:
       minZ = min(min(self.Z)-1, 0)
@@ -742,7 +739,7 @@ class Molecule(object):
         print >>out, "%-2s " % self.type_list[I],
         print >>out, " ".join("% 8.4f" % i for i in self.R[I][:])
   
-      if not re.match("",name):
+      if name:
         out.close()
 
   # tested
