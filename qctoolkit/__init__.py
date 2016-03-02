@@ -29,7 +29,7 @@ for dep in dir(setting):
     file_str = getattr(setting, dep)
     if exe_pattern.match(dep):
        itr = 0
-       while not_found:
+       while not_found and itr < len(paths):
          path = paths[itr]
          test_path = os.path.join(path, file_str)
          itr = itr +1

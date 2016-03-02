@@ -157,5 +157,6 @@ setup(name='qctoolkit',
                     ]},
   data_files = data_inc,
   include_package_data=True,
-  ext_modules = cythonize(c_module)
+  ext_modules = cythonize(c_module),
+  include_dirs=[np.get_include()],
 )
