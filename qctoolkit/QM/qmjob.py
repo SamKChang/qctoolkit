@@ -119,7 +119,7 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
 
     densities = glob.glob('*DEN*')
     for i in range(len(densities)):
-      exe = setting.cpmd_cpmd2cube
+      exe = setting.cpmd_cpmd2cube_exe
       log_name = densities[i] + '_%02d.log' % i
       log = open(log_name, 'w')
       run = sp.Popen("%s -fullmesh %s" % (exe, densities[i]), 
@@ -181,7 +181,7 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
     for f in tmp: os.remove(f)
     movecs = glob.glob('*.movecs')
     for f in movecs:
-      exe = setting.nwchem_mov2asc
+      exe = setting.nwchem_mov2asc_exe
       nb = qio_out.n_basis
       out = re.sub('\.movecs','.modat',f)
       exestr = "%s %d %s %s" % (exe, nb, f, out)
