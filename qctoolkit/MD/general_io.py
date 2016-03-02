@@ -6,7 +6,7 @@ from vacf import vacf as vacf_c
 
 class GenericMDInput(object):
   def __init__(self, molecule, **kwargs):
-    self.molecule = qtk.Structure(molecule)
+    self.molecule = qtk.toMolecule(molecule)
     if 'temperature' not in kwargs:
       kwargs['temperatur'] = 298
     if 'temperature_tolerance' not in kwargs:

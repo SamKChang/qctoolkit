@@ -7,6 +7,7 @@ from QM.pseudo.pseudo import *
 from analysis import *
 from utilities import *
 from setting import *
+from ccs.ccs import CCS
 
 import MD
 import ML

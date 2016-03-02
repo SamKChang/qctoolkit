@@ -65,7 +65,10 @@ def report(title, *texts, **kwargs):
       msghead = ''
       tle = ''
 
-    msg = msghead + title + ":" + tle
+    if title:
+      msg = msghead + title + ":" + tle
+    else:
+      msg = ''
     print msg,
     for info in texts:
       print info,

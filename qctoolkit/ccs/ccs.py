@@ -9,13 +9,13 @@ import xml.etree.ElementTree as ET
 import random
 import yaml
 
-class MoleculeSpan(object):
+class CCS(object):
   def __init__(self, xyz_file, parameter_file, **kwargs):
-    self.structure = qtk.Molecule()
-    self.structure.read(xyz_file)
+    self.structure = qtk.toMolecule(xyz_file)
     # mutation related variables
     self.mutation_list = []
     self.mutation_target = []
+    self.mutation_size = 0
     # stretching related variables
     self.stretching_list = []
     self.stretching_direction = []
@@ -55,28 +55,28 @@ class MoleculeSpan(object):
       report_itr = False
       if self.mutation_list:
         report_itr += True
-        print "===== CCS REPORT ====="
+        qtk.report('', "===== CCS REPORT =====", color=None)
         qtk.report("generating molecule", xyz_file)
         qtk.report("ccs parameter file", parameter_file)
         qtk.report("mutation indices", self.mutation_list)
         qtk.report("target atomic numbers", self.mutation_target)
         qtk.report("length of mutation vector",
                len(_flatten), "<=>", lenList)
-        print ""
+        #print ""
       if self.stretching_list:
         qtk.report("stretching indices", self.stretching_list)
         qtk.report("stretching range", self.stretching_range)
         qtk.report("stretching direction indices",
                self.stretching_direction)
-        print ""
+        #print ""
       if self.rotation_list:
         qtk.report("rotation indices", self.rotation_list)
         qtk.report("rotation center", self.rotation_center)
         qtk.report("rotation axis", self.rotation_axis)
         qtk.report("rotation range", self.rotation_range)
-        print ""
+        #print ""
       qtk.status("ccs coordinate", self.coor)
-      print "========= END ========\n"
+      qtk.report('', "========= END ========", color=None)
 
 
   # !!!!! TODO !!!!! #
@@ -93,6 +93,11 @@ class MoleculeSpan(object):
       self.read_param_yml(parameter_file)
     else:
       qtk.exit("extension " + extension + " not reconized...")
+    size_list = [len(self.mutation_target[i]) ** \
+                 len(self.mutation_list[i])\
+                 for i in range(len(self.mutation_list))
+                ]
+    self.mutation_size = sum(size_list)
 
   ###########################################
   # convert data string to numerical values #
@@ -171,6 +176,7 @@ class MoleculeSpan(object):
     tree = ET.parse(parameter_file)
     etroot = tree.getroot()
 
+    self.mutation_size = 0
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # read span section of xml file
     def read_span(span):
@@ -225,6 +231,10 @@ class MoleculeSpan(object):
   # interface between mutation and other operations is necessary!
   def generate(self, **kwargs):
     self.new_structure = copy.deepcopy(self.structure)
+    if 'suffix' in kwargs:
+      self.new_structure.name = self.new_structure.name + "_" + \
+                                kwargs['suffix']
+      del kwargs['suffix']
     if 'mutation' in kwargs:
       self._mutate(kwargs['mutation'])
     if 'stretching' in kwargs:
@@ -246,6 +256,56 @@ class MoleculeSpan(object):
   def _rotate(self, rotation):
     pass
   ##### END OF STRUCTURE GENERATION #####
+
+  ################################################
+  # GENERATOR TO CONSTRUCT NEXT STRUCTURE IN CCS #
+  ################################################
+  def iterateMutation(self, **kwargs):
+    if 'space' not in kwargs:
+      space = 1
+    else:
+      space = kwargs['space']
+    digits = len(str(self.mutation_size / space))
+    itr = 0
+    i = 0
+    while i < self.mutation_size:
+      mutation_crd = self.mutationNumber(i)
+      crd = self.random()[1]
+      crd['mutation'] = mutation_crd
+      crd['suffix'] = str(itr).rjust(digits, '0')
+      i = i + space
+      itr = itr + 1
+      yield self.generate(**crd)
+  ##### END OF NEXT STRUCTURE #####
+
+  #################################################
+  # INDEX CONVERSION FROM INTEGER TO CCS MUTATION #
+  #################################################
+  def mutationNumber(self, query_int):
+    out = []
+    constant = 0
+    too_large = True
+    for i in range(len(self.mutation_list)):
+      ilist = self.mutation_list[i]
+      itarg = self.mutation_target[i]
+      base = len(itarg)
+      imax = base ** len(ilist)
+      icrd = [0 for j in range(len(ilist))]
+      if query_int < imax:
+        number = query_int - constant
+        ind = qtk.numberToBase(number, base)
+        icrd[:len(ind)] = ind
+        too_large = False
+      else:
+        constant = constant + imax
+        icrd = [base - 1 for j in range(len(ilist))]
+      mcrd = [self.mutation_target[i][j] for j in icrd]
+      out.append(mcrd)
+    if not too_large:
+      return out
+    else:
+      return None
+  ##### END OF INDEX CONVERSION #####
 
   ################################################
   # TEST A GIVEN STRUCTURE SATISFIED CONSTRAINTS #

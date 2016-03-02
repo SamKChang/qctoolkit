@@ -1,5 +1,5 @@
 from math import pi ,sin, cos
-import qctoolkit.molecule as qg
+from qctoolkit.molecule import Molecule
 import numpy as np
 import qctoolkit as qtk
 import yaml
@@ -103,14 +103,23 @@ def imported(module):
   else:
     return True
 
-def Structure(input_data, **kwargs):
-  if type(input_data) is not qg.Molecule:
+def toMolecule(input_data, **kwargs):
+  if type(input_data) is not Molecule:
     try:
-      return qg.Molecule(input_data, **kwargs)
+      return Molecule(input_data, **kwargs)
     except:
       pass
   else:
     return input_data
+
+def numberToBase(n, b):
+  if n == 0:
+    return [0]
+  digits = []
+  while n:
+    digits.append(int(n % b))
+    n /= b
+  return digits[::-1]
 
 def partialSum(iterable):
   total = 0
@@ -124,4 +133,3 @@ def listShape(input_list):
       return len(input_list)
     else:
       return [listShape(sublist) for sublist in input_list]
-

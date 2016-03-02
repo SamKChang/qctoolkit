@@ -116,19 +116,25 @@ class inp(PlanewaveInput):
         setting['theory'].upper())
   
       inp.write('&SYSTEM\n')
-      inp.write(' SYMMETRY\n')
       if setting['periodic']:
-        inp.write('  %s\n' % setting['symmetry'].upper())
+        inp.write(' CELL VECTORS\n')
+        lattice_vec = self.setting['lattice']
+        for vec in lattice_vec:
+          inp.write(' ')
+          for component in vec:
+            inp.write(' %9.6f' % component)
+          inp.write('\n')
       else:
+        inp.write(' SYMMETRY\n')
         inp.write('  ISOLATED\n')
         if setting['isolation'] == 'mt':
           inp.write(' POISSON SOLVER TUCKERMAN\n')
+        inp.write(' CELL ABSOLUTE\n ')
+        for d in setting['celldm']:
+          inp.write(' %6.3f'% float(d))
+        inp.write('\n')
       if setting['unit'].lower() == 'angstrom':
         inp.write(' ANGSTROM\n')
-      inp.write(' CELL ABSOLUTE\n ')
-      for d in setting['celldm']:
-        inp.write(' %6.3f'% float(d))
-      inp.write('\n')
       inp.write(' CUTOFF\n  %.1f\n' % setting['cutoff'])
       if 'scale' in setting:
         inp.write(' SCALE SX=%d SY=%d SZ=%d\n' %\

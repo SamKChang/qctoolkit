@@ -181,6 +181,8 @@ class GenericQMInput(object):
     if self.molecule.periodic:
       if 'periodic' not in kwargs:
         self.setting['periodic'] = True
+    if self.molecule.celldm:
+      self.setting['celldm'] = self.molecule.celldm
 
     if self.setting['mode'] == 'md':
       for string, value in md_setup.iteritems():
@@ -230,7 +232,6 @@ class GenericQMInput(object):
       qtk.exit(msg)
 
   def run(self, qmcode, name=None, **kwargs):
-    self.setting.update(kwargs)
     if not name:
       name = self.molecule.name
     return QMWorker(self.setting['program'], **self.setting), name
@@ -239,6 +240,7 @@ class GenericQMInput(object):
 
     if 'no_reset' in kwargs and kwargs['no_reset']:
       self.reset()
+      del self.setting['no_reset']
     kwargs.update(self.setting)
 
     # unify output name/directory

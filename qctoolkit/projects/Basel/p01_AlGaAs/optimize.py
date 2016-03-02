@@ -50,7 +50,7 @@ def AlGaX_EvOpt(structure, vacancy_ind, ccs_span, **kwargs):
   else:
     _optimizer = 'MC'
 
-  ccs = qcs.MoleculeSpan(structure, ccs_span)
+  ccs = qtk.CCS(structure, ccs_span)
 
   inpp = qtk.QMInp(structure, **qm_setting)
   inpp.setting['info'] = 'Ev_per_ref'

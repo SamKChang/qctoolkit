@@ -73,13 +73,15 @@ planewave_setup = {
 dft_list = ['pbe', 'pbe0', 'blyp', 'b3lyp', 'bp91', 'bp86', 'pw91']
 cc_list = ['mp2', 'mp3', 'mp4', 'ccsd', 'ccsdt', 
            'lccsd', 'cisd', 'cisdt']
+_ = os.path.realpath(__file__)
+_root = os.path.split(_)[0]
 # VASP setting
 vasp_pp = '/home/samio/Works/PhD/packages/VASP/PP'
 vasp_exe = 'vasp'
 # CPMD setting
 cpmd_exe = 'cpmd.x'
 cpmd_cpmd2cube_exe = 'cpmd2cube.x'
-cpmd_pp = '/home/samio/Works/PhD/packages/CPMD/PP'
+cpmd_pp = os.path.join(_root, 'data/PP/cpmd')
 cpmd_pp_url = 'http://cp2k.web.psi.ch/potentials/Goedecker-Teter-Hutter/cpmd/'
 # NWChem setting
 nwchem_exe = 'nwchem'

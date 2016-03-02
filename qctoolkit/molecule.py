@@ -8,6 +8,7 @@ import networkx
 from networkx.algorithms.components.connected import connected_components
 import periodictable as pt
 import collections
+from math import ceil
 
 class Molecule(object):
   """
@@ -676,6 +677,8 @@ class Molecule(object):
         setattr(self, prop, False)
     if not self.charge: self.charge = 0
     if self.celldm or self.scale: self.periodic = True
+    if self.celldm: assert len(self.celldm) == 6
+      
 
     self.N = int(content[0])
     coord_list = content[2 : self.N + 2]
@@ -702,6 +705,15 @@ class Molecule(object):
         lattice.extend(angles)
         fm = qtk.fractionalMatrix(lattice)
         self.R = np.dot(fm, self.R.T).T
+      else:
+        self.R_scale = copy.deepcopy(self.R)
+        angles = self.celldm[3:]
+        lattice = [self.celldm[i] for i in range(3)]
+        lattice.extend(angles)
+        fm = qtk.fractionalMatrix(lattice)
+        self.R = np.dot(fm, self.R.T).T
+        self.scale = [ceil(max(self.R[:, i])) for i in range(3)]
+    
 
   # tested
   def write(self, *args, **kwargs):

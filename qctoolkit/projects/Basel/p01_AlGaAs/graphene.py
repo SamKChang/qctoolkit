@@ -112,8 +112,8 @@ def genRefInp(x, y, n_pair, **kwargs):
   graphenev = graphene.remove_atom(1)
   graphene.write_xyz(namev_xyz)
 
-  space = qcs.MoleculeSpan(name_xyz, name_ccs)
-  space_v = qcs.MoleculeSpan(namev_xyz, namev_ccs)
+  space = qtk.CCS(name_xyz, name_ccs)
+  space_v = qtk.CCS(namev_xyz, namev_ccs)
   flat = [item for sublist in space.mutation_list \
              for item in sublist]
 
