@@ -133,11 +133,11 @@ class AlPath(object):
 
   def runAll(self, name=None, **kwargs):
     if 'dl' not in kwargs:
-      dl = 0.2
+      kwargs['dl'] = 0.2
     if 'l' in kwargs: 
       del kwargs['l']
     out = []
-    for l in np.arange(0,1.01,dl):
+    for l in np.arange(0,1.01,kwargs['dl']):
       l_str = '_%03d' % (l * 100)
       new_name = name + l_str
       kwargs['l'] = l
