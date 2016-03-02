@@ -76,8 +76,10 @@ class InpContent(object):
       name = self.file_name
       if self.prefix:
         name = self.prefix + name
+        self.root_dir = self.prefix + self.root_dir
       if self.suffix:
         name = name + self.suffix 
+        self.root_dir = self.root_dir + self.suffix
       if self.extension:
         name = name + '.' + self.extension
       self.final_name = name
