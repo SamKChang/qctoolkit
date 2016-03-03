@@ -49,9 +49,9 @@ class inp(PlanewaveInput):
       if 'ks_states' in setting and 'ks_states':
         setting['mode'] = 'ks_states'
  
-      if molecule.scale:
-        molecule.R = molecule.R_scale
-        setting['scale'] = molecule.scale
+#      if molecule.scale:
+#        molecule.R = molecule.R_scale
+#        setting['scale'] = molecule.scale
   
       inp.write('&INFO\n')
       inp.write(' ' + setting['info'] + '\n')
@@ -136,11 +136,11 @@ class inp(PlanewaveInput):
       if setting['unit'].lower() == 'angstrom':
         inp.write(' ANGSTROM\n')
       inp.write(' CUTOFF\n  %.1f\n' % setting['cutoff'])
-      if 'scale' in setting:
-        inp.write(' SCALE SX=%d SY=%d SZ=%d\n' %\
-          (setting['scale'][0],
-           setting['scale'][1],
-           setting['scale'][2]))
+#      if 'scale' in setting:
+#        inp.write(' SCALE SX=%d SY=%d SZ=%d\n' %\
+#          (setting['scale'][0],
+#           setting['scale'][1],
+#           setting['scale'][2]))
       if 'kmesh' in setting:
         inp.write(' KPOINTS MONKHORST-PACK\n  %d %d %d\n' %\
           (setting['kmesh'][0],
