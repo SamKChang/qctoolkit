@@ -4,11 +4,54 @@ import multiprocessing as mp
 import operator
 from compiler.ast import flatten
 import numpy as np
+import sys, os
+
+#def main():
+#  while True:
+#    print 'y'
+#    time.sleep(5)
+#
+#if __name__ == '__main__':
+#  try:
+#    main()
+#  except KeyboardInterrupt:
+#    kill sub p
+#    try:
+#      print 'Interrupted'
+#      sys.exit(0)
+#    except SystemExit:
+#      os._exit(0)
+
+
+
+
 
 def parallelize(target_function, 
                 input_list, 
                 **kwargs):
- 
+  """
+  target_function is implemented in a general way
+    supposely any function would work
+    But it could break down if target_function assumes some convoluted data structure
+    
+  input_list is a list of list. 
+    Each input entry should be wrapped properly as a list 
+    **kwargs can be passed py passing dictionary
+    
+  Example:
+    # a toy target function
+    def f(a, b, **kwargs):
+      if 'factor' in kwargs:
+        factor = kwargs['factor']
+      else:
+        factor = 1
+      return a + b*factor
+      
+    input_list = [[i,j,{'factor':3}] for i in range(10) for j in range(10)]
+    
+    out_list = parallelize(f, input_list, block_size=10)
+  """
+
   if 'threads' in kwargs:
     threads = kwargs['threads']
   else:
@@ -70,7 +113,18 @@ def parallelize(target_function,
 
   # while not queue.empty' is NOT reliable
   for i in range(len(input_block)):
-    output_stack.append(qout.get())
+    # collect output from each subprocess
+    try:
+      output_stack.append(qout.get())
+    # check keyboard interrupt and terminate subprocess
+    except KeyboardInterrupt:
+      qtk.warning('jobs terminated by keyboard interrupt')
+      for p in jobs:
+        p.terminate()
+      try:
+        sys.exit(0)
+      except SystemExit:
+        os._exit(0)
 
   # clean up queues
   while not qinp.empty():
