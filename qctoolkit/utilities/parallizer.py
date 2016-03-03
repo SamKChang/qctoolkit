@@ -6,26 +6,6 @@ from compiler.ast import flatten
 import numpy as np
 import sys, os
 
-#def main():
-#  while True:
-#    print 'y'
-#    time.sleep(5)
-#
-#if __name__ == '__main__':
-#  try:
-#    main()
-#  except KeyboardInterrupt:
-#    kill sub p
-#    try:
-#      print 'Interrupted'
-#      sys.exit(0)
-#    except SystemExit:
-#      os._exit(0)
-
-
-
-
-
 def parallelize(target_function, 
                 input_list, 
                 **kwargs):
