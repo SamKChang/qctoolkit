@@ -20,6 +20,7 @@ import setting
 import os
 
 # check for qtk setting
+missing_files = []
 paths = os.environ["PATH"].split(":")
 code_pattern = re.compile('cpmd|bigdft|vasp|nwchem')
 exe_pattern = re.compile('.*exe')
@@ -40,8 +41,12 @@ for dep in dir(setting):
       if os.access(file_str, os.F_OK):
         not_found = False
     if not_found:
-      qtk.warning(
-                   "dependent file %s not found...,  " % file_str + \
-                   'please modify /path/to/qctoolkit/setting.py' +\
-                   ' and recompile'
-                 )
+      missing_files.append(file_str)
+
+if missing_files:
+  for missing_file in missing_files:
+    qtk.warning("missing file: %s" % missing_file)
+  qtk.warning(
+               'please modify /path/to/qctoolkit/setting/py ' +\
+               'and recompile.'
+             )

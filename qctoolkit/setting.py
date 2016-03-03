@@ -73,8 +73,8 @@ planewave_setup = {
 dft_list = ['pbe', 'pbe0', 'blyp', 'b3lyp', 'bp91', 'bp86', 'pw91']
 cc_list = ['mp2', 'mp3', 'mp4', 'ccsd', 'ccsdt', 
            'lccsd', 'cisd', 'cisdt']
-_ = os.path.realpath(__file__)
-_root = os.path.split(_)[0]
+_setting = os.path.realpath(__file__)
+_root = os.path.split(_setting)[0]
 # VASP setting
 vasp_pp = '/home/samio/Works/PhD/packages/VASP/PP'
 vasp_exe = 'vasp'
