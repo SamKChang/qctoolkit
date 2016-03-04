@@ -205,3 +205,19 @@ Br:
  atomic_number: 35
  valence_electrons: 7
  atomic_weight: 79.90
+
+In:
+ name: Indium
+ period: 5
+ group: 3
+ atomic_number: 49
+ valence_electrons: 3
+ atomic_weight: 114.818
+
+Sb:
+ name: Antimony
+ period: 5
+ group: 5
+ atomic_number: 51
+ valence_electrons: 5
+ atomic_weight: 121.76
