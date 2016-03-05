@@ -90,5 +90,8 @@ nwchem_mov2asc_exe = 'mov2asc'
 # BigDFT setting
 bigdft_exe = 'bigdft'
 bigdft_tool_exe = 'bigdft-tool'
-#bigdft_pp = os.path.join(_root, 'data/PP/bigdft')
-bigdft_pp = '/home/samio/Works/PhD/packages/BigDFT/PP'
+bigdft_pp = os.path.join(_root, 'data/PP/bigdft')
+bigdft_pp_url = 'http://cp2k.web.psi.ch/potentials/Goedecker-Teter-Hutter/abinit/'
+bigdft_pp_nlcc_url = 'http://bigdft.org/Wiki/index.php?title=New_Soft-Accurate_NLCC_pseudopotentials'
+#bigdft_pp_url = 'https://sourceforge.net/p/cp2k/code/HEAD/tree/trunk/potentials/Goedecker/abinit/'
+#bigdft_pp = '/home/samio/Works/PhD/packages/BigDFT/PP'

@@ -7,6 +7,44 @@ import pkg_resources
 import numpy as np
 import universal as univ
 import yaml
+import urllib2
+
+def PPCheck(xc, pp_theory, pp_path, element):
+  name = '%s_%s_%s' % (element, xc, pp_theory)
+  pp_file = os.path.join(pp_path, name)
+  if not os.path.exists(pp_file):
+    if pp_theory != 'nlcc':
+      url_root = qtk.setting.bigdft_pp_url
+      element_str = element + '-q%d' % qtk.n2ve(element)
+      url = url_root + '%s/%s' % (xc, element_str)
+      page = False
+      try:
+        page = urllib2.urlopen(url).read()
+      except:
+        qtk.warning('something wrong with url:%s' % url)
+      pp = page
+    else:
+      url = qtk.setting.bigdft_pp_nlcc_url
+      page = urllib2.urlopen(url).readlines()
+      string = filter(lambda x: '"psppar.%s' % element in x, page)[-1]
+      index = page.index(string) + 2
+      pp = []
+      itr = 0
+      while '</pre>' not in page[index + itr] \
+      and index + itr < len(page)\
+      and itr < 20:
+        pp.append(page[index + itr])
+        itr = itr + 1
+      pp = ''.join(pp)
+    if pp:
+      qtk.report('', 'pp file %s not found in %s.' %\
+        (name, pp_path) +\
+        ' But found in cp2k page, download now...')
+      new_pp_file = open(pp_file, 'w')
+      new_pp_file.write(pp)
+      new_pp_file.close()
+      
+  return pp_file
 
 class inp(WaveletInput):
   """
@@ -59,23 +97,21 @@ class inp(WaveletInput):
       out = re.sub("'", '', out)
       return out
 
-    self.pp_path = None
-    if 'pp_path' not in self.setting:
-      self.pp_path = qtk.setting.bigdft_pp
-    else:
+    self.pp_path = qtk.setting.bigdft_pp
+    if 'pp_path' in self.setting:
       self.pp_path = self.setting['pp_path']
 
-    pp_base = ['pbe']
     if 'pp_theory' not in self.setting:
       self.setting['pp_theory'] = self.setting['theory']
-    pp_dir = None
-    for base in pp_base:
-      if base in self.setting['pp_theory']:
-        pp_dir = os.path.join(self.pp_path, base)
-    if not pp_dir:
-      qtk.warning('PP is not implemented for theory:%s. '+\
-                  'To include, set pp_theory=implemented_theory,'+\
-                  ' e.g. pbe')
+#    pp_base = ['pbe']
+#    pp_dir = None
+#    for base in pp_base:
+#      if base in self.setting['pp_theory']:
+#        pp_dir = os.path.join(self.pp_path, base)
+#    if not pp_dir:
+#      qtk.warning('PP is not implemented for theory:%s. '+\
+#                  'To include, set pp_theory=implemented_theory,'+\
+#                  ' e.g. pbe')
       
     dft = {
             'rmult': yList([3.5, 9.0]),
@@ -109,9 +145,14 @@ class inp(WaveletInput):
     for i in range(molecule.N):
       entry = {molecule.type_list[i]: yList(list(molecule.R[i]))}
       positions.append(entry)
-      pp_file = os.path.join(pp_dir, 
-                             'psppar.' + molecule.type_list[i])
-      pp_files.append(pp_file)
+      pp_file = 'psppar.' + molecule.type_list[i]
+      pp_list = set([pp[1] for pp in pp_files])
+      if pp_file not in pp_list:
+        pp_src = PPCheck(self.setting['theory'], 
+                         self.setting['pp_theory'],
+                         self.pp_path,
+                         molecule.type_list[i])
+        pp_files.append([pp_src, pp_file])
 
     # need to be modified with periodic setting
     if self.setting['periodic']:

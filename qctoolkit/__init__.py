@@ -20,6 +20,7 @@ import os
 import copy_reg
 import types
 import pickle
+import urllib2
 
 # check for qtk setting
 missing_files = []

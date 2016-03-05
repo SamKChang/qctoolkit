@@ -101,11 +101,21 @@ class InpContent(object):
         # copy dependent files
         if 'dependent_files' in kwargs:
           self.dependent_files.extend(kwargs['dependent_files'])
-        for dep in set(self.dependent_files):
-          if os.path.exists(dep):
-            shutil.copy(dep, full_dir_path)
-          else:
-            qtk.warning('dependent file: %s not found' % dep)
+        #for dep in set(self.dependent_files):
+        for dep in self.dependent_files:
+          if type(dep) is str:
+            if os.path.exists(dep):
+              shutil.copy(dep, full_dir_path)
+            else:
+              qtk.warning('dependent file: %s not found' % dep)
+          elif type(dep) is list:
+            dep_src = dep[0]
+            if os.path.exists(dep_src):
+              dep_tar = os.path.join(full_dir_path, dep[1])
+              shutil.copy(dep_src, dep_tar)
+            else:
+              qtk.warning('dependent file: %s not found' % dep)
+            
 
     inp = sys.stdout if not self.output else open(full_path, 'w')
     for string in self.content:

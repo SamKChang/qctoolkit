@@ -1,6 +1,8 @@
+import qctoolkit as qtk
 import cpmd
 import numpy as np
 import copy
+import bigdft
 
 pp_setting = {
                'program': 'cpmd',
@@ -21,7 +23,7 @@ param = {
 class PP(object):
   def __init__(self, path=None, **kwargs):
     self.param = copy.deepcopy(param)
-    self.setting = {}
+    self.setting = kwargs
     self.info = ''
 
     for key, value in pp_setting.iteritems():
@@ -38,6 +40,8 @@ class PP(object):
   def read(self, path):
     if self.setting['program'] == 'cpmd':
       cpmd.read(self, path)
+    elif self.setting['program'] == 'bigdft':
+      bigdft.read(self, path)
 
     else:
       qtk.exit('program %s is not implemented for PP'\
@@ -46,6 +50,8 @@ class PP(object):
   def write(self, name=None):
     if self.setting['program'] == 'cpmd':
       cpmd.write(self, name)
+    elif self.setting['program'] == 'bigdft':
+      bigdft.write(self, name)
 
     else:
       qtk.exit('program %s is not implemented for PP'\
