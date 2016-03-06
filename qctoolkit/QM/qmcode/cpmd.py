@@ -216,6 +216,20 @@ class inp(PlanewaveInput):
         if name:
           sub_name = name + '_02'
         writeInp(sub_name, **setting)
+    elif 'ks_states' in setting and setting['ks_states']:
+      n_ks = setting['ks_states']
+      del setting['ks_states']
+      setting['no_subfolder'] = False
+      setting['save_restart'] = True
+      sub_name = name
+      if name:
+        sub_name = name + '_01'
+      inp = writeInp(sub_name, **setting)
+      setting['ks_states'] = n_ks
+      setting['no_cleanup'] = True
+      if name:
+        sub_name = name + '_02'
+      writeInp(sub_name, **setting)
     else:
       inp = writeInp(name, **setting)
 
