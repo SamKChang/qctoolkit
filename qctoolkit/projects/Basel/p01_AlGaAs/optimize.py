@@ -163,8 +163,8 @@ def Ev_ccs(ccs_coord, ccs_span, vacancy_index, **kwargs):
 
   print ccs_coord
   if alchem:
-    out_wov = qal.Al1st(inp_wov, ref_dir=perfect_ref, **qm_setting)
-    out_wv = qal.Al1st(inp_wv, ref_dir=vacancy_ref, **qm_setting)
+    out_wov = qtk.Al1st(inp_wov, ref_dir=perfect_ref, **qm_setting)
+    out_wv = qtk.Al1st(inp_wv, ref_dir=vacancy_ref, **qm_setting)
   else:
     out_wov = inp_wov.run(**qm_setting)
     out_wv = inp_wv.run(**qm_setting)
