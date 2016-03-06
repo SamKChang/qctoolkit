@@ -24,6 +24,8 @@ class inp(PlanewaveInput):
       self.setting['mode'] = kwargs['ks_states']
     if 'pp_type' not in kwargs:
       self.setting['pp_type'] = 'Goedecker'
+    if 'pp_theory' not in kwargs:
+      self.setting['pp_theory'] = self.setting['theory']
     self.backup()
 
   def run(self, name=None, **kwargs):
@@ -285,15 +287,15 @@ def PPString(inp, mol, i, n, outFile):
   and inp.setting['vdw'].lower == 'dcacp':
     # PPStr: Element_qve_dcacp_theory.psp
     PPStr = '*'+mol.type_list[i] + '_dcacp_' +\
-      inp.setting['theory'].lower() + '.psp'
+      inp.setting['pp_theory'].lower() + '.psp'
   else:
     # PPStr: Element_qve_theory.psp
     nve = qtk.n2ve(mol.type_list[i])
     PPStr = '*'+mol.type_list[i] + '_q%d_' % nve +\
-      inp.setting['theory'].lower() + '.psp'
+      inp.setting['pp_theory'].lower() + '.psp'
   outFile.write(PPStr + '\n')
   pp_file_str = re.sub('\*', '', PPStr)
-  xc = inp.setting['theory'].lower()
+  xc = inp.setting['pp_theory'].lower()
   if not mol.string[i]:
     PPCheck(xc, mol.type_list[i].title(), pp_file_str)
   elif alchemy.match(mol.string[i]):
