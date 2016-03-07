@@ -605,11 +605,13 @@ class Molecule(object):
         self.box = celldm[:3]
     else:
       if celldm:
-        self.celldm = celldm
+        for i in range(len(celldm)):
+          self.celldm[i] = celldm[i]
         self.box = celldm[:3]
         for i in range(self.N):
           for j in range(3):
-            self.R[i, j] = self.R_scale[i, j] * self.celldm[j]
+            self.R[i, j] = self.R_scale[i, j] * \
+                           self.celldm[j] / float(self.scale[j])
     return self.celldm
 
   def copy(self):
@@ -720,7 +722,7 @@ class Molecule(object):
         lattice.extend(angles)
         fm = qtk.fractionalMatrix(lattice)
         self.R = np.dot(fm, self.R.T).T
-        self.scale = [ceil(max(self.R[:, i])) for i in range(3)]
+        self.scale = [ceil(max(self.R[:, i])/lattice[i]) for i in range(3)]
     
 
   # tested
