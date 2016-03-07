@@ -36,8 +36,9 @@ c_module = [Extension(name = "qctoolkit.ML.kernel_matrix",
                          'readcubemodule.c']),
             Extension(name = "qctoolkit.ML.coulomb_matrix", 
               extra_compile_args=['-O3'],
-              sources = ['qctoolkit/src/coulombmatrixmodule.c',
-                         'qctoolkit/src/utilities.c']),
+              sources = ['qctoolkit/ML/c_extension/'+\
+                         'coulombmatrixmodule.c',
+                         'qctoolkit/ML/c_extension/utilities.c']),
             Extension(name = "qctoolkit.MD.dlist_1", 
               sources = ['qctoolkit/MD/c_extension/'+\
                          'dlist1.c'],
