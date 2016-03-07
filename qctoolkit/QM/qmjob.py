@@ -95,10 +95,12 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
       out = os.path.splitext(job)[0] + '.out'
       exestr = "%s %s" % (exe, job)
       compute(exestr, out, _threads)
-      if os.path.exists('RESTART.1'):
+      rst_list = sorted(glob.glob('RESTART.*'))
+      if rst_list:
+        rst_n = rst_list[-1]
         if os.path.exists('RESTART'):
           os.remove('RESTART')
-        os.link('RESTART.1', 'RESTART')
+        os.link(rst_n, 'RESTART')
 
     # clean up files
     files = glob.glob('*')

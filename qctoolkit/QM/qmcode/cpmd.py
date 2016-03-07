@@ -216,7 +216,8 @@ class inp(PlanewaveInput):
         if name:
           sub_name = name + '_02'
         writeInp(sub_name, **setting)
-    elif 'ks_states' in setting and setting['ks_states']:
+    elif 'ks_states' in setting and setting['ks_states']\
+    and not setting['restart']:
       n_ks = setting['ks_states']
       del setting['ks_states']
       setting['no_subfolder'] = False

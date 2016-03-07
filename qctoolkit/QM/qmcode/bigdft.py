@@ -10,6 +10,7 @@ import yaml
 import urllib2
 
 def PPCheck(xc, pp_theory, pp_path, element):
+  
   name = '%s_%s_%s' % (element, xc, pp_theory)
   pp_file = os.path.join(pp_path, name)
   if not os.path.exists(pp_file):
@@ -76,6 +77,8 @@ class inp(WaveletInput):
                  'pbe0': -406,
                  'blyp': -106131,
                  'b3lyp': -402,
+                 'hse': -524,
+                 'hse06': -428,
                }
     
     if self.setting['theory'] in dft_list:
