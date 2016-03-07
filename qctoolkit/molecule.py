@@ -589,19 +589,27 @@ class Molecule(object):
     return self.grid
 
   def setCelldm(self, celldm=None, **kwargs):
-    if not celldm:
-      if not self.periodic:
-        if 'margin' not in kwargs:
-          margin = qtk.setting.box_margin
-        else:
-          margin = kwargs['margin']
-        self.box = self.getSize() + \
-                   2*np.array([margin, margin, margin])
-        self.celldm = copy.deepcopy(self.box)
-        self.celldm.extend([0, 0, 0])
+    if not self.celldm:
+      if not celldm:
+        if not self.periodic:
+          if 'margin' not in kwargs:
+            margin = qtk.setting.box_margin
+          else:
+            margin = kwargs['margin']
+          self.box = self.getSize() + \
+                     2*np.array([margin, margin, margin])
+          self.celldm = copy.deepcopy(self.box)
+          self.celldm.extend([0, 0, 0])
+      else:
+        self.celldm = celldm
+        self.box = celldm[:3]
     else:
-      self.celldm = celldm
-      self.box = celldm[:3]
+      if celldm:
+        self.celldm = celldm
+        self.box = celldm[:3]
+        for i in range(self.N):
+          for j in range(3):
+            self.R[i, j] = self.R_scale[i, j] * self.celldm[j]
     return self.celldm
 
   def copy(self):

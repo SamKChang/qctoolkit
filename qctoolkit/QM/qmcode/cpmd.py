@@ -220,12 +220,14 @@ class inp(PlanewaveInput):
     and not setting['restart']:
       n_ks = setting['ks_states']
       del setting['ks_states']
+      setting['mode'] = 'single_point'
       setting['no_subfolder'] = False
       setting['save_restart'] = True
       sub_name = name
       if name:
         sub_name = name + '_01'
       inp = writeInp(sub_name, **setting)
+      setting['mode'] = 'ks_states'
       setting['ks_states'] = n_ks
       setting['no_cleanup'] = True
       if name:
