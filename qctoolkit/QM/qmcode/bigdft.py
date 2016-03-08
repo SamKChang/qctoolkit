@@ -131,7 +131,7 @@ class inp(WaveletInput):
         nv = int(max(wf_list) - self.getValenceElectrons() / 2)
         dft['norbv'] = nv
         dft['nplot'] = nv
-    if self.setting['ks_states']:
+    if 'ks_states' in self.setting and self.setting['ks_states']:
       nv = int(self.setting['ks_states'])
       dft['norbv'] = nv
       dft['nplot'] = nv
