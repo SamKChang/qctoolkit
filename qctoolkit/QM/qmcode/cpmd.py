@@ -150,12 +150,7 @@ class inp(PlanewaveInput):
       if setting['unit'].lower() == 'angstrom':
         inp.write(' ANGSTROM\n')
       inp.write(' CUTOFF\n  %.1f\n' % setting['cutoff'])
-#      if 'scale' in setting:
-#        inp.write(' SCALE SX=%d SY=%d SZ=%d\n' %\
-#          (setting['scale'][0],
-#           setting['scale'][1],
-#           setting['scale'][2]))
-      if 'kmesh' in setting:
+      if 'kmesh' in setting and setting['kmesh']:
         inp.write(' KPOINTS MONKHORST-PACK\n  %d %d %d\n' %\
           (setting['kmesh'][0],
            setting['kmesh'][1],
@@ -319,7 +314,13 @@ def PPString(inp, mol, i, n, outFile):
       inp.setting['pp_theory'].lower() + '.psp'
   else:
     # PPStr: Element_qve_theory.psp
-    nve = qtk.n2ve(mol.type_list[i])
+    element = mol.type_list[i]
+    if 'valence_electrons' in inp.setting\
+    and element in inp.setting['valence_electrons']:
+      nve = inp.setting['valence_electrons'][element]
+    else:
+      nve = qtk.n2ve(element)
+      
     PPStr = '*'+mol.type_list[i] + '_q%d_' % nve +\
       inp.setting['pp_theory'].lower() + '.psp'
   outFile.write(PPStr + '\n')

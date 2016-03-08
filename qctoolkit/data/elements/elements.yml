@@ -235,7 +235,7 @@ Zn:
  period: 4
  group: 12
  atomic_number: 30
- valence_electrons: 2
+ valence_electrons: 12
  atomic_weight: 65.41
 
 Cd:
@@ -243,7 +243,7 @@ Cd:
  period: 5
  group: 12
  atomic_number: 48
- valence_electrons: 2
+ valence_electrons: 12
  atomic_weight: 112.41
 
 Hg:
@@ -251,5 +251,5 @@ Hg:
  period: 6
  group: 12
  atomic_number: 80
- valence_electrons: 2
+ valence_electrons: 12
  atomic_weight: 200.59
