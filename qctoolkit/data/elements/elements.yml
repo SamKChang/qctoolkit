@@ -221,3 +221,27 @@ Sb:
  atomic_number: 51
  valence_electrons: 5
  atomic_weight: 121.76
+
+Zn:
+ name: Zinc
+ period: 4
+ group: 12
+ atomic_number: 30
+ valence_electrons: 2
+ atomic_weight: 65.41
+
+Cd:
+ name: Cadmium
+ period: 5
+ group: 12
+ atomic_number: 48
+ valence_electrons: 2
+ atomic_weight: 112.41
+
+Hg:
+ name: Mercury
+ period: 6
+ group: 12
+ atomic_number: 80
+ valence_electrons: 2
+ atomic_weight: 200.59
