@@ -253,47 +253,54 @@ class out(PlanewaveOutput):
       self.getEt(qmout)
 
   def getEt(self, name):
-    out = sys.stdout if re.match('stdout',name)\
-          else open(name, 'r')
-
-    done = False
-    finished = False
-    converged = True
-  
-    scf_p = re.compile('^ *[0-9]*  [0-9]\.[0-9]{3}E-[0-9]{2}   .*')
-    Et_cpmd = re.compile('.*TOTAL ENERGY = *([-0-9\.]*)')
-    convergence = re.compile('.*BUT NO CONVERGENCE.*')
-    soft_exit = re.compile('.*SOFT EXIT REQUEST.*')
-    done_cpmd = re.compile(' \* *FINAL RESULTS *\*')
-    qmInfo = re.compile('.*qmInfo.*')
-    info_head = re.compile('.*qmInfo:')
-    info_tail = re.compile(' *\*\*.*')
-
-    while True:
-      line = out.readline()
-      if not line: break
-
-      if (re.match(scf_p, line)):
-        try:
-          data = [float(x) for x in line.split()]
-          self.scf_step = int(data[0])
-        except:
-          qtk.report("\n\nFailed while reading file:", name,
-                    'at line: ', line,
-                    '... skipping!! \n', color='yellow')
-      elif re.match(convergence, line) and self.scf_step > 5:
-        converged = False
-      elif re.match(soft_exit, line):
-        converged = False
-      elif re.match(qmInfo, line):
-        tmp1 = re.sub(info_head, '', line)
-        tmp2 = re.sub(info_tail, '', tmp1)
-        self.info = tmp2
-      elif (re.match(done_cpmd,line)):
-        done = True,
-      elif (re.match(Et_cpmd, line)) and done and converged:
-        self.Et = float(Et_cpmd.match(line).group(1))
-        finished = True
+    out = open(name, 'r')
+    data = out.readlines()
+    out.close()
+    E_str = filter(lambda x: 'TOTAL ENERGY' in x, data)[-1]
+    self.Et = float(E_str.split()[-2])
+    rst_str = filter(lambda x: 'TOTAL ENERGY' in x, data)[-1]
+    p1 = re.compile('^.*\d  \d\.\d{3}E-\d\d.*$')
+    scf_str = filter(p1.match, data)
+    if scf_str:
+      self.scf_step = len(scf_str)
+    report_str = filter(lambda x: 'A.U.' in x, data)
+    report = report_str[:len(report_str)/2]
+    self.detail = {}
+    for s in report:
+      entry = s.split()
+      if filter(lambda x: '(' in x, entry):
+        entry_txt = ' '.join(entry[1:-3])
+      else:
+        entry_txt = ' '.join(entry[:-3])
+      energy = float(entry[-2])
+      self.detail[entry_txt] = energy
+      
+    ev_str1 = filter(lambda x: '(EV)' in x, data)
+    ev_str2 = filter(lambda x: ' EV\n' in x, data)
+    if ev_str1 and ev_str2:
+      self.mo_eigenvalues = []
+      self.occupation = []
+      ev_start = data.index(ev_str1[0]) + 1
+      ev_end = data.index(ev_str2[0])
+      for i in range(ev_start, ev_end):
+        s = data[i].split()
+        if len(s) == 6:
+          ev = [float(s[1]), float(s[4])]
+          occ = [float(s[2]), float(s[5])]
+          self.mo_eigenvalues.extend(ev)
+          self.occupation.extend(occ)
+        elif len(s) == 3:
+          ev = float(s[1])
+          occ = float(s[2])
+          self.mo_eigenvalues.append(ev)
+          self.occupation.append(occ)
+      diff = np.diff(np.array(self.occupation))
+      pos = diff[np.where(abs(diff) > 1)]
+      mask = np.in1d(diff, pos)
+      ind = np.array(range(len(diff)))
+      N_state = ind[mask][0]
+      self.Eg = self.mo_eigenvalues[N_state + 1] -\
+                self.mo_eigenvalues[N_state]
 
 # not used by PP object but by QMInp cpmd parts
 def PPString(inp, mol, i, n, outFile):
