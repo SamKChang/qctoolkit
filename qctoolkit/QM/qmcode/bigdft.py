@@ -17,7 +17,7 @@ def PPCheck(xc, pp_theory, pp_path, element):
     if pp_theory != 'nlcc':
       url_root = qtk.setting.bigdft_pp_url
       element_str = element + '-q%d' % qtk.n2ve(element)
-      url = url_root + '%s/%s' % (xc, element_str)
+      url = url_root + '%s/%s' % (pp_theory, element_str)
       page = False
       try:
         page = urllib2.urlopen(url).read()
@@ -117,10 +117,12 @@ class inp(WaveletInput):
 #                  ' e.g. pbe')
       
     dft = {
-            'rmult': yList([3.5, 9.0]),
+            'rmult': yList([6, 10]),
             'nrepmax': 'accurate',
             'disablesym': 'Yes',
             'ixc': theory,
+            'hgrids': 0.3,
+            'gnrm_cv': 1E-5,
           }
     if self.setting['save_wf']:
       dft['output_wf'] = 1
@@ -129,6 +131,10 @@ class inp(WaveletInput):
         nv = int(max(wf_list) - self.getValenceElectrons() / 2)
         dft['norbv'] = nv
         dft['nplot'] = nv
+    if self.setting['ks_states']:
+      nv = int(self.setting['ks_states'])
+      dft['norbv'] = nv
+      dft['nplot'] = nv
     if self.setting['save_density']:
       dft['output_denspot'] = 21
     if self.setting['restart']:
