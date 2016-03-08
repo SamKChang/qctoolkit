@@ -222,6 +222,14 @@ Sb:
  valence_electrons: 5
  atomic_weight: 121.76
 
+Te:
+ name: Tellurium
+ period: 5
+ group: 6
+ atomic_number: 52
+ valence_electrons: 6
+ atomic_weight: 127.60
+
 Zn:
  name: Zinc
  period: 4
