@@ -123,7 +123,7 @@ class inp(PlanewaveInput):
       if molecule.multiplicity != 1:
         inp.write(' LOCAL SPIN DENSITY\n') 
       if 'big_memory' in setting and setting['big_memory']:
-        inp.write(' MEMORY BIG')
+        inp.write(' MEMORY BIG\n')
       inp.write('&END\n\n')
   
       inp.write('&DFT\n FUNCTIONAL %s\n&END\n\n' % \
