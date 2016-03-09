@@ -8,7 +8,7 @@ import networkx
 from networkx.algorithms.components.connected import connected_components
 import periodictable as pt
 import collections
-from math import ceil
+from math import ceil, floor
 
 class Molecule(object):
   """
@@ -91,6 +91,7 @@ class Molecule(object):
     self.N = 0
     # atom coordinates
     self.R = np.atleast_2d(np.array([]))
+    self.R_scale = np.atleast_2d(np.array([]))
     # atom symbols
     self.type_list = []
     # nuclear charges
@@ -118,6 +119,9 @@ class Molecule(object):
 
   # tested
   def __add__(self, other):
+    if self.R_scale:
+      qtk.exit('Molecule add not implemented for crystals.' + \
+               'use extend/setAtoms instead')
     out = Molecule()
     out.N = self.N + other.N
     out.R = np.vstack([self.R, other.R])
@@ -440,7 +444,6 @@ class Molecule(object):
     angle = np.arctan(tangent)
     self.rotate(-angle, [1,0,0])
     self.center(self.R[ind1])
-    
 
   def rotate(self, angle, u):
     R_tmp = copy.deepcopy(self.R)
@@ -614,6 +617,35 @@ class Molecule(object):
                            self.celldm[j] / float(self.scale[j])
     return self.celldm
 
+  def extend(self, ratio):
+    assert len(ratio) == 3
+    assert len(self.R_scale) == self.N
+    factor = reduce(lambda x, y: x*y, ratio)
+    max_R = [ceil(i) for i in np.max(self.R_scale, axis = 0)]
+    for i in range(3):
+      for r in range(int(floor(ratio[i])) - 1):
+        M = self.N
+        new_R_scale = copy.deepcopy(self.R_scale)
+        new_R = copy.deepcopy(self.R)
+        mask = [True for j in range(M)]
+        for j in range(len(new_R_scale)):
+          new_scale_j = new_R_scale[:, i][j] + max_R[i] * (r + 1)
+          new_Rj = new_R[:, i][j] + self.celldm[i] * (r + 1)
+          if new_scale_j < max_R[i] * (ratio[i] + 1):
+            new_R_scale[:, i][j] = new_scale_j
+            new_R[:, i][j] = new_Rj
+          else:
+            M = M - 1 
+            mask[j] = False
+        self.N = M + self.N
+        self.R_scale = np.vstack([self.R_scale, new_R_scale[mask]])
+        self.R = np.vstack([self.R, new_R[mask]])
+        self.Z = list(np.hstack([self.Z, self.Z[mask]]))
+        new_list = np.array(self.type_list)
+        new_list = np.vstack([new_list, new_list[mask]])
+        self.type_list = [str(a) for sub_list in new_list\
+                          for a in sub_list]
+
   def copy(self):
     return copy.deepcopy(self)
 
@@ -685,10 +717,12 @@ class Molecule(object):
           setattr(self, prop, [float(_) for _ in prop_data])
       except:
         setattr(self, prop, False)
-    if not self.charge: self.charge = 0
-    if self.celldm or self.scale: self.periodic = True
-    if self.celldm: assert len(self.celldm) == 6
-      
+    if not self.charge:
+      self.charge = 0
+    if self.celldm or self.scale:
+      self.periodic = True
+    if self.celldm:
+       assert len(self.celldm) == 6
 
     self.N = int(content[0])
     coord_list = content[2 : self.N + 2]
