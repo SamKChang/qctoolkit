@@ -637,14 +637,14 @@ class Molecule(object):
           else:
             M = M - 1 
             mask[j] = False
+        Z = np.array(self.Z)
         self.N = M + self.N
         self.R_scale = np.vstack([self.R_scale, new_R_scale[mask]])
         self.R = np.vstack([self.R, new_R[mask]])
-        self.Z = list(np.hstack([self.Z, self.Z[mask]]))
+        self.Z = list(np.hstack([Z, Z[mask]]))
         new_list = np.array(self.type_list)
-        new_list = np.vstack([new_list, new_list[mask]])
-        self.type_list = [str(a) for sub_list in new_list\
-                          for a in sub_list]
+        new_list = np.hstack([new_list, new_list[mask]])
+        self.type_list = [str(a) for a in new_list]
 
   def copy(self):
     return copy.deepcopy(self)
