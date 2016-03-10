@@ -1,6 +1,7 @@
 from molecule import *
 from QM.qmInterface import *
 from QM.qmjob import *
+from QM.qmresults import *
 from alchemy.aljob import *
 from alchemy.alpath import *
 from QM.pseudo.pseudo import *
