@@ -623,11 +623,17 @@ class Molecule(object):
     factor = reduce(lambda x, y: x*y, ratio)
     max_R = [ceil(i) for i in np.max(self.R_scale, axis = 0)]
     for i in range(3):
+      M = self.N
+      R_scale = copy.deepcopy(self.R_scale)
+      R = copy.deepcopy(self.R)
+      Z = np.array(self.Z)
+      type_list = np.array(self.type_list)
+      string = np.array(self.string)
+      mask = [True for j in range(M)]
       for r in range(int(floor(ratio[i])) - 1):
-        M = self.N
-        new_R_scale = copy.deepcopy(self.R_scale)
-        new_R = copy.deepcopy(self.R)
-        mask = [True for j in range(M)]
+        S = M
+        new_R_scale = copy.deepcopy(R_scale)
+        new_R = copy.deepcopy(R)
         for j in range(len(new_R_scale)):
           new_scale_j = new_R_scale[:, i][j] + max_R[i] * (r + 1)
           new_Rj = new_R[:, i][j] + self.celldm[i] * (r + 1)
@@ -635,18 +641,15 @@ class Molecule(object):
             new_R_scale[:, i][j] = new_scale_j
             new_R[:, i][j] = new_Rj
           else:
-            M = M - 1 
+            S = S - 1 
             mask[j] = False
-        Z = np.array(self.Z)
-        self.N = M + self.N
+        self.N = S + self.N
         self.R_scale = np.vstack([self.R_scale, new_R_scale[mask]])
         self.R = np.vstack([self.R, new_R[mask]])
-        self.Z = list(np.hstack([Z, Z[mask]]))
-        new_list = np.array(self.type_list)
-        new_list = np.hstack([new_list, new_list[mask]])
+        self.Z = list(np.hstack([self.Z, Z[mask]]))
+        new_list = np.hstack([self.type_list, type_list[mask]])
         self.type_list = [str(a) for a in new_list]
-        new_str = np.array(self.string)
-        new_str = np.hstack([new_str, new_str[mask]])
+        new_str = np.hstack([self.string, string[mask]])
         self.string = [str(s) for s in new_str]
       self.celldm[i] = self.celldm[i] * ratio[i]
 
