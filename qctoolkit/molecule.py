@@ -631,7 +631,7 @@ class Molecule(object):
         for j in range(len(new_R_scale)):
           new_scale_j = new_R_scale[:, i][j] + max_R[i] * (r + 1)
           new_Rj = new_R[:, i][j] + self.celldm[i] * (r + 1)
-          if new_scale_j < max_R[i] * (ratio[i] + 1):
+          if new_scale_j < max_R[i] * ratio[i]:
             new_R_scale[:, i][j] = new_scale_j
             new_R[:, i][j] = new_Rj
           else:
@@ -645,6 +645,10 @@ class Molecule(object):
         new_list = np.array(self.type_list)
         new_list = np.hstack([new_list, new_list[mask]])
         self.type_list = [str(a) for a in new_list]
+        new_str = np.array(self.string)
+        new_str = np.hstack([new_str, new_str[mask]])
+        self.string = [str(s) for s in new_str]
+      self.celldm[i] = self.celldm[i] * ratio[i]
 
   def copy(self):
     return copy.deepcopy(self)
