@@ -54,15 +54,15 @@ supresses the system to insert this path before PYTHONPATH.
 
 **Implemented interface of QM code**:
 * Gaussian basis:
-- [Gaussian](www.gaussian.com/)
-- [NWChem](www.nwchem-sw.org/index.php/Main_Page)
-- [horton](theochem.github.io/horton/)
+  - [Gaussian](www.gaussian.com/)
+  - [NWChem](www.nwchem-sw.org/index.php/Main_Page)
+  - [horton](theochem.github.io/horton/)
 * Plane wave basis:
-- [VASP](www.vasp.at)
-- [QuantumESPRESSO](www.quantum-espresso.org/)
-- [CPMD](www.cpmd.org/)
+  - [VASP](www.vasp.at)
+  - [QuantumESPRESSO](www.quantum-espresso.org/)
+  - [CPMD](www.cpmd.org/)
 * Wavelet basis:
-- [BigDFT](bigdft.org/Wiki/index.php?title=BigDFT_website)
+  - [BigDFT](bigdft.org/Wiki/index.php?title=BigDFT_website)
 
 **Required libraries**:
 * OpenMP
