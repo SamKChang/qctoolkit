@@ -26,9 +26,11 @@ be obtained by the --record flag during install
   To change it according to pep8 standard, use the following command:
 ```cd /path/to/qctoolkit && find . -name "*.py"|xargs -n 1 autopep8 --in-place```
   where ```autopep8``` can be installed simply via ```pip install autopep8 --user```
+* **Note** newer version for many modules are required. They must __NOT__ 
+be installed via ubuntu repository
 
 **Dependent Python packages**:
-* numpy 1.9.2
+* numpy 1.11.* (for fast indexing operation)
 * pandas 0.16.2
 * matplotlib 1.4.3
 * matplotlib.pyplot
