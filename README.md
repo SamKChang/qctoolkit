@@ -52,7 +52,7 @@ supresses the system to insert this path before PYTHONPATH.
 * And standard libraries: sys, re, os, glob, math, subprocess, multiprocessing, copy, collections, compiler.ast, shutil, fileinput, operator, inspect, xml.etree.ElementTree
 * pymol is also used for visualization
 
-**Implemented interface of QM code**:
+**Implemented interfaces to QM codes**:
 * Gaussian basis:
   - [Gaussian](www.gaussian.com/)
   - [NWChem](www.nwchem-sw.org/index.php/Main_Page)
