@@ -80,12 +80,12 @@ class inp(PlanewaveInput):
           setting['restart'] = True
         inp.write(' KOHN-SHAM ENERGIES\n  %d\n'\
           % setting['ks_states'])
-        inp.write(' LANCZOS PARAMETER N=5\n')
-        inp.write('  1000  16  20  1.D-9\n')
-        inp.write('  0.05          1.D-11\n')
-        inp.write('  0.01          1.D-13\n')
-        inp.write('  0.0025        1.D-16\n')
-        inp.write('  0.001         1.D-18\n')
+        #inp.write(' LANCZOS PARAMETER N=5\n')
+        #inp.write('  1000  16  20  1.D-9\n')
+        #inp.write('  0.05          1.D-11\n')
+        #inp.write('  0.01          1.D-13\n')
+        #inp.write('  0.0025        1.D-16\n')
+        #inp.write('  0.001         1.D-18\n')
       elif setting['mode'].lower() == 'md':
         inp.write(' MOLECULAR DYNAMICS BO\n')
       if re.match(setting['mode'], 'md'):
