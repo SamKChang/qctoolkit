@@ -45,7 +45,6 @@ Overwrite local change to merge:
 
 Python Note
 ===========
-* When a module is installed through ubuntu repository as python-modeul (e.g. python-numpy), import path of such module **WILL GET** highest priority. In other words, stable but out-dated versions will always get loaded. To circumvent this, the best solution is to use virtual enviroment and setup dependancy. However, it is also possible to modify the system behaviour by edditing the easy_install path ```/usr/local/lib/python2.7/dist-packages/easy-install.pth```. Simply comment out the second line ```/usr/lib/python2.7/dist-packages``` supress the system to insert this path before PYTHONPATH.
 * Profiling: python -m cProfile -s time toAnalyse.py <args> 
 from [here]
 (http://stackoverflow.com/questions/582336/how-can-you-profile-a-python-script)
