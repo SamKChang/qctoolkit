@@ -1,4 +1,4 @@
-Python 2.7 modules for quantum chemistry applications
+Python modules for quantum chemistry applications
 =====================================================
 It seems worthwile to put effort to rewrite my bash/perl/python/C 
 tools in to an integrated module or package. It should boosts the
@@ -22,7 +22,7 @@ be obtained by the --record flag during install
 * The package depends on [NumPy > 1.11.*](http://www.numpy.org/),
   [pandas > 0.17.1](http://pandas.pydata.org/), 
   and [matplotlib > 1.5.1](http://matplotlib.org/). 
-* **Note** that newer version for many modules are required. They must __NOT__ 
+* **Note** that newer version for many python modules are required. They must __NOT__ 
 be installed via ubuntu repository. When a module is installed 
 through ubuntu repository as python-modeul (e.g. python-numpy), 
 import path of such module **WILL GET** highest priority. 
@@ -53,10 +53,13 @@ supresses the system to insert this path before PYTHONPATH.
 * pymol is also used for visualization
 
 **Implemented interface of QM code**:
-* CPMD
-* VASP
-* NWChem
-* (horton)
+* [NWChem](www.nwchem-sw.org/index.php/Main_Page)
+* [horton](theochem.github.io/horton/)
+* [BigDFT](bigdft.org/Wiki/index.php?title=BigDFT_website)
+* [VASP](www.vasp.at)
+* [QuantumESPRESSO](www.quantum-espresso.org/)
+* [CPMD](www.cpmd.org/)
+* [Gaussian](www.gaussian.com/)
 
 **Required libraries**:
 * OpenMP
