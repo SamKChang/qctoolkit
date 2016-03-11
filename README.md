@@ -15,17 +15,9 @@ purpose chemistry tool kit.
   package. This can be installed by
 ```wget https://bootstrap.pypa.io/ez_setup.py -O - | sudo python```
   with superuser priviledge
-* The package depends on [NumPy](http://www.numpy.org/),
-  [pandas](http://pandas.pydata.org/), 
-  and [matplotlib](http://matplotlib.org/). 
-* To install: ```cd /path/to/qctoolkit && python setup.py install --user```
-* To remove:  Manually remove all created files. List of files can 
-be obtained by the --record flag during install
-```python setup.py install --user --record fileList.txt```All files
-* **Note** all code are writen with **2-space indentation**. 
-  To change it according to pep8 standard, use the following command:
-```cd /path/to/qctoolkit && find . -name "*.py"|xargs -n 1 autopep8 --in-place```
-  where ```autopep8``` can be installed simply via ```pip install autopep8 --user```
+* The package depends on [NumPy > 1.11.*](http://www.numpy.org/),
+  [pandas > 0.17.1](http://pandas.pydata.org/), 
+  and [matplotlib > 1.5.1](http://matplotlib.org/). 
 * **Note** newer version for many modules are required. They must __NOT__ 
 be installed via ubuntu repository. When a module is installed 
 through ubuntu repository as python-modeul (e.g. python-numpy), 
@@ -36,8 +28,17 @@ the best solution is to use virtual enviroment and setup dependancy.
 However, it is also possible to modify the system behaviour 
 by edditing the easy_install path 
 ```/usr/local/lib/python2.7/dist-packages/easy-install.pth```. 
-Simply comment out the second line ```/usr/lib/python2.7/dist-packages``` 
+Simply comment out the second line 
+```/usr/lib/python2.7/dist-packages``` 
 supresses the system to insert this path before PYTHONPATH.
+* To install: ```cd /path/to/qctoolkit && python setup.py install --user```
+* To remove:  Manually remove all created files. List of files can 
+be obtained by the --record flag during install
+```python setup.py install --user --record fileList.txt```All files
+* **Note** all code are writen with **2-space indentation**. 
+  To change it according to pep8 standard, use the following command:
+```cd /path/to/qctoolkit && find . -name "*.py"|xargs -n 1 autopep8 --in-place```
+  where ```autopep8``` can be installed simply via ```pip install autopep8 --user```
 
 **Dependent Python packages**:
 * numpy 1.11.* (for fast indexing operation)
