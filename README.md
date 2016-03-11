@@ -26,10 +26,8 @@ In other words, stable but out-dated versions will always get loaded.
 To circumvent this, 
 the best solution is to use virtual enviroment and setup dependancy. 
 However, it is also possible to modify the system behaviour 
-by edditing the easy_install path 
-```/usr/local/lib/python2.7/dist-packages/easy-install.pth```. 
-Simply comment out the second line 
-```/usr/lib/python2.7/dist-packages``` 
+by edditing the easy_install path ```/usr/local/lib/python2.7/dist-packages/easy-install.pth```
+Simply comment out the second line ```/usr/lib/python2.7/dist-packages``` 
 supresses the system to insert this path before PYTHONPATH.
 * To install: ```cd /path/to/qctoolkit && python setup.py install --user```
 * To remove:  Manually remove all created files. List of files can 
