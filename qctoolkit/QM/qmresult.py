@@ -44,10 +44,12 @@ class QMResult(object):
           method_list.append(m)
       except:
         pass
+
     p = re.compile('^[a-z].*$')
     method_list = filter(p.match, method_list)
     for m in method_list:
-      setattr(self, m, getattr(self.data, m))
+      if m not in dir(self):
+        setattr(self, m, getattr(self.data, m))
 
   def __repr__(self):
     return str(self.data)
