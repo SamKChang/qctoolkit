@@ -1,7 +1,9 @@
 import qctoolkit as qtk
 import qmcode.cpmd as cpmd
+import qmcode.espresso as espresso
 import qmcode.vasp as vasp
 import qmcode.nwchem as nwchem
+import qmcode.gaussian as gaussian
 import qmcode.bigdft as bigdft
 import qmcode.gaussian as gaussian
 
@@ -16,11 +18,17 @@ def QMInp(molecule, **kwargs):
   if kwargs['program'].lower() == 'cpmd':
     kwargs['extension'] = 'inp'
     return cpmd.inp(molecule, **kwargs)
+  elif kwargs['program'].lower() == 'espresso':
+    kwargs['extension'] = 'inp'
+    return espresso.inp(molecule, **kwargs)
   elif kwargs['program'].lower() == 'vasp':
     return vasp.inp(molecule, **kwargs)
   elif kwargs['program'].lower() == 'nwchem':
     kwargs['extension'] = 'inp'
     return nwchem.inp(molecule, **kwargs)
+  elif kwargs['program'].lower() == 'gaussian':
+    kwargs['extension'] = 'com'
+    return gaussian.inp(molecule, **kwargs)
   elif kwargs['program'].lower() == 'bigdft':
     kwargs['extension'] = 'yaml'
     return bigdft.inp(molecule, **kwargs)
