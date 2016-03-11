@@ -53,13 +53,16 @@ supresses the system to insert this path before PYTHONPATH.
 * pymol is also used for visualization
 
 **Implemented interface of QM code**:
-* [NWChem](www.nwchem-sw.org/index.php/Main_Page)
-* [horton](theochem.github.io/horton/)
-* [BigDFT](bigdft.org/Wiki/index.php?title=BigDFT_website)
-* [VASP](www.vasp.at)
-* [QuantumESPRESSO](www.quantum-espresso.org/)
-* [CPMD](www.cpmd.org/)
-* [Gaussian](www.gaussian.com/)
+* Gaussian basis:
+- [Gaussian](www.gaussian.com/)
+- [NWChem](www.nwchem-sw.org/index.php/Main_Page)
+- [horton](theochem.github.io/horton/)
+* Plane wave basis:
+- [VASP](www.vasp.at)
+- [QuantumESPRESSO](www.quantum-espresso.org/)
+- [CPMD](www.cpmd.org/)
+* Wavelet basis:
+- [BigDFT](bigdft.org/Wiki/index.php?title=BigDFT_website)
 
 **Required libraries**:
 * OpenMP
