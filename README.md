@@ -40,8 +40,8 @@ supresses the system to insert this path before PYTHONPATH.
 
 **Dependent Python packages**:
 * numpy 1.11.* (for fast indexing operation)
-* pandas 0.16.2
-* matplotlib 1.4.3
+* pandas 0.17.1
+* matplotlib 1.5.1
 * matplotlib.pyplot
 * PyYAML 3.11
 * cython
