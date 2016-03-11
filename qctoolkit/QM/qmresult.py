@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import glob, os, re, copy
 
-class QMResults(object):
+class QMResult(object):
   def __init__(self, pattern, qm_property='Et', **kwargs):
 
     if 'program' not in kwargs:
@@ -35,6 +35,19 @@ class QMResults(object):
       self.names.append(out_file)
       self.qmout.append(qmout)
     self.data = pd.Series(values, index=files)
+
+    method_strlist = [m for m in dir(self.data)]
+    method_list = []
+    for m in method_strlist:
+      try:
+        if callable(getattr(self.data, m)):
+          method_list.append(m)
+      except:
+        pass
+    p = re.compile('^_.*$')
+    method_list = filter(p.match, method_list)
+    for m in method_list:
+      setattr(self, m, getattr(self.data, m))
 
   def __repr__(self):
     return str(self.data)
