@@ -10,7 +10,7 @@ such that the restart files will be written.
 Moreover, ks energy will not be printed 
 if the calculation is not converged.
 Where we simply want to hijack the routine
-to evaluate &lt;psi|H|psi&gl;
+to evaluate &lt;psi|H|psi>
 This behaviour also need to be changed.
 
 The above two modification can be done simply modify the 
