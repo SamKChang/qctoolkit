@@ -202,9 +202,9 @@ class inp(PlanewaveInput):
       if type(setting['save_wf']) is int:
         setting['save_wf'] = [setting['save_wf']]
       wf_list = setting['save_wf']
-      del setting['save_wf']
       max_wf = max(wf_list)
       if max_wf > self.getValenceElectrons() / 2:
+        del setting['save_wf']
         setting['no_subfolder'] = False
         setting['save_restart'] = True
         sub_name = name
@@ -217,6 +217,8 @@ class inp(PlanewaveInput):
         if name:
           sub_name = name + '_02'
         writeInp(sub_name, **setting)
+      else:
+        inp = writeInp(name, **setting)
     elif 'ks_states' in setting and setting['ks_states']\
     and not setting['restart']:
       n_ks = setting['ks_states']

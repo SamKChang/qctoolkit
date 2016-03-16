@@ -42,8 +42,8 @@ def QMOut(out=None, **kwargs):
     return cpmd.out(out)
   elif kwargs['program'].lower() == 'vasp':
     return vasp.out(out)
-  elif kwargs['program'].lower() == 'nwchem':
-    return nwchem.out(out)
+  elif kwargs['program'].lower() == 'espresso':
+    return espresso.out(out)
   elif kwargs['program'].lower() == 'nwchem':
     return nwchem.out(out)
   elif kwargs['program'].lower() == 'gaussian':

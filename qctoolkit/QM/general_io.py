@@ -71,7 +71,6 @@ class InpContent(object):
     """
 
     if self.output:
-
       # process file name
       name = self.file_name
       if self.prefix:

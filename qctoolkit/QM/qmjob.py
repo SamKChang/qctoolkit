@@ -216,8 +216,18 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
   ##################################
   # QuantumESPRESSO IMPLEMENTATION #
   ##################################
-  elif program.lower() == 'pwscf':
-    ut.exit("ERROR! program '%s' not implemented" % program)
+  elif program.lower() == 'espresso':
+    if 'exe' in kwargs:
+      exe = kwargs['exe']
+    else:
+      exe = setting.espresso_exe
+
+    inp_list = sorted(glob.glob('*.inp'))
+    for job in inp_list:
+      out = os.path.splitext(job)[0] + '.out'
+      exestr = "%s < %s" % (exe, job)
+      compute(exestr, out, _threads)
+    qio_out = qio.QMOut(out, program='espresso')
   #########################
   # GAMESS IMPLEMENTATION #
   #########################

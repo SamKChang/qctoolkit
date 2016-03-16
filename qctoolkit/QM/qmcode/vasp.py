@@ -178,7 +178,9 @@ class out(PlanewaveOutput):
   def __init__(self, qmoutXML, **kwargs):
     PlanewaveOutput.__init__(self, qmoutXML, **kwargs)
     if qmoutXML:
+      xml_file = open(qmoutXML)
       tree = ET.parse(qmoutXML)
+      xml_file.close()
       self.xml = tree.getroot()
       self.Et, self.unit = qtk.convE(float(self.xml[-2][-5][1].text),
                                      'eV-Eh', '-')
