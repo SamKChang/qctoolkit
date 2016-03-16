@@ -199,8 +199,6 @@ class out(PlanewaveOutput):
         N_state = ind[mask][0]
         vb = max(self.band[:, N_state])
         cb = min(self.band[:, N_state + 1])
-        print cb 
-        print vb
         self.Eb = cb - vb
 
 # not used by PP object but by QMInp cpmd parts
