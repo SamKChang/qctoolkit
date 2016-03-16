@@ -660,6 +660,8 @@ class Molecule(object):
 
   # tested by qminp
   def sort(self):
+    if len(self.R_scale) != self.N:
+      self.R_scale = copy.deepcopy(self.R)
     new = sorted(zip(self.R, self.R_scale, self.type_list, 
       self.Z, self.string), key=operator.itemgetter(2))
     self.R = np.array([_R for _R, _Rs, _T, _Z, _S in new])
