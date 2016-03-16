@@ -23,6 +23,9 @@ class inp(PlanewaveInput):
   def __init__(self, molecule, **kwargs):
     PlanewaveInput.__init__(self, molecule, **kwargs)
     self.setting.update(**kwargs)
+    if 'pp_theory' not in kwargs:
+      self.setting['pp_theory'] = self.setting['theory']
+    self.backup()
 
     tmp_mol = copy.deepcopy(self.molecule)
     tmp_mol.sort()
@@ -46,11 +49,9 @@ class inp(PlanewaveInput):
       ('ntyp', len(type_index) - 1),
       ('ecutwfc', self.setting['cutoff']),
     ])
-    self.content['electrons'] = odict()
-
-    if 'pp_theory' not in kwargs:
-      self.setting['pp_theory'] = self.setting['theory']
-    self.backup()
+    self.content['electrons'] = odict([
+      ('electron_maxstep', self.setting['scf_step']),
+    ])
 
   def run(self, name=None, **kwargs):
     kwargs['no_subfolder'] = False
@@ -65,6 +66,13 @@ class inp(PlanewaveInput):
     self.setting.update(kwargs)
     if 'root_dir' not in kwargs:
       self.setting['root_dir'] = name
+
+    dft_dict = {
+      'hse06': 'hse',
+      'pbe': 'pbe',
+      'blyp': 'blyp',
+      'lda': 'pz',
+    }
 
     def writeInp(name=None, **setting):
       inp, molecule = \
@@ -84,6 +92,13 @@ class inp(PlanewaveInput):
       if molecule.charge != 0:
         self.content['system']['tot_charge'] = molecule.charge
 
+      if 'theory' in setting:
+        self.content['system']['input_dft'] = \
+          dft_dict[self.setting['theory']]
+
+      if 'scf_step' in setting:
+        self.content['electrons']['electron_maxstep'] =\
+          setting['scf_step']
 
       if 'ks_states' in setting and setting['ks_states']:
         vs = int(round(self.molecule.getValenceElectrons() / 2.0))
@@ -229,7 +244,6 @@ def PPCheck(xc, element, pp_file_str, **kwargs):
     xc = 'pz'
   ne = qtk.n2ve(element)
   saved_pp_path = os.path.join(qtk.setting.espresso_pp, pp_file_str)
-  print saved_pp_path
   if not os.path.exists(saved_pp_path):
     url = os.path.join(qtk.setting.espresso_pp_url, pp_file_str)
     try:
