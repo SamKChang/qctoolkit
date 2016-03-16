@@ -115,8 +115,12 @@ class AlPath(object):
       else:
         string_dict[pp_string].append(ind)
 
+    itr = 1
     for pp_string, ind in string_dict.iteritems():
       mol.setAtoms(ind, string=pp_string)
+      Zn = mol.type_list[ind[0]]
+      mol.setAtoms(ind, element = Zn + str(itr))
+      itr = itr + 1
 
     return mol
 

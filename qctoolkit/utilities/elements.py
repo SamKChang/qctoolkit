@@ -20,12 +20,15 @@ def n2ve(Zn):
     ref = 'VOID'
     qtk.warning("VOID IS USED, symbol V is used for void "+\
                 "instead of vanadium")
-  if ve_list.has_key(Zn):
-    return ve_list[Zn]
-  elif ve_list.has_key(ref):
-    return ve_list[ref]
-  elif ve_list.has_key(tar):
-    return ve_list[tar]
+  match = [m for m in ve_list.iterkeys() if m in Zn]
+  match_tar = [m for m in ve_list.iterkeys() if m in tar]
+  match_ref = [m for m in ve_list.iterkeys() if m in ref]
+  if len(match) == 1:
+    return ve_list[match[0]]
+  elif len(match_ref) == 1:
+    return ve_list[match_ref[0]]
+  elif len(match_tar) == 1:
+    return ve_list[match_tar[0]]
   else:
     qtk.exit("n2ve: element type " + Zn + " is not defined")
 
@@ -43,22 +46,26 @@ def Z2n(Z):
     #return Z
   
 def n2Z(Zn):
-  if z_list.has_key(Zn):
-    return float(z_list[Zn])
+  match = [m for m in z_list.iterkeys() if m in Zn]
+  if len(match) == 1:
+    return float(z_list[match[0]])
   else:
+    print Zn, 
     qtk.warning("n2Z: element type " + str(Zn) +\
                 " is not defined, returning nuclear charge 0")
     return 0
 
 def n2Z0(Zn):
-  if z_list.has_key(Zn):
-    return z_list[Zn]
+  match = [m for m in z_list.iterkeys() if m in Zn]
+  if len(match) == 1:
+    return float(z_list[match[0]])
   else:
     return 0
   
 def n2m(Zn):
-  if mass_list.has_key(Zn):
-    return mass_list[Zn]
+  match = [m for m in mass_list.iterkeys() if m in Zn]
+  if len(match) == 1:
+    return float(mass_list[match[0]])
   else:
     qtk.exit("n2Z: element type " + str(Zn) + " is not defined")
 

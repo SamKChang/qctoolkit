@@ -525,13 +525,15 @@ class Molecule(object):
         if 'element' in kwargs:
           if type(kwargs['element']) is str:
             Z = qtk.n2Z(kwargs['element'])
+            Zn = kwargs['element']
           elif type(kwargs['element']) is int\
           or type(kwargs['element']) is float:
             Z = kwargs['element']
+            Zn = qtk.Z2n(Z)
         elif 'Z' in kwargs:
           Z = kwargs['Z']
         self.Z[i] = Z
-        self.type_list[i] = qtk.Z2n(Z)
+        self.type_list[i] = Zn
     if 'string' in kwargs:
       minZ = min(min(self.Z)-1, 0)
       for i in index:
@@ -658,22 +660,23 @@ class Molecule(object):
 
   # tested by qminp
   def sort(self):
-    new = sorted(zip(self.R, self.type_list, self.Z, self.string), 
-                 key=operator.itemgetter(2))
-    self.R = np.array([_R for _R, _T, _Z, _S in new])
-    self.type_list = np.array([_T for _R, _T, _Z, _S in new])
-    self.Z = np.array([_Z for _R, _T, _Z, _S in new])
-    self.string = np.array([_S for _R, _T, _Z, _S in new])
-   
-    index_a = np.insert(self.Z, 0, 0)
-    index_b = np.insert(self.Z, len(self.Z), 0)
-    self.index = np.where((index_a != index_b))[0]
-    if self.index[0] != 0:
-      self.index = np.insert(self.index, 0, 0)
-    if index_a[-1] == index_b[-1] and index_a[-1] == 0:
-      self.index = sorted(np.insert(self.index, \
-                                    0, len(self.index)))
-  # tested by qminp
+    new = sorted(zip(self.R, self.R_scale, self.type_list, 
+      self.Z, self.string), key=operator.itemgetter(2))
+    self.R = np.array([_R for _R, _Rs, _T, _Z, _S in new])
+    self.R_scale = np.array([_Rs for _R, _Rs, _T, _Z, _S in new])
+    self.type_list = np.array([_T for _R, _Rs, _T, _Z, _S in new])
+    self.Z = np.array([_Z for _R, _Rs, _T, _Z, _S in new])
+    self.string = np.array([_S for _R, _Rs, _T, _Z, _S in new])
+
+    type_list = []
+    self.index = []
+    for i in range(self.N):
+      Zn = self.type_list[i]
+      if Zn not in type_list:
+        type_list.append(Zn)
+        self.index.append(i)
+    self.index.append(self.N)
+
   def sort_coord(self, **kwargs):
     if 'order' in kwargs:
       order = kwargs['order']

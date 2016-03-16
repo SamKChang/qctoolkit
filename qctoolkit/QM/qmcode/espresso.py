@@ -11,6 +11,9 @@ import urllib2
 import glob
 import universal as univ
 import xml.etree.ElementTree as ET
+from cpmd import alchemyPP
+#from cpmd import PPCheck as cpCheck
+#from cpmd import mutatePP
 
 class inp(PlanewaveInput):
   """
@@ -120,16 +123,17 @@ class inp(PlanewaveInput):
       inp.write("ATOMIC_SPECIES\n")
       for a in range(len(type_index)-1):
         type_n = type_index[a+1] - type_index[a]
-        PPStr = PPString(self, molecule, type_index[a], type_n, inp)
+        PPStr = PPString(self, molecule, 
+          type_index[a], type_n, inp)
         mass = qtk.n2m(type_list[type_index[a]])
-        inp.write(' %2s %7.3f %s\n' % \
+        inp.write(' %-3s % 6.3f %s\n' % \
           (type_list[type_index[a]], mass, PPStr))
         pp_files.append(PPStr)
       inp.write("\n")
 
       inp.write("ATOMIC_POSITIONS angstrom\n")
       for a in range(len(type_list)):
-        inp.write(' %2s' % type_list[a])
+        inp.write(' %-3s' % type_list[a])
         for i in range(3):
           inp.write(' % 12.8f' % molecule.R[a, i])
         inp.write("\n")
@@ -152,7 +156,8 @@ class inp(PlanewaveInput):
   
       for pp in pp_files:
         pp_file = os.path.join(qtk.setting.espresso_pp, pp)
-        inp.dependent_files.append(pp_file)
+        if pp not in pp_files:
+          inp.dependent_files.append(pp_file)
 
       if 'no_cleanup' in setting and setting['no_cleanup']:
         inp.close(no_cleanup=True)
@@ -166,6 +171,45 @@ class inp(PlanewaveInput):
 
     return inp
 
+def PPString(inp, mol, i, n, outFile):
+  """
+  append PP file names to inp.pp_files
+  """
+  alchemy = re.compile('^\w*2\w*_\d\d\d$')
+  ppstr = re.sub('\*', '', mol.string[i])
+  if ppstr:
+    PPStr = ppstr
+    pp_root, pp_ext = os.path.split(ppstr)
+  else:
+    PPStr = mol.type_list[i] + '.' + \
+            inp.setting['pp_theory'].lower() + '-hgh.UPF'
+  xc = inp.setting['pp_theory'].lower()
+  if not mol.string[i]:
+    PPCheck(xc, mol.type_list[i].title(), PPStr)
+  elif alchemy.match(mol.string[i]):
+    alchemyPP(xc, PPStr)
+  pp_file = os.path.join(qtk.setting.espresso_pp, PPStr)
+
+  return PPStr
+
+def PPCheck(xc, element, pp_file_str, **kwargs):
+  if xc == 'lda':
+    xc = 'pz'
+  ne = qtk.n2ve(element)
+  saved_pp_path = os.path.join(qtk.setting.espresso_pp, pp_file_str)
+  if not os.path.exists(saved_pp_path):
+    url = os.path.join(qtk.setting.espresso_pp_url, pp_file_str)
+    try:
+      pp_content = urllib2.urlopen(url).read()
+      qtk.report('', 'pp file %s not found in %s. ' \
+                 % (pp_file_str, qtk.setting.espresso_pp) + \
+                 'but found in espresso page, download now...')
+      new_pp_file = open(saved_pp_path, 'w')
+      new_pp_file.write(pp_content)
+      new_pp_file.close()
+    except:
+      qtk.warning('something wrong with pseudopotential')
+
 class out(PlanewaveOutput):
   def __init__(self, qmout, **kwargs):
     out_file = open(qmout)
@@ -177,6 +221,7 @@ class out(PlanewaveOutput):
     self.Et, self.unit = qtk.convE(Et, 'Ry-Eh')
     out_folder = os.path.split(os.path.abspath(qmout))[0]
     save = glob.glob(os.path.join(out_folder, '*.save'))
+    # extract band structure from xml files
     if save:
       save = save[0]
       data_xml = os.path.join(save, 'data-file.xml')
@@ -186,6 +231,7 @@ class out(PlanewaveOutput):
       self.xml = tree.getroot()
       kpoints = []
       band = []
+      # access data for each kpoint
       for k in self.xml[-2]:
         k_str = k[0].text
         coord = [float(c) for c in k_str.split()]
@@ -215,85 +261,3 @@ class out(PlanewaveOutput):
         vb = max(self.band[:, N_state])
         cb = min(self.band[:, N_state + 1])
         self.Eb = cb - vb
-
-# not used by PP object but by QMInp cpmd parts
-def PPString(inp, mol, i, n, outFile):
-  """
-  append PP file names to inp.pp_files
-  """
-  alchemy = re.compile('^\w*2\w*_\d\d\d$')
-  ppstr = re.sub('\*', '', mol.string[i])
-  if ppstr:
-    PPStr = '*' + ppstr
-    pp_root, pp_ext = os.path.split(ppstr)
-  else:
-    PPStr = mol.type_list[i] + '.' + \
-            inp.setting['pp_theory'].lower() + '-hgh.UPF'
-  xc = inp.setting['pp_theory'].lower()
-  if not mol.string[i]:
-    PPCheck(xc, mol.type_list[i].title(), PPStr)
-  elif alchemy.match(mol.string[i]):
-    alchemyPP(xc, PPStr)
-  pp_file = os.path.join(qtk.setting.espresso_pp, PPStr)
-
-  return PPStr
-
-# not used by PP object but by QMInp cpmd parts
-def PPCheck(xc, element, pp_file_str, **kwargs):
-  if xc == 'lda':
-    xc = 'pz'
-  ne = qtk.n2ve(element)
-  saved_pp_path = os.path.join(qtk.setting.espresso_pp, pp_file_str)
-  if not os.path.exists(saved_pp_path):
-    url = os.path.join(qtk.setting.espresso_pp_url, pp_file_str)
-    try:
-      pp_content = urllib2.urlopen(url).read()
-      qtk.report('', 'pp file %s not found in %s. ' \
-                 % (pp_file_str, qtk.setting.espresso_pp) + \
-                 'but found in espresso page, download now...')
-      new_pp_file = open(saved_pp_path, 'w')
-      new_pp_file.write(pp_content)
-      new_pp_file.close()
-    except:
-      qtk.warning('something wrong with pseudopotential')
-
-def alchemyPP(xc, pp_file_str):
-  pp_path = os.path.join(qtk.setting.cpmd_pp, pp_file_str)
-  if not os.path.exists(pp_path):
-    root, _ = os.path.splitext(pp_file_str)
-    element_str = re.sub('_.*', '', root)
-    fraction = float(re.sub('.*_', '', root))/100
-    element1 = re.sub('2.*', '', element_str)
-    element2 = re.sub('.*2', '', element_str)
-    str1 = element1 + "_q" + str(qtk.n2ve(element1)) +\
-           "_" + xc + '.psp'
-    str2 = element2 + "_q" + str(qtk.n2ve(element2)) +\
-           "_" + xc + '.psp'
-    pp1 = PP(PPCheck(xc, element1, str1))
-    pp2 = PP(PPCheck(xc, element2, str2))
-    pp = mutatePP(pp1, pp2, fraction)
-    pp.write(pp_path)
-
-def mutatePP(pp1, pp2, fraction):
-  if type(pp1) is str:
-    if pp1.upper() == 'VOID':
-      pp1 = PP()
-    else:
-      pp1 = PP(pp1)
-  if type(pp2) is str:
-    if pp2.upper() == 'VOID':
-      pp2 = PP()
-    else:
-      pp2 = PP(pp2)
-  pp1 = pp1*(1-fraction)
-  pp2 = pp2*fraction
-  pp = pp1 + pp2
-  if pp1.param['Z']*pp2.param['Z'] > 0:
-    if fraction > 0.5:
-      pp.param['Z'] = pp2.param['Z']
-  else:
-    if pp1.param['Z'] == 0:
-      pp.param['Z'] = pp2.param['Z']
-    else:
-      pp.param['Z'] = pp1.param['Z']
-  return pp
