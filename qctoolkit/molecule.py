@@ -41,6 +41,7 @@ class Molecule(object):
       setChargeMultiplicity(c, m) --- set charge multiplicity to c, m
       setCharge(c) --- set charge to c, under same multiplicity
       getValenceElectrons() --- return number of valence electrons
+
     geometry operation:
       distance(i, j) --- return distance (angstrom) between 
                          atom i and j
@@ -53,7 +54,8 @@ class Molecule(object):
                               2=z, or a 3D vector
       alignSVD(mol, ref_list=[], tar_list=[]) --- align to mol according
                                                   to SVD minimization
-                                                  default ref_list = tar_list = all
+                                                  default ref_list = 
+                                                          tar_list = all
       stretch([i,j], [s,t], d) --- stretch atom i,j along direction of
                                    atom s,t to distance d
       rotate() ---
@@ -63,6 +65,7 @@ class Molecule(object):
       getCenterOfMass() --- return 3x1 array of center of mass
       principalAxes() --- return eigenvalue/vectors of 
                           momentum of inertia tensor
+
     modify molecule:
       addAtoms(list_str, list_coord) --- add atoms in list_str with 
                                          coordinates list_coord
@@ -134,13 +137,13 @@ class Molecule(object):
 
   def view(self, name=None):
     tmp = copy.deepcopy(self)
-    if self.scale:
-      try:
-        for i in range(3):
-          tmp.R[:,i] = tmp.R[:,i] * tmp.celldm[i]\
-                       / float(tmp.scale[i])
-      except AttributeError:
-        pass
+#    if self.scale:
+#      try:
+#        for i in range(3):
+#          tmp.R[:,i] = tmp.R[:,i] * tmp.celldm[i]\
+#                       / float(tmp.scale[i])
+#      except AttributeError:
+#        pass
 
     if qtk.imported('pymol'):
       qtk.report("Molecule", "initializing pymol...", color=None)
@@ -753,22 +756,34 @@ class Molecule(object):
       angle_sum = sum([abs(entry) for entry in angle])
       if angle_sum == 0:
         self.box = self.celldm[:3]
-        
+
+      self.R_scale = copy.deepcopy(self.R)
       if self.scale:
-        self.R_scale = copy.deepcopy(self.R)
-        angles = self.celldm[3:]
-        lattice = [self.celldm[i]/self.scale[i] for i in range(3)]
-        lattice.extend(angles)
-        fm = qtk.fractionalMatrix(lattice)
-        self.R = np.dot(fm, self.R.T).T
+        self.R = qtk.fractional2xyz(self.R, self.celldm, self.scale)
       else:
-        self.R_scale = copy.deepcopy(self.R)
-        angles = self.celldm[3:]
-        lattice = [self.celldm[i] for i in range(3)]
-        lattice.extend(angles)
-        fm = qtk.fractionalMatrix(lattice)
-        self.R = np.dot(fm, self.R.T).T
-        self.scale = [ceil(max(self.R[:, i])/lattice[i]) for i in range(3)]
+        self.scale = [ceil(max(self.R[:, i])/lattice[i]) \
+          for i in range(3)]
+        self.R = qtk.fractional2xyz(self.R, self.celldm)
+#      self.periodic = True
+#      angle = self.celldm[3:]
+#      angle_sum = sum([abs(entry) for entry in angle])
+#      if angle_sum == 0:
+#        self.box = self.celldm[:3]
+#        
+#      if self.scale:
+#        self.R_scale = copy.deepcopy(self.R)
+#        angles = self.celldm[3:]
+#        lattice = [self.celldm[i]/self.scale[i] for i in range(3)]
+#        lattice.extend(angles)
+#        fm = qtk.fractionalMatrix(lattice)
+#        self.R = np.dot(fm, self.R.T).T
+#      else:
+#        self.R_scale = copy.deepcopy(self.R)
+#        angles = self.celldm[3:]
+#        lattice = [self.celldm[i] for i in range(3)]
+#        lattice.extend(angles)
+#        fm = qtk.fractionalMatrix(lattice)
+#        self.R = np.dot(fm, self.R.T).T
     
 
   # tested

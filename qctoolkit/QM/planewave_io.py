@@ -16,16 +16,11 @@ class PlanewaveInput(GenericQMInput):
 
     self.setting.update(kwargs)
 
-    #if 'periodic' not in kwargs:
-    #  self.setting['periodic'] = True
-    #if 'symmetry' not in kwargs and self.setting['periodic']:
-    #  self.setting['symmetry'] = 'orthorhombic'
     if 'cutoff' not in kwargs:
       self.setting['cutoff'] = 100
     if not self.setting['periodic'] and 'isolation' not in kwargs:
       self.setting['isolation'] = 'mt'
     self.pp_files = []
-    #self.pp_path = ''
     if 'periodic' in self.setting and self.setting['periodic']:
       self.celldm2lattice()
 
@@ -36,21 +31,12 @@ class PlanewaveInput(GenericQMInput):
     if 'scale' in self.setting:
       sc = self.setting['scale']
     else:
-      sc = False
-    angles = cd[3:]
-    if sc:
-      lattice = [cd[i]/sc[i] for i in range(3)]
-    else:
-      lattice = [cd[i] for i in range(3)]
-    lattice.extend(angles)
-    fm = qtk.fractionalMatrix(lattice)
-    self.setting['lattice'] = np.dot(fm, np.eye(3)).T
+      sc = [1.0 for i in range(3)]
+    self.setting['lattice'] = qtk.celldm2lattice(cd, scale=sc)
 
   def write(self, name=None, **kwargs):
     if self.setting['periodic']:
       self.celldm2lattice()
-    print self.setting['lattice']
-    print 'yoyoyo'
     inp, molecule = \
       super(GenericQMInput, self).write(name, **setting)
     return inp, molecule

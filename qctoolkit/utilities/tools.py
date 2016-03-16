@@ -38,6 +38,40 @@ def fractionalMatrix(celldm_list):
     ]
   )
 
+def unscaledCelldm(celldm, scale):
+  celldm_new = [celldm[i]/scale[i] for i in range(3)]
+  angle = celldm[3:]
+  celldm_new.extend(angle)
+  return celldm_new
+  
+def lattice2celldm(lattice):
+  celldm = [round(np.linalg.norm(a), 8) for a in lattice]
+  for i in range(3):
+    j = (i + 1) % 3
+    k = (i + 2) % 3
+    vj = lattice[j] / celldm[j]
+    vk = lattice[k] / celldm[k]
+    celldm.append(round(np.dot(vj, vk), 8))
+  return celldm
+
+def celldm2lattice(celldm, **kwargs):
+  scale = [1.0 for i in range(3)]
+  if 'scale' in kwargs:
+    scale = kwargs['scale']
+  celldm = unscaledCelldm(celldm, scale)
+  fm = fractionalMatrix(celldm)
+  return np.dot(fm, np.eye(3)).T
+
+def fractional2xyz(R_scale, celldm, scale=[1,1,1]):
+  celldm = unscaledCelldm(celldm, scale)
+  fm = fractionalMatrix(celldm)
+  return np.dot(fm, R_scale.T).T
+
+def xyz2fractional(R, celldm, scale=[1,1,1]):
+  celldm = unscaledCelldm(celldm, scale)
+  fm = fractionalMatrix(celldm)
+  return np.dot(np.linalg.inv(fm), R.T).T
+
 def convE(source, units, separator=None):
   def returnError(ioStr, unitStr):
     msg = 'supported units are:\n'
