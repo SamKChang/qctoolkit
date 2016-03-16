@@ -5,6 +5,10 @@ import universal as univ
 from aljob import mutatePP
 
 class AlPath(object):
+  """
+  alchemical path object to interpolate pseudo potentail and 
+  perform lambda scan of E(lambda)
+  """
   def __init__(self, ref, tar, **kwargs):
     self.setting = kwargs
     if 'pp_string' not in kwargs:
@@ -99,13 +103,21 @@ class AlPath(object):
     mol = self.ref.molecule.copy()
     mol.name = self.name + lambda_string
     N = mol.N
+    string_dict = {}
     for i in range(len(self.mutation['ind'])):
       if i >= N:
         mol.addAtoms(self.mutation['tar'][i], 
                      self.mutation['crd'][i])
       ind = self.mutation['ind'][i]
       pp_string = self.mutation['string'][i] + lambda_string
+      if pp_string not in string_dict:
+        string_dict[pp_string] = [ind]
+      else:
+        string_dict[pp_string].append(ind)
+
+    for pp_string, ind in string_dict.iteritems():
       mol.setAtoms(ind, string=pp_string)
+
     return mol
 
   def write(self, name=None, **kwargs):
