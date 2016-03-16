@@ -5,7 +5,6 @@ from QM.qmresult import *
 from alchemy.aljob import *
 from alchemy.alpath import *
 from QM.pseudo.pseudo import *
-from analysis import *
 from utilities import *
 from setting import *
 from ccs.ccs import CCS
