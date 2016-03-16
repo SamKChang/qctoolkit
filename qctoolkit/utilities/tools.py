@@ -50,6 +50,7 @@ def convE(source, units, separator=None):
     'ha': 'Eh',
     'eh': 'Eh',
     'hartree': 'Eh',
+    'ry': 'Ry',
     'j': 'J',
     'joule': 'J',
     'kj/mol': 'kJ/mol',
@@ -70,7 +71,8 @@ def convE(source, units, separator=None):
   }
  
   Eh = {
-    'Eh': 1,
+    'Eh': 1.0,
+    'Ry': 2.0,
     'eV': 27.211396132,
     'kcal/mol': 627.509469,
     'cmInv': 219474.6313705,

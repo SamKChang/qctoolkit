@@ -5,9 +5,12 @@ import sys, os, re, copy, shutil
 import qctoolkit.QM.qmjob as qmjob
 from qctoolkit.QM.pseudo.pseudo import PP
 import pkg_resources
+from collections import OrderedDict as odict
 import numpy as np
 import urllib2
+import glob
 import universal as univ
+import xml.etree.ElementTree as ET
 
 class inp(PlanewaveInput):
   """
@@ -20,10 +23,31 @@ class inp(PlanewaveInput):
   def __init__(self, molecule, **kwargs):
     PlanewaveInput.__init__(self, molecule, **kwargs)
     self.setting.update(**kwargs)
-    if 'ks_states' in kwargs:
-      self.setting['mode'] = kwargs['ks_states']
-    if 'pp_type' not in kwargs:
-      self.setting['pp_type'] = 'Goedecker'
+
+    tmp_mol = copy.deepcopy(self.molecule)
+    tmp_mol.sort()
+    type_index = tmp_mol.index
+    type_list = tmp_mol.type_list
+
+    mode_dict = {
+      'single_point': 'scf',
+    }
+
+    self.content = odict()
+
+    mode = mode_dict[self.setting['mode']]
+    self.content['control'] = odict([
+      ('calculation', mode),
+      ('pseudo_dir', './'),
+    ])
+    self.content['system'] = odict([
+      ('ibrav', 0),
+      ('nat', self.molecule.N),
+      ('ntyp', len(type_index) - 1),
+      ('ecutwfc', self.setting['cutoff']),
+    ])
+    self.content['electrons'] = odict()
+
     if 'pp_theory' not in kwargs:
       self.setting['pp_theory'] = self.setting['theory']
     self.backup()
@@ -42,53 +66,50 @@ class inp(PlanewaveInput):
     if 'root_dir' not in kwargs:
       self.setting['root_dir'] = name
 
-    mode_dict = {
-                  'single_point': 'scf'
-                }
-
-    self.molecule.sort()
-    type_index = self.molecule.index
-    type_list = self.molecule.type_list
-
     def writeInp(name=None, **setting):
       inp, molecule = \
         super(PlanewaveInput, self).write(name, **setting)
+
+      molecule.sort()
+      type_index = molecule.index
+      type_list = molecule.type_list
+      pp_files = []
   
-      mode = mode_dict[setting['mode']]
+      if 'restart' in setting and setting['restart']:
+        self.content['control']['restart_mode'] = 'restart'
 
-      inp.write("&control\n")
-      inp.write(" calculation = '%s',\n" % mode)
-      inp.write(" pseudo_dir = './',\n")
-      if setting['restart']:
-        pass
-      else:
-        inp.write(" restart_mode = 'from_scratch',\n")
-      inp.write(" outdir = 'out',\n")
-      inp.write("/\n")
-
-      inp.write("&system\n")
       if not setting['periodic']:
-        inp.write(" assume_isolated = 'mt',\n")
-      inp.write(" ibrav = 0,\n")
-      inp.write(" nat = %d,\n" % molecule.N)
-      inp.write(" ntyp = %d,\n" % (len(type_index) - 1))
-      inp.write(" ecutwfc = %.1f,\n" % setting['cutoff'])
-      inp.write(" nosym = .true.,\n")
-      inp.write(" noinv = .true.,\n")
-      if molecule.charge != 0:
-        inp.write(" tot_charge = %.2f,\n" % molecule.charge)
-      inp.write("/\n")
+        self.content['system']['assume_isolated'] = 'mt'
 
-      inp.write("&electrons\n")
-      inp.write(" mixing_beta = 0.7,\n")
-      inp.write(" diagonalization = 'david',\n")
-      inp.write(" conv_thr =  1.0d-9,\n")
-      inp.write("/\n")
+      if molecule.charge != 0:
+        self.content['system']['tot_charge'] = molecule.charge
+
+
+      if 'ks_states' in setting and setting['ks_states']:
+        vs = int(round(self.molecule.getValenceElectrons() / 2.0))
+        self.content['system']['nbnd'] = setting['ks_states'] + vs
+
+      for section_key in self.content.iterkeys():
+        section = '&' + section_key + '\n'
+        inp.write(section)
+        for key, value in self.content[section_key].iteritems():
+          if type(value) is str:
+            entry = " %s = '%s',\n" % (key, value)
+          elif type(value) is int:
+            entry = ' %s = %d,\n' % (key, value)
+          elif type(value) is float:
+            entry = ' %s = %14.8E,\n' % (key, value)
+          inp.write(entry)
+        inp.write('/\n')
 
       inp.write("ATOMIC_SPECIES\n")
       for a in range(len(type_index)-1):
-        inp.write(' %2s %8.3f %s\n' % \
-          (type_list[type_index[a]], 1.0, 'pp_file'))
+        type_n = type_index[a+1] - type_index[a]
+        PPStr = PPString(self, molecule, type_index[a], type_n, inp)
+        mass = qtk.n2m(type_list[type_index[a]])
+        inp.write(' %2s %7.3f %s\n' % \
+          (type_list[type_index[a]], mass, PPStr))
+        pp_files.append(PPStr)
       inp.write("\n")
 
       inp.write("ATOMIC_POSITIONS angstrom\n")
@@ -99,8 +120,13 @@ class inp(PlanewaveInput):
         inp.write("\n")
       inp.write("\n")
 
-      inp.write("K_POINTS gamma\n")
-      inp.write("\n")
+      if 'kmesh' in setting and setting['kmesh']:
+        inp.write("K_POINTS automatic\n")
+        for k in setting['kmesh']:
+          inp.write(" %d" % k)
+        for s in range(3):
+          inp.write(" 0")
+        inp.write('\n\n')
 
       inp.write("CELL_PARAMETERS angstrom\n")
       lattice_vec = self.setting['lattice']
@@ -109,18 +135,73 @@ class inp(PlanewaveInput):
           inp.write(' %9.6f' % component)
         inp.write('\n')
   
-      for pp in self.pp_files:
-        pp_file = os.path.join(qtk.setting.cpmd_pp, pp)
+      for pp in pp_files:
+        pp_file = os.path.join(qtk.setting.espresso_pp, pp)
         inp.dependent_files.append(pp_file)
 
-      inp.close()
+      if 'no_cleanup' in setting and setting['no_cleanup']:
+        inp.close(no_cleanup=True)
+      else:
+        inp.close()
+
+      return inp
 
     setting = copy.deepcopy(self.setting)
-    writeInp(name, **setting)
+    inp = writeInp(name, **setting)
+
+    return inp
 
 class out(PlanewaveOutput):
   def __init__(self, qmout, **kwargs):
-    pass
+    out_file = open(qmout)
+    data = out_file.readlines()
+    out_file.close()
+    Et_pattern = re.compile("^!.*total energy.*$")
+    Et_str = filter(Et_pattern.match, data)[0]
+    Et = float(Et_str.split()[-2])
+    self.Et, self.unit = qtk.convE(Et, 'Ry-Eh')
+    out_folder = os.path.split(os.path.abspath(qmout))[0]
+    save = glob.glob(os.path.join(out_folder, '*.save'))
+    if save:
+      save = save[0]
+      data_xml = os.path.join(save, 'data-file.xml')
+      xml_file = open(data_xml)
+      tree = ET.parse(xml_file)
+      xml_file.close()
+      self.xml = tree.getroot()
+      kpoints = []
+      band = []
+      for k in self.xml[-2]:
+        k_str = k[0].text
+        coord = [float(c) for c in k_str.split()]
+        weight = float(k[1].text.split()[0])
+        coord.append(weight)
+        kpoints.append(coord)
+        ev_file = os.path.join(save, k[2].attrib['iotk_link'])
+        k_xml_file = open(ev_file)
+        k_xml = ET.parse(k_xml_file)
+        k_xml_file.close()
+        ev_k = k_xml.getroot()
+        ev_str = ev_k[2].text.split()
+        ev = [qtk.convE(float(entry), 'Eh-eV')[0] for entry in ev_str]
+        band.append(ev)
+        occ_str = ev_k[3].text.split()
+        occ = [float(entry) for entry in occ_str]
+      self.kpoints = np.array(kpoints)
+      self.mo_eigenvalues = copy.deepcopy(band[0])
+      self.band = np.array(band)
+      self.occupation = occ
+      diff = np.diff(occ)
+      pos = diff[np.where(abs(diff) > 0.5)]
+      mask = np.in1d(diff, pos)
+      ind = np.array(range(len(diff)))
+      if len(ind[mask]) > 0:
+        N_state = ind[mask][0]
+        vb = max(self.band[:, N_state])
+        cb = min(self.band[:, N_state + 1])
+        print cb 
+        print vb
+        self.Eb = cb - vb
 
 # not used by PP object but by QMInp cpmd parts
 def PPString(inp, mol, i, n, outFile):
@@ -132,61 +213,37 @@ def PPString(inp, mol, i, n, outFile):
   if ppstr:
     PPStr = '*' + ppstr
     pp_root, pp_ext = os.path.split(ppstr)
-    if pp_ext != 'psp':
-      PPStr = PPStr + '.psp'
-  elif 'vdw' in inp.setting\
-  and inp.setting['vdw'].lower == 'dcacp':
-    # PPStr: Element_qve_dcacp_theory.psp
-    PPStr = '*'+mol.type_list[i] + '_dcacp_' +\
-      inp.setting['pp_theory'].lower() + '.psp'
   else:
-    # PPStr: Element_qve_theory.psp
-    element = mol.type_list[i]
-    if 'valence_electrons' in inp.setting\
-    and element in inp.setting['valence_electrons']:
-      nve = inp.setting['valence_electrons'][element]
-    else:
-      nve = qtk.n2ve(element)
-      
-    PPStr = '*'+mol.type_list[i] + '_q%d_' % nve +\
-      inp.setting['pp_theory'].lower() + '.psp'
-  outFile.write(PPStr + '\n')
-  pp_file_str = re.sub('\*', '', PPStr)
+    PPStr = mol.type_list[i] + '.' + \
+            inp.setting['pp_theory'].lower() + '-hgh.UPF'
   xc = inp.setting['pp_theory'].lower()
   if not mol.string[i]:
-    PPCheck(xc, mol.type_list[i].title(), pp_file_str)
+    PPCheck(xc, mol.type_list[i].title(), PPStr)
   elif alchemy.match(mol.string[i]):
-    alchemyPP(xc, pp_file_str)
-  pp_file = os.path.join(qtk.setting.cpmd_pp, pp_file_str)
+    alchemyPP(xc, PPStr)
+  pp_file = os.path.join(qtk.setting.espresso_pp, PPStr)
 
-  if inp.setting['pp_type'].title() == 'Goedecker':
-    lmax = 'F'
-  outFile.write(' LMAX=%s\n %3d\n' % (lmax, n))
-  inp.pp_files.append(re.sub('\*', '', PPStr))
+  return PPStr
 
 # not used by PP object but by QMInp cpmd parts
 def PPCheck(xc, element, pp_file_str, **kwargs):
   if xc == 'lda':
-    xc = 'pade'
+    xc = 'pz'
   ne = qtk.n2ve(element)
-  try:
-    pp_path = os.path.join(xc, element + '-q' + str(qtk.n2ve(element)))
-    pp_file = os.path.join(qtk.setting.cpmd_pp_url, pp_path)
-    saved_pp_path = os.path.join(qtk.setting.cpmd_pp, pp_file_str)
-    if not os.path.exists(saved_pp_path):
-      if pp_file:
-        new_pp = os.path.join(qtk.setting.cpmd_pp, pp_file_str)
-        pp_content = urllib2.urlopen(pp_file).read()
-        qtk.report('', 'pp file %s not found in %s. ' \
-                   % (pp_file_str, qtk.setting.cpmd_pp) + \
-                   'but found in cp2k page, download now...')
-        new_pp_file = open(new_pp, 'w')
-        new_pp_file.write(pp_content)
-        new_pp_file.close()
-        pp_file = new_pp
-    return saved_pp_path
-  except:
-    qtk.warning('something wrong with pseudopotential')
+  saved_pp_path = os.path.join(qtk.setting.espresso_pp, pp_file_str)
+  print saved_pp_path
+  if not os.path.exists(saved_pp_path):
+    url = os.path.join(qtk.setting.espresso_pp_url, pp_file_str)
+    try:
+      pp_content = urllib2.urlopen(url).read()
+      qtk.report('', 'pp file %s not found in %s. ' \
+                 % (pp_file_str, qtk.setting.espresso_pp) + \
+                 'but found in espresso page, download now...')
+      new_pp_file = open(saved_pp_path, 'w')
+      new_pp_file.write(pp_content)
+      new_pp_file.close()
+    except:
+      qtk.warning('something wrong with pseudopotential')
 
 def alchemyPP(xc, pp_file_str):
   pp_path = os.path.join(qtk.setting.cpmd_pp, pp_file_str)
