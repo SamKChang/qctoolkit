@@ -8,6 +8,7 @@ from QM.pseudo.pseudo import *
 from utilities import *
 from setting import *
 from ccs.ccs import CCS
+from data.elements.element_list import ELEMENTS as element
 import MD
 import ML
 import ccs
