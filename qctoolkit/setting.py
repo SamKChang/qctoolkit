@@ -10,6 +10,7 @@ memory = float(virtual_memory().total)/10**9
 qmcode = 'cpmd'
 mdcode = 'cpmd'
 run_qmtest = False
+download_pp = True
 #run_qmtest = True
 
 # geometry setting

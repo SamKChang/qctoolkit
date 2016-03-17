@@ -13,7 +13,7 @@ def PPCheck(xc, pp_theory, pp_path, element):
   
   name = '%s_%s_%s' % (element, xc, pp_theory)
   pp_file = os.path.join(pp_path, name)
-  if not os.path.exists(pp_file):
+  if not os.path.exists(pp_file) and qtk.setting.download_pp:
     if pp_theory != 'nlcc':
       url_root = qtk.setting.bigdft_pp_url
       element_str = element + '-q%d' % qtk.n2ve(element)

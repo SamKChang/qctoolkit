@@ -355,7 +355,7 @@ def PPCheck(xc, element, pp_file_str, **kwargs):
     pp_path = os.path.join(xc, element + '-q' + str(qtk.n2ve(element)))
     pp_file = os.path.join(qtk.setting.cpmd_pp_url, pp_path)
     saved_pp_path = os.path.join(qtk.setting.cpmd_pp, pp_file_str)
-    if not os.path.exists(saved_pp_path):
+    if not os.path.exists(saved_pp_path) and qtk.setting.download_pp:
       if pp_file:
         new_pp = os.path.join(qtk.setting.cpmd_pp, pp_file_str)
         pp_content = urllib2.urlopen(pp_file).read()
@@ -386,6 +386,7 @@ def alchemyPP(xc, pp_file_str):
     pp2 = PP(PPCheck(xc, element2, str2))
     pp = mutatePP(pp1, pp2, fraction)
     pp.write(pp_path)
+  return os.path.abspath(pp_path)
 
 def mutatePP(pp1, pp2, fraction):
   if type(pp1) is str:

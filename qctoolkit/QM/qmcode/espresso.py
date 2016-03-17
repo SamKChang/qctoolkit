@@ -12,6 +12,7 @@ import glob
 import universal as univ
 import xml.etree.ElementTree as ET
 from cpmd import alchemyPP
+import subprocess as sp
 #from cpmd import PPCheck as cpCheck
 #from cpmd import mutatePP
 
@@ -155,9 +156,11 @@ class inp(PlanewaveInput):
         inp.write('\n')
   
       for pp in pp_files:
+        print pp
         pp_file = os.path.join(qtk.setting.espresso_pp, pp)
-        if pp not in pp_files:
+        if pp not in inp.dependent_files:
           inp.dependent_files.append(pp_file)
+      print inp.dependent_files
 
       if 'no_cleanup' in setting and setting['no_cleanup']:
         inp.close(no_cleanup=True)
@@ -187,8 +190,15 @@ def PPString(inp, mol, i, n, outFile):
   if not mol.string[i]:
     PPCheck(xc, mol.type_list[i].title(), PPStr)
   elif alchemy.match(mol.string[i]):
-    alchemyPP(xc, PPStr)
-  pp_file = os.path.join(qtk.setting.espresso_pp, PPStr)
+    cpmd_pp = alchemyPP(xc, PPStr)
+    qtk.report('espresso', "rewrite Goedecker's PP to UPF")
+    conv_pp = sp.Popen("%s %s" % \
+      (qtk.setting.espresso_cpmd2upf_exe, cpmd_pp),
+      shell=True)
+    conv_pp.wait()
+    new_pp1 = cpmd_pp + '.UPF'
+    shutil.move(new_pp1, qtk.setting.espresso_pp)
+    PPStr = PPStr + '.UPF'
 
   return PPStr
 
@@ -197,7 +207,7 @@ def PPCheck(xc, element, pp_file_str, **kwargs):
     xc = 'pz'
   ne = qtk.n2ve(element)
   saved_pp_path = os.path.join(qtk.setting.espresso_pp, pp_file_str)
-  if not os.path.exists(saved_pp_path):
+  if not os.path.exists(saved_pp_path) and qtk.setting.download_pp:
     url = os.path.join(qtk.setting.espresso_pp_url, pp_file_str)
     try:
       pp_content = urllib2.urlopen(url).read()

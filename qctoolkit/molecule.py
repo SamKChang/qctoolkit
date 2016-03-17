@@ -507,7 +507,8 @@ class Molecule(object):
       coord = [coord]
     Z = list(self.Z)
     for i in range(len(element)):
-      e = getattr(pt, element[i].title())
+      #e = getattr(pt, element[i].title())
+      e = qtk.element[element[i]]
       r = coord[i]
       if self.N == 0:
         self.R = np.array(r)

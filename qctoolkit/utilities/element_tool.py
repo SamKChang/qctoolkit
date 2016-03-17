@@ -1,6 +1,7 @@
 import qctoolkit.data.elements as qel
 import qctoolkit as qtk
 import re
+import numpy as np
 
 #################################
 # element information utilities #
@@ -49,19 +50,21 @@ def n2ve(Zn):
   tar = re.sub('.*[a-zA-Z]2','',Zn)
   tar = re.sub('_.*','',tar)
   # WARNING! symbol V is used for 
-  if ref == 'V':
-    ref = 'VOID'
-    qtk.warning("VOID IS USED, symbol V is used for void "+\
-                "instead of vanadium")
   match = [m for m in ve_list.iterkeys() if m in Zn]
   match_tar = [m for m in ve_list.iterkeys() if m in tar]
   match_ref = [m for m in ve_list.iterkeys() if m in ref]
-  if len(match) == 1:
-    return ve_list[match[0]]
-  elif len(match_ref) == 1:
-    return ve_list[match_ref[0]]
-  elif len(match_tar) == 1:
-    return ve_list[match_tar[0]]
+  mlen = [len(s) for s in match]
+  rlen = [len(s) for s in match_ref]
+  tlen = [len(s) for s in match_tar]
+  if len(match) > 0:
+    ind = np.argmax(mlen)
+    return ve_list[match[ind]]
+  elif len(match_ref) > 0:
+    ind = np.argmax(rlen)
+    return ve_list[match_ref[ind]]
+  elif len(match_tar) > 0:
+    ind = np.argmax(tlen)
+    return ve_list[match_tar[ind]]
   else:
     qtk.exit("n2ve: element type " + Zn + " is not defined")
 
