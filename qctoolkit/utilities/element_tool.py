@@ -83,7 +83,6 @@ def n2Z(Zn):
   if len(match) == 1:
     return float(z_list[match[0]])
   else:
-    print Zn, 
     qtk.warning("n2Z: element type " + str(Zn) +\
                 " is not defined, returning nuclear charge 0")
     return 0
