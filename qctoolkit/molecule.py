@@ -89,7 +89,7 @@ class Molecule(object):
 
   # used for pymol numeration
   mol_id = 0
-  def __init__(self, mol=None, **kwargs):
+  def __init__(self, *args, **kwargs):
     # number of atoms
     self.N = 0
     # atom coordinates
@@ -113,8 +113,29 @@ class Molecule(object):
     self.celldm = False
     self.grid = False
     self.name = ''
-    if mol:
+
+    if len(args) == 1:
+      mol = args[0]
       self.read(mol, **kwargs)
+    elif len(args) == 2:
+      N = len(args[0])
+      dim1 = np.array(args[0]).shape
+      dim2 = np.array(args[1]).shape
+      if dim1 == (N,) and dim2 == (N, 3):
+        atoms = args[0]
+        coord = np.array(args[1])
+      elif dim1 == (N, 3) and dim2 == (N,):
+        atoms = args[1]
+        coord = np.array(args[0])
+      else:
+        qtk.exit('not supported declaration of molecule object.')
+      self.addAtoms(atoms, coord)
+     
+
+    attr_list = dir(self)
+    for string, value in kwargs.iteritems():
+      if string in attr_list:
+        setattr(self, string, kwargs[string])
 
   def __repr__(self):
     if self.name: return self.name
@@ -502,9 +523,12 @@ class Molecule(object):
 
   # tested
   def addAtoms(self, element, coord):
-    if type(element) is not list:
+    if type(element) is not list\
+    and type(element) is not type(np.array([0])):
       element = [element]
       coord = [coord]
+    if type(element[0]) is not str:
+      element = [qtk.Z2n(int(i)) for i in element]
     Z = list(self.Z)
     for i in range(len(element)):
       #e = getattr(pt, element[i].title())
@@ -759,33 +783,7 @@ class Molecule(object):
         self.box = self.celldm[:3]
 
       self.R_scale = copy.deepcopy(self.R)
-      if self.scale:
-        self.R = qtk.fractional2xyz(self.R, self.celldm, self.scale)
-      else:
-        self.scale = [ceil(max(self.R[:, i])/lattice[i]) \
-          for i in range(3)]
-        self.R = qtk.fractional2xyz(self.R, self.celldm)
-#      self.periodic = True
-#      angle = self.celldm[3:]
-#      angle_sum = sum([abs(entry) for entry in angle])
-#      if angle_sum == 0:
-#        self.box = self.celldm[:3]
-#        
-#      if self.scale:
-#        self.R_scale = copy.deepcopy(self.R)
-#        angles = self.celldm[3:]
-#        lattice = [self.celldm[i]/self.scale[i] for i in range(3)]
-#        lattice.extend(angles)
-#        fm = qtk.fractionalMatrix(lattice)
-#        self.R = np.dot(fm, self.R.T).T
-#      else:
-#        self.R_scale = copy.deepcopy(self.R)
-#        angles = self.celldm[3:]
-#        lattice = [self.celldm[i] for i in range(3)]
-#        lattice.extend(angles)
-#        fm = qtk.fractionalMatrix(lattice)
-#        self.R = np.dot(fm, self.R.T).T
-    
+      self.R = qtk.fractional2xyz(self.R_scale, self.celldm)
 
   # tested
   def write(self, *args, **kwargs):

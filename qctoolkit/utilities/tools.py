@@ -1,4 +1,4 @@
-from math import pi ,sin, cos
+from math import pi ,sin, cos, ceil
 from qctoolkit.molecule import Molecule
 import numpy as np
 import qctoolkit as qtk
@@ -24,19 +24,28 @@ def fractionalMatrix(celldm_list):
   ca = celldm_list[3] # cos(alpha)
   cb = celldm_list[4] # cos(beta)
   cc = celldm_list[5] # cos(gamma)
-
-  sa = np.sqrt(1-ca**2) # sin(alpha) = sqrt(1-cos(alpha)^2)
+  #sa = np.sqrt(1-ca**2) # sin(alpha) = sqrt(1-cos(alpha)^2)
   sc = np.sqrt(1-cc**2) # sin(gamma) = sqrt(1-cos(gamma)^2)
-  cw = (cb - ca*cc)/(sa*sc)
-  sw = np.sqrt(1-cw**2)
+  #cw = (cb - ca*cc)/(sa*sc)
+  #sw = np.sqrt(1-cw**2)
+  v = np.sqrt(1 - ca**2 - cb**2 - cc**2 + 2*ca*cb*cc)
 
+  # fractional transformation from wiki
   return np.array(
     [
-      [a * sc * sw, 0, 0],
-      [a * cc, b, c * ca],
-      [a * sc * cw, 0, c * sa],
+      [a, b*cc, c*cb],
+      [0, b*sc, c*(ca - cb*cc)/sc],
+      [0, 0, c*v/sc],
     ]
   )
+
+#  return np.array(
+#    [
+#      [a * sc * sw, 0, 0],
+#      [a * cc, b, c * ca],
+#      [a * sc * cw, 0, c * sa],
+#    ]
+#  )
 
 def unscaledCelldm(celldm, scale):
   celldm_new = [celldm[i]/scale[i] for i in range(3)]
@@ -62,10 +71,22 @@ def celldm2lattice(celldm, **kwargs):
   fm = fractionalMatrix(celldm)
   return np.dot(fm, np.eye(3)).T
 
-def fractional2xyz(R_scale, celldm, scale=[1,1,1]):
-  celldm = unscaledCelldm(celldm, scale)
-  fm = fractionalMatrix(celldm)
-  return np.dot(fm, R_scale.T).T
+def fractional2xyz(R_scale, lattice_celldm):
+  scale = [ceil(i) for i in np.max(R_scale,axis=0)]
+  dim = np.array(lattice_celldm).shape
+  if len(dim) == 2:
+    assert dim == (3, 3)
+    lattice = np.array(lattice_celldm)
+  else:
+    assert dim == (6,)
+    lattice = celldm2lattice(lattice_celldm)
+  R = np.dot(R_scale, lattice)
+  return np.array(R)
+
+#def fractional2xyz(R_scale, celldm, scale=[1,1,1]):
+#  celldm = unscaledCelldm(celldm, scale)
+#  fm = fractionalMatrix(celldm)
+#  return np.dot(fm, R_scale.T).T
 
 def xyz2fractional(R, celldm, scale=[1,1,1]):
   celldm = unscaledCelldm(celldm, scale)
