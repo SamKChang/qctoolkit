@@ -1,5 +1,5 @@
 import qctoolkit as qtk
-import os, re, shutil, copy
+import os, re, shutil, copy, glob
 from qctoolkit.QM.pseudo.pseudo import PP
 import universal as univ
 
@@ -24,10 +24,20 @@ def Al1st(qminp, **setting):
     else:
       setting['dependent_files'] = [rst]
 
-  if qminp.setting['program'] == 'bigdft':
+  elif qminp.setting['program'] == 'espresso':
+    setting['restart'] = True
+    rst_pattern = os.path.join(setting['ref_dir'], 'pwscf.*')
+    rst = glob.glob(rst_pattern)
+    if 'dependent_files' in setting:
+      setting['dependent_files'].extend(rst)
+    else:
+      setting['dependent_files'] = rst
+    # need to change pseudopotential name in pwscf.save
+
+  elif qminp.setting['program'] == 'bigdft':
     pass
 
-  if qminp.setting['program'] == 'nwchem':
+  elif qminp.setting['program'] == 'nwchem':
     pass
 
   qmout = qminp.run(name, **setting)
