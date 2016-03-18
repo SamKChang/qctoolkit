@@ -83,8 +83,10 @@ def Z2n(Z):
   
 def n2Z(Zn):
   match = [m for m in z_list.iterkeys() if m in Zn]
-  if len(match) == 1:
-    return float(z_list[match[0]])
+  mlen = [len(s) for s in match]
+  if len(match) > 0:
+    ind = np.argmax(mlen)
+    return float(z_list[match[ind]])
   else:
     qtk.warning("n2Z: element type " + str(Zn) +\
                 " is not defined, returning nuclear charge 0")
@@ -92,15 +94,19 @@ def n2Z(Zn):
 
 def n2Z0(Zn):
   match = [m for m in z_list.iterkeys() if m in Zn]
-  if len(match) == 1:
-    return float(z_list[match[0]])
+  mlen = [len(s) for s in match]
+  if len(match) > 0:
+    ind = np.argmax(mlen)
+    return float(z_list[match[ind]])
   else:
     return 0
   
 def n2m(Zn):
   match = [m for m in mass_list.iterkeys() if m in Zn]
-  if len(match) == 1:
-    return float(mass_list[match[0]])
+  mlen = [len(s) for s in match]
+  if len(match) > 0:
+    ind = np.argmax(mlen)
+    return float(mass_list[match[ind]])
   else:
     qtk.exit("n2Z: element type " + str(Zn) + " is not defined")
 
