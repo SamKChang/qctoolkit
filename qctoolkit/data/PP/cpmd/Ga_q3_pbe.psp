@@ -1,0 +1,52 @@
+ &ATOM
+  Z  =   31.
+  ZV =   3.
+  XC = 1134   0.6666666667
+  TYPE = NORMCONSERVING GOEDECKER
+ &END
+ &INFO
+ ****************************************************************
+
+ Atomic symbol                       : Ga
+
+ Atomic number                       :  31
+ Effective core charge               :   3
+ Number of core states               :   6
+ Number of valence states            :  13
+ Electronic configuration (s,p,d,...):     2    1
+
+ Exchange-correlation functional     : PBE
+
+       r(loc)
+     0.560000
+
+         r(0)     h(i,j)^0
+     0.565866     2.215751     1.032448    -0.760629
+                              -2.570048     1.963937
+                                           -1.558827
+         r(1)     h(i,j)^1
+     0.646716     0.311224     0.613416
+                              -0.725804
+         r(2)     h(i,j)^2
+     0.999425     0.089520
+
+ Please cite:
+
+ - S. Goedecker, M. Teter, and J. Hutter,
+   Phys. Rev. B 54, 1703 (1996)
+ - C. Hartwigsen, S. Goedecker, and J. Hutter,
+   Phys. Rev. B 58, 3641 (1998)
+ - M. Krack,
+   Theor. Chem. Acc. 114, 145 (2005)
+
+ ****************************************************************
+ &END
+ &POTENTIAL
+     GOEDECKER
+ 3                                    LMAX
+      0.560000000                                 RC
+   0   #C 
+      0.565866445  3   2.215750509   1.032447927  -0.760629458  -2.570048448   1.963936816  -1.558826521 H(s) 11 12 13 22 23 33  
+      0.646716135  2   0.311223939   0.613416049  -0.725803658 H(p) 11 12 22           
+      0.999424836  1   0.089519515 H(d) 11                 
+ &END

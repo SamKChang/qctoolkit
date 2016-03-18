@@ -1,0 +1,44 @@
+ &ATOM
+  Z  =   6.00000000000000000
+  ZV =   4.00000000000000000
+  XC = 1134    .6666666667
+  TYPE = NORMCONSERVING GOEDECKER
+ &END
+ &INFO
+ ****************************************************************
+
+ Atomic symbol                       : C
+
+ Atomic number                       :   6
+ Effective core charge               :   4
+ Number of core states               :   1
+ Number of valence states            :   9
+ Electronic configuration (s,p,d,...):     2    2
+
+ Exchange-correlation functional     : PBE
+
+       r(loc)         C(1)         C(2)
+     0.338471    -8.803674     1.339211
+
+         r(0)     h(i,j)^0
+     0.302576     9.622487
+
+ Please cite:
+
+ - S. Goedecker, M. Teter, and J. Hutter,
+   Phys. Rev. B 54, 1703 (1996)
+ - C. Hartwigsen, S. Goedecker, and J. Hutter,
+   Phys. Rev. B 58, 3641 (1998)
+ - M. Krack,
+   Theor. Chem. Acc. 114, 145 (2005)
+
+ ****************************************************************
+ &END
+ &POTENTIAL
+     GOEDECKER
+ 2                                    LMAX
+       .338471240                                 RC
+   2    -8.803673976     1.339210855   #C  C1 C2
+       .302575747  1   9.622486655 H(s) 11                 
+       .291506936  0 H(p) no projector       
+ &END
