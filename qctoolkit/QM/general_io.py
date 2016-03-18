@@ -100,21 +100,25 @@ class InpContent(object):
         # copy dependent files
         if 'dependent_files' in kwargs:
           self.dependent_files.extend(kwargs['dependent_files'])
-        #for dep in set(self.dependent_files):
-        for dep in self.dependent_files:
-          if type(dep) is str:
-            if os.path.exists(dep):
-              shutil.copy(dep, full_dir_path)
-            else:
-              qtk.warning('dependent file: %s not found' % dep)
-          elif type(dep) is list:
-            dep_src = dep[0]
-            if os.path.exists(dep_src):
-              dep_tar = os.path.join(full_dir_path, dep[1])
-              shutil.copy(dep_src, dep_tar)
-            else:
-              qtk.warning('dependent file: %s not found' % dep)
-            
+        for dep_entry in self.dependent_files:
+          if type(dep_entry) is str:
+            dep = dep_entry
+            dep_name = os.path.split(dep)[1]
+            dep_src = os.path.abspath(dep)
+          elif type(dep_entry) is list:
+            dep = dep_entry[1]
+            dep_name = os.path.split(dep)[1]
+            dep_src = os.path.abspath(dep_entry[0])
+            dep_src = os.path.join(dep_src, dep_name)
+          dep_tar = os.path.join(full_dir_path, dep_name)
+          if os.path.exists(dep):
+            if not os.path.exists(dep_tar):
+              if 'copy' in kwargs and kwargs['copy']:
+                shutil(dep_src, dep_tar)
+              else:
+                os.link(dep_src, dep_tar)
+          else:
+            qtk.warning('dependent file: %s not found' % dep)
 
     inp = sys.stdout if not self.output else open(full_path, 'w')
     for string in self.content:
