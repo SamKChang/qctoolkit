@@ -17,6 +17,7 @@ def Al1st(qminp, **setting):
 
   if qminp.setting['program'] == 'cpmd':
     setting['restart'] = True
+    setting['scf_step'] = 1
     rst = os.path.join(setting['ref_dir'], 'RESTART')
     assert os.path.exists(rst)
     if 'dependent_files' in setting:
@@ -26,12 +27,27 @@ def Al1st(qminp, **setting):
 
   elif qminp.setting['program'] == 'espresso':
     setting['restart'] = True
-    rst_pattern = os.path.join(setting['ref_dir'], 'pwscf.*')
-    rst = glob.glob(rst_pattern)
+    setting['scf_step'] = 1
+    save_file = os.path.join(setting['ref_dir'], '*.save')
+    save = glob.glob(save_file)
+    print 'yo'
+    print save
+    try:
+      save = save[0]
+    except:
+      qtk.exit('*.save folder not found.')
+    save_folder = os.path.split(save)[1]
+    print save_folder
+    prefix = os.path.splitext(save_folder)[0]
+    rst_files = os.path.join(setting['ref_dir'], prefix + '*')
+    rst = glob.glob(rst_files)
+    print rst
     if 'dependent_files' in setting:
       setting['dependent_files'].extend(rst)
     else:
       setting['dependent_files'] = rst
+
+    print setting['dependent_files']
     # need to change pseudopotential name in pwscf.save
 
   elif qminp.setting['program'] == 'bigdft':

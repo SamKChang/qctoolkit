@@ -687,35 +687,39 @@ class Molecule(object):
     return copy.deepcopy(self)
 
   # tested by qminp
-  def sort(self):
-    if len(self.R_scale) != self.N:
-      self.R_scale = copy.deepcopy(self.R)
-    new = sorted(zip(self.R, self.R_scale, self.type_list, 
-      self.Z, self.string), key=operator.itemgetter(2))
-    self.R = np.array([_R for _R, _Rs, _T, _Z, _S in new])
-    self.R_scale = np.array([_Rs for _R, _Rs, _T, _Z, _S in new])
-    self.type_list = np.array([_T for _R, _Rs, _T, _Z, _S in new])
-    self.Z = np.array([_Z for _R, _Rs, _T, _Z, _S in new])
-    self.string = np.array([_S for _R, _Rs, _T, _Z, _S in new])
+  def sort(self, order = 'Z'):
+    odict = {'Z':0, 'x':1, 'y':2, 'z':3}
+    olist = []
+    for i in range(len(order)):
+      if order[i] in odict:
+        olist.append(odict[order[i]])
+      else:
+        qtk.exit("sorting order %c not found")
+    tmp = np.hstack([np.array(self.type_list).reshape(-1, 1), self.R])
+    ind = np.lexsort([tmp[:,i] for i in olist])
+    self.R = self.R[ind]
+    if self.R_scale:
+      self.R_scale = self.R_scale[ind]
+    self.Z = list(np.array(self.Z)[ind])
+    self.type_list = list(np.array(self.type_list)[ind])
+    self.string = list(np.array(self.string)[ind])
 
-    type_list = []
-    self.index = []
-    for i in range(self.N):
-      Zn = self.type_list[i]
-      if Zn not in type_list:
-        type_list.append(Zn)
-        self.index.append(i)
-    self.index.append(self.N)
-
+    if order == 'Z':
+      type_list = []
+      self.index = []
+      for i in range(self.N):
+        Zn = self.type_list[i]
+        if Zn not in type_list:
+          type_list.append(Zn)
+          self.index.append(i)
+      self.index.append(self.N)
+    
   def sort_coord(self, **kwargs):
     if 'order' in kwargs:
       order = kwargs['order']
     else:
-      order = [0,1,2]
-    ind = np.lexsort((self.R[:,order[2]],\
-                      self.R[:,order[1]],\
-                      self.R[:,order[0]]))
-    self.R = self.R[ind]
+      order = 'xyz'
+    self.sort(order)
 
   # tested
   # general interface to dertermine file type

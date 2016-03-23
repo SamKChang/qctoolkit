@@ -113,10 +113,13 @@ class InpContent(object):
           dep_tar = os.path.join(full_dir_path, dep_name)
           if os.path.exists(dep):
             if not os.path.exists(dep_tar):
-              if 'copy' in kwargs and kwargs['copy']:
-                shutil(dep_src, dep_tar)
-              else:
-                os.link(dep_src, dep_tar)
+              try:
+                shutil.copytree(dep_src, dep_tar)
+              except OSError:
+                if 'copy' in kwargs and kwargs['copy']:
+                  shutil(dep_src, dep_tar)
+                else:
+                  os.link(dep_src, dep_tar)
           else:
             qtk.warning('dependent file: %s not found' % dep)
 
