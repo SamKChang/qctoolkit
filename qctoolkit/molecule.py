@@ -111,6 +111,7 @@ class Molecule(object):
     self.periodic = False
     self.scale = False
     self.celldm = False
+    self.symmetry = False
     self.grid = False
     self.name = ''
 
@@ -749,7 +750,7 @@ class Molecule(object):
     xyz.close()
     content = [line.replace('\t', ' ') for line in content]
 
-    prop_list = ['charge', 'celldm', 'scale']
+    prop_list = ['charge', 'celldm', 'scale', 'symmetry']
     for prop in prop_list:
       try:
         prop_str = filter(lambda x: prop in x, content)[0]
@@ -757,11 +758,20 @@ class Molecule(object):
         prop_data = prop_str.split(' ')
         prop_data = filter(None, prop_data)
         if len(prop_data) == 1:
-          setattr(self, prop, float(prop_data[0]))
+          try:
+            setattr(self, prop, float(prop_data[0]))
+          except Exception as exc:
+            if prop == 'symmetry':
+              setattr(self, prop, prop_data[0].strip())
         elif len(prop_data) > 1:
           setattr(self, prop, [float(_) for _ in prop_data])
+      except ValueError as exc:
+        setattr(self, prop, False)
+        qtk.warning("setting attribute %s with error: %s" % \
+          (prop, exc))
       except:
         setattr(self, prop, False)
+    
     if not self.charge:
       self.charge = 0
     if self.celldm or self.scale:
@@ -792,6 +802,9 @@ class Molecule(object):
 
   # tested
   def write(self, *args, **kwargs):
+    if len(args) > 0:
+      _, ext = os.path.splitext(args[0])
+      kwargs['format'] = ext[1:]
     if 'format' not in kwargs:
       kwargs['format'] = 'xyz'
     if kwargs['format'] == 'xyz':
@@ -811,20 +824,21 @@ class Molecule(object):
 
     if 'fractional' in kwargs and kwargs['name']:
       if self.celldm and self.scale:
-        print >>out, str(self.N)+"\n"
+        out.write(str(self.N)+"\n")
         for I in xrange(0, self.N):
-          print >>out, "%-2s " % self.type_list[I],
-          print >>out, " ".join("% 8.4f" % i \
-            for i in self.R_scale[I][:])
+          out.write("%-2s " % self.type_list[I])
+          out.write(" ".join("% 8.4f" % i \
+            for i in self.R_scale[I][:]))
       else:
         del kwargs['fractional']
         qtk.warning('celldm or scale not set, print cartician')
         self.write(name, **kwargs)
     else:
-      print >>out, str(self.N)+"\n"
+      out.write(str(self.N)+"\n\n")
       for I in xrange(0, self.N):
-        print >>out, "%-2s " % self.type_list[I],
-        print >>out, " ".join("% 8.4f" % i for i in self.R[I][:])
+        out.write("%-2s " % self.type_list[I])
+        out.write(" ".join("% 8.4f" % i for i in self.R[I][:]))
+        out.write("\n")
   
       if name:
         out.close()
@@ -840,8 +854,8 @@ class Molecule(object):
     out = sys.stdout if not name else open(name,"w")
     if len(self.segments) == 0:
       self.findBonds(quiet=True)
-    print >> out, "%-10s%s" % ('COMPND', self.stoichiometry())
-    print >> out, "%-10s%s" % ('AUTHOR', 'QCTOOLKIT')
+    out.write("%-10s%s\n" % ('COMPND', self.stoichiometry()))
+    out.write("%-10s%s\n" % ('AUTHOR', 'QCTOOLKIT'))
     chain = 1
     itr = 1
 
@@ -863,10 +877,10 @@ class Molecule(object):
         yi = segment.R[i, 1]
         zi = segment.R[i, 2]
         #"% 7.3f % 7.3f % 7.3f%6.2f%6.2f%12s" %\
-        print >> out, "%-6s%5d%3s%6s%6d     " %\
+        out.write("%-6s%5d%3s%6s%6d     " %\
           ('ATOM', itr+i, atom.upper(), 'LIG', chain) +\
-          "% 7.3f % 7.3f % 7.3f%6.2f%6.2f%12s" %\
-          (xi, yi, zi, 1, 0, atom)
+          "% 7.3f % 7.3f % 7.3f%6.2f%6.2f%12s\n" %\
+          (xi, yi, zi, 1, 0, atom))
       connection = connect(segment, itr, connection)
       itr = itr + segment.N
       chain = chain + 1

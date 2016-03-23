@@ -108,6 +108,14 @@ class inp(PlanewaveInput):
         vs = int(round(self.molecule.getValenceElectrons() / 2.0))
         self.content['system']['nbnd'] = setting['ks_states'] + vs
 
+      if 'symmetry' in setting:
+        if setting['symmetry'] == 'fcc':
+          self.content['system']['ibrav'] = 2
+          dm = ['A', 'B', 'C', 'cosBC', 'cosAC', 'cosAB']
+          for i in range(6):
+            self.content['system'][dm[i]] = float(self
+              .molecule.celldm[i])
+
       for section_key in self.content.iterkeys():
         section = '&' + section_key + '\n'
         inp.write(section)
@@ -132,11 +140,17 @@ class inp(PlanewaveInput):
         pp_files.append(PPStr)
       inp.write("\n")
 
-      inp.write("ATOMIC_POSITIONS angstrom\n")
+      inp.write("ATOMIC_POSITIONS ")
+      if self.content['system']['ibrav'] == 0:
+        inp.write("angstrom\n")
+        R = molecule.R
+      else:
+        inp.write("\n")
+        R = molecule.R_scale
       for a in range(len(type_list)):
         inp.write(' %-3s' % type_list[a])
         for i in range(3):
-          inp.write(' % 12.8f' % molecule.R[a, i])
+          inp.write(' % 12.8f' % R[a, i])
         inp.write("\n")
       inp.write("\n")
 
@@ -148,19 +162,18 @@ class inp(PlanewaveInput):
           inp.write(" 0")
         inp.write('\n\n')
 
-      inp.write("CELL_PARAMETERS angstrom\n")
-      lattice_vec = self.setting['lattice']
-      for vec in lattice_vec:
-        for component in vec:
-          inp.write(' %9.6f' % component)
-        inp.write('\n')
+      if self.content['system']['ibrav'] == 0:
+        inp.write("CELL_PARAMETERS angstrom\n")
+        lattice_vec = self.setting['lattice']
+        for vec in lattice_vec:
+          for component in vec:
+            inp.write(' %9.6f' % component)
+          inp.write('\n')
   
       for pp in pp_files:
-        print pp
         pp_file = os.path.join(qtk.setting.espresso_pp, pp)
         if pp not in inp.dependent_files:
           inp.dependent_files.append(pp_file)
-      print inp.dependent_files
 
       if 'no_cleanup' in setting and setting['no_cleanup']:
         inp.close(no_cleanup=True)

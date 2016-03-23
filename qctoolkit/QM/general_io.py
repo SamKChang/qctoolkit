@@ -201,6 +201,8 @@ class GenericQMInput(object):
         self.setting['periodic'] = True
     if self.molecule.celldm:
       self.setting['celldm'] = self.molecule.celldm
+    if self.molecule.symmetry:
+      self.setting['symmetry'] = self.molecule.symmetry
 
     if self.setting['mode'] == 'md':
       for string, value in md_setup.iteritems():

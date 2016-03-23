@@ -7,11 +7,22 @@ def runCode(self, parrent, name, **kwargs):
 
   if 'no_subfolder' not in kwargs or not kwargs['no_subfolder']:
     self.setting['root_dir'] = name
-  inp = self.write(name, **kwargs)
-  new_name = None
-  if 'new_name' in kwargs:
-    new_name = kwargs['new_name']
-  return worker.start(inp, new_name)
+
+  def run():
+    inp = self.write(name, **kwargs)
+    new_name = None
+    if 'new_name' in kwargs:
+      new_name = kwargs['new_name']
+    return worker.start(inp, new_name)
+
+  if not os.path.exists(name):
+    return run()
+  elif 'no_overwrite' not in self.setting \
+  or not self.setting['no_overwrite']:
+    return run()
+  else:
+    qtk.report("QMInp.run", "%s exists" % name)
+
 
 def cornerCube(self):
   if self.setting['save_density'] or self.setting['save_wf']:
