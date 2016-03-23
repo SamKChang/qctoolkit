@@ -687,24 +687,25 @@ class Molecule(object):
     return copy.deepcopy(self)
 
   # tested by qminp
-  def sort(self, order = 'Z'):
-    odict = {'Z':0, 'x':1, 'y':2, 'z':3}
-    olist = []
-    for i in range(len(order)):
-      if order[i] in odict:
-        olist.append(odict[order[i]])
+  def sort(self, order = 'Zxyz'):
+    odict = {'x':0, 'y':1, 'z':2}
+    tmp = []
+    for o in order:
+      if o == 'Z':
+        tmp.insert(0, self.Z)
+      elif o in odict:
+        tmp.insert(0, self.R[:, odict[o]])
       else:
-        qtk.exit("sorting order %c not found")
-    tmp = np.hstack([np.array(self.type_list).reshape(-1, 1), self.R])
-    ind = np.lexsort([tmp[:,i] for i in olist])
+        qtk.exit("sorting order '%c' not valid" % o)
+    ind = np.lexsort(tmp)
     self.R = self.R[ind]
-    if self.R_scale:
+    if list(self.R_scale):
       self.R_scale = self.R_scale[ind]
     self.Z = list(np.array(self.Z)[ind])
     self.type_list = list(np.array(self.type_list)[ind])
     self.string = list(np.array(self.string)[ind])
 
-    if order == 'Z':
+    if order == 'Zxyz':
       type_list = []
       self.index = []
       for i in range(self.N):
