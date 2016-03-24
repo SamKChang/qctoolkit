@@ -17,12 +17,10 @@ def runCode(self, parrent, name, **kwargs):
 
   if not os.path.exists(name):
     return run()
-  elif 'no_overwrite' not in self.setting \
-  or not self.setting['no_overwrite']:
+  elif self.setting['overwrite']:
     return run()
   else:
     qtk.report("QMInp.run", "%s exists" % name)
-
 
 def cornerCube(self):
   if self.setting['save_density'] or self.setting['save_wf']:

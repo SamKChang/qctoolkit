@@ -47,6 +47,7 @@ qm_setup = {
              'restart': False,
              'setting_backup': False,
              'molecule_backup': False,
+             'overwrite': False,
            }
 # default setup for qmmm jobs
 md_setup = {

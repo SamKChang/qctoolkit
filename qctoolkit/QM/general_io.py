@@ -45,20 +45,30 @@ class InpContent(object):
         self.output = True
     if 'root_dir' in kwargs:
       self.root_dir = kwargs['root_dir']
+    if 'overwrite' in kwargs:
+      self.overwrite = kwargs['overwrite']
+    else:
+      self.overwrite = False
     self.path = os.getcwd()
 
   def write(self, string):
     self.content.append(string)
 
-  def cleanPath(self, path):
+  def cleanPath(self, path, force=False):
     if os.path.exists(path):
-      qtk.prompt(path + ' exists, overwrite?')
-      try:
-        os.remove(path)
-      except OSError:
-        shutil.rmtree(path)
-      except:
-        qtk.warning("can not remove file: " + path)
+      if force:
+        try:
+          os.remove(path)
+        except OSError:
+          shutil.rmtree(path)
+      else:
+        qtk.prompt(path + ' exists, overwrite?')
+        try:
+          os.remove(path)
+        except OSError:
+          shutil.rmtree(path)
+        except:
+          qtk.warning("can not remove file: " + path)
     
   def close(self, **kwargs):
     """
@@ -91,8 +101,8 @@ class InpContent(object):
         full_path = os.path.join(full_dir_path, name)
         if not 'no_cleanup' in kwargs or not kwargs['no_cleanup']:
           if self.root_dir:
-            self.cleanPath(full_dir_path)
-        self.cleanPath(full_path)
+            self.cleanPath(full_dir_path, self.overwrite)
+        self.cleanPath(full_path, self.overwrite)
         if not os.path.exists(full_dir_path):
           os.makedirs(full_dir_path)
         self.final_path = full_dir_path
