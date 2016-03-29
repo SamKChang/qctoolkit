@@ -4,6 +4,27 @@ import numpy as np
 import qctoolkit as qtk
 import yaml
 
+def CoulombMatrix(molecule, dim=None):
+  mol = toMolecule(molecule)
+  if dim is None:
+    dim = mol.N
+  if dim < mol.N:
+    qtk.exit("Coulomb matrix dimension must greater than" +\
+             " the number of atoms")
+  M = np.zeros((dim, dim))
+  for i in range(mol.N):
+    for j in range(i, mol.N):
+      if i == j:
+        M[i, j] = 0.5 * mol.Z[i] ** 2.4
+      else:
+        Rij = np.linalg.norm(mol.R[i] - mol.R[j])
+        M[i, j] = mol.Z[i] * mol.Z[j] / Rij
+        M[j, i] = M[i, j]
+  order = list(np.argsort(sum(M ** 2)))
+  order.reverse()
+  out = M[:, order]
+  return out[order, :]
+
 def R(theta, u):
   return np.array(
     [[cos(theta) + u[0]**2 * (1-cos(theta)), 
