@@ -26,7 +26,7 @@ import urllib2
 # check for qtk setting
 missing_files = []
 paths = os.environ["PATH"].split(":")
-code_pattern = re.compile('cpmd|bigdft|vasp|nwchem')
+code_pattern = re.compile('cpmd|bigdft|vasp|nwchem|espresso')
 exe_pattern = re.compile('.*exe')
 url_pattern = re.compile('.*url')
 for dep in dir(setting):
