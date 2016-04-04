@@ -6,6 +6,11 @@ from compiler.ast import flatten
 import numpy as np
 import sys, os
 
+def qmRunJob(inp, name):
+  qtk.report("qmRunJob", "runing qmjob:'%s'" % inp,
+             'with name:', name)
+  return inp.run(name)
+
 def parallelize(target_function, 
                 input_list, 
                 **kwargs):

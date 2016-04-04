@@ -1,11 +1,11 @@
 import numpy as np
-#import utilities as ut
 import qctoolkit as qtk
 import setting
 import re, os, sys, copy, operator
 from time import sleep
 import networkx
-from networkx.algorithms.components.connected import connected_components
+from networkx.algorithms.components.connected\
+     import connected_components
 import periodictable as pt
 import collections
 from math import ceil, floor
@@ -159,14 +159,6 @@ class Molecule(object):
 
   def view(self, name=None):
     tmp = copy.deepcopy(self)
-#    if self.scale:
-#      try:
-#        for i in range(3):
-#          tmp.R[:,i] = tmp.R[:,i] * tmp.celldm[i]\
-#                       / float(tmp.scale[i])
-#      except AttributeError:
-#        pass
-
     if qtk.imported('pymol'):
       qtk.report("Molecule", "initializing pymol...", color=None)
       import pymol

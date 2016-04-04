@@ -130,6 +130,12 @@ class AlPath(object):
     inp = qtk.QMInp(molecule, **self.qm_setting)
     inp.write(name)
 
+  def getInp(self, **kwargs):
+    molecule = self.setLambda(**kwargs)
+    self.qm_setting.update(kwargs)
+    inp = qtk.QMInp(molecule, **self.qm_setting)
+    return inp
+
   def writeAll(self, name, **kwargs):
     if 'dl' not in kwargs:
       dl = 0.2

@@ -204,13 +204,20 @@ def PPString(inp, mol, i, n, outFile):
     PPCheck(xc, mol.type_list[i].title(), PPStr)
   elif alchemy.match(mol.string[i]):
     cpmd_pp = alchemyPP(xc, PPStr)
-    qtk.report('espresso', "rewrite Goedecker's PP to UPF")
-    conv_pp = sp.Popen("%s %s" % \
-      (qtk.setting.espresso_cpmd2upf_exe, cpmd_pp),
-      shell=True)
-    conv_pp.wait()
     new_pp1 = cpmd_pp + '.UPF'
-    shutil.move(new_pp1, qtk.setting.espresso_pp)
+    if not os.path.exists(new_pp1):
+      qtk.report('espresso', "rewrite Goedecker's PP to UPF")
+      conv_pp = sp.Popen("%s %s" % \
+        (qtk.setting.espresso_cpmd2upf_exe, cpmd_pp),
+        shell=True)
+      conv_pp.wait()
+    new_pp1_file = os.path.split(new_pp1)[1]
+    new_pp1_trg = os.path.join(qtk.setting.espresso_pp, new_pp1_file)
+    print 'yo'
+    print new_pp1
+    print new_pp1_trg
+    if not os.path.exists(new_pp1_trg):
+      shutil.copy(new_pp1, qtk.setting.espresso_pp)
     PPStr = PPStr + '.UPF'
 
   return PPStr
