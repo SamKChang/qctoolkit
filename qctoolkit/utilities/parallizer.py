@@ -44,7 +44,10 @@ def parallelize(target_function,
   if 'block_size' in kwargs:
     block_size = kwargs['block_size']
   else:
-    block_size = len(input_list)/(threads*3)
+    if len(input_list) > threads*3:
+      block_size = len(input_list)/(threads*3)
+    else:
+      block_size = 1
 
   #############################################
   # runing target function of a single thread #
