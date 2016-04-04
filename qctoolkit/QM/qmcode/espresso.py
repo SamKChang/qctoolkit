@@ -283,4 +283,4 @@ class out(PlanewaveOutput):
         N_state = ind[mask][0]
         vb = max(self.band[:, N_state])
         cb = min(self.band[:, N_state + 1])
-        self.Eb = cb - vb
+        self.Eg = cb - vb
