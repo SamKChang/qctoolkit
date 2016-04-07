@@ -1,0 +1,2 @@
+include README.md
+recursive-include qctoolkit *.md *.py *.h *.yml *.psp *.inp *.out *.xml *.xyz
