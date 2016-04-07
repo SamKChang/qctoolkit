@@ -144,7 +144,7 @@ class Molecule(object):
 
   # tested
   def __add__(self, other):
-    if self.R_scale:
+    if self.R_scale.shape[1] > 0:
       qtk.exit('Molecule add not implemented for crystals.' + \
                'use extend/setAtoms instead')
     out = Molecule()

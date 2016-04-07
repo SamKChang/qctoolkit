@@ -211,11 +211,30 @@ def PPString(inp, mol, i, n, outFile):
         (qtk.setting.espresso_cpmd2upf_exe, cpmd_pp),
         shell=True)
       conv_pp.wait()
+      if conv_pp.returncode != 0:
+        # dirty fix for espresso alchemy conversion routine
+        qtk.warning('conversion failed...')
+        root, _ = os.path.splitext(PPStr)
+        element_str = re.sub('_.*', '', root)
+        element1 = re.sub('2.*', '', element_str)
+        element2 = re.sub('.*2', '', element_str)
+        fraction = float(re.sub('.*_', '', root))/100
+        if fraction == 1.0:
+          strpp = element1 + "_q" + str(qtk.n2ve(element1)) +\
+                  "_" + xc + '.psp'
+        elif fraction == 0.0:
+          strpp = element2 + "_q" + str(qtk.n2ve(element2)) +\
+                  "_" + xc + '.psp'
+        else:
+          qtk.exit("PP conversion failed for intermediate lambda")
+        strpp = os.path.join(qtk.setting.cpmd_pp, strpp)
+        conv_pp = sp.Popen("%s %s" % \
+          (qtk.setting.espresso_cpmd2upf_exe, strpp),
+          shell=True)
+        conv_pp.wait()
+        os.rename(strpp + '.UPF', new_pp1)
     new_pp1_file = os.path.split(new_pp1)[1]
     new_pp1_trg = os.path.join(qtk.setting.espresso_pp, new_pp1_file)
-    print 'yo'
-    print new_pp1
-    print new_pp1_trg
     if not os.path.exists(new_pp1_trg):
       shutil.copy(new_pp1, qtk.setting.espresso_pp)
     PPStr = PPStr + '.UPF'
