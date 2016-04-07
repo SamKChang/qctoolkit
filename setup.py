@@ -124,12 +124,14 @@ for root, sub_dir, files in os.walk('qctoolkit/data/unittest'):
   data_inc.append((root, file_list))
 
 setup(name='qctoolkit',
-  version='0.1.1',
+  version='0.0.1',
   description='quantum chemistry tool kit',
   url='https://github.com/SamKChang/qctoolkit.git',
   author='K. Y. S. Chang',
   author_email='ky.sam.chang@gmail.com',
-  packages=[
+  keywords = ['quantum', 'chemistry', 'wrapper', 'tools', 'alchemy',
+              'cpmd', 'quantumespresso', 'nwchem', 'bigdft'],
+  packages = [
     'qctoolkit',
     'qctoolkit.QM',
     'qctoolkit.QM.qmcode',

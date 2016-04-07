@@ -213,7 +213,7 @@ def PPString(inp, mol, i, n, outFile):
       conv_pp.wait()
       if conv_pp.returncode != 0:
         # dirty fix for espresso alchemy conversion routine
-        qtk.warning('conversion failed...')
+        qtk.warning('conversion failed..., trying path end points')
         root, _ = os.path.splitext(PPStr)
         element_str = re.sub('_.*', '', root)
         element1 = re.sub('2.*', '', element_str)
