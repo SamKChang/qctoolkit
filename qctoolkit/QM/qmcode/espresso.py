@@ -219,10 +219,10 @@ def PPString(inp, mol, i, n, outFile):
         element1 = re.sub('2.*', '', element_str)
         element2 = re.sub('.*2', '', element_str)
         fraction = float(re.sub('.*_', '', root))/100
-        if fraction == 1.0:
+        if fraction == 0.0:
           strpp = element1 + "_q" + str(qtk.n2ve(element1)) +\
                   "_" + xc + '.psp'
-        elif fraction == 0.0:
+        elif fraction == 1.0:
           strpp = element2 + "_q" + str(qtk.n2ve(element2)) +\
                   "_" + xc + '.psp'
         else:
