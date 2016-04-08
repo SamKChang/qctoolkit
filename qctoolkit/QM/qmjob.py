@@ -220,7 +220,10 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
     if 'exe' in kwargs:
       exe = kwargs['exe']
     else:
-      exe = setting.espresso_exe
+      if 'save_restart' in kwargs and kwargs['save_restart']:
+        exe = setting.espresso_alchemy_exe
+      else:
+        exe = setting.espresso_exe
 
     inp_list = sorted(glob.glob('*.inp'))
     for job in inp_list:

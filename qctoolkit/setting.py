@@ -88,6 +88,7 @@ cpmd_pp = os.path.join(_root, 'data/PP/cpmd')
 cpmd_pp_url = 'http://cp2k.web.psi.ch/potentials/Goedecker-Teter-Hutter/cpmd/'
 # espresso setting
 espresso_exe = 'pw.x'
+espresso_alchemy_exe = 'alpw.x'
 espresso_cpmd2upf_exe = 'cpmd2upf.x'
 espresso_pp = os.path.join(_root, 'data/PP/espresso')
 espresso_pp_url = 'http://www.quantum-espresso.org/wp-content/uploads/upf_files/'

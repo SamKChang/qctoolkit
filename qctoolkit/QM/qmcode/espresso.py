@@ -264,8 +264,8 @@ class out(PlanewaveOutput):
     out_file = open(qmout)
     data = out_file.readlines()
     out_file.close()
-    Et_pattern = re.compile("^!.*total energy.*$")
-    Et_str = filter(Et_pattern.match, data)[0]
+    Et_pattern = re.compile("^.*total energy *=.*$")
+    Et_str = filter(Et_pattern.match, data)[-1]
     Et = float(Et_str.split()[-2])
     self.Et, self.unit = qtk.convE(Et, 'Ry-Eh')
     out_folder = os.path.split(os.path.abspath(qmout))[0]
