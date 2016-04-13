@@ -83,7 +83,7 @@ class inp(PlanewaveInput):
       pp_files = []
 
       self.content['system']['nat'] = molecule.N
-      self.content['system']['ntype'] = len(type_index) - 1
+      self.content['system']['ntyp'] = len(type_index) - 1
   
       if 'restart' in setting and setting['restart']:
         self.content['control']['restart_mode'] = 'restart'
