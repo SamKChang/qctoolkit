@@ -304,6 +304,23 @@ class out(PlanewaveOutput):
       self.Eg = self.mo_eigenvalues[N_state + 1] -\
                 self.mo_eigenvalues[N_state]
 
+def PPName(inp, mol, i, n):
+  if 'vdw' in inp.setting\
+  and inp.setting['vdw'].lower == 'dcacp':
+    PPvdw = '_dcacp_'
+  else:
+    PPvdw = ''
+  element = mol.type_list[i].title()
+  if 'valence_electrons' in inp.setting\
+  and element in inp.setting['valence_electrons']:
+    nve = inp.setting['valence_electrons'][element]
+  else:
+    nve = qtk.n2ve(element)
+    
+  PPStr = element + PPvdw + '_q%d_' % nve +\
+    inp.setting['pp_theory'].lower() + '.psp'
+  return PPStr
+
 # not used by PP object but by QMInp cpmd parts
 def PPString(inp, mol, i, n, outFile):
   """

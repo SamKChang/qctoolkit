@@ -124,7 +124,7 @@ for root, sub_dir, files in os.walk('qctoolkit/data/unittest'):
   data_inc.append((root, file_list))
 
 setup(name='qctoolkit',
-  version='0.0.7',
+  version='0.0.8',
   description='quantum chemistry tool kit',
   url='https://github.com/SamKChang/qctoolkit.git',
   author='K. Y. S. Chang',

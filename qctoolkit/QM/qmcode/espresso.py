@@ -12,6 +12,8 @@ import glob
 import universal as univ
 import xml.etree.ElementTree as ET
 from cpmd import alchemyPP
+from cpmd import PPName
+from cpmd import PPCheck as PPCheck_cpmd
 import subprocess as sp
 #from cpmd import PPCheck as cpCheck
 #from cpmd import mutatePP
@@ -31,11 +33,6 @@ class inp(PlanewaveInput):
       self.setting['pp_theory'] = self.setting['theory']
     self.backup()
 
-    tmp_mol = copy.deepcopy(self.molecule)
-    tmp_mol.sort()
-    type_index = tmp_mol.index
-    type_list = tmp_mol.type_list
-
     mode_dict = {
       'single_point': 'scf',
     }
@@ -49,8 +46,6 @@ class inp(PlanewaveInput):
     ])
     self.content['system'] = odict([
       ('ibrav', 0),
-      ('nat', self.molecule.N),
-      ('ntyp', len(type_index) - 1),
       ('ecutwfc', self.setting['cutoff']),
     ])
     self.content['electrons'] = odict([
@@ -86,6 +81,9 @@ class inp(PlanewaveInput):
       type_index = molecule.index
       type_list = molecule.type_list
       pp_files = []
+
+      self.content['system']['nat'] = molecule.N
+      self.content['system']['ntype'] = len(type_index) - 1
   
       if 'restart' in setting and setting['restart']:
         self.content['control']['restart_mode'] = 'restart'
@@ -197,11 +195,28 @@ def PPString(inp, mol, i, n, outFile):
     PPStr = ppstr
     pp_root, pp_ext = os.path.split(ppstr)
   else:
-    PPStr = mol.type_list[i] + '.' + \
-            inp.setting['pp_theory'].lower() + '-hgh.UPF'
+    if inp.setting['pp_type'] == 'qe-hgh':
+      PPStr = mol.type_list[i] + '.' + \
+              inp.setting['pp_theory'].lower() + '-hgh.UPF'
+    elif inp.setting['pp_type'] == 'geodecker':
+      PPStr = PPName(inp, mol, i, n)
   xc = inp.setting['pp_theory'].lower()
   if not mol.string[i]:
-    PPCheck(xc, mol.type_list[i].title(), PPStr)
+    if inp.setting['pp_type'] == 'qe-hgh':
+      PPCheck(xc, mol.type_list[i].title(), PPStr)
+    elif inp.setting['pp_type'] == 'geodecker':
+      saved_pp = PPCheck_cpmd(xc, mol.type_list[i].title(), PPStr)
+      new_pp1 = saved_pp + '.UPF'
+      conv_pp = sp.Popen("%s %s" % \
+        (qtk.setting.espresso_cpmd2upf_exe, saved_pp),
+        shell=True)
+      conv_pp.wait()
+      new_pp1_file = os.path.split(new_pp1)[1]
+      new_pp1_trg = os.path.join(qtk.setting.espresso_pp, new_pp1_file)
+      if not os.path.exists(new_pp1_trg):
+        shutil.copy(new_pp1, qtk.setting.espresso_pp)
+      PPStr = PPStr + '.UPF'
+
   elif alchemy.match(mol.string[i]):
     cpmd_pp = alchemyPP(xc, PPStr)
     new_pp1 = cpmd_pp + '.UPF'

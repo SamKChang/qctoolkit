@@ -23,6 +23,8 @@ class PlanewaveInput(GenericQMInput):
     self.pp_files = []
     if 'periodic' in self.setting and self.setting['periodic']:
       self.celldm2lattice()
+    if 'pp_type' not in kwargs:
+      self.setting['pp_type'] = 'geodecker'
 
     univ.getCelldm(self) 
 
