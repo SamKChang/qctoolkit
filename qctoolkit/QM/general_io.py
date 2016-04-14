@@ -327,7 +327,11 @@ class GenericQMOutput(object):
     self.scf_step = np.nan
     self.unit = 'Eh'
     if output:
-      self.path = qtk.getPath(output)
+      #self.path = qtk.getPath(output)
+      if output:
+        self.path, self.name = os.path.split(output)
+      else:
+        self.path = qtk.getPath(output)
       _file = qtk.fileStrip(output)
       self.stem, self.ext = os.path.splitext(_file)
 

@@ -276,6 +276,7 @@ def PPCheck(xc, element, pp_file_str, **kwargs):
 
 class out(PlanewaveOutput):
   def __init__(self, qmout, **kwargs):
+    PlanewaveOutput.__init__(self, qmout, **kwargs)
     out_file = open(qmout)
     data = out_file.readlines()
     out_file.close()
