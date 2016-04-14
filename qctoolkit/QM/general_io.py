@@ -129,7 +129,10 @@ class InpContent(object):
                 if 'copy' in kwargs and kwargs['copy']:
                   shutil(dep_src, dep_tar)
                 else:
-                  os.link(dep_src, dep_tar)
+                  try:
+                    os.link(dep_src, dep_tar)
+                  except OSError:
+                    shutil(dep_src, dep_tar)
           else:
             qtk.warning('dependent file: %s not found' % dep)
 
