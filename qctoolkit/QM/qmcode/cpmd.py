@@ -314,6 +314,9 @@ def PPName(inp, mol, i, n):
   if 'valence_electrons' in inp.setting\
   and element in inp.setting['valence_electrons']:
     nve = inp.setting['valence_electrons'][element]
+  elif 'd_shell' in inp.setting\
+  and element in inp.setting['d_shell']:
+    nve = qtk.n2ve(element) + 10
   else:
     nve = qtk.n2ve(element)
     
