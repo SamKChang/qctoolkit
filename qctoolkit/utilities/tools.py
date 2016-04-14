@@ -3,6 +3,15 @@ from qctoolkit.molecule import Molecule
 import numpy as np
 import qctoolkit as qtk
 import yaml
+import pickle
+
+def pdump(obj, name):
+  with open(name, 'wb') as pfile:
+    pickle.dump(obj, pfile)
+
+def pload(name):
+  with open(name, 'rb') as pfile:
+    return pickle.load(pfile)
 
 def CoulombMatrix(molecule, dim=None):
   mol = toMolecule(molecule)
