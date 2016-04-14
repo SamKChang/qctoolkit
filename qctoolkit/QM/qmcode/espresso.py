@@ -197,7 +197,7 @@ def PPString(inp, mol, i, n, outFile):
   else:
     if inp.setting['pp_type'] == 'geodecker':
       if qtk.n2ve(mol.type_list[i].title()) > 10:
-        shell = '-d-'
+        shell = '-d'
       else:
         shell = ''
       PPStr = mol.type_list[i] + '.' + \
