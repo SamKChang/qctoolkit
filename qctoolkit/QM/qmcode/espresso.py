@@ -195,16 +195,20 @@ def PPString(inp, mol, i, n, outFile):
     PPStr = ppstr
     pp_root, pp_ext = os.path.split(ppstr)
   else:
-    if inp.setting['pp_type'] == 'qe-hgh':
+    if inp.setting['pp_type'] == 'geodecker':
+      if qtk.n2ve(mol.type_list[i].title()) > 10:
+        shell = '-d-'
+      else:
+        shell = ''
       PPStr = mol.type_list[i] + '.' + \
-              inp.setting['pp_theory'].lower() + '-hgh.UPF'
-    elif inp.setting['pp_type'] == 'geodecker':
+              inp.setting['pp_theory'].lower() + shell + '-hgh.UPF'
+    elif inp.setting['pp_type'] == 'cpmd':
       PPStr = PPName(inp, mol, i, n)
   xc = inp.setting['pp_theory'].lower()
   if not mol.string[i]:
-    if inp.setting['pp_type'] == 'qe-hgh':
+    if inp.setting['pp_type'] == 'geodecker':
       PPCheck(xc, mol.type_list[i].title(), PPStr)
-    elif inp.setting['pp_type'] == 'geodecker':
+    elif inp.setting['pp_type'] == 'cpmd':
       saved_pp = PPCheck_cpmd(xc, mol.type_list[i].title(), PPStr)
       new_pp1 = saved_pp + '.UPF'
       conv_pp = sp.Popen("%s %s" % \

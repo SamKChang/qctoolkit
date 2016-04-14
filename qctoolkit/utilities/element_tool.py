@@ -13,8 +13,10 @@ type_list = qel.Elements.type_list()
 mass_list = qel.Elements.mass_list()
 
 def e2ve(e):
+  pattern = re.compile('\d[spdf]')
   ve = 0
   ecfg_lst = e.eleconfig.split()
+  print ecfg_lst
   ecfg_str = filter(pattern.match, ecfg_lst)
   for s in ecfg_str[-2:]:
     n = re.sub(pattern, '', s)
