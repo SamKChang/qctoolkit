@@ -84,6 +84,9 @@ class inp(PlanewaveInput):
 
       self.content['system']['nat'] = molecule.N
       self.content['system']['ntyp'] = len(type_index) - 1
+      if setting['full_kmesh']:
+        self.content['system']['nosym'] = True
+        self.content['system']['noinv'] = True
   
       if 'restart' in setting and setting['restart']:
         self.content['control']['restart_mode'] = 'restart'
@@ -124,6 +127,11 @@ class inp(PlanewaveInput):
             entry = ' %s = %d,\n' % (key, value)
           elif type(value) is float:
             entry = ' %s = %14.8E,\n' % (key, value)
+          elif type(value) is bool:
+            if value:
+              entry = ' %s = .true.,\n' % key
+            else:
+              entry = ' %s = .false.,\n' % key
           inp.write(entry)
         inp.write('/\n')
 
@@ -200,10 +208,10 @@ def PPString(inp, mol, i, n, outFile):
       if 'd_shell' in inp.setting:
         if type(inp.setting['d_shell']) is not list:
           inp.setting['d_shell'] = [inp.setting['d_shell']]
-      if qtk.n2ve(mol.type_list[i].title()) > 10 \
+      if qtk.n2ve(mol.type_list[i].title()) > 10:
         shell = '-d'
       elif 'd_shell' in inp.setting \
-      and element in inp.setting['d_shell']\
+      and element in inp.setting['d_shell']:
         shell = '-d'
       else:
         shell = ''

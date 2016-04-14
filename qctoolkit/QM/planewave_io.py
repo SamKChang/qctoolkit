@@ -25,6 +25,8 @@ class PlanewaveInput(GenericQMInput):
       self.celldm2lattice()
     if 'pp_type' not in kwargs:
       self.setting['pp_type'] = 'geodecker'
+    if 'full_kmesh' not in self.setting:
+      self.setting['full_kmesh'] = False
 
     univ.getCelldm(self) 
 
