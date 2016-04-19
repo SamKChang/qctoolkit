@@ -357,4 +357,4 @@ class out(PlanewaveOutput):
           cb = min(self.band[:, N_state + 1])
           self.Eg = cb - vb
     else:
-      qtk.warning('job %s not finished')
+      qtk.warning('job %s not finished' % qmout)
