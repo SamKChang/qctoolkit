@@ -359,6 +359,6 @@ class out(PlanewaveOutput):
             cb = min(self.band[:, N_state + 1])
             self.Eg = cb - vb
         except IOError:
-          qtk.warning('job %s not finished' % qmout)
+          qtk.warning('xml file of job %s not found' % qmout)
     else:
       qtk.warning('job %s not finished' % qmout)
