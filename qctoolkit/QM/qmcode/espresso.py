@@ -309,7 +309,8 @@ class out(PlanewaveOutput):
     data = out_file.readlines()
     out_file.close()
     Et_pattern = re.compile("^.*total energy *=.*$")
-    if len(Et_str) > 0:
+    Et_list = filter(Et_pattern.match, data)
+    if len(Et_list) > 0:
       Et_str = filter(Et_pattern.match, data)[-1]
       Et = float(Et_str.split()[-2])
       self.Et, self.unit = qtk.convE(Et, 'Ry-Eh')
