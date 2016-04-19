@@ -309,48 +309,51 @@ class out(PlanewaveOutput):
     data = out_file.readlines()
     out_file.close()
     Et_pattern = re.compile("^.*total energy *=.*$")
-    Et_str = filter(Et_pattern.match, data)[-1]
-    Et = float(Et_str.split()[-2])
-    self.Et, self.unit = qtk.convE(Et, 'Ry-Eh')
-    out_folder = os.path.split(os.path.abspath(qmout))[0]
-    save = glob.glob(os.path.join(out_folder, '*.save'))
-    # extract band structure from xml files
-    if save:
-      save = save[0]
-      data_xml = os.path.join(save, 'data-file.xml')
-      xml_file = open(data_xml)
-      tree = ET.parse(xml_file)
-      xml_file.close()
-      self.xml = tree.getroot()
-      kpoints = []
-      band = []
-      # access data for each kpoint
-      for k in self.xml[-2]:
-        k_str = k[0].text
-        coord = [float(c) for c in k_str.split()]
-        weight = float(k[1].text.split()[0])
-        coord.append(weight)
-        kpoints.append(coord)
-        ev_file = os.path.join(save, k[2].attrib['iotk_link'])
-        k_xml_file = open(ev_file)
-        k_xml = ET.parse(k_xml_file)
-        k_xml_file.close()
-        ev_k = k_xml.getroot()
-        ev_str = ev_k[2].text.split()
-        ev = [qtk.convE(float(entry), 'Eh-eV')[0] for entry in ev_str]
-        band.append(ev)
-        occ_str = ev_k[3].text.split()
-        occ = [float(entry) for entry in occ_str]
-      self.kpoints = np.array(kpoints)
-      self.mo_eigenvalues = copy.deepcopy(band[0])
-      self.band = np.array(band)
-      self.occupation = occ
-      diff = np.diff(occ)
-      pos = diff[np.where(abs(diff) > 0.5)]
-      mask = np.in1d(diff, pos)
-      ind = np.array(range(len(diff)))
-      if len(ind[mask]) > 0:
-        N_state = ind[mask][0]
-        vb = max(self.band[:, N_state])
-        cb = min(self.band[:, N_state + 1])
-        self.Eg = cb - vb
+    if len(Et_str) > 0:
+      Et_str = filter(Et_pattern.match, data)[-1]
+      Et = float(Et_str.split()[-2])
+      self.Et, self.unit = qtk.convE(Et, 'Ry-Eh')
+      out_folder = os.path.split(os.path.abspath(qmout))[0]
+      save = glob.glob(os.path.join(out_folder, '*.save'))
+      # extract band structure from xml files
+      if save:
+        save = save[0]
+        data_xml = os.path.join(save, 'data-file.xml')
+        xml_file = open(data_xml)
+        tree = ET.parse(xml_file)
+        xml_file.close()
+        self.xml = tree.getroot()
+        kpoints = []
+        band = []
+        # access data for each kpoint
+        for k in self.xml[-2]:
+          k_str = k[0].text
+          coord = [float(c) for c in k_str.split()]
+          weight = float(k[1].text.split()[0])
+          coord.append(weight)
+          kpoints.append(coord)
+          ev_file = os.path.join(save, k[2].attrib['iotk_link'])
+          k_xml_file = open(ev_file)
+          k_xml = ET.parse(k_xml_file)
+          k_xml_file.close()
+          ev_k = k_xml.getroot()
+          ev_str = ev_k[2].text.split()
+          ev = [qtk.convE(float(entry), 'Eh-eV')[0] for entry in ev_str]
+          band.append(ev)
+          occ_str = ev_k[3].text.split()
+          occ = [float(entry) for entry in occ_str]
+        self.kpoints = np.array(kpoints)
+        self.mo_eigenvalues = copy.deepcopy(band[0])
+        self.band = np.array(band)
+        self.occupation = occ
+        diff = np.diff(occ)
+        pos = diff[np.where(abs(diff) > 0.5)]
+        mask = np.in1d(diff, pos)
+        ind = np.array(range(len(diff)))
+        if len(ind[mask]) > 0:
+          N_state = ind[mask][0]
+          vb = max(self.band[:, N_state])
+          cb = min(self.band[:, N_state + 1])
+          self.Eg = cb - vb
+    else:
+      qtk.warning('job %s not finished')
