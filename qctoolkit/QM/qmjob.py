@@ -228,6 +228,14 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
       exestr = "%s < %s" % (exe, job)
       compute(exestr, out, _threads)
     qio_out = qio.QMOut(out, program='espresso')
+    if not _save_restart:
+      rst_list = glob.glob("*.wfc*")
+      rst_list.extend(glob.glob("*.restart_*"))
+    else:
+      rst_list = []
+    for r in rst_list:
+      os.remove(r)
+      
   #########################
   # GAMESS IMPLEMENTATION #
   #########################
