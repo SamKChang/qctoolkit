@@ -14,10 +14,10 @@ purpose chemistry tool kit.
 * __To install__: ```cd /path/to/qctoolkit && python setup.py install --user```
 * __To remove__:  Manually remove all created files. List of files can 
 be obtained by the --record flag during install
-```python setup.py install --user --record fileList.txt```All files
+```python setup.py install --user --record fileList.txt```
 * **Note** that the ```setup.py``` script depends on python setuptools
   package. This can be installed by
-```wget https://bootstrap.pypa.io/ez_setup.py -O - | sudo python```
+```wget https://bootstrap.pypa.io/ez_setup.py --no-check-certificate -O - | python - --user```
   with superuser priviledge
 * The package depends on [NumPy > 1.11.*](http://www.numpy.org/),
   [pandas > 0.17.1](http://pandas.pydata.org/), 
