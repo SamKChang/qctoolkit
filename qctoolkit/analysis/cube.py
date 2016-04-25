@@ -125,7 +125,8 @@ class CUBE(object):
 
   def contour(self, axis=0, level=None, **kwargs):
     if not level:
-      level = self.molecule.getCenterOfMass()[axis] 
+      level = self.molecule.getCenterOfMass()[axis]
+    level = level / 0.529177249
     O = self.grid[0,1:4]
     _max = []
     for i in range(1, 4):
@@ -137,7 +138,7 @@ class CUBE(object):
       if i != axis:
         _axis.append(line)
       else:
-       loc = np.argmin(abs(line - level))
+        loc = np.argmin(abs(line - level))
     if axis == 0:
       Z = self.data[loc, :, :]
     elif axis == 1:
@@ -146,9 +147,6 @@ class CUBE(object):
       Z = self.data[:, :, loc]
         
     X, Y = np.meshgrid(*tuple(_axis), indexing='ij')
-    print X.shape
-    print Y.shape
-    print Z.shape
     if 'name' in kwargs:
       name = kwargs['name']
     else:
@@ -161,7 +159,9 @@ class CUBE(object):
     if 'plkwargs' in kwargs:
       plkwargs.update(kwargs['plkwargs'])
     pl.figure(name)
-    CS = pl.contour(X, Y, Z, *plargs, **plkwargs)
+    CS = pl.contour(X, Y, Z, 10, *plargs, **plkwargs)
+    pl.clabel(CS, fontsize=9, inline=1)
+    ut.report('CUBE', 'axis:%d, slice:%f' % (axis, loc))
     return [X, Y, Z]
     
 

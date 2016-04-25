@@ -3,6 +3,7 @@ import re, os, shutil, copy, sys
 import numpy as np
 import qctoolkit.QM.qmjob as qmjob
 import universal as univ
+import paramiko
 
 class InpContent(object):
   """
@@ -323,6 +324,41 @@ class GenericQMInput(object):
       return inp
     else:
       return inp, molecule
+
+  def submit(self, name=None, **remote_settings):
+    necessary_list = [
+      'username',
+      'password',
+      'ip',
+      'submission_script',
+    ]
+    default_dict = {
+      'submission_string': None,
+      'n_cpu': 1,
+    }
+    for s in necessary_list:
+      if s not in remote_settings:
+        qtk.exit('cluster setting:%s not defined' % s)
+      else:
+        exec "%s = '%s'" % (s, remote_settings[s])
+
+    if not name:
+      name = self.molecule.name
+    if os.path.exists(name):
+      qtk.warning("%s exist, skipping...")
+    else:
+      self.write(name)
+      ssh = paramiko.SSHClient()
+      ssh.load_system_host_keys()
+      ssh.connect(ip, username=username, password=password)
+      sftp = ssh.open_sftp()
+      #sftp.put(localpath, remotepath)
+      sftp.close()
+      ssh.close()
+      shutil.rmtree(name)
+   
+      
+    
 
 class GenericQMOutput(object):
   def __init__(self, output=None, **kwargs):
