@@ -331,16 +331,18 @@ def PPString(inp, mol, i, n, outFile):
   """
   alchemy = re.compile('^\w*2\w*_\d\d\d$')
   ppstr = re.sub('\*', '', mol.string[i])
+  dcacp_flag = False
   if ppstr:
     PPStr = '*' + ppstr
     pp_root, pp_ext = os.path.split(ppstr)
     if pp_ext != 'psp':
       PPStr = PPStr + '.psp'
   elif 'vdw' in inp.setting\
-  and inp.setting['vdw'].lower == 'dcacp':
+  and inp.setting['vdw'].lower() == 'dcacp':
     # PPStr: Element_qve_dcacp_theory.psp
     PPStr = '*'+mol.type_list[i] + '_dcacp_' +\
       inp.setting['pp_theory'].lower() + '.psp'
+    dcacp_flag = True
   else:
     # PPStr: Element_qve_theory.psp
     element = mol.type_list[i]
@@ -356,7 +358,7 @@ def PPString(inp, mol, i, n, outFile):
   pp_file_str = re.sub('\*', '', PPStr)
   xc = inp.setting['pp_theory'].lower()
   if not mol.string[i]:
-    PPCheck(xc, mol.type_list[i].title(), pp_file_str)
+    PPCheck(xc, mol.type_list[i].title(), pp_file_str, dcacp=dcacp_flag)
   elif alchemy.match(mol.string[i]):
     alchemyPP(xc, pp_file_str)
   pp_file = os.path.join(qtk.setting.cpmd_pp, pp_file_str)
@@ -372,14 +374,22 @@ def PPCheck(xc, element, pp_file_str, **kwargs):
     xc = 'pade'
   ne = qtk.n2ve(element)
   try:
-    pp_path = os.path.join(xc, element + '-q' + str(qtk.n2ve(element)))
-    pp_file = os.path.join(qtk.setting.cpmd_pp_url, pp_path)
+    if 'dcacp' in kwargs and kwargs['dcacp']:
+      pp_path = os.path.join(xc.upper(), "%s_DCACP_%s" %\
+                (element, xc.upper()))
+      if element in qtk.setting.dcacp_dict:
+        pp_path = pp_path + "_%s" % qtk.setting.dcacp_dict[element]
+      pp_file = os.path.join(qtk.setting.cpmd_dcacp_url, pp_path)
+    else:
+      pp_path = os.path.join(xc, 
+        element + '-q' + str(qtk.n2ve(element)))
+      pp_file = os.path.join(qtk.setting.cpmd_pp_url, pp_path)
     saved_pp_path = os.path.join(qtk.setting.cpmd_pp, pp_file_str)
     if not os.path.exists(saved_pp_path) and qtk.setting.download_pp:
       if pp_file:
         new_pp = os.path.join(qtk.setting.cpmd_pp, pp_file_str)
         pp_content = urllib2.urlopen(pp_file).read()
-        qtk.report('', 'pp file %s not found in %s. ' \
+        qtk.report('PPCheck', 'pp file %s not found in %s. ' \
                    % (pp_file_str, qtk.setting.cpmd_pp) + \
                    'but found in cp2k page, download now...')
         new_pp_file = open(new_pp, 'w')

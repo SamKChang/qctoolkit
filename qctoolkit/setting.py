@@ -76,6 +76,13 @@ planewave_setup = {
 dft_list = ['pbe', 'pbe0', 'blyp', 'b3lyp', 'bp91', 'bp86', 'pw91']
 cc_list = ['mp2', 'mp3', 'mp4', 'ccsd', 'ccsdt', 
            'lccsd', 'cisd', 'cisdt']
+dcacp_dict = {
+  'C': 'C6H6',
+  'H': 'H2',
+  'N': 'N2',
+  'O': 'CO2',
+  'S': 'CS2',
+}
 _setting = os.path.realpath(__file__)
 _root = os.path.split(_setting)[0]
 # VASP setting
@@ -86,6 +93,7 @@ cpmd_exe = 'cpmd.x'
 cpmd_cpmd2cube_exe = 'cpmd2cube.x'
 cpmd_pp = os.path.join(_root, 'data/PP/cpmd')
 cpmd_pp_url = 'http://cp2k.web.psi.ch/potentials/Goedecker-Teter-Hutter/cpmd/'
+cpmd_dcacp_url = 'http://lcbc.epfl.ch/files/content/sites/lcbc/files/DCACPs/download/SG/'
 # espresso setting
 espresso_exe = 'pw.x'
 espresso_cpmd2upf_exe = 'cpmd2upf.x'
