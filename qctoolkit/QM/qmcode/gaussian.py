@@ -5,6 +5,7 @@ import os, sys, copy, shutil, re
 import numpy as np
 import qctoolkit.QM.qmjob as qmjob
 import periodictable as pt
+import universal as univ
 
 class inp(GaussianBasisInput):
   def __init__(self, molecule, **kwargs):
@@ -30,8 +31,60 @@ class inp(GaussianBasisInput):
 #      os.chdir(cwd)
 #    return out
     
-  def write(self, name=None):
-    pass
+  def write(self, name=None, **kwargs):
+    self.setting.update(kwargs)
+    univ.cornerCube(self)
+    inp, molecule = \
+      super(GaussianBasisInput, self).write(name, **self.setting)
+
+    theory_dict = {
+      'pbe': 'pbepbe',
+      'pbe0': 'pbe1pbe',
+      'blyp': 'blyp',
+      'b3lyp': 'b3lyp',
+      'mp2': 'mp2',
+      'ccsd': 'ccsd',
+    }
+    theory = theory_dict[self.setting['theory']]
+    basis = self.setting['basis_set']
+    charge, multiplicity = \
+      self.molecule.charge, self.molecule.multiplicity
+
+    if 'gaussian_setting' not in self.setting:
+      gaussian_setting = '6d 10f nosymm' +\
+        ' Scf(maxcycle=1000,verytight) int(grid=ultrafine)'
+    else:
+      gaussian_setting = self.setting['gaussian_setting']
+
+    chk_flag = False
+    save_list = [
+      'save_density',
+      'ks_states',
+      'save_wf',
+    ]
+    for s in save_list:
+      if s in self.setting and self.setting[s]:
+        chk_flag = True
+
+    inp.write('%nproc=\n')
+    if chk_flag:
+      inp.write('%chk=\n')
+    inp.write("# %s/%s %s\n\n" % (theory, basis, gaussian_setting))
+    inp.write("%s\n\n" % self.molecule.name)
+    inp.write("%d   %d\n" % (charge, multiplicity))
+
+    for i in range(molecule.N):
+      inp.write('%-2s % 8.4f % 8.4f % 8.4f\n' % \
+                (molecule.type_list[i],
+                 molecule.R[i, 0],
+                 molecule.R[i, 1],
+                 molecule.R[i, 2]))
+    inp.write('\n\n')
+    inp.close()
+
+    return inp
+    
+
 #    self.reset()
 #    molecule = copy.deepcopy(self.molecule)
 #    self.cm_check(molecule)

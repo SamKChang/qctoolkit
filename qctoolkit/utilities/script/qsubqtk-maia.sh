@@ -28,6 +28,8 @@ for dir in *; do
   inp=`ls|grep $dir`
   BASE=${f%.*}
   out=`echo $inp|sed 's/\.[^\.]*$/.out/g'`
+  log=`echo $inp|sed 's/\.[^\.]*$/.log/g'`
+  fchk=`echo $inp|sed 's/\.[^\.]*$/.fchk/g'`
   job=$BASE$$
   cwd=$PWD
 
@@ -43,10 +45,18 @@ for dir in *; do
   echo "cp  $cwd/* /tmp/$USER/$job/"                  >> jobsub
   echo -n "mpirun -np $NSLOTS -mca btl tcp,self "     >> jobsub
   echo "$EXE $inp > $out"                             >> jobsub
+  echo "if [ -e '$log' ];then"                        >> jobsub
+  echo "  mv $log $out"                               >> jobsub
+  echo "fi"                                           >> jobsub
+  echo "if [ -e *.chk ];then"                         >> jobsub
+  echo "  mv *.chk $fchk"                             >> jobsub
+  echo "fi"                                           >> jobsub
   echo "cp * $cwd"                                    >> jobsub
   echo "cd $cwd"                                      >> jobsub
   echo "rm -rf /tmp/$USER/$job"                       >> jobsub
   
+  sed -i "/^%nproc/{s/=.*/=$NSLOTS/g}" $inp
+  sed -i "/^%chk/{s/=.*/=$cwd/g}" $inp
   qsub $FLAG jobsub
   cd ..
 done

@@ -90,5 +90,5 @@ def submit(inp_list, root, **remote_settings):
   remote_cmd = "%s %s %s %d '%s'" % \
     (submission_script, exe, remote_path, n_cpu, flags)
   ssh.exec_command(remote_cmd)
-  #print remote_cmd
+  qtk.report('submit', remote_cmd)
   ssh.close()
