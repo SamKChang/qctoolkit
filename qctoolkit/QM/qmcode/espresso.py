@@ -108,6 +108,10 @@ class inp(PlanewaveInput):
       if 'ks_states' in setting and setting['ks_states']:
         vs = int(round(self.molecule.getValenceElectrons() / 2.0))
         self.content['system']['nbnd'] = setting['ks_states'] + vs
+        if 'd_shell' in setting:
+          for a in molecule.type_list:
+            if a in setting['d_shell'] and qtk.n2ve(a) < 10:
+              self.content['system']['nbnd'] += 5
 
       if 'symmetry' in setting:
         if setting['symmetry'] == 'fcc':
