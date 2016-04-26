@@ -102,3 +102,13 @@ bigdft_pp_url = 'http://cp2k.web.psi.ch/potentials/Goedecker-Teter-Hutter/abinit
 bigdft_pp_nlcc_url = 'http://bigdft.org/Wiki/index.php?title=New_Soft-Accurate_NLCC_pseudopotentials'
 #bigdft_pp_url = 'https://sourceforge.net/p/cp2k/code/HEAD/tree/trunk/potentials/Goedecker/abinit/'
 #bigdft_pp = '/home/samio/Works/PhD/packages/BigDFT/PP'
+gaussian_exe = 'g90'
+
+program_dict = {
+  'cpmd': cpmd_exe,
+  'vasp': vasp_exe,
+  'espresso': espresso_exe + ' <',
+  'bigdft': bigdft_exe,
+  'nwchem': nwchem_exe,
+  'gaussian': gaussian_exe,
+}
