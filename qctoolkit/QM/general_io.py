@@ -280,7 +280,11 @@ class GenericQMInput(object):
 
     # unify output name/directory
     if name:
-      name = os.path.splitext(name)[0]
+      name_list = os.path.splitext(name)
+      if re.match("(inp|com|yaml)", name_list[-1]):
+        name = ''
+        for n in name_list:
+          name += n
 
     # unify periodicity
     cell_check = False
