@@ -40,6 +40,12 @@ def submit(inp_list, root, **remote_settings):
     and remote_settings['overwrite']:
       qtk.warning("root directory %s exist, overwrite..." % root)
       shutil.rmtree(root)
+      cwd = os.getcwd()
+      os.makedirs(root)
+      os.chdir(root)
+      for inp in inp_list:
+        inp.write(inp.molecule.name)
+      os.chdir(cwd)
     else:
       qtk.warning("root directory %s exist, uploading existing folder"\
                   % root)
