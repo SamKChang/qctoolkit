@@ -178,11 +178,11 @@ class inp(PlanewaveInput):
       if 'restart' in setting and setting['restart']:
         if 'scf_step' in setting and setting['scf_step'] == 1:
           inp.write("ALCHEMY prediction\n")
-     
-
 
       if self.content['system']['ibrav'] == 0:
         inp.write("CELL_PARAMETERS angstrom\n")
+        if 'lattice' not in self.setting:
+          self.celldm2lattice()
         lattice_vec = self.setting['lattice']
         for vec in lattice_vec:
           for component in vec:
