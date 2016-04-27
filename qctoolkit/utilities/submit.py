@@ -36,8 +36,13 @@ def submit(inp_list, root, **remote_settings):
   program = inp_list[0].setting['program']
 
   if os.path.exists(root):
-    qtk.warning("root directory %s exist, uploading existing folder"\
-                % root)
+    if 'overwrite' in remote_settings \
+    and remote_settings['overwrite']:
+      qtk.warning("root directory %s exist, overwrite..." % root)
+      shutil.rmtree(root)
+    else:
+      qtk.warning("root directory %s exist, uploading existing folder"\
+                  % root)
   else:
     cwd = os.getcwd()
     os.makedirs(root)
@@ -59,7 +64,12 @@ def submit(inp_list, root, **remote_settings):
     ssh.exec_command('ls %s' % remote_path)
   sshout = ssh_stdout.read()
   if len(sshout) > 0:
-    qtk.exit('remote path %s exists' % remote_path)
+    if 'overwrite' in remote_settings \
+    and remote_settings['overwrite']:
+      qtk.warning('remote path %s exists, overwrite...' % remote_path)
+      ssh.exec_command('rm -r %s' % remote_path)
+    else:
+      qtk.exit('remote path %s exists' % remote_path)
 
   ssh_newkey = 'Are you sure you want to continue connecting'
   patterns = [ssh_newkey, '[Pp]assword:', pexpect.EOF]
