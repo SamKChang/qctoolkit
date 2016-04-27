@@ -34,6 +34,10 @@ c_module = [Extension(name = "qctoolkit.ML.kernel_matrix",
               extra_compile_args=['-O3'],
               sources = ['qctoolkit/analysis/c_extension/'+\
                          'readcubemodule.c']),
+            Extension(name = "qctoolkit.analysis.write_cube", 
+              extra_compile_args=['-O3'],
+              sources = ['qctoolkit/analysis/c_extension/'+\
+                         'writecubemodule.c']),
             Extension(name = "qctoolkit.ML.coulomb_matrix", 
               extra_compile_args=['-O3'],
               sources = ['qctoolkit/ML/c_extension/'+\
