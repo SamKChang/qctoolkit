@@ -36,7 +36,7 @@ class CUBE(object):
     self.molecule.type_list = [ut.Z2n(z) for z in self.molecule.Z]
 
   def __repr__(self):
-    return 'CUBE mesh:\n' + str(self.grid) +\
+    return '\nCUBE mesh:\n' + str(self.grid) +\
            '\n\nmolecule:\n' +\
            str(np.hstack([self.molecule.Z[:, np.newaxis], 
                           self.molecule.R]))
