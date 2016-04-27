@@ -11,7 +11,7 @@
 void readCubeHeader(char *inp, int dims[3], int size[2]){
   FILE *fr;
   double read;
-  int i, j=0;
+  int i, j=0, s;
   double grid[16];
   char *string = (char *) malloc(80);
   size_t len=0;
@@ -19,11 +19,14 @@ void readCubeHeader(char *inp, int dims[3], int size[2]){
   // CUBE file contains fixed size grid specification
   fr = fopen(inp, "r");
   for(i=0;i<2;i++) getline(&string, &len, fr);
-  for(i=0;i<16;i++){
-    fscanf(fr, "%lf", &read);
-    grid[i] = read;
+  for(i=0;i<4;i++){
+    for(j=0;j<4;j++){
+      s = i*4 + j;
+      fscanf(fr, "%lf", &read);
+      grid[s] = read;
+    }
+    getline(&string, &len, fr);
   }
-  getline(&string, &len, fr);
 
   size[0] = grid[0];
   size[1] = 4;
@@ -50,23 +53,27 @@ void readcube_c(char *inp,
   FILE *fr;
   int Na, N3=1;
   double read;
-  int i, j=0;
+  int i, j=0, s;
   char *string = (char *) malloc(80);
   size_t len=0;
 
   // CUBE file contains fixed size grid specification
   fr = fopen(inp, "r");
   for(i=0;i<2;i++) getline(&string, &len, fr);
-  for(i=0;i<16;i++){
-    fscanf(fr, "%lf", &read);
-    grid[i] = read;
+  for(i=0;i<4;i++){
+    for(j=0;j<4;j++){
+      s = i*4 + j;
+      fscanf(fr, "%lf", &read);
+      grid[s] = read;
+    }
+    getline(&string, &len, fr);
   }
-  getline(&string, &len, fr);
 
   // assign proper value to related parameters
   Na = size[0];
   for(i=0;i<3;i++) N3 *= dims[i];
 
+  j = 0;
   for(i=0;i<Na*5;i++){
     fscanf(fr, "%lf", &read);
     if((i%5) != 0){
@@ -93,7 +100,7 @@ void readcube_c(char *inp,
       fscanf(fr,"%le", &read);
       cube[i] = read;
     }else{
-      printf("===== ERROR REPORT =====");
+      printf("===== ERROR REPORT =====\n");
       printf("last point read: % le\n", cube[i-1]);
       printf("end at i=%d, while N=%d\n", i, N3);
       // check for incomplete CUBE file
