@@ -240,6 +240,16 @@ class GenericQMInput(object):
       if method != 'setCelldm':
         setattr(self, method, getattr(self.molecule, method))
 
+  def cornerMargin(self,
+      margin = [qtk.setting.box_margin for i in range(3)]):
+    if type(margin) is not list:
+      margin = [margin for i in range(3)]
+    margin = np.array(margin)
+    R = self.molecule.R
+    min_vec = np.array([min(R[:,i]) for i in range(3)])
+    self.molecule.center(min_vec)
+    self.molecule.shift(margin)
+
   def setCelldm(self, celldm=None, **kwargs):
     self.setting['celldm'] = self.molecule.setCelldm(celldm, **kwargs)
     self.setting['box'] = self.setting['celldm'][:3]

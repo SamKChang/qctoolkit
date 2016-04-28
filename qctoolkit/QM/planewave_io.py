@@ -45,6 +45,9 @@ class PlanewaveInput(GenericQMInput):
       super(GenericQMInput, self).write(name, **setting)
     return inp, molecule
 
+  def cornerMargin(self, *args, **kwargs):
+    pass
+
 class PlanewaveOutput(GenericQMOutput):
   def __init__(self, output=None, **kwargs):
     GenericQMOutput.__init__(self, output, **kwargs)
