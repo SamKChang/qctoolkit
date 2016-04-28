@@ -100,7 +100,7 @@ class inp(PlanewaveInput):
       if not setting['periodic']:
         self.content['system']['assume_isolated'] = 'mt'
 
-      if 'exx' in setting and setting['exx'] = 'anisotropic':
+      if 'exx' in setting and setting['exx'] == 'anisotropic':
         self.content['system']['exxdiv_treatment'] = 'vcut_ws'
         self.content['system']['ecutvcut'] = 0.7
         self.content['system']['x_gamma_extrapolation'] = False
