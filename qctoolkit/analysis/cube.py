@@ -7,6 +7,7 @@ import re, copy
 import qctoolkit.molecule as geometry
 import qctoolkit.utilities as ut
 import read_cube as rq
+import write_cube as wq
 import qctoolkit.setting as setting
 import numpy as np
 import matplotlib.pyplot as pl
@@ -40,6 +41,17 @@ class CUBE(object):
            '\n\nmolecule:\n' +\
            str(np.hstack([self.molecule.Z[:, np.newaxis], 
                           self.molecule.R]))
+
+  def write(self, out):
+    x, y, z = self.data.shape
+    data = self.data
+    grid = self.grid
+    N = self.molecule.N
+    Z = self.molecule.Z.reshape(N, 1)
+    structure = np.hstack([Z, self.molecule.R * 1.889725989])
+    if os.path.exists(out):
+      ut.prompt("output file:%s exist overwrite?" % out)
+    wq.write_cube(out, grid, structure, data)
 
   def integrate(self, **kwargs):
     O = self.grid[0,1:4]
