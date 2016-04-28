@@ -24,7 +24,9 @@ class CUBE(object):
   def __init__(self, cube_file):
     if not os.path.exists(cube_file):
       ut.exit("CUBE file:%s not found" % cube_file)
-    self.data, self.zcoord, self.grid = rq.read_cube(cube_file)
+    self.data, self.zcoord, self.grid, self.coords\
+      = rq.read_cube(cube_file)
+    self.coords = self.coords * 0.529177249
     self.molecule = geometry.Molecule()
     if(self.grid[0,0] > 0):
       self.molecule.R = self.zcoord[:,1:4]*0.529177249

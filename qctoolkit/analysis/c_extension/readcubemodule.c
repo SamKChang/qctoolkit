@@ -47,13 +47,16 @@ void readcube_c(char *inp,
                 double *cube, 
                 double *structure, 
                 double *grid, 
+                double *coords, 
                 int dims[3],
                 int size[2])
 {
   FILE *fr;
   int Na, N3=1;
   double read;
-  int i, j=0, s;
+  int i, j=0, k, s;
+  int nx, ny, nz;
+  double r;
   char *string = (char *) malloc(80);
   size_t len=0;
 
@@ -99,6 +102,14 @@ void readcube_c(char *inp,
     if(!feof(fr)){
       fscanf(fr,"%le", &read);
       cube[i] = read;
+      nz = i % dims[2];
+      ny = (i/dims[2]) % dims[1];
+      nx = (i/(dims[2]*dims[1])) % dims[0];
+      for(k=0;k<3;k++){
+        // index: n*4 + k + 1
+        r = nx*grid[5 + k] + ny*grid[9 + k] + nz*grid[13 + k];
+        coords[i*3 + k] = r;
+      }
     }else{
       printf("===== ERROR REPORT =====\n");
       printf("last point read: % le\n", cube[i-1]);
@@ -138,10 +149,11 @@ static PyObject * read_cube(PyObject * self, PyObject * args){
   double *data; // C-data need to be converted to numpy object
   double *structure; // C-data need to be converted to numpy object
   double *grid; // C-data need to be converted to numpy object
-  int dims[3], size[2], gsize[2]={4,4};
+  double *coords;
+  int dims[3], size[2], gsize[2]={4,4}, dims_crd[2];
   int N3=1, i;
   // numpy object pass back to python
-  PyArrayObject *npdata, *npstructure, *npgrid; 
+  PyArrayObject *npdata, *npstructure, *npgrid, *npcoords; 
 
   // parse arguments check and/or error handling
   if(!PyArg_ParseTuple(args, "s", &input))
@@ -152,25 +164,31 @@ static PyObject * read_cube(PyObject * self, PyObject * args){
 
   // to allocate memory in the function
   for(i=0;i<3;i++) N3 *= dims[i];
+  dims_crd[0] = N3;
+  dims_crd[1] = 3;
   data = (double*) malloc(N3*sizeof(double));
+  coords = (double*) malloc(3*N3*sizeof(double));
   structure = (double*) malloc(4*size[0]*sizeof(double));
   grid = (double*) malloc(16*sizeof(double));
   // set up numpy array data structure
   npdata = (PyArrayObject*) PyArray_FromDims(3, dims, NPY_DOUBLE);
+  npcoords = (PyArrayObject*) PyArray_FromDims(2, 
+                                   dims_crd, NPY_DOUBLE);
   npstructure = (PyArrayObject*) PyArray_FromDims(2, 
                                    size, NPY_DOUBLE);
   npgrid = (PyArrayObject*) PyArray_FromDims(2, gsize, NPY_DOUBLE);
   // set numpy data point to C-array data
   data = pyvector_to_Carrayptrs(npdata);
+  coords = pyvector_to_Carrayptrs(npcoords);
   structure = pyvector_to_Carrayptrs(npstructure);
   grid = pyvector_to_Carrayptrs(npgrid);
   // run the actual function
   // NOTE the data is passed as datatype double**
-  readcube_c(input, data, structure, grid, dims, size);
+  readcube_c(input, data, structure, grid, coords, dims, size);
 
   // build return tuple of PyObjects
   // NOTE: data which Numpy array points to CANNOT be freeed
-  return Py_BuildValue("OOO", npdata, npstructure, npgrid);
+  return Py_BuildValue("OOOO", npdata, npstructure, npgrid, npcoords);
 }
 
 /////////////////////////////////////////
