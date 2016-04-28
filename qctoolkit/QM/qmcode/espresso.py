@@ -91,8 +91,19 @@ class inp(PlanewaveInput):
       if 'restart' in setting and setting['restart']:
         self.content['control']['restart_mode'] = 'restart'
 
+      if 'save_density' in setting and setting['save_density']:
+        self.content['control']['wf_collect'] = True
+
+      if 'save_wf' in setting and setting['save_wf']:
+        self.content['control']['wf_collect'] = True
+
       if not setting['periodic']:
         self.content['system']['assume_isolated'] = 'mt'
+
+      if 'exx' in setting and setting['exx'] = 'anisotropic':
+        self.content['system']['exxdiv_treatment'] = 'vcut_ws'
+        self.content['system']['ecutvcut'] = 0.7
+        self.content['system']['x_gamma_extrapolation'] = False
 
       if molecule.charge != 0:
         self.content['system']['tot_charge'] = molecule.charge
