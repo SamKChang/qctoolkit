@@ -14,9 +14,13 @@ def submit(inp_list, root, **remote_settings):
     'password': None,
     'flags': None,
     'n_cpu': 1,
+    'timeout': 40,
   }
+    
   for k, v in default_dict.iteritems():
     exec "%s = %s" % (k, v)
+  if len(inp_list) * 5 > 40:
+    timout = len(inp_list) * 5
   if 'password' in remote_settings:
     password = remote_settings['password']
   if 'username' in remote_settings:
@@ -88,14 +92,14 @@ def submit(inp_list, root, **remote_settings):
   
 
   p = pexpect.spawn(cmd)
-  i = p.expect(patterns)
+  i = p.expect(patterns, timeout=timeout)
   if i == 0:
     qtk.report('submit', 'adding %s to known_hosts' % ip)
     p.sendline('yes')
-    i = p.expect(patterns)
+    i = p.expect(patterns, timeout=timeout)
   if i == 1:
     p.sendline(password)
-    i = p.expect(patterns)
+    i = p.expect(patterns, timeout=timeout)
   if i == 2:
     if not p.before:
       qtk.report('submit', 'scp completed')
