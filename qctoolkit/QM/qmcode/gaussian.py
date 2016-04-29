@@ -206,29 +206,32 @@ class out(GaussianBasisOutput):
     if qmout:
       outfile = open(qmout)
       data = outfile.readlines()
-      report_str = filter(lambda x: 'N-N=' in x, data)[0]
-      start = data.index(report_str)
-      for i in range(10):
-        end = start + i
-        if data[end] == '\n':
-          break
-      report = data[start:end]
-      final_str = ''.join(report)
-      final_str = final_str.replace('\n', '')
-      final_list = final_str.split('\\')
-      pattern = re.compile("R *M *S *D *=")
-      rmsd = filter(pattern.match, final_list)[0]
-      ind = final_list.index(rmsd) - 1
-      Et_str = final_list[ind]
-      self.Et = float(Et_str.split('=')[1].replace(' ',''))
-      self.detail = final_list
-      
-      fchk = os.path.join(self.path, self.stem) + ".fchk"
-      if os.path.exists(fchk):
-        try:
-          self.getMO(fchk)
-        except:
-          qtk.warning("something wrong while loading fchk file")
+      try:
+        report_str = filter(lambda x: 'N-N=' in x, data)[0]
+        start = data.index(report_str)
+        for i in range(10):
+          end = start + i
+          if data[end] == '\n':
+            break
+        report = data[start:end]
+        final_str = ''.join(report)
+        final_str = final_str.replace('\n', '')
+        final_list = final_str.split('\\')
+        pattern = re.compile("R *M *S *D *=")
+        rmsd = filter(pattern.match, final_list)[0]
+        ind = final_list.index(rmsd) - 1
+        Et_str = final_list[ind]
+        self.Et = float(Et_str.split('=')[1].replace(' ',''))
+        self.detail = final_list
+        
+        fchk = os.path.join(self.path, self.stem) + ".fchk"
+        if os.path.exists(fchk):
+          try:
+            self.getMO(fchk)
+          except:
+            qtk.warning("something wrong while loading fchk file")
+      except: # 'N-N=' not found in the output file
+        qtk.warning("job %s not finished" % qmout)
 
   def getMO(self, fchk):
     fchkfile = open(fchk)
