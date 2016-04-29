@@ -108,3 +108,8 @@ def submit(inp_list, root, **remote_settings):
   ssh.exec_command(remote_cmd)
   qtk.report('submit', remote_cmd)
   ssh.close()
+
+  if 'debug' in remote_settings and remote_settings['debug']:
+    pass
+  else:
+    shutil.rmtree(root)
