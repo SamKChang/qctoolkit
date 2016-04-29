@@ -44,6 +44,29 @@ class CUBE(object):
            str(np.hstack([self.molecule.Z[:, np.newaxis], 
                           self.molecule.R]))
 
+  def __getitem__(self, key):
+    new = copy.deepcopy(self)
+    new.data = new.data[key]
+    corner = new.grid[0, 1:]
+    print key
+    for i in range(len(key)):
+      k = key[i]
+      v = self.grid[i+1, 1:]
+      if type(k) is int:
+        start = k
+        end = 1
+      else:
+        start = k.start
+        end = k.stop
+      if start is None:
+        start = 0
+      if end is None:
+        end = int(self.grid[1+i, 0])
+      corner = corner + v*start
+      new.grid[1+i, 0] = end
+    new.grid[0, 1:] = corner
+    return new
+
   def write(self, out):
     x, y, z = self.data.shape
     data = self.data
