@@ -216,10 +216,11 @@ class out(GaussianBasisOutput):
       final_str = ''.join(report)
       final_str = final_str.replace('\n', '')
       final_list = final_str.split('\\')
-      rmsd = filter(lambda x: 'RMSD=' in x, final_list)[0]
+      pattern = re.compile("R *M *S *D *=")
+      rmsd = filter(pattern.match, final_list)[0]
       ind = final_list.index(rmsd) - 1
       Et_str = final_list[ind]
-      self.Et = Et_str.split('=')[1]
+      self.Et = float(Et_str.split('=')[1].replace(' ',''))
       self.detail = final_list
       
       fchk = os.path.join(self.path, self.stem) + ".fchk"
