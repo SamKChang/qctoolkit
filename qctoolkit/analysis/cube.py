@@ -67,6 +67,12 @@ class CUBE(object):
     new.grid[0, 1:] = corner
     return new
 
+  def asGaussianTemplate(self, fchk, **kwargs):
+    if not os.path.exists:
+      qtk.exit("gaussian fchk file:%s not found" % fchk)
+    tmp_file = 'gcube_tmp_' + str(id(self)) + '.cube'
+    # system call to cubegen with grid setup
+
   def write(self, out):
     x, y, z = self.data.shape
     data = self.data

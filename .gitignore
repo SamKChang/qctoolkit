@@ -10,6 +10,7 @@ branchUpdate.sh
 initialize.sh
 install.sh
 masterUpdate.sh
+lineCount.sh
 qctoolkit/projects/initialize.py
 qctoolkit/QM/old
 qctoolkit/old

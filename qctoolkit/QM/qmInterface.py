@@ -35,20 +35,35 @@ def QMInp(molecule, **kwargs):
 
 def QMOut(out=None, **kwargs):
 
-  if 'program' not in kwargs:
-    kwargs['program'] = qtk.setting.qmcode
-
-  if kwargs['program'].lower() == 'cpmd':
-    return cpmd.out(out)
-  elif kwargs['program'].lower() == 'vasp':
-    return vasp.out(out)
-  elif kwargs['program'].lower() == 'espresso':
-    return espresso.out(out)
-  elif kwargs['program'].lower() == 'nwchem':
-    return nwchem.out(out)
-  elif kwargs['program'].lower() == 'gaussian':
-    return gaussian.out(out)
-  elif kwargs['program'].lower() == 'bigdft':
-    return bigdft.out(out)
+  if 'program' in kwargs:
+    if kwargs['program'].lower() == 'cpmd':
+      return cpmd.out(out)
+    elif kwargs['program'].lower() == 'vasp':
+      return vasp.out(out)
+    elif kwargs['program'].lower() == 'espresso':
+      return espresso.out(out)
+    elif kwargs['program'].lower() == 'nwchem':
+      return nwchem.out(out)
+    elif kwargs['program'].lower() == 'gaussian':
+      return gaussian.out(out)
+    elif kwargs['program'].lower() == 'bigdft':
+      return bigdft.out(out)
+    else:
+      qtk.exit("program: %s not reconized" % kwargs['program'])
   else:
-    qtk.exit("program: %s not reconized" % kwargs['program'])
+    out_list = [
+      cpmd.out, 
+      vasp.out, 
+      espresso.out, 
+      nwchem.out,
+      gaussian.out,
+      bigdft.out,
+    ]
+    for p in out_list:
+      try:
+        return p(out)
+      except:
+        pass
+    qtk.warning("something wrong with output file, "+\
+                "pass 'program' eplicitly")
+      
