@@ -24,6 +24,7 @@ class CUBE(object):
   def __init__(self, cube_file):
     if not os.path.exists(cube_file):
       ut.exit("CUBE file:%s not found" % cube_file)
+    self.path, self.name = os.path.split(cube_file)
     self.data, self.zcoord, self.grid, self.coords\
       = rq.read_cube(cube_file)
     self.coords = self.coords * 0.529177249
@@ -183,11 +184,20 @@ class CUBE(object):
       else:
         loc = np.argmin(abs(line - level))
     if axis == 0:
-      Z = self.data[loc, :, :]
+      try:
+        Z = self.data[level, :, :]
+      except:
+        qtk.exit("failed when accessing cube data")
     elif axis == 1:
-      Z = self.data[:, loc, :]
+      try:
+        Z = self.data[:, level, :]
+      except:
+        qtk.exit("failed when accessing cube data")
     elif axis == 2:
-      Z = self.data[:, :, loc]
+      try:
+        Z = self.data[:, :, level]
+      except:
+        qtk.exit("failed when accessing cube data")
         
     X, Y = np.meshgrid(*tuple(_axis), indexing='ij')
     if 'name' in kwargs:
