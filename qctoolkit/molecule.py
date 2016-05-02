@@ -355,7 +355,9 @@ class Molecule(object):
     return np.linalg.norm(Ri - Rj)
 
   # tested
-  def center(self, center_coord):
+  def center(self, center_coord = None):
+    if center_coord is None:
+      center_coord = self.getCenterOfMass()
     center_matrix = np.kron(
       np.transpose(np.atleast_2d(np.ones(self.N))),
       center_coord
@@ -387,8 +389,9 @@ class Molecule(object):
 
   # tested
   def align(self, u=None, **kwargs):
-    center = self.getCenterOfMass()
-    self.center(center)
+    if 'no_center' in kwargs and kwargs['no_center']:
+      center = self.getCenterOfMass()
+      self.center(center)
     if 'axis' not in kwargs:
       v = np.array([1,0,0])
     else:
