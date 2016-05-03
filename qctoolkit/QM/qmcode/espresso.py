@@ -372,7 +372,14 @@ class out(PlanewaveOutput):
             N_state = ind[mask][0]
             vb = max(self.band[:, N_state])
             cb = min(self.band[:, N_state + 1])
+            vb_pos = np.argmax(self.band[:, N_state])
+            cb_pos = np.argmin(self.band[:, N_state + 1])
             self.Eg = cb - vb
+            if vb_pos == cb_pos:
+              self.Eg_direct = True
+            else:
+              self.Eg_direct = False
+            
         except IOError:
           qtk.warning('xml file of job %s not found' % qmout)
     else:
