@@ -15,7 +15,6 @@ def submit(inp_list, root, **remote_settings):
     'flags': None,
     'n_cpu': 1,
     'timeout': 40,
-    'prefix': '',
   }
     
   for k, v in default_dict.iteritems():
@@ -34,6 +33,8 @@ def submit(inp_list, root, **remote_settings):
     timeout = remote_settings['timeout']
   if 'prefix' in remote_settings:
     prefix = remote_settings['prefix']
+  else:
+    prefix = ''
   for s in necessary_list:
     if s not in remote_settings:
       qtk.exit('cluster setting:%s not defined' % s)
