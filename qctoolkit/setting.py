@@ -26,7 +26,7 @@ ompstr = '-x OMP_NUM_THREADS=%d' % ompthreads
 libgbasis = '/home/samio/src/science/nwchem-6.6/src/basis/libraries'
 # default setup for qm jobs
 qm_setup = {
-             'threads': cpu_count - 2,
+             'threads': 1,
              'program' : qmcode,
              'theory' : 'pbe',
              'mode' : 'single_point',
