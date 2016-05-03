@@ -65,11 +65,13 @@ class lazyattr(object):
         self.func = func
 
     def __get__(self, instance, owner):
-        result = self.func(instance)
-        if result is NotImplemented:
-            return getattr(super(owner, instance), self.func.__name__)
-        setattr(instance, self.func.__name__, result)
-        return result
+        try:
+            if result is NotImplemented:
+                return getattr(super(owner, instance), self.func.__name__)
+            setattr(instance, self.func.__name__, result)
+            return result
+        except:
+            return 'vacuum'
 
 
 class Element(object):
@@ -283,16 +285,18 @@ class ElementsDict(object):
     def __init__(self, *elements):
         self._list = []
         self._dict = {}
+        void = elements[0]
         for element in elements:
             if element.number > len(self._list) + 1:
                 raise ValueError("Elements must be added in order")
-            if element.number <= len(self._list):
+            if element.number <= len(self._list) and element.number > 0:
                 self._list[element.number - 1] = element
             else:
                 self._list.append(element)
             self._dict[element.number] = element
             self._dict[element.symbol] = element
             self._dict[element.name] = element
+        self._list.insert(0, void)
 
     def __str__(self):
         return "[%s]" % ", ".join(ele.symbol for ele in self._list)
@@ -318,6 +322,16 @@ class ElementsDict(object):
 
 
 ELEMENTS = ElementsDict(
+    Element(
+        0, 'Vo', 'Void',
+        group=0, period=0, block='nan', series=0,
+        mass=0.0, eleneg=0.0, eleaffin=0.0,
+        covrad=0.0, atmrad=0.0, vdwrad=0.0,
+        tboil=0.0, tmelt=0.0, density=0.0,
+        eleconfig='nan',
+        oxistates='0',
+        ionenergy=(0.0, ),
+        isotopes={}),
     Element(
         1, 'H', 'Hydrogen',
         group=1, period=1, block='s', series=1,
@@ -1685,11 +1699,12 @@ ELEMENTS = ElementsDict(
         isotopes={268: Isotope(268.13882, 1.0, 268)}))
 
 
-PERIODS = {1: 'K', 2: 'L', 3: 'M', 4: 'N', 5: 'O', 6: 'P', 7: 'Q'}
+PERIODS = {0: 'V', 1: 'K', 2: 'L', 3: 'M', 4: 'N', 5: 'O', 6: 'P', 7: 'Q'}
 
-BLOCKS = {'s': '', 'g': '', 'f': '', 'd': '', 'p': ''}
+BLOCKS = {'nan': '', 's': '', 'g': '', 'f': '', 'd': '', 'p': ''}
 
 GROUPS = {
+    0: ('VOID', 'Vacuum'),
     1: ('IA', 'Alkali metals'),
     2: ('IIA', 'Alkaline earths'),
     3: ('IIIB', ''),
@@ -1710,6 +1725,7 @@ GROUPS = {
     18: ('VIIIA', 'Noble gases')}
 
 SERIES = {
+    0: 'Vacuum',
     1: 'Nonmetals',
     2: 'Noble gases',
     3: 'Alkali metals',
@@ -1725,6 +1741,9 @@ SERIES = {
 def _descriptions(symbol):
     """Delay load descriptions."""
     e = ELEMENTS
+    e['Vo'].description = (
+         "Vacuum, "
+         "used for alchemy...")
     e['H'].description = (
         "Colourless, odourless gaseous chemical element. Lightest and "
         "most abundant element in the universe. Present in water and in "
