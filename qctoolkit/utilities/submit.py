@@ -15,12 +15,13 @@ def submit(inp_list, root, **remote_settings):
     'flags': None,
     'n_cpu': 1,
     'timeout': 40,
+    'prefix': '',
   }
     
   for k, v in default_dict.iteritems():
     exec "%s = %s" % (k, v)
   if len(inp_list) * 5 > 40:
-    timout = len(inp_list) * 5
+    timeout = len(inp_list) * 5
   if 'password' in remote_settings:
     password = remote_settings['password']
   if 'username' in remote_settings:
@@ -29,6 +30,10 @@ def submit(inp_list, root, **remote_settings):
     remote_path = './%s' % root
   else:
     remote_path = remote_settings['remote_path']
+  if 'timeout' in remote_settings:
+    timeout = remote_settings['timeout']
+  if 'prefix' in remote_settings:
+    prefix = remote_settings['prefix']
   for s in necessary_list:
     if s not in remote_settings:
       qtk.exit('cluster setting:%s not defined' % s)
@@ -107,8 +112,8 @@ def submit(inp_list, root, **remote_settings):
       qtk.warning('scp message: %s' % p.before)
 
   exe = qtk.setting.program_dict[program]
-  remote_cmd = "%s %s %s %d '%s'" % \
-    (submission_script, exe, remote_path, n_cpu, flags)
+  remote_cmd = "%s %s %s %d '%s' %s" % \
+    (submission_script, exe, remote_path, n_cpu, flags, prefix)
   ssh.exec_command(remote_cmd)
   qtk.report('submit', remote_cmd)
   ssh.close()
