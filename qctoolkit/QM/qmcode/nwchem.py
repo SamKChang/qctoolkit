@@ -227,101 +227,109 @@ class out(GaussianBasisOutput):
         except:
           self.n_basis = np.nan
 
-      try:
-        getBasis()
-      except:
-        qtk.warning('failed to get basis information')
+      nuclear = filter(lambda x: 'repulsion' in x, data)[-1]
+      self.nuclear_repulsion = float(nuclear.split(' ')[-1])
 
-  def getBasis():
-    ######################################
-    # extract basis function information #
-    ######################################
+      def getBasis():
+        ######################################
+        # extract basis function information #
+        ######################################
+      
+        basis_dict = {"S":0, "P":1, "D":2, "F":3, "G":4, "H":5}
   
-    basis_dict = {"S":0, "P":1, "D":2, "F":3, "G":4, "H":5}
-
-    basis_P = re.compile(r" *[0-9]+ [A-Z]  [0-9]\.[0-9]{8}")
-    batom_P = re.compile(r"^  [0-9A-Za-z\-_\.]+ *\([A-Z][a-z]*\)")
-    bname_P = re.compile(r"\((.*)\)")
-    coord_P = re.compile(r"^ [0-9A-Za-z\.\-_]+ +[- ][0-9\.]{9,}")
-    basisStr = filter(basis_P.match, data)
-    batomStr = filter(batom_P.match, data)
-    coordStr = filter(coord_P.match, data)
-
-    # change 'Sulphur' to 'Sulfur' for NWChem format
-    _sulphur = filter(lambda x: 'Sulphur' in x, batomStr)
-    if _sulphur:
-      _sulphur = _sulphur[0]
-      _s = batomStr.index(_sulphur)
-      batomStr[_s] = re.sub('Sulphur', 'Sulfur', batomStr[_s])
-      _s = data.index(_sulphur)
-      data[_s] = re.sub('Sulphur', 'Sulfur', data[_s])
-
-    _exponents = [float(filter(None, s.split(' '))\
-      [2]) for s in basisStr]
-    _coefficients = [float(filter(None, s.split(' '))\
-      [3]) for s in basisStr]
-    _N = [int(filter(None, s.split(' '))[0])\
-      for s in basisStr]
-    _type = [filter(None, s.split(' '))[1]\
-      for s in basisStr]
-    _bfnInd = [data.index(batom) for batom in batomStr]
-    _bfnEndPtn = re.compile(r" Summary of \"")
-    _bfnEndStr = filter(_bfnEndPtn.match, data)[0]
-    _bfnInd.append(data.index(_bfnEndStr))
-
-    _ao_keys = [0]
-    for ind in range(len(_bfnInd)-1):
-      _key = _ao_keys[-1]
-      for i in range(_bfnInd[ind]+4, _bfnInd[ind+1]):
-        if len(data[i]) > 1:
-          _key = _key + 1
-      _ao_keys.append(_key)
-    _atoms = [getattr(pt, bname_P.match(
-      filter(None, s.split(' '))[1]).group(1).lower()).symbol\
-      for s in batomStr]
-    self.type_list = [re.split(r'[\._]',
-      filter(None, s.split(' '))[0])[0].title()\
-      for s in coordStr]
-    self.type_list_unique = list(
-      collections.OrderedDict.fromkeys(self.type_list)
-    )
-    self.R = np.array([filter(None, s.split(' '))[1:4]\
-      for s in coordStr]).astype(float)
-    self.N = len(self.R)
-    self.Z = [qtk.n2Z(e) for e in self.type_list]
-    self.R_bohr = 1.889725989 * self.R
-
-    _N.append(0)
-    self.basis = []
-    for i in range(len(self.type_list_unique)):
-      e = self.type_list_unique[i]
-      center = self.R_bohr[i]
-      ind = self.type_list_unique.index(e)
-      bfn_base = {}
-      bfn_base['atom'] = e
-      bfn_base['center'] = center
-      bfn_base['index'] = i
-      exp = []
-      cef = []
-      for g in range(_ao_keys[ind], _ao_keys[ind+1]):
-        exp.append(_exponents[g])
-        cef.append(_coefficients[g])
-        if _N[g] != _N[g+1] or g+1 >= _ao_keys[ind+1]:
-          bfn = copy.deepcopy(bfn_base)
-          bfn['exponents'] = copy.deepcopy(exp)
-          bfn['coefficients'] = copy.deepcopy(cef)
-          if _type[g] in basis_dict:
-            _bfnList = self.basisList(basis_dict[_type[g]])
-            for bStr in _bfnList:
-              bfn['type'] = _type[g].lower() + bStr
-              self.basis.append(copy.deepcopy(bfn))
+        basis_P = re.compile(r" *[0-9]+ [A-Z]  [0-9]\.[0-9]{8}")
+        batom_P = re.compile(r"^  [0-9A-Za-z\-_\.]+ *\([A-Z][a-z]*\)")
+        bname_P = re.compile(r"\((.*)\)")
+        coord_P = re.compile(r"^ [0-9A-Za-z\.\-_]+ +[- ][0-9\.]{9,}")
+        basisStr = filter(basis_P.match, data)
+        batomStr = filter(batom_P.match, data)
+        coordStr = filter(coord_P.match, data)
+  
+        # change 'Sulphur' to 'Sulfur' for NWChem format
+        # 'Sulphur' 'Sulfur'
+        def atomNameConv(old, new):
+          _matched = filter(lambda x: old in x, batomStr)
+          if _matched:
+            _matched = _matched[0]
+            _s = batomStr.index(_matched)
+            batomStr[_s] = re.sub(old, new, batomStr[_s])
+            _s = data.index(_matched)
+            data[_s] = re.sub(old, new, data[_s])
+        atomNameConv('Sulphur', 'Sulfur')
+        atomNameConv('Aluminium', 'Aluminum')
+  
+        _exponents = [float(filter(None, s.split(' '))\
+          [2]) for s in basisStr]
+        _coefficients = [float(filter(None, s.split(' '))\
+          [3]) for s in basisStr]
+        _N = [int(filter(None, s.split(' '))[0])\
+          for s in basisStr]
+        _type = [filter(None, s.split(' '))[1]\
+          for s in basisStr]
+        _bfnInd = [data.index(batom) for batom in batomStr]
+        _bfnEndPtn = re.compile(r" Summary of \"")
+        _bfnEndStr = filter(_bfnEndPtn.match, data)[0]
+        _bfnInd.append(data.index(_bfnEndStr))
+  
+        _ao_keys = [0]
+        for ind in range(len(_bfnInd)-1):
+          _key = _ao_keys[-1]
+          for i in range(_bfnInd[ind]+4, _bfnInd[ind+1]):
+            if len(data[i]) > 1:
+              _key = _key + 1
+          _ao_keys.append(_key)
+        _atoms = [getattr(pt, bname_P.match(
+          filter(None, s.split(' '))[1]).group(1).lower()).symbol\
+          for s in batomStr]
+        self.type_list = [re.split(r'[\._]',
+          filter(None, s.split(' '))[0])[0].title()\
+          for s in coordStr]
+        self.type_list_unique = list(
+          collections.OrderedDict.fromkeys(self.type_list)
+        )
+        self.R = np.array([filter(None, s.split(' '))[1:4]\
+          for s in coordStr]).astype(float)
+        self.N = len(self.R)
+        self.Z = [qtk.n2Z(e) for e in self.type_list]
+        self.R_bohr = 1.889725989 * self.R
+  
+        _N.append(0)
+        self.basis = []
+        for i in range(len(self.type_list_unique)):
+          e = self.type_list_unique[i]
+          center = self.R_bohr[i]
+          ind = self.type_list_unique.index(e)
+          bfn_base = {}
+          bfn_base['atom'] = e
+          bfn_base['center'] = center
+          bfn_base['index'] = i
           exp = []
           cef = []
-        
+          for g in range(_ao_keys[ind], _ao_keys[ind+1]):
+            exp.append(_exponents[g])
+            cef.append(_coefficients[g])
+            if _N[g] != _N[g+1] or g+1 >= _ao_keys[ind+1]:
+              bfn = copy.deepcopy(bfn_base)
+              bfn['exponents'] = copy.deepcopy(exp)
+              bfn['coefficients'] = copy.deepcopy(cef)
+              if _type[g] in basis_dict:
+                _bfnList = self.basisList(basis_dict[_type[g]])
+                for bStr in _bfnList:
+                  bfn['type'] = _type[g].lower() + bStr
+                  self.basis.append(copy.deepcopy(bfn))
+              exp = []
+              cef = []
+  
+      try:
+        getBasis()
+      except AttributeError as err:
+        qtk.warning('failed to get basis information with error: %s.'\
+                    % err + ' Weird atom names?')
 
-    movecs = os.path.join(self.path, self.stem) + '.modat'
-    if os.path.exists(movecs):
-      self.getMO(movecs)
+      movecs = os.path.join(self.path, self.stem) + '.modat'
+      if os.path.exists(movecs):
+        self.getMO(movecs)
+
 
   def getMO(self, mo_file):
     """
