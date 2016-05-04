@@ -78,6 +78,16 @@ class inp(PlanewaveInput):
         super(PlanewaveInput, self).write(name, **setting)
 
       molecule.sort()
+      if 'save_restart' in setting and setting['save_restart']:
+        for i in range(len(molecule.index) - 1):
+          start = molecule.index[i]
+          end = molecule.index[i+1]
+          if end - start > 1:
+            for I in range(start, end):
+              element = molecule.type_list[I] + str(I)
+              molecule.setAtoms(I, element = element)
+        molecule.sort()
+
       type_index = molecule.index
       type_list = molecule.type_list
       pp_files = []
@@ -184,11 +194,11 @@ class inp(PlanewaveInput):
         inp.write('\n\n')
 
       if 'save_restart' in setting and setting['save_restart']:
-        inp.write("ALCHEMY reference\n")
+        inp.write("ALCHEMY reference\n\n")
 
       if 'restart' in setting and setting['restart']:
         if 'scf_step' in setting and setting['scf_step'] == 1:
-          inp.write("ALCHEMY prediction\n")
+          inp.write("ALCHEMY prediction\n\n")
 
       if self.content['system']['ibrav'] == 0:
         inp.write("CELL_PARAMETERS angstrom\n")
@@ -239,7 +249,8 @@ def PPString(inp, mol, i, n, outFile):
         shell = '-d'
       else:
         shell = ''
-      PPStr = mol.type_list[i] + '.' + \
+      PPStr = ''.join([c for c in mol.type_list[i] if not c.isdigit()])\
+              + '.' + \
               inp.setting['pp_theory'].lower() + shell + '-hgh.UPF'
     elif inp.setting['pp_type'] == 'cpmd':
       PPStr = PPName(inp, mol, i, n)
