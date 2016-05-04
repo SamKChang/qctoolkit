@@ -523,8 +523,7 @@ class Molecule(object):
 
   # tested
   def addAtoms(self, element, coord):
-    if type(element) is not list\
-    and type(element) is not type(np.array([0])):
+    if type(element) is not list:
       element = [element]
       coord = [coord]
     if type(element[0]) is not str:
