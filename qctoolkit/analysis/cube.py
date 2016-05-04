@@ -167,10 +167,10 @@ class CUBE(object):
           pl.legend([kwargs['legend']])
       return xout, yout
 
-  def contour(self, axis=0, level=None, **kwargs):
-    if not level:
+  def contour(self, axis=0, loc=None, **kwargs):
+    if not loc:
       level = self.molecule.getCenterOfMass()[axis]
-    level = level / 0.529177249
+      level = level / 0.529177249
     O = self.grid[0,1:4]
     _max = []
     for i in range(1, 4):
@@ -182,20 +182,21 @@ class CUBE(object):
       if i != axis:
         _axis.append(line)
       else:
-        loc = np.argmin(abs(line - level))
+        if not loc:
+          loc = np.argmin(abs(line - level))
     if axis == 0:
       try:
-        Z = self.data[level, :, :]
+        Z = self.data[loc, :, :]
       except:
         qtk.exit("failed when accessing cube data")
     elif axis == 1:
       try:
-        Z = self.data[:, level, :]
+        Z = self.data[:, loc, :]
       except:
         qtk.exit("failed when accessing cube data")
     elif axis == 2:
       try:
-        Z = self.data[:, :, level]
+        Z = self.data[:, :, loc]
       except:
         qtk.exit("failed when accessing cube data")
         
