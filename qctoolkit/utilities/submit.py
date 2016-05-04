@@ -35,6 +35,8 @@ def submit(inp_list, root, **remote_settings):
     prefix = remote_settings['prefix']
   else:
     prefix = ''
+  if 'flags' in remote_settings:
+    flags = remote_settings['flags']
   for s in necessary_list:
     if s not in remote_settings:
       qtk.exit('cluster setting:%s not defined' % s)
