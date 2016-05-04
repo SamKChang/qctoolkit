@@ -542,6 +542,8 @@ class Molecule(object):
       Z.append(e.number)
       self.string.append('')
     self.Z = np.array(Z)
+    if self.N == 1:
+      self.R = np.array([self.R])
 
   # tested
   def setAtoms(self, index, **kwargs):
