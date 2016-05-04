@@ -323,7 +323,7 @@ class ElementsDict(object):
 
 ELEMENTS = ElementsDict(
     Element(
-        0, 'Vo', 'Void',
+        0, '', 'Void',
         group=0, period=0, block='nan', series=0,
         mass=0.0, eleneg=0.0, eleaffin=0.0,
         covrad=0.0, atmrad=0.0, vdwrad=0.0,
@@ -1741,7 +1741,7 @@ SERIES = {
 def _descriptions(symbol):
     """Delay load descriptions."""
     e = ELEMENTS
-    e['Vo'].description = (
+    e[''].description = (
          "Vacuum, "
          "used for alchemy...")
     e['H'].description = (
