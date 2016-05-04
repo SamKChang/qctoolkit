@@ -138,6 +138,10 @@ class Molecule(object):
       if string in attr_list:
         setattr(self, string, kwargs[string])
 
+    if self.N > 0:
+      self.ve = self.getValenceElectrons()
+      self.ne = sum(self.Z)
+
   def __repr__(self):
     if self.name: return self.name
     else: return 'generic Molecule object'
