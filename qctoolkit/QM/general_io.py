@@ -114,23 +114,29 @@ class InpContent(object):
           self.dependent_files.extend(kwargs['dependent_files'])
         for dep_entry in self.dependent_files:
           if type(dep_entry) is str:
+            # copy file directly
             dep = dep_entry
             dep_name = os.path.split(dep)[1]
             dep_src = os.path.abspath(dep)
-            if not os.path.exists(dep_src):
-              qtk.warning('dependent file:%s not found' % dep_src)
+            dep_tar = os.path.join(full_dir_path, dep_name)
           elif type(dep_entry) is list:
+            # copy file to different name [src, name]
             dep = dep_entry[1]
             dep_name = os.path.split(dep)[1]
             dep_src = os.path.abspath(dep_entry[0])
             dep_src = os.path.join(dep_src, dep_name)
-          dep_tar = os.path.join(full_dir_path, dep_name)
+            dep_tar = os.path.join(full_dir_path, dep_name)
+          elif type(dep_entry) is dict:
+            # copy file to different path/name {src: path/name}
+            dep = dep_entry.keys()[0]
+            dep_name = os.path.split(dep)[1]
+            dep_src = os.path.abspath(dep)
+            dep_tar = os.path.join(full_dir_path, dep_entry[dep])
           if os.path.exists(dep):
-            if not os.path.exists(dep_tar):
-              try:
-                shutil.copytree(dep_src, dep_tar)
-              except OSError:
-                shutil.copy(dep_src, dep_tar)
+            try:
+              shutil.copytree(dep_src, dep_tar)
+            except OSError:
+              shutil.copy(dep_src, dep_tar)
           else:
             qtk.warning('dependent file: %s not found' % dep)
 

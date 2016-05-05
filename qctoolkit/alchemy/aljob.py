@@ -8,7 +8,6 @@ def Al1st(qminp, **setting):
   assert os.path.exists(setting['ref_dir'])
 
   qminp = univ.toInp(qminp, **setting)
-  qminp.setting['scf_step'] = 1
 
   name = qminp.molecule.name
   if 'out_dir' in setting:
@@ -26,29 +25,13 @@ def Al1st(qminp, **setting):
       setting['dependent_files'] = [rst]
 
   elif qminp.setting['program'] == 'espresso':
+    wfn = glob.glob(setting['ref_dir'] + '/*.wfc[0-9]*')
+    if 'threads' not in setting or setting['threads'] != len(wfn):
+      qtk.warning('threads must be the same as ref_dir, reset to %d'\
+                  % len(wfn))
+      setting['threads'] = len(wfn)
     setting['restart'] = True
     setting['scf_step'] = 1
-    save_file = os.path.join(setting['ref_dir'], '*.save')
-    save = glob.glob(save_file)
-    print 'yo'
-    print save
-    try:
-      save = save[0]
-    except:
-      qtk.exit('*.save folder not found.')
-    save_folder = os.path.split(save)[1]
-    print save_folder
-    prefix = os.path.splitext(save_folder)[0]
-    rst_files = os.path.join(setting['ref_dir'], prefix + '*')
-    rst = glob.glob(rst_files)
-    print rst
-    if 'dependent_files' in setting:
-      setting['dependent_files'].extend(rst)
-    else:
-      setting['dependent_files'] = rst
-
-    print setting['dependent_files']
-    # need to change pseudopotential name in pwscf.save
 
   elif qminp.setting['program'] == 'bigdft':
     pass
@@ -56,6 +39,7 @@ def Al1st(qminp, **setting):
   elif qminp.setting['program'] == 'nwchem':
     pass
 
+  #qminp.write(name, **setting)
   qmout = qminp.run(name, **setting)
   return qmout
 
