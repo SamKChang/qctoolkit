@@ -117,6 +117,8 @@ class InpContent(object):
             dep = dep_entry
             dep_name = os.path.split(dep)[1]
             dep_src = os.path.abspath(dep)
+            if not os.path.exists(dep_src):
+              qtk.warning('dependent file:%s not found' % dep_src)
           elif type(dep_entry) is list:
             dep = dep_entry[1]
             dep_name = os.path.split(dep)[1]
@@ -128,13 +130,7 @@ class InpContent(object):
               try:
                 shutil.copytree(dep_src, dep_tar)
               except OSError:
-                if 'copy' in kwargs and kwargs['copy']:
-                  shutil.copy(dep_src, dep_tar)
-                else:
-                  try:
-                    os.link(dep_src, dep_tar)
-                  except OSError:
-                    shutil.copy(dep_src, dep_tar)
+                shutil.copy(dep_src, dep_tar)
           else:
             qtk.warning('dependent file: %s not found' % dep)
 
