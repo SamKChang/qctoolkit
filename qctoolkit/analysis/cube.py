@@ -3,6 +3,7 @@
 # QM programs include: 
 #  CPMD, Gaussian, NwChem, espresso, gamess
 
+import qctoolkit as qtk
 import re, copy
 import qctoolkit.molecule as geometry
 import qctoolkit.utilities as ut
@@ -12,6 +13,7 @@ import qctoolkit.setting as setting
 import numpy as np
 import matplotlib.pyplot as pl
 import os
+import subprocess as sp
 
 class CUBE(object):
   """
@@ -68,11 +70,32 @@ class CUBE(object):
     new.grid[0, 1:] = corner
     return new
 
-  def asGaussianTemplate(self, fchk, **kwargs):
-    if not os.path.exists:
-      qtk.exit("gaussian fchk file:%s not found" % fchk)
-    tmp_file = 'gcube_tmp_' + str(id(self)) + '.cube'
-    # system call to cubegen with grid setup
+  def asGaussianTemplate(self, gcube, **kwargs):
+    cube_name_list = gcube.name.split('.')
+    fchk_name = '.'.join(cube_name_list[:-1]) + '.fchk'
+    fchk = os.path.abspath(os.path.join(gcube.path, fchk_name))
+    path, _ = os.path.split(fchk)
+    if not os.path.exists(fchk):
+      ut.exit("gaussian fchk file:%s not found" % fchk)
+    cube = 'gcube_tmp_' + str(id(self)) + '.cube'
+    cube = os.path.join(path, cube)
+    cmd = '%s 1 density=scf %s %s -1' % (qtk.cubegen_exe, fchk, cube)
+    run = sp.Popen(cmd, shell=True, stdin=sp.PIPE)
+    for i in range(len(self.grid)):
+      vec = self.grid[i]
+      if i == 0:
+        # for formated output
+        msg = '-1 %f %f %f\n' % (vec[1], vec[2], vec[3])
+      elif i == 1:
+        # for Bohr as grid unit
+        msg = '%d %f %f %f\n' % (-vec[0], vec[1], vec[2], vec[3])
+      else:
+        msg = '%d %f %f %f\n' % (vec[0], vec[1], vec[2], vec[3])
+      run.stdin.write(msg)
+    run.stdin.flush()
+    run.communicate()
+    run.wait()
+    return qtk.CUBE(cube)
 
   def write(self, out):
     x, y, z = self.data.shape
@@ -217,7 +240,6 @@ class CUBE(object):
     pl.clabel(CS, fontsize=9, inline=1)
     ut.report('CUBE', 'axis:%d, slice:%f' % (axis, loc))
     return [X, Y, Z]
-    
 
   def shift(self, vector):
     vectorb = np.array(vector) / 0.529177249
