@@ -12,6 +12,14 @@ class inp(GaussianBasisInput):
     GaussianBasisInput.__init__(self, molecule, **kwargs)
     self.setting.update(kwargs)
     self.backup()
+    if 'gaussian_setting' not in self.setting:
+      gaussian_setting = [
+        '6d 10f',
+        'nosymm',
+        'Scf(maxcycle=1000,verytight)',
+        'int(grid=ultrafine)',
+      ]
+      self.setting['gaussian_setting'] = gaussian_setting
 
   def run(self, name=None, **kwargs):
     pass
@@ -50,11 +58,7 @@ class inp(GaussianBasisInput):
     charge, multiplicity = \
       self.molecule.charge, self.molecule.multiplicity
 
-    if 'gaussian_setting' not in self.setting:
-      gaussian_setting = '6d 10f nosymm' +\
-        ' Scf(maxcycle=1000,verytight) int(grid=ultrafine)'
-    else:
-      gaussian_setting = self.setting['gaussian_setting']
+    gaussian_setting = self.setting['gaussian_setting']
 
     chk_flag = False
     save_list = [
@@ -69,8 +73,10 @@ class inp(GaussianBasisInput):
     inp.write('%nproc=\n')
     if chk_flag:
       inp.write('%chk=\n')
-    inp.write("# %s/%s %s\n\n" % (theory, basis, gaussian_setting))
-    inp.write("%s\n\n" % self.molecule.name)
+    inp.write("# %s/%s" % (theory, basis))
+    for s in gaussian_setting:
+      inp.write(" %s" % s)
+    inp.write("\n\n%s\n\n" % self.molecule.name)
     inp.write("%d   %d\n" % (charge, multiplicity))
 
     for i in range(molecule.N):
@@ -83,122 +89,6 @@ class inp(GaussianBasisInput):
     inp.close()
 
     return inp
-    
-
-#    self.reset()
-#    molecule = copy.deepcopy(self.molecule)
-#    self.cm_check(molecule)
-#    if name:
-#      nameStr = re.sub('\.inp', '', name)
-#      out = os.path.splitext(name)
-#      if out[1] != '.inp':
-#        name = out[0] + '.inp'
-#      if os.path.exists(name) and not qtk.setting.no_warning:
-#        qtk.prompt(name + ' exists, overwrite?')
-#        try:
-#          os.remove(name)
-#        except:
-#          qtk.exit("can not remove file: " + name)
-#    else:
-#      nameStr = re.sub('\.inp', '', molecule.name)
-#    inp = sys.stdout if not name else open(name, 'w')
-#
-#    # mode setup
-#    if self.setting['mode'] == 'single_point':
-#      operation = 'energy'
-#    elif self.setting['mode'] == 'geopt':
-#      operation = 'optimize'
-#
-#    # Theory setupt
-#    dft = {
-#      'pbe': 'xpbe96 cpbe96',
-#      'pbe0': 'pbe0',
-#      'blyp': 'becke88 lyp',
-#      'b3lyp': 'b3lyp',
-#      'bp91': 'becke88 perdew91',
-#      'bp86': 'becke88 perdew86',
-#      'pw91': 'xperdew91 perdew91',
-#    }
-#    scf = {
-#      'rhf', 'rohf', 'uhf',
-#    }
-#    tce = {
-#      'mp2', 'ccsd', 'ccsd(t)',
-#    }
-#    if self.setting['theory'] in dft:
-#      module = 'dft'
-#      xc = dft[self.setting['theory']]
-#    elif self.setting['theory'] in scf:
-#      module = 'scf'
-#    elif self.setting['theory'] in tce:
-#      module = 'tce'
-#
-#    # print file
-#    inp.write('title %s\n' % nameStr)
-#    inp.write('start %s\n' % nameStr)
-#    inp.write('echo\n')
-#    if self.setting['fix_molecule']\
-#    and self.setting['fix_molecule']:
-#      fix_mol = 'nocenter'
-#    else:
-#      fix_mol = ''
-#    inp.write('\ngeometry units angstrom %s\n' % fix_mol)
-#    if fix_mol:
-#      inp.write('symmetry group c1\n')
-#    if 'nuclear_charges' in self.setting:
-#      new_Z = self.setting['nuclear_charges']
-#    else:
-#      new_Z = []
-#    z_itr = 0
-#    for i in range(molecule.N):
-#      n_charge = ''
-#      e_str = molecule.type_list[i]
-#      if new_Z and z_itr < len(new_Z):
-#        if new_Z[z_itr][0] == i+1:
-#          n_charge = 'charge %.3f' % float(new_Z[z_itr][1])
-#          e_str = new_Z[z_itr][2]
-#          molecule.string[i] = e_str
-#          z_itr = z_itr + 1
-#      inp.write(' %-8s % 8.4f % 8.4f % 8.4f %s\n' % \
-#                (e_str,
-#                 molecule.R[i, 0],
-#                 molecule.R[i, 1],
-#                 molecule.R[i, 2],
-#                 n_charge
-#               ))
-#    inp.write('end\n\n')
-#    inp.write('basis\n')
-#    if self.setting['basis_set'] != 'gen':
-#      eStr = []
-#      for e in range(len(molecule.Z)):
-#        if molecule.string[e]:
-#          eString = molecule.string[e]
-#        else:
-#          eString = molecule.type_list[e]
-#        if eString not in set(eStr):
-#          eStr.append(eString)
-#          inp.write(' %-8s library %2s %s\n' % (\
-#            eString,
-#            molecule.type_list[e],
-#            self.setting['basis_set'].upper()),
-#          )
-#    inp.write('end\n\n')
-#    if module == 'dft':
-#      inp.write('dft\n')
-#      inp.write(' xc %s\n' % xc)
-#      inp.write('end\n\n')
-#    elif module == 'scf':
-#      pass
-#    if molecule.charge != 0:
-#      inp.write('charge % 5.2f\n' % molecule.charge)
-#    if molecule.multiplicity != 1:
-#      inp.write('multiplicity %d\n' % molecule.multiplicity)
-#
-#    inp.write('\ntask %s %s\n' % (module, operation))
-#
-#    if name:
-#      inp.close()
-
 
 class out(GaussianBasisOutput):
   def __init__(self, qmout=None, **kwargs):
