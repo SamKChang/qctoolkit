@@ -116,10 +116,14 @@ class out(GaussianBasisOutput):
         
         fchk = os.path.join(self.path, self.stem) + ".fchk"
         if os.path.exists(fchk):
-          try:
+          if qtk.setting.debug: 
+            print 'yo'
             self.getMO(fchk)
-          except:
-            qtk.warning("something wrong while loading fchk file")
+          else:
+            try:
+              self.getMO(fchk)
+            except:
+              qtk.warning("something wrong while loading fchk file")
       except: # 'N-N=' not found in the output file
         qtk.warning("job %s not finished" % qmout)
 
@@ -127,10 +131,33 @@ class out(GaussianBasisOutput):
     fchkfile = open(fchk)
     fchk = fchkfile.readlines()
 
-    basis_list =[
+    def basisList(L):
+      N_dict = {4: 'g', 5: 'h', 6: 'k'}
+      orbital = ['x', 'y', 'z']
+      base = [2 for _ in range(L)]
+
+      out = []
+      for n in range(L + 1):
+        b = copy.deepcopy(base)
+        for i in range(n):
+          b[i] = 0
+        orb = N_dict[L] + ''.join([orbital[j] for j in b])
+        out.append(orb)
+        for i in range(n, L):
+          b[i] = 1
+          orb = N_dict[L] + ''.join([orbital[j] for j in b])
+          out.append(orb)
+
+      return out
+
+    basis_list = [
       ['s'],
       ['px', 'py', 'pz'],
       ['dxx', 'dyy', 'dzz', 'dxy', 'dxz', 'dyz'],
+      ['fxxx', 'fyyy', 'fzzz', 'fxyy', 'fxxy', 
+       'fxxz', 'fxzz', 'fyzz', 'fyyz', 'fxyz'],
+      basisList(4),
+      basisList(5),
     ]
 
     def readFchk(flag, type=float):
