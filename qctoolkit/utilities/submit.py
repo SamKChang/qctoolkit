@@ -13,7 +13,7 @@ def submit(inp_list, root, **remote_settings):
     'username': None,
     'password': None,
     'flags': None,
-    'n_cpu': 1,
+    'threads': 1,
     'timeout': 40,
   }
     
@@ -116,7 +116,7 @@ def submit(inp_list, root, **remote_settings):
 
   exe = qtk.setting.program_dict[program]
   remote_cmd = "%s %s %s %d '%s' %s" % \
-    (submission_script, exe, remote_path, n_cpu, flags, prefix)
+    (submission_script, exe, remote_path, threads, flags, prefix)
   ssh.exec_command(remote_cmd)
   qtk.report('submit', remote_cmd)
   ssh.close()
