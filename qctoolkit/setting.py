@@ -4,6 +4,7 @@ import os
 
 __version__ = '0.1.1'
 quiet = False
+debug = False
 no_warning = False
 cpu_count = mp.cpu_count()
 memory = float(virtual_memory().total)/10**9

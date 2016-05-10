@@ -252,7 +252,10 @@ class out(PlanewaveOutput):
         self.molecule = qtk.Molecule(mol_path)
       except:
         pass
-      self.getEt(qmout)
+      try:
+        self.getEt(qmout)
+      except:
+        qtk.warning("%s is not finished" % qmout)
 
   def getEt(self, name):
     out = open(name, 'r')

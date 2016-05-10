@@ -70,7 +70,10 @@ class inp(GaussianBasisInput):
       if s in self.setting and self.setting[s]:
         chk_flag = True
 
-    inp.write('%nproc=\n')
+    if 'threads' in self.setting:
+      inp.write('%%nproc=%d\n' % self.setting['threads'])
+    else:
+      inp.write('%nproc=\n')
     if chk_flag:
       inp.write('%chk=\n')
     inp.write("# %s/%s" % (theory, basis))

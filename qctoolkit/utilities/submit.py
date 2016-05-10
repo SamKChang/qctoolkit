@@ -37,6 +37,8 @@ def submit(inp_list, root, **remote_settings):
     prefix = ''
   if 'flags' in remote_settings:
     flags = remote_settings['flags']
+  if 'threads' in remote_settings:
+    threads = remote_settings['threads']
   for s in necessary_list:
     if s not in remote_settings:
       qtk.exit('cluster setting:%s not defined' % s)
@@ -117,8 +119,14 @@ def submit(inp_list, root, **remote_settings):
   exe = qtk.setting.program_dict[program]
   remote_cmd = "%s %s %s %d '%s' %s" % \
     (submission_script, exe, remote_path, threads, flags, prefix)
-  ssh.exec_command(remote_cmd)
   qtk.report('submit', remote_cmd)
+  ssh_stdin, ssh_stdout, ssh_stderr = \
+    ssh.exec_command(remote_cmd)
+  sshout = ssh_stdout.read()
+  ssherr = ssh_stderr.read()
+  qtk.report('submit-remote-output', sshout)
+  qtk.report('submit-remote-error', ssherr)
+  
   ssh.close()
 
   if 'debug' in remote_settings and remote_settings['debug']:
