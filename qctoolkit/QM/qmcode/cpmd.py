@@ -389,9 +389,9 @@ def PPCheck(xc, element, pp_file_str, **kwargs):
       if pp_file:
         new_pp = os.path.join(qtk.setting.cpmd_pp, pp_file_str)
         pp_content = urllib2.urlopen(pp_file).read()
-        qtk.report('PPCheck', 'pp file %s not found in %s. ' \
+        qtk.report('PPCheck', 'pp file %s not found in %s, ' \
                    % (pp_file_str, qtk.setting.cpmd_pp) + \
-                   'but found in cp2k page, download now...')
+                   'but found on internet, download now...')
         new_pp_file = open(new_pp, 'w')
         new_pp_file.write(pp_content)
         new_pp_file.close()

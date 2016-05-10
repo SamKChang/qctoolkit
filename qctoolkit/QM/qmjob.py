@@ -187,6 +187,7 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
       nb = qio_out.n_basis
       out = re.sub('\.movecs','.modat',f)
       exestr = "%s %d %s %s" % (exe, nb, f, out)
+      print exestr
       run = sp.Popen(exestr, shell=True)
       run.wait()
       qio_out.getMO(out)
