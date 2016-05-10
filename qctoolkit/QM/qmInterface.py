@@ -6,64 +6,56 @@ import qmcode.nwchem as nwchem
 import qmcode.gaussian as gaussian
 import qmcode.bigdft as bigdft
 import qmcode.gaussian as gaussian
+import sys, os
 
 def QMInp(molecule, **kwargs):
+  inp_dict = {
+    'cpmd': [cpmd.inp, 'inp'],
+    'vasp': [vasp.inp, 'inp'],
+    'espresso': [espresso.inp, 'inp'],
+    'nwchem': [nwchem.inp, 'inp'],
+    'gaussian': [gaussian.inp, 'com'],
+    'bigdft': [bigdft.inp, 'ymal'],
+  }
 
   if type(molecule) is str:
     molecule = qtk.Molecule(molecule, **kwargs)
 
   if 'program' not in kwargs:
     kwargs['program'] = qtk.setting.qmcode
-
-  if kwargs['program'].lower() == 'cpmd':
-    kwargs['extension'] = 'inp'
-    return cpmd.inp(molecule, **kwargs)
-  elif kwargs['program'].lower() == 'espresso':
-    kwargs['extension'] = 'inp'
-    return espresso.inp(molecule, **kwargs)
-  elif kwargs['program'].lower() == 'vasp':
-    return vasp.inp(molecule, **kwargs)
-  elif kwargs['program'].lower() == 'nwchem':
-    kwargs['extension'] = 'inp'
-    return nwchem.inp(molecule, **kwargs)
-  elif kwargs['program'].lower() == 'gaussian':
-    kwargs['extension'] = 'com'
-    return gaussian.inp(molecule, **kwargs)
-  elif kwargs['program'].lower() == 'bigdft':
-    kwargs['extension'] = 'yaml'
-    return bigdft.inp(molecule, **kwargs)
+  p_str = kwargs['program'].lower()
+  p = inp_dict[p_str][0]
+  kwargs['extension'] = inp_dict[p_str][1]
+  return p(molecule, **kwargs)
 
 def QMOut(out=None, **kwargs):
+  out_dict = {
+    'cpmd': cpmd.out,
+    'vasp': vasp.out,
+    'espresso': espresso.out,
+    'nwchem': nwchem.out,
+    'gaussian': gaussian.out,
+    'bigdft': bigdft.out,
+  }
 
-  if 'program' in kwargs:
-    if kwargs['program'].lower() == 'cpmd':
-      return cpmd.out(out)
-    elif kwargs['program'].lower() == 'vasp':
-      return vasp.out(out)
-    elif kwargs['program'].lower() == 'espresso':
-      return espresso.out(out)
-    elif kwargs['program'].lower() == 'nwchem':
-      return nwchem.out(out)
-    elif kwargs['program'].lower() == 'gaussian':
-      return gaussian.out(out)
-    elif kwargs['program'].lower() == 'bigdft':
-      return bigdft.out(out)
-    else:
-      qtk.exit("program: %s not reconized" % kwargs['program'])
+  if out is not None and not os.path.exists(out):
+    qtk.warning("%s not found" % out)
+    return qtk.QMOut()
   else:
-    out_list = [
-      cpmd.out, 
-      vasp.out, 
-      espresso.out, 
-      nwchem.out,
-      gaussian.out,
-      bigdft.out,
-    ]
-    for p in out_list:
+    if 'program' in kwargs:
+      p_str = kwargs['program']
       try:
-        return p(out)
+        return out_dict[p_str](out)
       except:
-        pass
-    qtk.warning("something wrong with output file, "+\
-                "pass 'program' eplicitly")
+        e = sys.exc_info()[0]
+        qtk.warning("%s failed with message: %s" % (out, e))
+        return qtk.QMOut()
+    else:
+      for p in out_dict.itervalues():
+        try:
+          return p(out)
+        except:
+          pass
+      qtk.warning("something wrong with output file, "+\
+                  "pass 'program' eplicitly")
       
