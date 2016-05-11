@@ -5,16 +5,22 @@
 # be wrapped by as job_directory.
 # make sure exe is callable on the cluster
 # syntax:
-#  qsubqtk.sh exe root n_cpu 'flags'
+#  qsubqtk.sh exe root n_cpu 'flags' prefix
 
 EXE=$1
 ROOT=$2
 NSLOTS=$3
 FLAG=$4
-PREFIX=$5
+if [ $# -ge 4 ];then
+  PREFIX=$5
+else
+  PREFIX='q'
+fi
 
 if [[ $FLAG == "None" ]];then
   FLAG=''
+else
+  FLAG=`echo $FLAG|sed "s/'//g"`
 fi
 
 if (( $NSLOTS > 8 ));then
