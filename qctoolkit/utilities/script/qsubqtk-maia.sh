@@ -72,7 +72,7 @@ for dir in *; do
   echo "rm -rf /tmp/$USER/$job"                       >> jobsub
 
   sed -i "/^%nproc/{s/=.*/=$NSLOTS/g}" $inp
-  sed -i "/^%chk/{s/=.*/=$cwd/g}" $inp
+  sed -i "/^%chk/{s|=.*/=$cwd|g}" $inp
   
   qsub $FLAG jobsub
   cd ..

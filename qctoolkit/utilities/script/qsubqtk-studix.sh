@@ -60,7 +60,7 @@ for dir in *; do
   echo "fi"                                           >> jobsub
 
   sed -i "/^%nproc/{s/=.*/=$NSLOTS/g}" $inp
-  sed -i "/^%chk/{s/=.*/=$cwd/g}" $inp
+  sed -i "/^%chk/{s|=.*|=$cwd|g}" $inp
   
   qsub $FLAG jobsub
   cd ..
