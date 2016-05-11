@@ -31,6 +31,7 @@ class CUBE(object):
       = rq.read_cube(cube_file)
     self.coords = self.coords * 0.529177249
     self.molecule = geometry.Molecule()
+    self.shape = self.data.shape
     if(self.grid[0,0] > 0):
       self.molecule.R = self.zcoord[:,1:4]*0.529177249
       self.unit = 'Bohr'
