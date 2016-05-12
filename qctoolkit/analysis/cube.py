@@ -11,7 +11,7 @@ import read_cube as rq
 import write_cube as wq
 import qctoolkit.setting as setting
 import numpy as np
-import matplotlib.pyplot as pl
+import matplotlib.pyplot as plt
 import os
 import subprocess as sp
 
@@ -185,15 +185,26 @@ class CUBE(object):
         else:
           plkwargs = {}
   
-        pl.figure(name)
-        pl.plot(xout, yout, *plargs, **plkwargs)
+        plt.figure(name)
+        plt.plot(xout, yout, *plargs, **plkwargs)
         if 'legend' in kwargs:
-          pl.legend([kwargs['legend']])
+          plt.legend([kwargs['legend']])
       return xout, yout
 
-  def contour(self, axis=0, loc=None, **kwargs):
+  def filter(self, cutoff=0.001):
+    m = np.max(self.data)
+    self.data[np.abs(self.data) < m*cutoff] = 0
+
+  def contour(self, axis=0, **kwargs):
+    if 'slice' not in kwargs:
+      loc = None
+    else:
+      loc = kwargs['slice']
     if not loc:
       level = self.molecule.getCenterOfMass()[axis]
+      _text = ['x', 'y', 'z']
+      ut.report("CUBE", 
+                "center of mass on %s-axis:" % _text[axis], level)
       level = level / 0.529177249
     O = self.grid[0,1:4]
     _max = []
@@ -201,10 +212,13 @@ class CUBE(object):
       _max.append(self.grid[i,i] * self.grid[i,0])
     _max = np.array(_max)
     _axis = []
+    _axis_text = ['$x$', '$y$', '$z$']
+    _label = []
     for i in range(3):
       line = np.linspace(O[i], _max[i], self.grid[i+1, 0])
       if i != axis:
-        _axis.append(line)
+        _axis.append(line * 0.529177249)
+        _label.append(_axis_text[i])
       else:
         if not loc:
           loc = np.argmin(abs(line - level))
@@ -236,9 +250,13 @@ class CUBE(object):
     plkwargs = {}
     if 'plkwargs' in kwargs:
       plkwargs.update(kwargs['plkwargs'])
-    pl.figure(name)
-    CS = pl.contour(X, Y, Z, 10, *plargs, **plkwargs)
-    pl.clabel(CS, fontsize=9, inline=1)
+    plt.figure(name)
+    CS = plt.contour(X, Y, Z, 10, *plargs, **plkwargs)
+    CB = plt.colorbar(CS, shrink=0.8, extend='both')
+    #plt.clabel(CS, fontsize=9, inline=1)
+    plt.xlabel(_label[0] + r" [$\rm \AA$]", fontsize=15)
+    plt.ylabel(_label[1] + r" [$\rm \AA$]", fontsize=15)
+    plt.axes().set_aspect('equal', 'datalim')
     ut.report('CUBE', 'axis:%d, slice:%f' % (axis, loc))
     return [X, Y, Z]
 
