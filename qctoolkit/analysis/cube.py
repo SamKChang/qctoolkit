@@ -12,7 +12,6 @@ import write_cube as wq
 import qctoolkit.setting as setting
 import numpy as np
 import matplotlib as mpl
-mpl.use('Agg')
 import matplotlib.pyplot as plt
 import os
 import subprocess as sp
