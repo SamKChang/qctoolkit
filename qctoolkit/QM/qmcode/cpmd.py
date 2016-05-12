@@ -252,22 +252,27 @@ class out(PlanewaveOutput):
         self.molecule = qtk.Molecule(mol_path)
       except:
         pass
-      try:
-        self.getEt(qmout)
-      except:
-        qtk.warning("%s is not finished" % qmout)
+      self.getEt(qmout)
 
   def getEt(self, name):
     out = open(name, 'r')
     data = out.readlines()
     out.close()
     E_str = filter(lambda x: 'TOTAL ENERGY' in x, data)[-1]
-    self.Et = float(E_str.split()[-2])
+    Et_report = float(E_str.split()[-2])
     rst_str = filter(lambda x: 'TOTAL ENERGY' in x, data)[-1]
     p1 = re.compile('^.*\d  \d\.\d{3}E-\d\d.*$')
     scf_str = filter(p1.match, data)
     if scf_str:
       self.scf_step = len(scf_str)
+    Et_scf = float(filter(None, scf_str[-1].split(' '))[3])
+    if abs(Et_report - Et_scf) > 1E-6 :
+      qtk.exit("%s is not finished" % qmout)
+    else:
+      self.Et = Et_report
+    detail = []
+    for scf in scf_str:
+      detail.append(filter(None, scf.split(' ')))
     report_str = filter(lambda x: 'A.U.' in x, data)
     report = report_str[:len(report_str)/2]
     self.detail = {}
@@ -279,6 +284,7 @@ class out(PlanewaveOutput):
         entry_txt = ' '.join(entry[:-3])
       energy = float(entry[-2])
       self.detail[entry_txt] = energy
+    self.detail['scf'] = detail
       
     ev_str1 = filter(lambda x: '(EV)' in x, data)
     ev_str2 = filter(lambda x: ' EV\n' in x, data)

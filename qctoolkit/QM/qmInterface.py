@@ -49,7 +49,9 @@ def QMOut(out=None, **kwargs):
       except:
         e = sys.exc_info()[0]
         qtk.warning("%s failed with message: %s" % (out, e))
-        return qtk.QMOut()
+        qout = qtk.QMOut()
+        qout.path, qout.name = os.path.split(out)
+        return qout
     else:
       for p in out_dict.itervalues():
         try:
