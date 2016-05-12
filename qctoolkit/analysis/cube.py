@@ -194,9 +194,17 @@ class CUBE(object):
 
   def filter(self, cutoff=0.001):
     m = np.max(self.data)
-    self.data[np.abs(self.data) < m*cutoff] = 0
+    out = copy.deepcopy(self)
+    out.data[np.abs(self.data) < m*cutoff] = 0
+    return out
 
   def contour(self, axis=0, **kwargs):
+    if 'levels' not in kwargs:
+      levels = 15
+    else:
+      levels = kwargs['levels']
+    if 'filter' in kwargs:
+      self = self.filter(kwargs['filter'])
     if 'slice' not in kwargs:
       loc = None
     else:
@@ -206,7 +214,7 @@ class CUBE(object):
       _text = ['x', 'y', 'z']
       ut.report("CUBE", 
                 "center of mass on %s-axis:" % _text[axis], level)
-      level = level / 0.529177249
+      level = level
     O = self.grid[0,1:4]
     _max = []
     for i in range(1, 4):
@@ -215,14 +223,22 @@ class CUBE(object):
     _axis = []
     _axis_text = ['$x$', '$y$', '$z$']
     _label = []
+    _coord = []
+    _range = []
+
     for i in range(3):
       line = np.linspace(O[i], _max[i], self.grid[i+1, 0])
+      line = line * 0.529177249
       if i != axis:
-        _axis.append(line * 0.529177249)
+        _axis.append(line)
         _label.append(_axis_text[i])
+        _coord.append(list(self.molecule.R[:,i]))
+        _range.append([self.grid[0, 1+i]* 0.529177249, 
+                       _max[i]* 0.529177249])
       else:
         if not loc:
           loc = np.argmin(abs(line - level))
+        loc_coord = (O[i] + loc * self.grid[i+1, i+1]) * 0.529177249
     if axis == 0:
       try:
         Z = self.data[loc, :, :]
@@ -243,7 +259,7 @@ class CUBE(object):
     if 'name' in kwargs:
       name = kwargs['name']
     else:
-      name = 'density contour plot'
+      name = self.name
     if 'plargs' in kwargs:
       plargs = kwargs['plargs']
     else:
@@ -251,14 +267,41 @@ class CUBE(object):
     plkwargs = {}
     if 'plkwargs' in kwargs:
       plkwargs.update(kwargs['plkwargs'])
-    plt.figure(name)
-    CS = plt.contour(X, Y, Z, 10, *plargs, **plkwargs)
+    fig = plt.figure(name)
+    ax = fig.add_subplot(111)
+    CS = plt.contour(X, Y, Z, levels, *plargs, **plkwargs)
     CB = plt.colorbar(CS, shrink=0.8, extend='both')
-    #plt.clabel(CS, fontsize=9, inline=1)
     plt.xlabel(_label[0] + r" [$\rm \AA$]", fontsize=15)
     plt.ylabel(_label[1] + r" [$\rm \AA$]", fontsize=15)
-    plt.axes().set_aspect('equal', 'datalim')
+    plt.axes().set_aspect('equal')
+
+    x_list = []
+    y_list = []
+
+    def plotElement(i):
+      to_plot = True
+      for j in range(2):
+        if _coord[j][i] > _range[j][1] or _coord[j][i] < _range[j][0]:
+          to_plot = False
+      if to_plot:
+        symbol = self.molecule.type_list[i]
+        x = _coord[0][i]
+        y = _coord[1][i]
+        x_list.append(x)
+        y_list.append(y)
+        ax.annotate(symbol, xytext=(x+0.02, y+0.02), xy=(0, 0))
+
+    for i in range(self.molecule.N):
+      plotElement(i)
+
+    plt.plot(x_list, y_list, ls='', marker='o', color='k')
+    x_min, x_max = _range[0]
+    y_min, y_max = _range[1]
+    plt.xlim(_range[0])
+    plt.ylim(_range[1])
+
     ut.report('CUBE', 'axis:%d, slice:%f' % (axis, loc))
+    ut.report("CUBE", "slice coordinate: %f" % loc_coord)
     return [X, Y, Z]
 
   def shift(self, vector):
