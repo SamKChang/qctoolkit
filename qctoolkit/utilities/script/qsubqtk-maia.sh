@@ -58,8 +58,12 @@ for dir in *; do
   echo "if [ -e '$log' ];then"                        >> jobsub
   echo "  mv $log $out"                               >> jobsub
   echo "fi"                                           >> jobsub
-  echo "if [ -e *.chk ];then"                         >> jobsub
-  echo "  mv *.chk $BASE.chk"                         >> jobsub
+  echo "for chk in *.chk;do"                          >> jobsub
+  echo "  if [ -e $f ];then"                          >> jobsub
+  echo "    cp $f $BASE.chk"                          >> jobsub
+  echo "  fi"                                         >> jobsub
+  echo "done"                                         >> jobsub
+  echo "if [ -e $BASE.fchk ];then"                    >> jobsub
   echo "  formchk $BASE.chk $BASE.fchk"               >> jobsub
   echo "  cubegen 1 density=scf *.fchk $BASE.cube"    >> jobsub
   echo "fi"                                           >> jobsub

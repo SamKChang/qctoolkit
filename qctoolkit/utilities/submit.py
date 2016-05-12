@@ -13,7 +13,6 @@ def submit(inp_list, root, **remote_settings):
     'username': None,
     'password': None,
     'flags': None,
-    'threads': 1,
     'timeout': 40,
   }
     
@@ -37,8 +36,7 @@ def submit(inp_list, root, **remote_settings):
     prefix = ''
   if 'flags' in remote_settings:
     flags = remote_settings['flags']
-  if 'threads' in remote_settings:
-    threads = remote_settings['threads']
+  threads = inp_list[0].setting['threads']
   for s in necessary_list:
     if s not in remote_settings:
       qtk.exit('cluster setting:%s not defined' % s)
