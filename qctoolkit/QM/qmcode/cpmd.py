@@ -261,15 +261,21 @@ class out(PlanewaveOutput):
     E_str = filter(lambda x: 'TOTAL ENERGY' in x, data)[-1]
     Et_report = float(E_str.split()[-2])
     rst_str = filter(lambda x: 'TOTAL ENERGY' in x, data)[-1]
+    r_scf_str = filter(
+      lambda x: 'MAXIMUM NUMBER OF ITERATIONS FOR SC' in x, data)[-1]
+    r_scf = int(filter(None, r_scf_str.split(' '))[-2])
     p1 = re.compile('^.*\d  \d\.\d{3}E-\d\d.*$')
     scf_str = filter(p1.match, data)
     if scf_str:
       self.scf_step = len(scf_str)
+      
     Et_scf = float(filter(None, scf_str[-1].split(' '))[3])
     if abs(Et_report - Et_scf) > 1E-6 :
       qtk.exit("%s is not finished" % qmout)
     else:
       self.Et = Et_report
+    if self.scf_step == 1 and r_scf > 1:
+      self.Et = nan
     detail = []
     for scf in scf_str:
       detail.append(filter(None, scf.split(' ')))
