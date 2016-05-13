@@ -198,6 +198,19 @@ class CUBE(object):
     out.data[np.abs(self.data) < m*cutoff] = 0
     return out
 
+  def locate(self, coord):
+    O = self.grid[0,1:4]
+    _max = []
+    for i in range(1, 4):
+      _max.append(self.grid[i,i] * self.grid[i,0])
+    _max = np.array(_max)
+    out = []
+    for i in range(3):
+      line = np.linspace(O[i], _max[i], self.grid[i+1, 0])
+      line = line * 0.529177249
+      out.append(np.argmin(abs(line - coord[i])))
+    return out
+
   def contour(self, axis=0, **kwargs):
     if 'levels' not in kwargs:
       levels = 15
