@@ -125,7 +125,8 @@ def submit(inp_list, root, **remote_settings):
   sshout = trimMsg(ssh_stdout)
   ssherr = trimMsg(ssh_stderr)
   qtk.report('submit-remote-output', sshout)
-  qtk.report('submit-remote-error', ssherr)
+  if len(ssherr) > 0:
+	  qtk.report('submit-remote-error', ssherr)
   
   ssh.close()
 
@@ -138,4 +139,4 @@ def trimMsg(msg_in):
   out = msg_in.readlines()
   if len(out) > 10:
     out = out[:10]
-  return ''.join(out)
+  return ''.join(filter(None, out))
