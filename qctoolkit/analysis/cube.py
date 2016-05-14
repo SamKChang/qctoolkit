@@ -5,7 +5,6 @@
 
 import qctoolkit as qtk
 import re, copy
-import qctoolkit.molecule as geometry
 import qctoolkit.utilities as ut
 import read_cube as rq
 import write_cube as wq
@@ -16,6 +15,40 @@ import matplotlib.pyplot as plt
 import os
 import subprocess as sp
 
+def read_vasp(chg_file):
+  with open(chg_file) as cfile:
+    content = cfile.readlines()
+  grid_1d = np.fromstring(''.join(content[2:5]), dtype=float, sep=' ')
+  grid = grid_1d.reshape([3,3])
+  type_list = filter(None, content[5].split(' '))[:-1]
+  n_list = np.fromstring(content[6], dtype=int, sep=' ')
+  Z = []
+  for a in range(len(type_list)):
+    for n in range(n_list[a]):
+      Z.append(qtk.n2Z(type_list[a]))
+  Z = np.array(Z)[:, None]
+  N = sum(n_list)
+  R_scale = np.fromstring(''.join(content[8:8+N]), 
+                          dtype=float, sep=' ').reshape([N, 3])
+  R = []
+  for i in range(N):
+    r = np.array([0,0,0])
+    for j in range(3):
+      r = r + R_scale[i, j] * grid.T[j]
+    R.append(r)
+  R = np.array(R)
+  print R
+  print Z
+  zcoord = np.hstack([Z, R])
+
+  step = np.fromstring(content[9+N], dtype=int, sep=' ')
+  data = np.fromstring(''.join(content[10+N:]), dtype=float, sep=' ')
+  data.reshape(step)
+  step = step[:, None]
+  grid = np.hstack([step, grid])
+
+  return data, zcoord, grid
+
 class CUBE(object):
   """
   read Gaussian CUBE file into numpy 3D array
@@ -24,21 +57,24 @@ class CUBE(object):
   pointwise addition, substraction, multiplication and division
   are implemented for wavefunction/density analysis
   """
-  def __init__(self, cube_file):
+  def __init__(self, cube_file, **kwargs):
     if not os.path.exists(cube_file):
       ut.exit("CUBE file:%s not found" % cube_file)
     self.path, self.name = os.path.split(cube_file)
-    self.data, self.zcoord, self.grid, self.coords\
-      = rq.read_cube(cube_file)
-    self.coords = self.coords * 0.529177249
-    self.molecule = geometry.Molecule()
+    if 'format' not in kwargs:
+      ext = os.path.splitext(self.name)[1]
+      if ext == '.cube':
+        kwargs['format'] = 'cube'
+      elif self.name == 'CHGCAR' or ext =='.vasp':
+        kwargs['format'] = 'vasp'
+    if kwargs['format'] == 'cube':
+      self.data, self.zcoord, self.grid, self.coords\
+        = rq.read_cube(cube_file)
+    elif kwargs['format'] == 'vasp':
+      self.data, self.zcoord, self.grid = read_vasp(cube_file)
+    self.molecule = qtk.Molecule()
     self.shape = self.data.shape
-    if(self.grid[0,0] > 0):
-      self.molecule.R = self.zcoord[:,1:4]*0.529177249
-      self.unit = 'Bohr'
-    else:
-      self.molecule.R = self.zcoord[:,1:4]
-      self.unit = 'Angstrom'
+    self.molecule.R = self.zcoord[:,1:4]*0.529177249
     self.molecule.Z = self.zcoord[:,0]
     self.molecule.N = len(self.zcoord)
     self.molecule.type_list = [ut.Z2n(z) for z in self.molecule.Z]
