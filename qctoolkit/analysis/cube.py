@@ -45,8 +45,13 @@ def read_vasp(chg_file):
   for i in range(3):
     grid[i] = grid[i] / (step[i] * 0.529177249)
 
+  # numpy array.reshape does not change memory order
+  # use ravel to unwine new order
   data = np.fromstring(''.join(content[10+N:]), dtype=float, sep=' ')
-  data = data.reshape(step, order='C') / V
+  data = data.reshape(step, order='F') / V
+  data_rav = data.ravel()
+  data = data_rav.reshape(step)
+
   step = step[:, None]
   grid = np.hstack([step, grid])
   grid = np.vstack([[N, 0, 0, 0], grid])
@@ -125,7 +130,7 @@ class CUBE(object):
     xo = linepoints(other, 0)
     yo = linepoints(other, 1)
     zo = linepoints(other, 2)
-    X, Y, Z = np.meshgrid(xo, yo, zo)
+    X, Y, Z = np.meshgrid(xo, yo, zo, indexing='ij')
     points = np.vstack([X.ravel(), Y.ravel(), Z.ravel()]).T
     print xs.shape
     print ys.shape
