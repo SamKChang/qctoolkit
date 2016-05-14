@@ -14,6 +14,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import os
 import subprocess as sp
+from scipy.interpolate import RegularGridInterpolator as RGI
 
 def read_vasp(chg_file):
   with open(chg_file) as cfile:
@@ -34,18 +35,21 @@ def read_vasp(chg_file):
   for i in range(N):
     r = np.array([0,0,0])
     for j in range(3):
-      r = r + R_scale[i, j] * grid.T[j]
+      r = r + R_scale[i, j] * grid.T[j] / 0.529177249
     R.append(r)
   R = np.array(R)
-  print R
-  print Z
   zcoord = np.hstack([Z, R])
 
+  V = np.dot(np.cross(grid[0], grid[1]), grid[2])
   step = np.fromstring(content[9+N], dtype=int, sep=' ')
+  for i in range(3):
+    grid[i] = grid[i] / (step[i] * 0.529177249)
+
   data = np.fromstring(''.join(content[10+N:]), dtype=float, sep=' ')
-  data.reshape(step)
+  data = data.reshape(step, order='C') / V
   step = step[:, None]
   grid = np.hstack([step, grid])
+  grid = np.vstack([[N, 0, 0, 0], grid])
 
   return data, zcoord, grid
 
@@ -107,6 +111,29 @@ class CUBE(object):
       new.grid[1+i, 0] = end
     new.grid[0, 1:] = corner
     return new
+
+  def remesh(self, other, **kwargs):
+
+    def linepoints(cube, i):
+      return np.linspace(cube.grid[0, i+1],
+                         cube.grid[0, i]*cube.grid[i,i],
+                         cube.grid[i+1,0])
+
+    xs = linepoints(self, 0)
+    ys = linepoints(self, 1)
+    zs = linepoints(self, 2)
+    xo = linepoints(other, 0)
+    yo = linepoints(other, 1)
+    zo = linepoints(other, 2)
+    X, Y, Z = np.meshgrid(xo, yo, zo)
+    points = np.vstack([X.ravel(), Y.ravel(), Z.ravel()]).T
+    print xs.shape
+    print ys.shape
+    print zs.shape
+    interp = RGI((xs, ys, zs), self.data, 
+                 bounds_error=False, fill_value=0)
+    self.data = interp(points)
+    self.grid = copy.deepcopy(other.grid)
 
   def asGaussianTemplate(self, gcube, **kwargs):
     cube_name_list = gcube.name.split('.')
