@@ -49,6 +49,7 @@ supresses the system to insert this path before PYTHONPATH.
 * networkx
 * periodictable
 * mdtraj
+* paramiko (newest version might be problematic, 1.17 works fine)
 * And standard libraries: sys, re, os, glob, math, subprocess, multiprocessing, copy, collections, compiler.ast, shutil, fileinput, operator, inspect, xml.etree.ElementTree
 * pymol is also used for visualization
 
