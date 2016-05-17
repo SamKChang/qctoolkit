@@ -30,17 +30,20 @@ else
 fi
 
 cd $ROOT
+# submit job in each directory under ROOT
 for dir in *; do
   cd $dir
   mydir=$PWD
   inp=`ls|grep -E "(inp|com|yaml)$"`
   BASE=${inp%.*}
+  BCHK=$BASE".chk"
   out=`echo $inp|sed 's/\.[^\.]*$/.out/g'`
   log=`echo $inp|sed 's/\.[^\.]*$/.log/g'`
   fchk=`echo $inp|sed 's/\.[^\.]*$/.fchk/g'`
   job=$BASE$$
   cwd=$PWD
 
+  # job setup
   echo "#!/bin/bash"                                   > jobsub
   echo "module load openmpi/gnu/1.6.5"                >> jobsub
   echo "module load gaussian"                         >> jobsub
@@ -48,35 +51,45 @@ for dir in *; do
   echo "#$ -N $PREFIX${inp%.*}"                       >> jobsub
   echo "$paraSetup"                                   >> jobsub
   echo "#$ -S /bin/bash"                              >> jobsub
+
+  # construct scratch folder
   echo "rm -rf /tmp/$USER/$job"                       >> jobsub
   echo "mkdir -p /tmp/$USER"                          >> jobsub
   echo "mkdir /tmp/$USER/$job"                        >> jobsub
   echo "cp -r * /tmp/$USER/$job"                      >> jobsub
   echo "cd /tmp/$USER/$job"                           >> jobsub
+
+  # mpi jobs
   echo -n "mpirun -np $NSLOTS -mca btl tcp,self "     >> jobsub
   echo "$EXE $inp > $out"                             >> jobsub
+
+  # unified outputs
+  # gaussian output
   echo "if [ -e '$log' ];then"                        >> jobsub
   echo "  mv $log $out"                               >> jobsub
   echo "fi"                                           >> jobsub
-  echo "for chk in *.chk;do"                          >> jobsub
-  echo "  if [ -e $f ];then"                          >> jobsub
-  echo "    cp $f $BASE.chk"                          >> jobsub
-  echo "  fi"                                         >> jobsub
-  echo "done"                                         >> jobsub
+  echo 'chk=`ls|grep chk|tail -n 1`'                  >> jobsub
+  echo 'if [ "$chk" != "" ];then'                     >> jobsub
+  echo -n '  cp $chk'                                 >> jobsub
+  echo " $BASE.fchk"                                  >> jobsub
+  echo 'fi'                                           >> jobsub
   echo "if [ -e $BASE.fchk ];then"                    >> jobsub
   echo "  formchk $BASE.chk $BASE.fchk"               >> jobsub
   echo "  cubegen 1 density=scf *.fchk $BASE.cube"    >> jobsub
   echo "fi"                                           >> jobsub
+  # cpmd density file
   echo "if [ -e DENSITY ];then"                       >> jobsub
   echo "  cpmd2cube.x DENSITY"                        >> jobsub
   echo "fi"                                           >> jobsub
+
+  # cleanup scratch
   echo "cd .."                                        >> jobsub
   echo "cp -rT /tmp/$USER/$job $mydir"                >> jobsub
   echo "cd $mydir"                                    >> jobsub
   echo "rm -rf /tmp/$USER/$job"                       >> jobsub
 
   sed -i "/^%nproc/{s/=.*/=$NSLOTS/g}" $inp
-  sed -i "/^%chk/{s|=.*/=$cwd|g}" $inp
+  sed -i "/^%chk/{s|=.*/=$cwd/$BCHK|g}" $inp
   
   qsub $FLAG jobsub
   cd ..

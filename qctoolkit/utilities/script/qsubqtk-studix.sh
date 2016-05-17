@@ -34,6 +34,7 @@ for dir in *; do
   cd $dir
   inp=`ls|grep -E "(inp|com|yaml)$"`
   BASE=${inp%.*}
+  BCHK=$BASE".chk"
   out=`echo $inp|sed 's/\.[^\.]*$/.out/g'`
   log=`echo $inp|sed 's/\.[^\.]*$/.log/g'`
   fchk=`echo $inp|sed 's/\.[^\.]*$/.fchk/g'`
@@ -64,7 +65,7 @@ for dir in *; do
   echo "fi"                                           >> jobsub
 
   sed -i "/^%nproc/{s/=.*/=$NSLOTS/g}" $inp
-  sed -i "/^%chk/{s|=.*|=$cwd|g}" $inp
+  sed -i "/^%chk/{s|=.*|=$cwd/$BCHK|g}" $inp
   
   qsub $FLAG jobsub
   cd ..
