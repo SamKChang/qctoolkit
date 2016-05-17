@@ -51,21 +51,18 @@ for dir in *; do
   echo "if [ -e '$log' ];then"                        >> jobsub
   echo "  mv $log $out"                               >> jobsub
   echo "fi"                                           >> jobsub
-  echo "for chk in *.chk;do"                          >> jobsub
-  echo "  if [ -e $f ];then"                          >> jobsub
-  echo "    cp $f $BASE.chk"                          >> jobsub
-  echo "  fi"                                         >> jobsub
-  echo "done"                                         >> jobsub
-  echo "if [ -e $BASE.fchk ];then"                    >> jobsub
-  echo "  formchk $BASE.chk $BASE.fchk"               >> jobsub
-  echo "  cubegen 1 density=scf *.fchk $BASE.cube"    >> jobsub
+  echo "if [ -e tmp.chk ];then"                       >> jobsub
+  echo "  formchk tmp.chk tmp.fchk"                   >> jobsub
+  echo "  mv tmp.chk $BASE.chk"                       >> jobsub
+  echo "  cubegen 1 density=scf tmp.fchk $BASE.cube"  >> jobsub
+  echo "  mv tmp.fchk $BASE.fchk"                     >> jobsub
   echo "fi"                                           >> jobsub
   echo "if [ -e DENSITY ];then"                       >> jobsub
   echo "  cpmd2cube.x DENSITY"                        >> jobsub
   echo "fi"                                           >> jobsub
 
   sed -i "/^%nproc/{s/=.*/=$NSLOTS/g}" $inp
-  sed -i "/^%chk/{s|=.*|=$cwd/$BCHK|g}" $inp
+  sed -i "/^%chk/{s|=.*|=tmp.chk|g}" $inp
   
   qsub $FLAG jobsub
   cd ..

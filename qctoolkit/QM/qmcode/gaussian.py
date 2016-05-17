@@ -48,12 +48,11 @@ class inp(GaussianBasisInput):
     theory_dict = {
       'pbe': 'pbepbe',
       'pbe0': 'pbe1pbe',
-      'blyp': 'blyp',
-      'b3lyp': 'b3lyp',
-      'mp2': 'mp2',
-      'ccsd': 'ccsd',
     }
-    theory = theory_dict[self.setting['theory']]
+    if self.setting['theory'] in theory_dict:
+      theory = theory_dict[self.setting['theory']]
+    else:
+      theory = self.setting['theory']
     basis = self.setting['basis_set']
     charge, multiplicity = \
       self.molecule.charge, self.molecule.multiplicity
@@ -77,10 +76,12 @@ class inp(GaussianBasisInput):
     if chk_flag:
       inp.write('%chk=\n')
       if 'save_density' in self.setting\
-      and self.setting['save_density']:
+      and self.setting['save_density']\
+      and theory != 'ccsd(t)'\
+      and 'Density=Current' not in self.setting['gaussian_setting']:
         self.setting['gaussian_setting'].append('Density=Current')
     inp.write("# %s/%s" % (theory, basis))
-    for s in gaussian_setting:
+    for s in list(set(gaussian_setting)):
       inp.write(" %s" % s)
     inp.write("\n\n%s\n\n" % self.molecule.name)
     inp.write("%d   %d\n" % (charge, multiplicity))

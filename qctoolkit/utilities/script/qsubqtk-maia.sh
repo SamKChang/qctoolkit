@@ -68,14 +68,11 @@ for dir in *; do
   echo "if [ -e '$log' ];then"                        >> jobsub
   echo "  mv $log $out"                               >> jobsub
   echo "fi"                                           >> jobsub
-  echo 'chk=`ls|grep chk|tail -n 1`'                  >> jobsub
-  echo 'if [ "$chk" != "" ];then'                     >> jobsub
-  echo -n '  cp $chk'                                 >> jobsub
-  echo " $BASE.fchk"                                  >> jobsub
-  echo 'fi'                                           >> jobsub
-  echo "if [ -e $BASE.fchk ];then"                    >> jobsub
-  echo "  formchk $BASE.chk $BASE.fchk"               >> jobsub
-  echo "  cubegen 1 density=scf *.fchk $BASE.cube"    >> jobsub
+  echo "if [ -e tmp.chk ];then"                       >> jobsub
+  echo "  formchk tmp.chk tmp.fchk"                   >> jobsub
+  echo "  mv tmp.chk $BASE.chk"                       >> jobsub
+  echo "  cubegen 1 density=scf tmp.fchk $BASE.cube"  >> jobsub
+  echo "  mv tmp.fchk $BASE.fchk"                     >> jobsub
   echo "fi"                                           >> jobsub
   # cpmd density file
   echo "if [ -e DENSITY ];then"                       >> jobsub
@@ -89,7 +86,7 @@ for dir in *; do
   echo "rm -rf /tmp/$USER/$job"                       >> jobsub
 
   sed -i "/^%nproc/{s/=.*/=$NSLOTS/g}" $inp
-  sed -i "/^%chk/{s|=.*/=$cwd/$BCHK|g}" $inp
+  sed -i "/^%chk/{s|=.*|=tmp.chk|g}" $inp
   
   qsub $FLAG jobsub
   cd ..

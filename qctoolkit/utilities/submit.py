@@ -85,7 +85,11 @@ def submit(inp_list, root, **remote_settings):
     if 'overwrite' in remote_settings \
     and remote_settings['overwrite']:
       qtk.warning('remote path %s exists, overwrite...' % remote_path)
-      ssh.exec_command('rm -r %s' % remote_path)
+      ssh_stdin, ssh_stdout, ssh_stderr = \
+        ssh.exec_command('rm -r %s' % remote_path)
+      ssherr = trimMsg(ssh_stderr)
+      if len(ssherr) > 0:
+    	  qtk.report('submit-remote-error for removing file', ssherr)
     else:
       qtk.exit('remote path %s exists' % remote_path)
 
