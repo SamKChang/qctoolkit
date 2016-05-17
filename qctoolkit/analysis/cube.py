@@ -40,7 +40,7 @@ def read_vasp(chg_file):
   R = np.array(R)
   zcoord = np.hstack([Z, R])
 
-  V = np.dot(np.cross(grid[0], grid[1]), grid[2])
+  V = np.dot(np.cross(grid[0], grid[1]), grid[2]) / (0.529177249)**3
   step = np.fromstring(content[9+N], dtype=int, sep=' ')
   for i in range(3):
     grid[i] = grid[i] / (step[i] * 0.529177249)
@@ -118,11 +118,17 @@ class CUBE(object):
     return new
 
   def remesh(self, other, **kwargs):
+    self = copy.deepcopy(self)
 
     def linepoints(cube, i):
       return np.linspace(cube.grid[0, i+1],
-                         cube.grid[0, i]*cube.grid[i,i],
+                         cube.grid[i+1,0]*cube.grid[i+1,i+1],
                          cube.grid[i+1,0])
+
+    if 'method' in kwargs:
+      method = kwargs['method']
+    else:
+      method = 'linear'
 
     xs = linepoints(self, 0)
     ys = linepoints(self, 1)
@@ -132,13 +138,12 @@ class CUBE(object):
     zo = linepoints(other, 2)
     X, Y, Z = np.meshgrid(xo, yo, zo, indexing='ij')
     points = np.vstack([X.ravel(), Y.ravel(), Z.ravel()]).T
-    print xs.shape
-    print ys.shape
-    print zs.shape
-    interp = RGI((xs, ys, zs), self.data, 
+    interp = RGI((xs, ys, zs), self.data, method = method, 
                  bounds_error=False, fill_value=0)
     self.data = interp(points)
     self.grid = copy.deepcopy(other.grid)
+
+    return self
 
   def asGaussianTemplate(self, gcube, **kwargs):
     cube_name_list = gcube.name.split('.')
