@@ -33,9 +33,68 @@ class PP(object):
         self.setting[key] = value
     if path:
       self.read(path)
+    elif 'element' in kwargs:
+      print self.getPP(**kwargs)
 
   def __repr__(self):
     return str(self.param)
+
+  def getPP(self, **kwargs):
+
+    def PPName(**kwargs):
+      element = kwargs['element'].title()
+      if 'vdw' in kwargs:
+        PPvdw = '_dcacp_'
+      else:
+        PPvdw = ''
+      if 'd_shell' in kwargs:
+        nve = qtk.n2ve(element) + 10
+      else:
+        nve = qtk.n2ve(element)
+      print element
+      print nve
+      print PPvdw
+      PPStr = element + PPvdw + '_q%d_' % nve +\
+        self.setting['xc'].lower() + '.psp'
+      return PPStr
+
+    file_name = PPName(**kwargs)
+
+    # not used by PP object but by QMInp cpmd parts
+    def PPCheck(xc, element, pp_file_str, **kwargs):
+      if xc == 'lda':
+        xc = 'pade'
+      ne = qtk.n2ve(element)
+      try:
+        if 'dcacp' in kwargs and kwargs['dcacp']:
+          pp_path = os.path.join(xc.upper(), "%s_DCACP_%s" %\
+                    (element, xc.upper()))
+          if element in qtk.setting.dcacp_dict:
+            pp_path = pp_path + "_%s" % qtk.setting.dcacp_dict[element]
+          pp_file = os.path.join(qtk.setting.cpmd_dcacp_url, pp_path)
+        else:
+          pp_path = os.path.join(xc,
+            element + '-q' + str(qtk.n2ve(element)))
+          pp_file = os.path.join(qtk.setting.cpmd_pp_url, pp_path)
+        saved_pp_path = os.path.join(qtk.setting.cpmd_pp, pp_file_str)
+        if not os.path.exists(saved_pp_path) \
+        and qtk.setting.download_pp:
+          if pp_file:
+            new_pp = os.path.join(qtk.setting.cpmd_pp, pp_file_str)
+            pp_content = urllib2.urlopen(pp_file).read()
+            qtk.report('PPCheck', 'pp file %s not found in %s, ' \
+                       % (pp_file_str, qtk.setting.cpmd_pp) + \
+                       'but found on internet, download now...')
+            new_pp_file = open(new_pp, 'w')
+            new_pp_file.write(pp_content)
+            new_pp_file.close()
+            pp_file = new_pp
+        return saved_pp_path
+      except:
+        qtk.warning('something wrong with pseudopotential')
+
+
+    return file_name
 
   def read(self, path):
     if self.setting['program'] == 'cpmd':

@@ -76,6 +76,9 @@ class inp(GaussianBasisInput):
       inp.write('%nproc=\n')
     if chk_flag:
       inp.write('%chk=\n')
+      if 'save_density' in self.setting\
+      and self.setting['save_density']:
+        self.setting['gaussian_setting'].append('Density=Current')
     inp.write("# %s/%s" % (theory, basis))
     for s in gaussian_setting:
       inp.write(" %s" % s)

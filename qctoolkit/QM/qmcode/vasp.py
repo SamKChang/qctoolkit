@@ -10,6 +10,7 @@ import universal as univ
 class inp(PlanewaveInput):
   def __init__(self, molecule, **kwargs):
     PlanewaveInput.__init__(self, molecule, **kwargs)
+    self.setting['pp_type'] = 'vasp_default'
     self.setting.update(kwargs)
     self.backup()
 

@@ -11,7 +11,7 @@ import sys, os
 def QMInp(molecule, **kwargs):
   inp_dict = {
     'cpmd': [cpmd.inp, 'inp'],
-    'vasp': [vasp.inp, 'inp'],
+    'vasp': [vasp.inp, ''],
     'espresso': [espresso.inp, 'inp'],
     'nwchem': [nwchem.inp, 'inp'],
     'gaussian': [gaussian.inp, 'com'],
