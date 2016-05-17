@@ -345,6 +345,7 @@ class GenericQMInput(object):
 class GenericQMOutput(object):
   def __init__(self, output=None, **kwargs):
     self.Et = np.nan
+    self.nuclear_repulsion = np.nan
     self.scf_step = np.nan
     self.unit = 'Eh'
     if output:
@@ -363,7 +364,7 @@ class GenericQMOutput(object):
     unitStr = self.unit + '-' + unit
     if not unitStr.lower() == 'eh-eh':
       self.Et, self.unit = qtk.convE(self.Et, unitStr, '-')
-    return self.Et
+    return self
 
   def __add__(self, other):
     out = copy.deepcopy(self)
