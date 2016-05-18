@@ -34,14 +34,23 @@ class PP(object):
       else:
         self.setting[key] = value
     if path:
-      self.read(path)
+      if len(path) <= 2:
+        self.get(path)
+      else:
+        self.read(path)
     elif 'element' in kwargs:
       print self.getPP(**kwargs)
 
   def __repr__(self):
-    return str(self.param)
+    return 'Cn=%d, l_max=%d\n' % (self.param['Cn'], self.param['l_max'])
 
-  def get(self, **kwargs):
+  def __getitem__(self, key):
+    return self.param[key]
+
+  def keys(self):
+    return self.param.keys()
+
+  def get(self, element, **kwargs):
 
     def PPName(**kwargs):
       element = kwargs['element'].title()
@@ -91,6 +100,7 @@ class PP(object):
       except:
         qtk.warning('something wrong with pseudopotential')
 
+    kwargs['element'] = element
     file_name, element = PPName(**kwargs)
     if 'vdw' in kwargs and kwargs['vdw'].lower() == 'dcacp':
       dcacp_flag = True
@@ -103,6 +113,8 @@ class PP(object):
     return self.read(pp_file)
 
   def read(self, path):
+    fullpath = os.path.abspath(path)
+    self.path, self.name = os.path.split(fullpath)
     if self.setting['program'] == 'cpmd':
       cpmd.read(self, path)
     elif self.setting['program'] == 'bigdft':
@@ -111,6 +123,7 @@ class PP(object):
     else:
       qtk.exit('program %s is not implemented for PP'\
         % self.setting['program'])
+    return self
 
   def write(self, name=None):
     if self.setting['program'] == 'cpmd':
