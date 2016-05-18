@@ -3,6 +3,8 @@ import cpmd
 import numpy as np
 import copy
 import bigdft
+import os
+import urllib2
 
 pp_setting = {
                'program': 'cpmd',
@@ -39,7 +41,7 @@ class PP(object):
   def __repr__(self):
     return str(self.param)
 
-  def getPP(self, **kwargs):
+  def get(self, **kwargs):
 
     def PPName(**kwargs):
       element = kwargs['element'].title()
@@ -51,14 +53,9 @@ class PP(object):
         nve = qtk.n2ve(element) + 10
       else:
         nve = qtk.n2ve(element)
-      print element
-      print nve
-      print PPvdw
       PPStr = element + PPvdw + '_q%d_' % nve +\
         self.setting['xc'].lower() + '.psp'
-      return PPStr
-
-    file_name = PPName(**kwargs)
+      return PPStr, element
 
     # not used by PP object but by QMInp cpmd parts
     def PPCheck(xc, element, pp_file_str, **kwargs):
@@ -81,6 +78,7 @@ class PP(object):
         and qtk.setting.download_pp:
           if pp_file:
             new_pp = os.path.join(qtk.setting.cpmd_pp, pp_file_str)
+            print new_pp
             pp_content = urllib2.urlopen(pp_file).read()
             qtk.report('PPCheck', 'pp file %s not found in %s, ' \
                        % (pp_file_str, qtk.setting.cpmd_pp) + \
@@ -93,8 +91,16 @@ class PP(object):
       except:
         qtk.warning('something wrong with pseudopotential')
 
-
-    return file_name
+    file_name, element = PPName(**kwargs)
+    if 'vdw' in kwargs and kwargs['vdw'].lower() == 'dcacp':
+      dcacp_flag = True
+    else:
+      dcacp_flag = False
+    pp_file = PPCheck(self.setting['xc'], 
+              element, 
+              file_name, 
+              dcacp=dcacp_flag)
+    return self.read(pp_file)
 
   def read(self, path):
     if self.setting['program'] == 'cpmd':
