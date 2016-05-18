@@ -20,6 +20,7 @@ param = {
           'r_loc': 0,
           'r_nl': [],
           'h_ij': [],
+          'l_max': 0,
         }
 
 class PP(object):
@@ -38,11 +39,16 @@ class PP(object):
         self.get(path)
       else:
         self.read(path)
-    elif 'element' in kwargs:
-      print self.getPP(**kwargs)
+    n_size = np.array([h.shape[0] for h in self['h_ij']])
+    if 1 in n_size:
+      n_dim = sum(n_size * (n_size - 1)) + 2 + len(n_size) + self['Cn']
+    else:
+      n_dim = sum(n_size * (n_size - 1)) + 1 + len(n_size) + self['Cn']
+    self.dim = (self['Cn'], self['l_max'], n_dim)
 
   def __repr__(self):
-    return 'Cn=%d, l_max=%d\n' % (self.param['Cn'], self.param['l_max'])
+    d = self.dim
+    return 'Cn=%d, l_max=%d, parameters=%d\n' % (d[0], d[1], d[2])
 
   def __getitem__(self, key):
     return self.param[key]
