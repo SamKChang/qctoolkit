@@ -80,6 +80,8 @@ class inp(GaussianBasisInput):
       and theory != 'ccsd(t)'\
       and 'Density=Current' not in self.setting['gaussian_setting']:
         self.setting['gaussian_setting'].append('Density=Current')
+    if 'nuclear_charges' in self.setting:
+      gaussian_setting.append('Charge')
     inp.write("# %s/%s" % (theory, basis))
     for s in list(set(gaussian_setting)):
       inp.write(" %s" % s)
@@ -92,6 +94,20 @@ class inp(GaussianBasisInput):
                  molecule.R[i, 0],
                  molecule.R[i, 1],
                  molecule.R[i, 2]))
+
+    if 'nuclear_charges' in self.setting:
+      new_Z = self.setting['nuclear_charges']
+    else:
+      new_Z = []
+    if new_Z:
+      inp.write('\n')
+      for chg_list in new_Z:
+        for i in range(molecule.N):
+          if chg_list[0] == i:
+            Ri = molecule.R[i]
+            charge = chg_list[1]
+            inp.write('% 8.4f % 8.4f % 8.4f  % .3f\n' %\
+                      (Ri[0], Ri[1], Ri[2], charge))
     inp.write('\n\n')
     inp.close()
 

@@ -85,9 +85,10 @@ class inp(GaussianBasisInput):
       n_charge = ''
       e_str = molecule.type_list[i]
       if new_Z and z_itr < len(new_Z):
-        if new_Z[z_itr][0] == i+1:
-          n_charge = 'charge %.3f' % float(new_Z[z_itr][1])
-          e_str = new_Z[z_itr][2]
+        if new_Z[z_itr][0] == i:
+          Zn = molecule.Z[i]
+          n_charge = 'charge %.3f' % float(new_Z[z_itr][1] + Zn)
+          e_str = molecule.type_list[i] + '.' + new_Z[z_itr][2]
           molecule.string[i] = e_str
           z_itr = z_itr + 1
       inp.write(' %-8s % 8.4f % 8.4f % 8.4f %s\n' % \
