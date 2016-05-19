@@ -14,6 +14,8 @@ class inp(GaussianBasisInput):
   """
   __doc__ = GaussianBasisInput.__doc__ + __doc__
   def __init__(self, molecule, **kwargs):
+    if 'wf_convergence' not in kwargs:
+      kwargs['wf_convergence'] = 1e-06
     GaussianBasisInput.__init__(self, molecule, **kwargs)
     self.setting.update(kwargs)
     self.backup()
@@ -122,6 +124,9 @@ class inp(GaussianBasisInput):
       if molecule.multiplicity > 1:
         inp.write(' odft\n')
         inp.write(' mult %d\n' % molecule.multiplicity)
+      if self.setting['wf_convergence'] != 1e-06:
+        inp.write(' convergence energy %e\n' % \
+                  self.setting['wf_convergence'])
       inp.write('end\n\n')
 
     elif module == 'scf':
