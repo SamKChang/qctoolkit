@@ -144,6 +144,7 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
     else:
       exestr = setting.vasp_exe
     qmoutput = inp + '.out'
+    qmlog = inp + '.log'
     compute(exestr, qmoutput, _threads)
     qio_out = qio.QMOut('vasprun.xml', program='vasp')
 
@@ -158,6 +159,7 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
       pass
 
     os.rename(qmoutput, 'STDOUT')
+    shutil.copyfile(qmoutput, qmlog)
     shutil.copyfile('vasprun.xml', qmoutput)
 
   #########################
