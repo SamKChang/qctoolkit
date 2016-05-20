@@ -19,7 +19,8 @@ be obtained by the --record flag during install
   package. This can be installed by
 ```wget https://bootstrap.pypa.io/ez_setup.py --no-check-certificate -O - | python - --user```
   with superuser priviledge
-* The package depends on [NumPy > 1.11.*](http://www.numpy.org/),
+* The package depends on [NumPy > 1.11.0](http://www.numpy.org/),
+  [SciPy > 0.16.0](https://www.scipy.org/),
   [pandas > 0.17.1](http://pandas.pydata.org/), 
   and [matplotlib > 1.5.1](http://matplotlib.org/). 
 * **Note** that newer version for many python modules are required. They must __NOT__ 
@@ -39,7 +40,8 @@ supresses the system to insert this path before PYTHONPATH.
   where ```autopep8``` can be installed simply via ```pip install autopep8 --user```
 
 **Dependent Python packages**:
-* numpy 1.11.* (for fast indexing operation)
+* numpy 1.11.0
+* scipy 0.16.0
 * pandas 0.17.1
 * matplotlib 1.5.1
 * matplotlib.pyplot
