@@ -118,7 +118,7 @@ class inp(PlanewaveInput):
       nve = molecule.getValenceElectrons()
       incar.write("NELECT = %d\n" % (nve))
     if 'save_density'not in self.setting\
-    or self.setting['save_density']:
+    or not self.setting['save_density']:
       incar.write("LCHARG = .FALSE.\n")
     if 'scalapack' not in self.setting:
       incar.write("LSCALAPACK = .FALSE.\n")
