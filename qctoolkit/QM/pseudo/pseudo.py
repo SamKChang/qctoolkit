@@ -141,13 +141,21 @@ class PP(object):
       qtk.exit('program %s is not implemented for PP'\
         % self.setting['program'])
 
+  def getSize(self):
+    return self.param['Cn'], len(self.param['h_ij'])
+
   def resize(self, cn, hn):
-    if cn > self.param['Cn']:
+    too_small = False
+    if cn < self.param['Cn']:
+      too_small = True
+    else:
       self.param['Cn'] = cn
       tmp = [0 for i in range(cn)]
       tmp[:len(self.param['Ci'])] = self.param['Ci']
       self.param['Ci'] = copy.deepcopy(tmp)
-    if len(hn) > len(self.param['h_ij']):
+    if len(hn) < len(self.param['h_ij']):
+      too_small = True
+    else:
       n = len(hn)
       tmp = [0 for i in range(n)]
       tmp[:len(self.param['r_nl'])] = self.param['r_nl']
@@ -155,13 +163,16 @@ class PP(object):
       tmp = [np.zeros((0,0)) for i in range(len(hn))]
       tmp[:len(self.param['h_ij'])] = self.param['h_ij']
       self.param['h_ij'] = copy.deepcopy(tmp)
-    for i in range(len(hn)):
-      n = hn[i]
-      h = self.param['h_ij'][i]
-      if n > len(h):
-        tmp = np.zeros((n,n))
-        tmp[:len(h), :len(h)] = h
-        self.param['h_ij'][i] = tmp
+    if not too_small:
+      for i in range(len(hn)):
+        n = hn[i]
+        h = self.param['h_ij'][i]
+        if n > len(h):
+          tmp = np.zeros((n,n))
+          tmp[:len(h), :len(h)] = h
+          self.param['h_ij'][i] = tmp
+    else:
+      qtk.warning('PP dimension too small')
     return self
 
   def __add__(self, other):
