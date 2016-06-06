@@ -5,6 +5,7 @@ from QM.qmresult import *
 from alchemy.aljob import *
 from alchemy.alpath import *
 from analysis import CUBE
+from analysis import PCA
 from QM.pseudo.pseudo import *
 from utilities import *
 from setting import *

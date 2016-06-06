@@ -39,12 +39,16 @@ class PP(object):
         self.get(path)
       else:
         self.read(path)
+    # sizes of projector matrix
+    self.dim = self.getDim()
+
+  def getDim(self):
     n_size = np.array([h.shape[0] for h in self['h_ij']])
-    if 1 in n_size:
-      n_dim = sum(n_size * (n_size - 1)) + 2 + len(n_size) + self['Cn']
-    else:
-      n_dim = sum(n_size * (n_size - 1)) + 1 + len(n_size) + self['Cn']
-    self.dim = (self['Cn'], self['l_max'], n_dim)
+    n_dim = 1 + self['Cn'] + len(self['h_ij']) # r_loc Cn and r_nl 
+    for i in n_size:
+      n = i * (i + 1) / 2
+      n_dim += n
+    return self['Cn'], len(self['h_ij']), n_dim
 
   def __repr__(self):
     d = self.dim
@@ -142,7 +146,7 @@ class PP(object):
         % self.setting['program'])
 
   def getSize(self):
-    return self.param['Cn'], len(self.param['h_ij'])
+    return self.param['Cn'], [len(h) for h in self.param['h_ij']]
 
   def resize(self, cn, hn):
     too_small = False
@@ -173,7 +177,22 @@ class PP(object):
           self.param['h_ij'][i] = tmp
     else:
       qtk.warning('PP dimension too small')
+    self.dim = self.getDim()
     return self
+
+  def vectorize(self):
+    out = [self['r_loc']]
+    for c in self['Ci']:
+      out.append(c)
+    for i in range(len(self['r_nl'])):
+      out.append(self['r_nl'][i])
+      for row in range(len(self['h_ij'][i])):
+        for col in range(row, len(self['h_ij'][i])):
+          out.append(self['h_ij'][i][row, col])
+    return np.array(out)
+       
+      
+    
 
   def __add__(self, other):
     assert type(other) is type(self)
