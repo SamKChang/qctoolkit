@@ -98,6 +98,7 @@ class AlPath(object):
   def setLambda(self, **kwargs):
     if 'l' not in kwargs:
       kwargs['l'] = 0.2
+    # dirty fix, grep '_[0-9]' pattern in QM.write function
     lambda_string = '_%03d' % (kwargs['l']*100)
     del kwargs['l']
     mol = self.ref.molecule.copy()

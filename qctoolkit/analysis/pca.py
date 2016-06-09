@@ -25,10 +25,12 @@ class PCA:
     self.std = A.std(axis=axis)
     self.mean = A.mean(axis=axis)
     qtk.report("PCA", "centering data")
-    A -= A.mean(axis=axis)
+    A -= self.mean
     if scale:
       qtk.report('PCA', 'rescaling data')
-      A /= A.std(axis=axis)
+      std = self.std
+      std[std == 0 ] = 1
+      A /= std
 
     assert 0 <= fraction
     # A = U . diag(d) . Vt, O( m n^2 ), lapack_lite --
