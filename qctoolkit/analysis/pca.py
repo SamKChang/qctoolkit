@@ -15,6 +15,10 @@ class PCA:
       axis = 0
     else:
       axis = kwargs['axis']
+    if 'scale' in kwargs:
+      scale = kwargs['scale']
+    else:
+      scale = True
 
     self.data_original = A
     A = copy.deepcopy(A)
@@ -22,7 +26,7 @@ class PCA:
     self.mean = A.mean(axis=axis)
     qtk.report("PCA", "centering data")
     A -= A.mean(axis=axis)
-    if 'scale' in kwargs and kwargs['scale']:
+    if scale:
       qtk.report('PCA', 'rescaling data')
       A /= A.std(axis=axis)
 
