@@ -88,7 +88,7 @@ class inp(PlanewaveInput):
     def refCopy(name=None, **setting):
 
       inp, molecule = \
-        PlanewaveInput.write(self, name, **setting)
+        super(PlanewaveInput, self).write(name, **setting)
       molecule.sort()
       molecule = atomIndex(molecule)
       type_index = molecule.index

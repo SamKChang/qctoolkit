@@ -1,10 +1,11 @@
 import qctoolkit as qtk
-import cpmd
 import numpy as np
 import copy
-import bigdft
 import os
 import urllib2
+import bigdft
+import cpmd
+import espresso
 
 pp_setting = {
                'program': 'cpmd',
@@ -57,6 +58,9 @@ class PP(object):
   def __getitem__(self, key):
     return self.param[key]
 
+  def __setitem__(self, key, value):
+    self.param[key] = value
+
   def keys(self):
     return self.param.keys()
 
@@ -76,7 +80,6 @@ class PP(object):
         self.setting['xc'].lower() + '.psp'
       return PPStr, element
 
-    # not used by PP object but by QMInp cpmd parts
     def PPCheck(xc, element, pp_file_str, **kwargs):
       if xc == 'lda':
         xc = 'pade'
@@ -135,11 +138,39 @@ class PP(object):
         % self.setting['program'])
     return self
 
-  def write(self, name=None):
+  def write(self, name=None, **kwargs):
+    if 'inplace' not in kwargs:
+      inplace = True
+    else:
+      inplace = kwargs['inplace']
     if self.setting['program'] == 'cpmd':
+      if name:
+        stem, ext = os.path.splitext(name)
+        if ext != 'psp':
+          name = name + '.psp'
+      if name and not inplace:
+        name = os.path.join(qtk.setting.cpmd_pp, name)
+      print name
       cpmd.write(self, name)
     elif self.setting['program'] == 'bigdft':
+      if name and not inplace:
+        name = os.path.join(qtk.setting.bigdft_pp, name)
       bigdft.write(self, name)
+    elif self.setting['program'] == 'espresso':
+      if name:
+        stem, ext = os.path.splitext(name)
+        if ext == 'psp' or ext == 'UPF':
+          name = stem
+      print name
+      if name and not inplace:
+        espresso_name = os.path.join(qtk.setting.espresso_pp, 
+          name + '.UPF')
+        cpmd_name = os.path.join(qtk.setting.cpmd_pp, 
+          name + '.psp')
+      else:
+        espresso_name = name + '.UPF'
+        cpmd_name = name + '.psp'
+      espresso.write(self, cpmd_name, espresso_name)
 
     else:
       qtk.exit('program %s is not implemented for PP'\
@@ -181,7 +212,8 @@ class PP(object):
     return self
 
   def vectorize(self):
-    out = [self['r_loc']]
+    out = [self['ZV']]
+    out.append(self['r_loc'])
     for c in self['Ci']:
       out.append(c)
     for i in range(len(self['r_nl'])):
@@ -189,10 +221,41 @@ class PP(object):
       for row in range(len(self['h_ij'][i])):
         for col in range(row, len(self['h_ij'][i])):
           out.append(self['h_ij'][i][row, col])
-    return np.array(out)
+    return np.array(out), self['Cn'], [len(h) for h in self['h_ij']]
        
-      
-    
+  def unvectorize(self, param, Cn, h_ij_length, **kwargs):
+
+    def nonZero(value):
+      if abs(value) > 1E-8:
+        return value
+      else:
+        return 0.
+
+    self['ZV'] = nonZero(param[0])
+    self['r_loc'] = nonZero(param[1])
+    self['Ci'] = []
+    for i in range(Cn):
+      self['Ci'].append(nonZero(param[2+i]))
+    self['h_ij'] = []
+    itr = 2 + Cn
+    self['r_nl'] = []
+    for size in h_ij_length:
+      self['r_nl'].append(nonZero(param[itr]))
+      itr += 1
+      h_ij = []
+      for i in range(size):
+        h_i = []
+        for j in range(i):
+          h_i.append(0)
+        for j in range(i, size):
+          h_i.append(nonZero(param[itr]))
+          itr += 1
+        h_ij.append(h_i)
+      h_ij = np.array(h_ij)
+      diag = np.diag(np.diag(h_ij))
+      h_ij = h_ij + h_ij.T - diag
+      self['h_ij'].append(h_ij)
+    return self
 
   def __add__(self, other):
     assert type(other) is type(self)

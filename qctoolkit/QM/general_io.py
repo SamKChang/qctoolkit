@@ -284,7 +284,6 @@ class GenericQMInput(object):
     return QMWorker(self.setting['program'], **self.setting), name
 
   def write(self, name, **kwargs):
-
     if 'no_reset' in kwargs and kwargs['no_reset']:
       self.reset()
       del self.setting['no_reset']

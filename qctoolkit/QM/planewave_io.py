@@ -30,6 +30,30 @@ class PlanewaveInput(GenericQMInput):
 
     univ.getCelldm(self) 
 
+  def write(self, name=None, **kwargs):
+    if self.setting['periodic']:
+      self.celldm2lattice()
+    inp, molecule = \
+      GenericQMInput.write(self, name, **self.setting)
+
+    if 'pp_list' in self.setting:
+      pp_list = self.setting['pp_list']
+      itr = 1
+      for pp_data in pp_list:
+        pp_inds = pp_data[0]
+        if type(pp_inds) is not list:
+          pp_inds = [pp_inds]
+        pp_name = pp_data[1]
+        pp = pp_data[2]
+        pp.setting['program'] = self.setting['program']
+        pp.write(pp_name, inplace=False)
+        molecule.setAtoms(pp_inds, string=pp_name)
+        Zn = molecule.type_list[pp_inds[0]]
+        molecule.setAtoms(pp_inds, element=Zn + str(itr))
+        itr += 1
+
+    return inp, molecule
+
   def celldm2lattice(self):
     cd = self.setting['celldm']
     if 'scale' in self.setting:
@@ -37,13 +61,6 @@ class PlanewaveInput(GenericQMInput):
     else:
       sc = [1.0 for i in range(3)]
     self.setting['lattice'] = qtk.celldm2lattice(cd, scale=sc)
-
-  def write(self, name=None, **kwargs):
-    if self.setting['periodic']:
-      self.celldm2lattice()
-    inp, molecule = \
-      super(GenericQMInput, self).write(name, **setting)
-    return inp, molecule
 
   def cornerMargin(self, *args, **kwargs):
     pass

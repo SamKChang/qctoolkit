@@ -45,9 +45,8 @@ class inp(PlanewaveInput):
 
     def writeInp(name=None, **setting):
       setting['no_update'] = True
-      print 'yo, calling super'
-
-      inp, molecule = PlanewaveInput.write(self, name, **setting)
+      inp, molecule = \
+        super(PlanewaveInput, self).write(name, **setting)
   
       if 'ks_states' in setting and 'ks_states':
         setting['mode'] = 'ks_states'
