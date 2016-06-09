@@ -100,7 +100,6 @@ class PP(object):
         and qtk.setting.download_pp:
           if pp_file:
             new_pp = os.path.join(qtk.setting.cpmd_pp, pp_file_str)
-            print new_pp
             pp_content = urllib2.urlopen(pp_file).read()
             qtk.report('PPCheck', 'pp file %s not found in %s, ' \
                        % (pp_file_str, qtk.setting.cpmd_pp) + \
@@ -146,11 +145,10 @@ class PP(object):
     if self.setting['program'] == 'cpmd':
       if name:
         stem, ext = os.path.splitext(name)
-        if ext != 'psp':
+        if ext != '.psp':
           name = name + '.psp'
       if name and not inplace:
         name = os.path.join(qtk.setting.cpmd_pp, name)
-      print name
       cpmd.write(self, name)
     elif self.setting['program'] == 'bigdft':
       if name and not inplace:
@@ -159,9 +157,8 @@ class PP(object):
     elif self.setting['program'] == 'espresso':
       if name:
         stem, ext = os.path.splitext(name)
-        if ext == 'psp' or ext == 'UPF':
+        if ext == '.psp' or ext == '.UPF':
           name = stem
-      print name
       if name and not inplace:
         espresso_name = os.path.join(qtk.setting.espresso_pp, 
           name + '.UPF')

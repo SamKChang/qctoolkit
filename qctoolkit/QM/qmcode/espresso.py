@@ -185,7 +185,7 @@ class inp(PlanewaveInput):
     def writeInp(name=None, **setting):
 
       inp, molecule = \
-        super(PlanewaveInput, self).write(name, **setting)
+        PlanewaveInput.write(self, name, **setting)
 
       molecule.sort()
       if 'save_restart' in setting and setting['save_restart']:
@@ -268,6 +268,10 @@ class inp(PlanewaveInput):
         type_n = type_index[a+1] - type_index[a]
         PPStr = PPString(self, molecule, 
           type_index[a], type_n, inp)
+        stem, ext = os.path.splitext(PPStr)
+        print ext
+        if ext != '.UPF':
+          PPStr = PPStr + '.UPF'
         mass = qtk.n2m(type_list[type_index[a]])
         inp.write(' %-3s % 6.3f %s\n' % \
           (type_list[type_index[a]], mass, PPStr))
@@ -314,6 +318,7 @@ class inp(PlanewaveInput):
           inp.write('\n')
   
       for pp in pp_files:
+        print pp_files
         pp_file = os.path.join(qtk.setting.espresso_pp, pp)
         if pp not in inp.dependent_files:
           inp.dependent_files.append(pp_file)
