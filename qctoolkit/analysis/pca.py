@@ -6,6 +6,7 @@ dot = np.dot
 
 class PCA:
   def __init__( self, A, **kwargs):
+
     if 'fraction' not in kwargs:
       fraction = 0.9
     else:
@@ -14,17 +15,19 @@ class PCA:
       axis = 0
     else:
       axis = kwargs['axis']
+
+    self.data_original = A
     A = copy.deepcopy(A)
     self.std = A.std(axis=axis)
     self.mean = A.mean(axis=axis)
+    qtk.report("PCA", "centering data")
+    A -= A.mean(axis=axis)
     if 'scale' in kwargs and kwargs['scale']:
       qtk.report('PCA', 'rescaling data')
-      A /= self.std
-    qtk.report("PCA", "centering data")
-    A -= self.mean
+      A /= A.std(axis=axis)
 
-    assert 0 <= fraction <= 1
-        # A = U . diag(d) . Vt, O( m n^2 ), lapack_lite --
+    assert 0 <= fraction
+    # A = U . diag(d) . Vt, O( m n^2 ), lapack_lite --
     self.U, self.d, self.Vt = np.linalg.svd( A, full_matrices=False )
     assert np.all( self.d[:-1] >= self.d[1:] )  # sorted
     self.eigen = self.d**2
@@ -36,10 +39,24 @@ class PCA:
     self.data = A
 
   def pc( self ):
-    """ e.g. 1000 x 2 U[:, :npc] * d[:npc], to plot etc. """
+    """ 
+      principal components, same as data projection to Vt matrix 
+      i.e. self.U[:, :n] * self.d[:n] = dot(self.Vt[:npc], data.T).T
+      because the svd equation: data = U . d . Vt
+    """
     n = self.npc
     return self.U[:, :n] * self.d[:n]
 
+  def project(self, npc=None, data=None):
+    if not npc:
+      npc = self.npc
+    if not data:
+      data = self.data
+    out = np.dot(self.pc()[:,:npc], self.Vt[:npc, :])
+    out = out * self.std + \
+      np.kron(np.ones(len(out))[:, np.newaxis], self.mean)
+    return out
+      
   # These 1-line methods may not be worth the bother;
   # then use U d Vt directly --
 
