@@ -269,7 +269,6 @@ class inp(PlanewaveInput):
         PPStr = PPString(self, molecule, 
           type_index[a], type_n, inp)
         stem, ext = os.path.splitext(PPStr)
-        print ext
         if ext != '.UPF':
           PPStr = PPStr + '.UPF'
         mass = qtk.n2m(type_list[type_index[a]])
@@ -318,7 +317,6 @@ class inp(PlanewaveInput):
           inp.write('\n')
   
       for pp in pp_files:
-        print pp_files
         pp_file = os.path.join(qtk.setting.espresso_pp, pp)
         if pp not in inp.dependent_files:
           inp.dependent_files.append(pp_file)
