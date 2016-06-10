@@ -6,11 +6,11 @@ from compiler.ast import flatten
 import numpy as np
 import sys, os
 
-def qmRunAll(inp_list):
+def qmRunAll(inp_list, **kwargs):
   job = []
   for inp in inp_list:
     job.append([inp, inp.molecule.name])
-  qtk.parallelize(qtk.qmRunJob, job)
+  qtk.parallelize(qtk.qmRunJob, job, **kwargs)
 
 def qmRunJob(inp, name):
   qtk.report("qmRunJob", "runing qmjob:'%s'" % inp,
