@@ -638,6 +638,7 @@ class Molecule(object):
         self.periodic = True
         self.celldm = celldm
         self.box = celldm[:3]
+        self.R_scale = qtk.xyz2fractional(self.R, celldm)
     else:
       if celldm:
         self.periodic = True
