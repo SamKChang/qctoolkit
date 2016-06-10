@@ -635,10 +635,12 @@ class Molecule(object):
           self.celldm = copy.deepcopy(self.box)
           self.celldm.extend([0, 0, 0])
       else:
+        self.periodic = True
         self.celldm = celldm
         self.box = celldm[:3]
     else:
       if celldm:
+        self.periodic = True
         for i in range(len(celldm)):
           self.celldm[i] = celldm[i]
         self.box = celldm[:3]
