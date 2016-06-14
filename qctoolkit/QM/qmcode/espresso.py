@@ -116,9 +116,10 @@ class inp(PlanewaveInput):
         return matched.split(',')[0]
 
       ref = setting['ref_dir']
+      ref_root = os.path.split(ref)[1]
       files = glob.glob(ref + '/*')
       restart = filter(lambda x: '.restart' in x, files)
-      rst_inp = os.path.join(ref, ref) + '.inp'
+      rst_inp = os.path.join(ref, ref_root) + '.inp'
       rst_wfc = filter(lambda x: '.wfc' in x, files)
       rst_save = filter(lambda x: '.save' in x, files)[0]
       tar_save = os.path.split(rst_save)[1]
