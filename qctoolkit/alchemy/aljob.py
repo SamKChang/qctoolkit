@@ -13,6 +13,7 @@ def Al1st(qminp, **setting):
   if 'out_dir' in setting:
     name = setting['out_dir']
     del setting['out_dir']
+    qminp = copy.deepcopy(qminp)
     qminp.molecule.name = name
 
   if qminp.setting['program'] == 'cpmd':
