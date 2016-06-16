@@ -10,9 +10,10 @@
 EXE=$1
 ROOT=$2
 NSLOTS=$3
-FLAG=$4
+QSLOTS=$4
+FLAG=$5
 if [ $# -ge 4 ];then
-  PREFIX=$5
+  PREFIX=$6
 else
   PREFIX='q'
 fi
@@ -23,15 +24,15 @@ else
   FLAG=`echo $FLAG|sed "s/'//g"`
 fi
 
-if (( $NSLOTS > 8 ));then
-  paraSetup="#$ -pe orte* $NSLOTS"
+if (( $QSLOTS > 8 ));then
+  paraSetup="#$ -pe orte* $QSLOTS"
 else
-  paraSetup="#$ -pe smp $NSLOTS"
+  paraSetup="#$ -pe smp $QSLOTS"
 fi
 
 cd $ROOT
 # submit job in each directory under ROOT
-for dir in *; do
+for dir in `ls -d */`; do
   cd $dir
   mydir=$PWD
   inp=`ls|grep -E "(inp|com|yaml)$"`

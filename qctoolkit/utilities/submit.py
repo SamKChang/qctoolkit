@@ -36,7 +36,18 @@ def submit(inp_list, root, **remote_settings):
     prefix = ''
   if 'flags' in remote_settings:
     flags = remote_settings['flags']
-  threads = inp_list[0].setting['threads']
+  if 'threads' not in remote_settings:
+    threads = inp_list[0].setting['threads']
+  else:
+    threads = remote_settings['threads']
+    if threads != inp_list[0].setting['threads']:
+      qtk.report('submit', 'reset job threads to %d' % threads)
+      for inp in inp_list:
+        inp.setting['threads'] = threads
+  if 'qthreads' not in remote_settings:
+    qthreads = threads
+  else:
+    qthreads = remote_settings['qthreads']
   for s in necessary_list:
     if s not in remote_settings:
       qtk.exit('cluster setting:%s not defined' % s)
@@ -119,19 +130,28 @@ def submit(inp_list, root, **remote_settings):
       qtk.warning('scp message: %s' % p.before)
 
   exe = qtk.setting.program_dict[program]
-  remote_cmd = "%s %s %s %d '%s' %s" % \
-    (submission_script, exe, remote_path, threads, flags, prefix)
+  remote_cmd = "%s %s %s %d %d '%s' %s" % \
+    (submission_script, exe, 
+     remote_path, threads, qthreads, flags, prefix)
+  
   qtk.report('submit', remote_cmd)
+
   ssh_stdin, ssh_stdout, ssh_stderr = \
     ssh.exec_command(remote_cmd)
-
-
   sshout = trimMsg(ssh_stdout)
   ssherr = trimMsg(ssh_stderr)
   qtk.report('submit-remote-output', sshout)
   if len(ssherr) > 0:
 	  qtk.report('submit-remote-error', ssherr)
   
+  ssh_stdin, ssh_stdout, ssh_stderr = \
+    ssh.exec_command("echo %s > %s/cmd.log" % (remote_cmd, remote_path))
+  sshout = trimMsg(ssh_stdout)
+  ssherr = trimMsg(ssh_stderr)
+  qtk.report('submit-remote-output', sshout)
+  if len(ssherr) > 0:
+	  qtk.report('submit-remote-error', ssherr)
+
   ssh.close()
 
   if 'debug' in remote_settings and remote_settings['debug']:
