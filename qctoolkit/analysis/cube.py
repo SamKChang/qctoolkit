@@ -58,6 +58,37 @@ def read_vasp(chg_file):
 
   return data, zcoord, grid
 
+def read_casino(chg_file):
+  data = np.loadtxt(chg_file)
+
+  def getRange(np_vector):
+    crd = sorted(list(set(list(np_vector))))
+    # min, max, step
+    return crd[0], crd[-1], crd[1] - crd[0], crd
+
+  x = getRange(data[:,0])
+  y = getRange(data[:,1])
+  z = getRange(data[:,2])
+  c = data[:,3]
+
+  grid = np.array(
+    [
+      [1, x[0], y[0], z[0]],
+      [len(x[-1]), x[2], 0., 0.],
+      [len(y[-1]), 0., y[2], 0.],
+      [len(z[-1]), 0., 0., z[2]],
+    ]
+  )
+  V = (x[1] - x[0]) * (y[1] - y[0]) * (z[1] - z[0]) / (0.529177249)**3
+  shape = (len(x[-1]), len(y[-1]), len(z[-1]))
+
+  zcoord = np.array([[1., 0., 0., 0.]])
+  data = c.reshape(*shape, order = 'F') / V
+  data_ref = data.ravel()
+  data = data_ref.reshape(*shape)
+
+  return data, zcoord, grid
+
 class CUBE(object):
   """
   read Gaussian CUBE file into numpy 3D array
@@ -74,6 +105,8 @@ class CUBE(object):
       ext = os.path.splitext(self.name)[1]
       if ext == '.cube':
         kwargs['format'] = 'cube'
+      elif ext == '.casino':
+        kwargs['format'] = 'casino'
       elif self.name == 'CHGCAR' or ext =='.vasp':
         kwargs['format'] = 'vasp'
     if kwargs['format'] == 'cube':
@@ -81,6 +114,8 @@ class CUBE(object):
         = rq.read_cube(cube_file)
     elif kwargs['format'] == 'vasp':
       self.data, self.zcoord, self.grid = read_vasp(cube_file)
+    elif kwargs['format'] == 'casino':
+      self.data, self.zcoord, self.grid = read_casino(cube_file)
     self.molecule = qtk.Molecule()
     self.shape = self.data.shape
     self.molecule.R = self.zcoord[:,1:4]*0.529177249
