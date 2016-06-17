@@ -79,7 +79,8 @@ def read_casino(chg_file):
       [len(z[-1]), 0., 0., z[2]],
     ]
   )
-  V = (x[1] - x[0]) * (y[1] - y[0]) * (z[1] - z[0]) / (0.529177249)**3
+  # already in Angstrom?
+  V = (x[1] - x[0]) * (y[1] - y[0]) * (z[1] - z[0])
   shape = (len(x[-1]), len(y[-1]), len(z[-1]))
 
   zcoord = np.array([[1., 0., 0., 0.]])
