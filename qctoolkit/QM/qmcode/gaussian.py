@@ -49,11 +49,14 @@ class inp(GaussianBasisInput):
       'pbe': 'pbepbe',
       'pbe0': 'pbe1pbe',
     }
+
     if self.setting['theory'] in theory_dict:
       theory = theory_dict[self.setting['theory']]
     else:
       theory = self.setting['theory']
     basis = self.setting['basis_set']
+    if 'def2' in basis.lower():
+      basis = basis.replace('-', '')
     charge, multiplicity = \
       self.molecule.charge, self.molecule.multiplicity
 
@@ -75,9 +78,12 @@ class inp(GaussianBasisInput):
       inp.write('%nproc=\n')
     if chk_flag:
       inp.write('%chk=\n')
+
+      density_dict = {'ccsd', 'mp2', 'mp3', 'ccd', 'cid', 'cisd'}
+
       if 'save_density' in self.setting\
       and self.setting['save_density']\
-      and theory != 'ccsd(t)'\
+      and theory.lower() in density_dict\
       and 'Density=Current' not in self.setting['gaussian_setting']:
         self.setting['gaussian_setting'].append('Density=Current')
     if 'nuclear_charges' in self.setting:

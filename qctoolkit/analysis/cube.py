@@ -154,6 +154,7 @@ class CUBE(object):
     return new
 
   def remesh(self, other, **kwargs):
+    # maybe reimplemented via scipy.interpolate.rbf
     self = copy.deepcopy(self)
 
     def linepoints(cube, i):
