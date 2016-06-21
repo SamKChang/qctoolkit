@@ -127,6 +127,8 @@ class inp(GaussianBasisInput):
       if self.setting['wf_convergence'] != 1e-06:
         inp.write(' convergence energy %e\n' % \
                   self.setting['wf_convergence'])
+      if 'scf_step' in self.setting:
+        inp.write(' maxiter %d\n' % self.setting['scf_step'])
       if 'vdw' in self.setting:
         if self.setting['vdw'] == 'd3':
           inp.write(' disp vdw 3\n')
