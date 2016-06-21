@@ -158,8 +158,7 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
     except:
       pass
 
-    os.rename(qmoutput, 'STDOUT')
-    shutil.copyfile(qmoutput, qmlog)
+    os.rename(qmoutput, 'qmlog')
     shutil.copyfile('vasprun.xml', qmoutput)
 
   #########################
