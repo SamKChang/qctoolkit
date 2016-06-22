@@ -4,6 +4,20 @@ from Cython.Build import cythonize
 import numpy as np
 import glob, os
 
+required = [
+  'numpy>=1.11.0',
+  'scipy>=0.16.0',
+  'pandas>=0.17.1',
+  'matplotlib>=1.5.1',
+  'pyyaml>=3.11',
+  'cython',
+  'psutil',
+  'networkx',
+  'periodictable',
+  'mdtraj',
+  'paramiko',
+]
+
 # to enable openmp, use:
 #  extra_compile_args=['-fopenmp', '-fpic']
 #  and extra_link_args=['-lgomp', '-shared']
@@ -128,7 +142,7 @@ for root, sub_dir, files in os.walk('qctoolkit/data/unittest'):
   data_inc.append((root, file_list))
 
 setup(name='qctoolkit',
-  version='0.0.8',
+  version='0.0.9',
   description='quantum chemistry tool kit',
   url='https://github.com/SamKChang/qctoolkit.git',
   author='K. Y. S. Chang',
@@ -169,6 +183,7 @@ setup(name='qctoolkit',
   package_data={'': ['elements/elements.yml', 
                      'data/PP/cpmd/*.psp',
                     ]},
+  install_requires = required,
   data_files = data_inc,
   include_package_data=True,
   ext_modules = cythonize(c_module),

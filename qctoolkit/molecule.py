@@ -830,15 +830,27 @@ class Molecule(object):
   # tested
   # write xyz format to file
   def write_xyz(self, name=None, **kwargs):
+
+    def listStr(data_list):
+      out = str(data_list)
+      out = out.replace('[', '')
+      out = out.replace(']', '')
+      return out.replace(',', '')
+
     out = sys.stdout if not name else open(name,"w")
 
-    if 'fractional' in kwargs and kwargs['name']:
+    if 'fractional' in kwargs and kwargs['fractional']:
       if self.celldm and self.scale:
-        out.write(str(self.N)+"\n")
+        out.write(str(self.N)+"\n\n")
         for I in xrange(0, self.N):
           out.write("%-2s " % self.type_list[I])
           out.write(" ".join("% 8.4f" % i \
             for i in self.R_scale[I][:]))
+          out.write('\n')
+        out.write("\ncelldm: %s\n" % listStr(self.celldm))
+        out.write('scale: %s\n' % listStr(self.scale))
+        if self.symmetry:
+          out.write('symmetry: %s\n' % self.symmetry)
       else:
         del kwargs['fractional']
         qtk.warning('celldm or scale not set, print cartician')

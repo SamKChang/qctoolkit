@@ -2,7 +2,7 @@ import multiprocessing as mp
 from psutil import virtual_memory
 import os
 
-__version__ = '0.1.1'
+__version__ = '0.0.9'
 quiet = False
 debug = False
 no_warning = False

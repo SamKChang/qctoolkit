@@ -11,6 +11,7 @@ initialize.sh
 install.sh
 masterUpdate.sh
 lineCount.sh
+pypiUpdate.sh
 qctoolkit/projects/initialize.py
 qctoolkit/QM/old
 qctoolkit/old
