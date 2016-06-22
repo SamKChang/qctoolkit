@@ -4,13 +4,15 @@ from Cython.Build import cythonize
 import numpy as np
 import glob, os
 
+version = '0.0.10'
+
 required = [
+  'cython',
   'numpy>=1.11.0',
   'scipy>=0.16.0',
   'pandas>=0.17.1',
   'matplotlib>=1.5.1',
   'pyyaml>=3.11',
-  'cython',
   'psutil',
   'networkx',
   'periodictable',
@@ -142,7 +144,7 @@ for root, sub_dir, files in os.walk('qctoolkit/data/unittest'):
   data_inc.append((root, file_list))
 
 setup(name='qctoolkit',
-  version='0.0.9',
+  version=version,
   description='quantum chemistry tool kit',
   url='https://github.com/SamKChang/qctoolkit.git',
   author='K. Y. S. Chang',
