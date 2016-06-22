@@ -7,7 +7,7 @@ import glob, os
 version = '0.0.10'
 
 required = [
-  #'cython',
+  'cython>0.19',
   'numpy>=1.11.0',
   'scipy>=0.16.0',
   'pandas>=0.17.1',
