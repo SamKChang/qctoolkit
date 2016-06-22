@@ -1,13 +1,13 @@
 from setuptools import setup
 from distutils.core import Extension
-from Cython.Build import cythonize
+#from Cython.Build import cythonize
 import numpy as np
 import glob, os
 
 version = '0.0.10'
 
 required = [
-  'cython',
+  #'cython',
   'numpy>=1.11.0',
   'scipy>=0.16.0',
   'pandas>=0.17.1',
@@ -188,6 +188,7 @@ setup(name='qctoolkit',
   install_requires = required,
   data_files = data_inc,
   include_package_data=True,
-  ext_modules = cythonize(c_module),
+  #ext_modules = cythonize(c_module),
+  ext_modules = c_module,
   include_dirs=[np.get_include()],
 )
