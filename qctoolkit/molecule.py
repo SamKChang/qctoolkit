@@ -693,6 +693,7 @@ class Molecule(object):
         new_str = np.hstack([self.string, take(string,mask)])
         self.string = [str(s) for s in new_str]
       self.celldm[i] = self.celldm[i] * ratio[i]
+      self.scale =  [ceil(i) for i in np.max(self.R_scale, axis = 0)]
 
   def copy(self):
     return copy.deepcopy(self)

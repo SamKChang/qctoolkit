@@ -106,10 +106,10 @@ def fractional2xyz(R_scale, lattice_celldm):
   dim = np.array(lattice_celldm).shape
   if len(dim) == 2:
     assert dim == (3, 3)
-    lattice = np.array(lattice_celldm)
+    lattice = np.array(lattice_celldm) / np.array(scale)
   else:
     assert dim == (6,)
-    lattice = celldm2lattice(lattice_celldm)
+    lattice = celldm2lattice(lattice_celldm) / np.array(scale)
   R = np.dot(R_scale, lattice)
   return np.array(R)
 
