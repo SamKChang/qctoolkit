@@ -114,6 +114,14 @@ class inp(PlanewaveInput):
           incar.write("IVDW = 212\n")
         else:
           qtk.exit("VDW '%s' is not supported for VASP" % vdw)
+    if self.setting['theory'] == 'pbe0':
+      incar.write("LHFCALC = .TRUE.\n")
+      incar.write("GGA = PE\n")
+    elif self.setting['theory'] == 'hse06':
+      incar.write("LHFCALC = .TRUE.\n")
+      incar.write("HFSCREEN = 0.2 \n")
+      incar.write("GGA = PE\n")
+
     if molecule.charge != 0:
       nve = molecule.getValenceElectrons()
       incar.write("NELECT = %d\n" % (nve))

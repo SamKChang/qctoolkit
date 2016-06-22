@@ -386,6 +386,8 @@ def PPString(inp, mol, i, n, outFile):
 def PPCheck(xc, element, pp_file_str, **kwargs):
   if xc == 'lda':
     xc = 'pade'
+  elif xc == 'pbe0':
+    xc = 'pbe'
   ne = qtk.n2ve(element)
   try:
     if 'dcacp' in kwargs and kwargs['dcacp']:

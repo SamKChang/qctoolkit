@@ -68,8 +68,6 @@ class inp(PlanewaveInput):
 
     dft_dict = {
       'hse06': 'hse',
-      'pbe': 'pbe',
-      'blyp': 'blyp',
       'lda': 'pz',
     }
 
@@ -223,8 +221,11 @@ class inp(PlanewaveInput):
         self.content['system']['tot_charge'] = molecule.charge
 
       if 'theory' in setting:
-        self.content['system']['input_dft'] = \
-          dft_dict[self.setting['theory']]
+        if self.setting['theory'] in dft_dict:
+          self.content['system']['input_dft'] = \
+            dft_dict[self.setting['theory']]
+        else:
+          self.content['system']['input_dft'] = self.setting['theory']
 
       if 'scf_step' in setting:
         self.content['electrons']['electron_maxstep'] =\
@@ -359,17 +360,24 @@ def PPString(inp, mol, i, n, outFile):
         shell = '-d'
       else:
         shell = ''
+      pp_xc_dict = {
+        'lda': 'pz',
+        'pbe0': 'pbe',
+        'b3lyp': 'blyp',
+      }
+      pp_xc = inp.setting['pp_theory'].lower()
+      if pp_xc in pp_xc_dict:
+        pp_xc = pp_xc_dict[pp_xc]
       PPStr = ''.join([c for c in mol.type_list[i] if not c.isdigit()])\
-              + '.' + \
-              inp.setting['pp_theory'].lower() + shell + '-hgh.UPF'
+              + '.' + pp_xc + shell + '-hgh.UPF'
     elif inp.setting['pp_type'] == 'cpmd':
       PPStr = PPName(inp, mol, i, n)
   xc = inp.setting['pp_theory'].lower()
   if not mol.string[i]:
     if inp.setting['pp_type'] == 'geodecker':
-      PPCheck(xc, mol.type_list[i].title(), PPStr)
+      PPCheck(pp_xc, mol.type_list[i].title(), PPStr)
     elif inp.setting['pp_type'] == 'cpmd':
-      saved_pp = PPCheck_cpmd(xc, mol.type_list[i].title(), PPStr)
+      saved_pp = PPCheck_cpmd(pp_xc, mol.type_list[i].title(), PPStr)
       new_pp1 = saved_pp + '.UPF'
       conv_pp = sp.Popen("%s %s" % \
         (qtk.setting.espresso_cpmd2upf_exe, saved_pp),
@@ -421,8 +429,6 @@ def PPString(inp, mol, i, n, outFile):
   return PPStr
 
 def PPCheck(xc, element, pp_file_str, **kwargs):
-  if xc == 'lda':
-    xc = 'pz'
   ne = qtk.n2ve(element)
   saved_pp_path = os.path.join(qtk.setting.espresso_pp, pp_file_str)
   if not os.path.exists(saved_pp_path) and qtk.setting.download_pp:
