@@ -660,7 +660,6 @@ class Molecule(object):
     assert len(self.R_scale) == self.N
     factor = reduce(lambda x, y: x*y, ratio)
     max_R = [ceil(i) for i in np.max(self.R_scale, axis = 0)]
-    print max_R
     for i in range(3):
       M = self.N
       R_scale = copy.deepcopy(self.R_scale)
