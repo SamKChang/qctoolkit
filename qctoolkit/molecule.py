@@ -652,10 +652,15 @@ class Molecule(object):
     return self.celldm
 
   def extend(self, ratio):
+
+    def take(data, mask):
+      return list(data[i] for i in range(len(mask)) if mask[i])
+
     assert len(ratio) == 3
     assert len(self.R_scale) == self.N
     factor = reduce(lambda x, y: x*y, ratio)
     max_R = [ceil(i) for i in np.max(self.R_scale, axis = 0)]
+    print max_R
     for i in range(3):
       M = self.N
       R_scale = copy.deepcopy(self.R_scale)
@@ -678,12 +683,15 @@ class Molecule(object):
             S = S - 1 
             mask[j] = False
         self.N = S + self.N
-        self.R_scale = np.vstack([self.R_scale, new_R_scale[mask]])
-        self.R = np.vstack([self.R, new_R[mask]])
-        self.Z = list(np.hstack([self.Z, Z[mask]]))
-        new_list = np.hstack([self.type_list, type_list[mask]])
+        self.R_scale = np.vstack(
+                         [self.R_scale, 
+                          take(new_R_scale,mask)]
+                       )
+        self.R = np.vstack([self.R, take(new_R, mask)])
+        self.Z = list(np.hstack([self.Z, take(Z,mask)]))
+        new_list = np.hstack([self.type_list, take(type_list,mask)])
         self.type_list = [str(a) for a in new_list]
-        new_str = np.hstack([self.string, string[mask]])
+        new_str = np.hstack([self.string, take(string,mask)])
         self.string = [str(s) for s in new_str]
       self.celldm[i] = self.celldm[i] * ratio[i]
 
