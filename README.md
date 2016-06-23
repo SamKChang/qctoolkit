@@ -16,6 +16,13 @@ purpose chemistry tool kit.
 ```
 sudo apt-get install -y gcc g++ gfortran liblapack-dev liblapack-doc-man liblapack-doc liblapack-pic liblapack3 liblapack-test liblapack3gf liblapacke liblapacke-dev libgsl0-dev libatlas-base-dev build-essential libffi6 libffi-dev python-pip python-dev freetype*
 ```
+It might be necessary to create temperary swap if the memory run out:
+```
+sudo /bin/dd if=/dev/zero of=/var/swap.1 bs=1M count=1024
+sudo /sbin/mkswap /var/swap.1
+sudo /sbin/swapon /var/swap.1
+```
+Then do pip install ```pip install qctoolkit --user```
 * __To remove__:  Manually remove all created files. List of files can 
 be obtained by the --record flag during install
 ```python setup.py install --user --record fileList.txt```
