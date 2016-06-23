@@ -11,7 +11,7 @@ required = [
   'numpy>=1.11.0',
   'scipy>=0.16.0',
   'pandas>=0.17.1',
-  'matplotlib>=1.5.1',
+  'matplotlib',
   'pyyaml>=3.11',
   'psutil',
   'networkx',
