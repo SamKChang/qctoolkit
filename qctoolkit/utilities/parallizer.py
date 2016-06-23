@@ -60,6 +60,7 @@ def parallelize(target_function,
   #############################################
   def run_jobs(q_in, q_out):
     for inps in iter(q_in.get, None):
+      print inps
       ind = inps[-1]    # index of job
       inps = inps[:-1]  # actual input sequence
       out = []
@@ -120,14 +121,14 @@ def parallelize(target_function,
       except SystemExit:
         os._exit(0)
 
+  for thread in jobs:
+    thread.join()
+
   # clean up queues
   while not qinp.empty():
     qinp.get()
   while not qout.empty():
     qout.get()
-
-  for thread in jobs:
-    thread.join()
 
   if len(output_stack)>0:
     # sort/restructure output according to input order
