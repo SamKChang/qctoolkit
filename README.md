@@ -23,6 +23,11 @@ sudo /sbin/mkswap /var/swap.1
 sudo /sbin/swapon /var/swap.1
 ```
 Then do pip install ```pip install qctoolkit --user```
+If temerary swap is added, remove after installation:
+```
+sudo swapoff /var/swap.1
+sudo rm /var/swap.1
+```
 * __To remove__:  Manually remove all created files. List of files can 
 be obtained by the --record flag during install
 ```python setup.py install --user --record fileList.txt```
