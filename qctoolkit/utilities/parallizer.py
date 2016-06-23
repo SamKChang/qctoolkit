@@ -60,7 +60,6 @@ def parallelize(target_function,
   #############################################
   def run_jobs(q_in, q_out):
     for inps in iter(q_in.get, None):
-      print inps
       ind = inps[-1]    # index of job
       inps = inps[:-1]  # actual input sequence
       out = []
