@@ -12,7 +12,7 @@ purpose chemistry tool kit.
 
 **Installation on Ubuntu 32/64 systems**:
 * __To install__: ```cd /path/to/qctoolkit && python setup.py install --user``` or install by pip using ```pip install qctoolkit --user```. 
-* __Install on Amazon Ec2__: It is tested and working on amazon Ec2 ubuntu instances. For a fresh install, dependencies 
+* __Install on Amazon Ec2__: It is tested and working on amazon Ec2 ubuntu instances. For a fresh install, all dependencies must be installed
 ```
 sudo apt-get install -y gcc g++ gfortran liblapack-dev liblapack-doc-man liblapack-doc liblapack-pic liblapack3 liblapack-test liblapack3gf liblapacke liblapacke-dev libgsl0-dev libatlas-base-dev build-essential libffi6 libffi-dev python-pip python-dev freetype*
 ```
