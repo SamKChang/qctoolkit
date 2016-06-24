@@ -10,7 +10,7 @@ import universal as univ
 class inp(PlanewaveInput):
   def __init__(self, molecule, **kwargs):
     PlanewaveInput.__init__(self, molecule, **kwargs)
-    self.setting['pp_type'] = 'vasp_default'
+    self.setting['pp_type'] = 'PAW'
     self.setting.update(kwargs)
     self.backup()
 
@@ -74,7 +74,9 @@ class inp(PlanewaveInput):
 
     self.pp_path = None
     if 'pp_path' not in self.setting:
-      self.pp_path = qtk.setting.vasp_pp
+      self.pp_path = qtk.setting.vasp_pp + '_%s_%s' % \
+                     (self.setting['theory'].upper(), 
+                      self.setting['pp_type'].upper())
     else:
       self.pp_path = self.setting['pp_path']
 
