@@ -711,7 +711,7 @@ class Molecule(object):
         qtk.exit("sorting order '%c' not valid" % o)
     ind = np.lexsort(tmp)
     self.R = self.R[ind]
-    if list(self.R_scale):
+    if list(self.R_scale[0]):
       self.R_scale = self.R_scale[ind]
     self.Z = list(np.array(self.Z)[ind])
     self.type_list = list(np.array(self.type_list)[ind])
