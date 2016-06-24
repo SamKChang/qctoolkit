@@ -74,8 +74,12 @@ class inp(PlanewaveInput):
 
     self.pp_path = None
     if 'pp_path' not in self.setting:
+      theory = copy.deepcopy(self.setting['theory'])
+      if theory.lower() not in ['pbe', 'lda']:
+        qtk.warning('xc: %s is not supported, using LDA PP')
+        theory = 'LDA'
       self.pp_path = qtk.setting.vasp_pp + '_%s_%s' % \
-                     (self.setting['theory'].upper(), 
+                     (theory.upper(), 
                       self.setting['pp_type'].upper())
     else:
       self.pp_path = self.setting['pp_path']
