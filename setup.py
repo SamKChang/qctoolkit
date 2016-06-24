@@ -4,7 +4,7 @@ from distutils.core import Extension
 #import numpy as np
 import os
 
-version = '0.0.11'
+version = '0.0.12'
 
 required = [
   'cython',
