@@ -160,7 +160,7 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
     except:
       pass
 
-    os.rename(qmoutput, 'qmlog')
+    os.rename(qmoutput, qmlog)
     shutil.copyfile('vasprun.xml', qmoutput)
 
   #########################
@@ -215,7 +215,17 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
   # Gaussian09 IMPLEMENTATION #
   #############################
   elif program.lower() == 'gaussian':
-    ut.exit("ERROR! program '%s' not implemented" % program)
+    if 'exe' in kwargs:
+      exe = kwargs['exe']
+    else:
+      exe = setting.gaussian_exe
+    exestr = "%s %s" % (exe, inp)
+    qmoutput = os.path.splitext(inp)[0] + '.out'
+    qmlog = os.path.splitext(inp)[0] + '.log'
+    compute(exestr, qmoutput, _threads)
+    os.rename(qmlog, qmoutput)
+    qio_out = qio.QMOut(qmoutput, program='gaussian')
+
   ##################################
   # QuantumESPRESSO IMPLEMENTATION #
   ##################################

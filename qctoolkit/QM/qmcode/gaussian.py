@@ -22,22 +22,8 @@ class inp(GaussianBasisInput):
       self.setting['gaussian_setting'] = gaussian_setting
 
   def run(self, name=None, **kwargs):
-    pass
-#    # creat_folder routine check default name
-#    name = self.create_folder(name)
-#    cwd = os.getcwd()
-#    os.chdir(name)
-#    inp = name + '.inp'
-#    self.write(inp)
-#    try:
-#      out = qmjob.QMRun(inp, 'gaussian', **kwargs)
-#    except:
-#      qtk.warning("qmjob finished unexpectedly for '" + \
-#                  name + "'")
-#      out = GaussianBasisOutput(program='gaussian')
-#    finally:
-#      os.chdir(cwd)
-#    return out
+    self.setting.update(kwargs)
+    return univ.runCode(self, GaussianBasisInput, name, **self.setting)
     
   def write(self, name=None, **kwargs):
     self.setting.update(kwargs)
@@ -77,7 +63,10 @@ class inp(GaussianBasisInput):
     else:
       inp.write('%nproc=\n')
     if chk_flag:
-      inp.write('%chk=\n')
+      if name:
+        inp.write('%%chk=%s.chk\n' % name)
+      else:
+        inp.write('%chk=tmp.chk\n')
 
       density_dict = {'ccsd', 'mp2', 'mp3', 'ccd', 'cid', 'cisd'}
 
@@ -88,6 +77,11 @@ class inp(GaussianBasisInput):
         self.setting['gaussian_setting'].append('Density=Current')
     if 'nuclear_charges' in self.setting:
       gaussian_setting.append('Charge')
+    if 'vdw' in self.setting:
+      if self.setting['vdw'] == 'd3':
+        gaussian_setting.append('EmpiricalDispersion=GD3')
+      elif self.setting['vdw'] == 'd2':
+        gaussian_setting.append('EmpiricalDispersion=GD2')
     inp.write("# %s/%s" % (theory, basis))
     for s in list(set(gaussian_setting)):
       inp.write(" %s" % s)
