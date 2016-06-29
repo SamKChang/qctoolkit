@@ -64,7 +64,7 @@ class inp(PlanewaveInput):
   
       inp.write('&CPMD\n MIRROR\n')
       if 'save_restart' not in setting\
-       or not setting['save_restart']:
+      or not setting['save_restart']:
         inp.write(' BENCHMARK\n')
         inp.write('  1 0 0 0 0 0 0 0 0 0\n')
       if 'init_random' in setting\
