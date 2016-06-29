@@ -34,6 +34,15 @@ def Al1st(qminp, **setting):
       setting['threads'] = len(wfn)
     setting['restart'] = True
     setting['scf_step'] = 1
+    rst = glob.glob(setting['ref_dir'] + '/*.restart*')
+    save = glob.glob(setting['ref_dir'] + '/*.save')
+    if 'dependent_files' in setting:
+      for lst in [wfn, rst, save]:
+        setting['dependent_files'].extend(lst)
+    else:
+      setting['dependent_files'] = wfn
+      for lst in [rst, save]:
+        setting['dependent_files'].extend(lst)
 
   elif qminp.setting['program'] == 'bigdft':
     pass

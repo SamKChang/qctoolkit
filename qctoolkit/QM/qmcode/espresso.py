@@ -84,105 +84,6 @@ class inp(PlanewaveInput):
             molecule.setAtoms(I, element = element)
       molecule.sort()
       return molecule
-      
-
-    def refCopy(name=None, **setting):
-
-      inp, molecule = \
-        PlanewaveInput.write(self, name, **setting)
-      molecule.sort()
-      molecule = atomIndex(molecule)
-      type_index = molecule.index
-
-      def fileInsert(flag, string, data, before=False):
-        matched = filter(lambda x: flag in x, data)[0]
-        ind = data.index(matched)
-        if before:
-          data.insert(ind, string)
-        else:
-          data.insert(ind+1, string)
-
-      def fileModify(flag, value, data):
-        if type(value) is not str:
-          value = str(value) + ","
-        matched = filter(lambda x: flag in x, data)[0]
-        ind = data.index(matched)
-        str_list = matched.split(' ')
-        str_list[-1] = value
-        data[ind] = ' '.join(str_list) + '\n'
-
-      def fileGrep(flag, data):
-        matched = filter(lambda x: flag in x, data)[0]
-        matched = matched.split('=')[1]
-        return matched.split(',')[0]
-
-      ref = setting['ref_dir']
-      ref_root = os.path.split(ref)[1]
-      files = glob.glob(ref + '/*')
-      restart = filter(lambda x: '.restart' in x, files)
-      rst_inp = os.path.join(ref, ref_root) + '.inp'
-      rst_wfc = filter(lambda x: '.wfc' in x, files)
-#      #rst_save = filter(lambda x: '.save' in x, files)[0]
-#      #tar_save = os.path.split(rst_save)[1]
-
-      if len(rst_wfn) == 0:
-        qtk.exit('no espresso restart file found')
-      for rst in restart:
-        inp.dependent_files.append(rst)
-      for wfc in rst_wfc:
-        inp.dependent_files.append(wfc)
-      #inp.dependent_files.append(rst_save)
-#
-      inp_file = open(rst_inp)
-      inp_data = inp_file.readlines()
-      inp_file.close()
-      nat = int(fileGrep('nat =', inp_data))
-      ntyp = int(fileGrep('ntyp =', inp_data))
-#
-#      tar_pp_files = []
-#      for a in range(len(type_index)-1):
-#        type_n = type_index[a+1] - type_index[a]
-#        PPStr = PPString(self, molecule,
-#          type_index[a], type_n, inp)
-#        tar_pp_files.append(PPStr)
-#
-#      species_str = filter(lambda x: 'ATOMIC_SPECIES' in x, inp_data)[0]
-#      ind = inp_data.index(species_str)
-#      ref_pp_files = []
-#      for a in range(ind+1, ind+ntyp+1):
-#        PPStr = inp_data[a].split(' ')[-1].replace('\n', '')
-#        ref_pp_files.append(PPStr)
-#
-#      # add nat, ntyp check
-#      if molecule.N != nat or len(type_index)-1 != ntyp:
-#        qtk.exit("number of atoms and atom types must matched")
-#
-#      for i in range(len(tar_pp_files)):
-#        tar_pp = tar_pp_files[i]
-#        ref_pp = ref_pp_files[i]
-#        pp_file = os.path.join(qtk.setting.espresso_pp, tar_pp)
-#        if tar_pp not in inp.dependent_files:
-#          name = os.path.join(tar_save, ref_pp)
-#          inp.dependent_files.append({pp_file: name})
-#
-      try:
-        fileModify('electron_maxstep', 1, inp_data)
-      except:
-        fileInsert('&electrons', ' electron_maxstep = 1,\n', inp_data)
-      try:
-        fileModify('restart_mode', "'restart',", inp_data)
-      except:
-        fileInsert('&control', " restart_mode = 'restart',\n", inp_data)
-
-      try:
-        fileModify('ALCHEMY', "prediction", inp_data)
-      except:
-        inp_data.append('\nALCHEMY prediction\n')
-#
-#      for s in inp_data:
-#        inp.write(s)
-#      inp.close()
-#      return inp
 
     def writeInp(name=None, **setting):
 
@@ -190,9 +91,6 @@ class inp(PlanewaveInput):
         PlanewaveInput.write(self, name, **setting)
 
       molecule.sort()
-#      # index all identical atoms
-#      if 'save_restart' in setting and setting['save_restart']:
-#        molecule = atomIndex(molecule)
 
       type_index = molecule.index
       type_list = molecule.type_list
@@ -334,11 +232,8 @@ class inp(PlanewaveInput):
 
       return inp
 
-    if 'ref_dir' in self.setting:
-      inp = refCopy(name, **self.setting)
-    else:
-      setting = copy.deepcopy(self.setting)
-      inp = writeInp(name, **setting)
+    setting = copy.deepcopy(self.setting)
+    inp = writeInp(name, **setting)
 
     return inp
 
