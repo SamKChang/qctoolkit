@@ -101,8 +101,9 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
         if os.path.exists('RESTART'):
           os.remove('RESTART')
         os.link(rst_n, 'RESTART')
-    final_out = re.sub(r'_[0-9][0-9]$', '', out)
-    os.copy(out, final_out)
+    final_out = re.sub(r'_[0-9][0-9].out$', '.out', out)
+    if final_out != out:
+      os.copy(out, final_out)
 
     # clean up files
     files = glob.glob('*')
