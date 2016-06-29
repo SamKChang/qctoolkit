@@ -7,14 +7,14 @@ def Al1st(qminp, **setting):
   assert 'ref_dir' in setting
   assert os.path.exists(setting['ref_dir'])
 
-  qminp = univ.toInp(qminp, **setting)
+  qminp = copy.deepcopy(univ.toInp(qminp, **setting))
 
   name = qminp.molecule.name
   if 'out_dir' in setting:
     name = setting['out_dir']
     del setting['out_dir']
-    qminp = copy.deepcopy(qminp)
     qminp.molecule.name = name
+    qminp.setting['root_dir'] = name
 
   if qminp.setting['program'] == 'cpmd':
     setting['restart'] = True
