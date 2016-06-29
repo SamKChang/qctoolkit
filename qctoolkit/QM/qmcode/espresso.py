@@ -72,6 +72,9 @@ class inp(PlanewaveInput):
     }
 
     def atomIndex(molecule):
+      """
+      add index to all atoms, not necessary...
+      """
       for i in range(len(molecule.index) - 1):
         start = molecule.index[i]
         end = molecule.index[i+1]
@@ -119,49 +122,49 @@ class inp(PlanewaveInput):
       restart = filter(lambda x: '.restart' in x, files)
       rst_inp = os.path.join(ref, ref_root) + '.inp'
       rst_wfc = filter(lambda x: '.wfc' in x, files)
-      rst_save = filter(lambda x: '.save' in x, files)[0]
-      tar_save = os.path.split(rst_save)[1]
+#      #rst_save = filter(lambda x: '.save' in x, files)[0]
+#      #tar_save = os.path.split(rst_save)[1]
 
-      if len(restart) == 0:
+      if len(rst_wfn) == 0:
         qtk.exit('no espresso restart file found')
       for rst in restart:
         inp.dependent_files.append(rst)
       for wfc in rst_wfc:
         inp.dependent_files.append(wfc)
-      inp.dependent_files.append(rst_save)
-
+      #inp.dependent_files.append(rst_save)
+#
       inp_file = open(rst_inp)
       inp_data = inp_file.readlines()
       inp_file.close()
       nat = int(fileGrep('nat =', inp_data))
       ntyp = int(fileGrep('ntyp =', inp_data))
-
-      tar_pp_files = []
-      for a in range(len(type_index)-1):
-        type_n = type_index[a+1] - type_index[a]
-        PPStr = PPString(self, molecule,
-          type_index[a], type_n, inp)
-        tar_pp_files.append(PPStr)
-
-      species_str = filter(lambda x: 'ATOMIC_SPECIES' in x, inp_data)[0]
-      ind = inp_data.index(species_str)
-      ref_pp_files = []
-      for a in range(ind+1, ind+ntyp+1):
-        PPStr = inp_data[a].split(' ')[-1].replace('\n', '')
-        ref_pp_files.append(PPStr)
-
-      # add nat, ntyp check
-      if molecule.N != nat or len(type_index)-1 != ntyp:
-        qtk.exit("number of atoms and atom types must matched")
-
-      for i in range(len(tar_pp_files)):
-        tar_pp = tar_pp_files[i]
-        ref_pp = ref_pp_files[i]
-        pp_file = os.path.join(qtk.setting.espresso_pp, tar_pp)
-        if tar_pp not in inp.dependent_files:
-          name = os.path.join(tar_save, ref_pp)
-          inp.dependent_files.append({pp_file: name})
-
+#
+#      tar_pp_files = []
+#      for a in range(len(type_index)-1):
+#        type_n = type_index[a+1] - type_index[a]
+#        PPStr = PPString(self, molecule,
+#          type_index[a], type_n, inp)
+#        tar_pp_files.append(PPStr)
+#
+#      species_str = filter(lambda x: 'ATOMIC_SPECIES' in x, inp_data)[0]
+#      ind = inp_data.index(species_str)
+#      ref_pp_files = []
+#      for a in range(ind+1, ind+ntyp+1):
+#        PPStr = inp_data[a].split(' ')[-1].replace('\n', '')
+#        ref_pp_files.append(PPStr)
+#
+#      # add nat, ntyp check
+#      if molecule.N != nat or len(type_index)-1 != ntyp:
+#        qtk.exit("number of atoms and atom types must matched")
+#
+#      for i in range(len(tar_pp_files)):
+#        tar_pp = tar_pp_files[i]
+#        ref_pp = ref_pp_files[i]
+#        pp_file = os.path.join(qtk.setting.espresso_pp, tar_pp)
+#        if tar_pp not in inp.dependent_files:
+#          name = os.path.join(tar_save, ref_pp)
+#          inp.dependent_files.append({pp_file: name})
+#
       try:
         fileModify('electron_maxstep', 1, inp_data)
       except:
@@ -175,11 +178,11 @@ class inp(PlanewaveInput):
         fileModify('ALCHEMY', "prediction", inp_data)
       except:
         inp_data.append('\nALCHEMY prediction\n')
-
-      for s in inp_data:
-        inp.write(s)
-      inp.close()
-      return inp
+#
+#      for s in inp_data:
+#        inp.write(s)
+#      inp.close()
+#      return inp
 
     def writeInp(name=None, **setting):
 
@@ -187,8 +190,9 @@ class inp(PlanewaveInput):
         PlanewaveInput.write(self, name, **setting)
 
       molecule.sort()
-      if 'save_restart' in setting and setting['save_restart']:
-        molecule = atomIndex(molecule)
+#      # index all identical atoms
+#      if 'save_restart' in setting and setting['save_restart']:
+#        molecule = atomIndex(molecule)
 
       type_index = molecule.index
       type_list = molecule.type_list
