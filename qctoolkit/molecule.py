@@ -415,14 +415,19 @@ class Molecule(object):
       U = self.principalAxes()[1]
       self.R = np.dot(self.R, U)
     else:      
-      u = np.array(u)
-      n1 = np.linalg.norm(u)
-      n2 = np.linalg.norm(v)
-      angle = np.arccos(np.dot(u, v)/(n1*n2))
-      if angle > 0:
-        axis = np.cross(u, v)
-        axis = axis / np.linalg.norm(axis)
-        self.rotate(angle, axis)
+      if np.linalg.norm(u[1]) - u[1] > 1E-8 or u[0] > 0:
+        u = np.array(u)
+        n1 = np.linalg.norm(u)
+        n2 = np.linalg.norm(v)
+        angle = np.arccos(np.dot(u, v)/(n1*n2))
+      else:
+        u = np.array([0, 0, 1])
+        angle = np.pi
+
+      #if angle > 0:
+      axis = np.cross(u, v)
+      axis = axis / np.linalg.norm(axis)
+      self.rotate(angle, axis)
 
   def alignSVD(self, mol, ref_list=None, tar_list=None):
     if type(mol) is str:
@@ -459,15 +464,24 @@ class Molecule(object):
 
   def alignAtoms(self, ind1, ind2, ind3):
     self.center(self.R[ind1])
-    self.align(self.R[ind2] - self.R[ind1])
+    vec = self.R[ind2] - self.R[ind1]
+    self.align(vec)
     self.center(self.R[ind1])
-    if self.R[ind3][1] > 0:
+
+    if abs(self.R[ind3][1]) > 0:
       tangent = self.R[ind3][2]/self.R[ind3][1]
     else:
-      tangent = np.inf
+      if self.R[ind3][2] > 0:
+        tangent = np.inf
+      else:
+        tangent = -np.inf
+
     angle = np.arctan(tangent)
     self.rotate(-angle, [1,0,0])
     self.center(self.R[ind1])
+    if self.R[ind3][1] < 0:
+      self.rotate(np.pi, [1, 0, 0])
+      
 
   def rotate(self, angle, u):
     R_tmp = copy.deepcopy(self.R)
