@@ -35,6 +35,7 @@ def CoulombMatrix(molecule, dim=None):
   return out[order, :]
 
 def R(theta, u):
+  u = np.array(u) / np.linalg.norm(u)
   return np.array(
     [[cos(theta) + u[0]**2 * (1-cos(theta)), 
       u[0] * u[1] * (1-cos(theta)) - u[2] * sin(theta), 
