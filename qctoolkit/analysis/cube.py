@@ -124,6 +124,12 @@ class CUBE(object):
     self.molecule.N = len(self.zcoord)
     self.molecule.type_list = [ut.Z2n(z) for z in self.molecule.Z]
 
+    def vec(i):
+      return self.grid[i,1:]
+
+    self.dV = np.dot(vec(1), np.cross(vec(2), vec(3)))
+    self.V = self.dV * self.grid[1,0] * self.grid[2,0] * self.grid[3,0]
+
   def __repr__(self):
     return '\nCUBE mesh:\n' + str(self.grid) +\
            '\n\nmolecule:\n' +\
@@ -264,7 +270,6 @@ class CUBE(object):
       #return np.meshgrid(yr, xr, zr)
       ut.warning("CUBE.meshgrid returns in the unit of Bohr!")
       return np.meshgrid(xr, yr, zr, indexing='ij')
-    
 
   def plot(self, **kwargs):
     if self.isCubic():
