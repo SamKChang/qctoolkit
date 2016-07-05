@@ -27,6 +27,9 @@ class PlanewaveInput(GenericQMInput):
       self.setting['pp_type'] = 'geodecker'
     if 'full_kmesh' not in self.setting:
       self.setting['full_kmesh'] = False
+    if 'theory' in self.setting and self.setting['theory'] == 'hse06':
+      if 'pp_theory' not in self.setting:
+        self.setting['pp_theory'] = 'pbe'
 
     univ.getCelldm(self) 
 
