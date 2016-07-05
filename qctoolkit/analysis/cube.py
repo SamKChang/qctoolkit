@@ -79,12 +79,12 @@ def read_casino(chg_file):
       [len(z[-1]), 0., 0., z[2]],
     ]
   )
+  dV = x[2] * y[2] * z[2]
   # already in Angstrom?
-  V = (x[1] - x[0]) * (y[1] - y[0]) * (z[1] - z[0])
   shape = (len(x[-1]), len(y[-1]), len(z[-1]))
 
   zcoord = np.array([[1., 0., 0., 0.]])
-  data = c.reshape(*shape, order = 'F')
+  data = c.reshape(*shape, order = 'F') / dV
   data_ref = data.ravel()
   data = data_ref.reshape(*shape)
 
