@@ -7,6 +7,8 @@ import numpy as np
 import sys, os
 
 def qmRunAll(inp_list, **kwargs):
+  if 'block_size' not in kwargs:
+    kwargs['block_size'] = 1
   job = []
   for inp in inp_list:
     job.append([inp, inp.molecule.name])
