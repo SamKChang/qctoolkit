@@ -48,7 +48,7 @@ def read_vasp(chg_file):
   # numpy array.reshape does not change memory order
   # use ravel to unwine new order
   data = np.fromstring(''.join(content[10+N:]), dtype=float, sep=' ')
-  data = data.reshape(step, order='F') / V
+  data = data.reshape(step, order='F')
   data_rav = data.ravel()
   data = data_rav.reshape(step)
 
@@ -227,21 +227,14 @@ class CUBE(object):
     wq.write_cube(out, grid, structure, data)
 
   def integrate(self, **kwargs):
-    O = self.grid[0,1:4]
-    vx = self.grid[1,1:4]
-    vy = self.grid[2,1:4]
-    vz = self.grid[3,1:4]
-    dV = np.linalg.norm(vx - O)\
-              *np.linalg.norm(vy - O)\
-              *np.linalg.norm(vz - O)
     if 'power' in kwargs:
       power = kwargs['power']
     else:
       power = 1
     if power > 0:
-      return np.sum(np.ravel(self.data**power)) * dV
+      return np.sum(np.ravel(self.data**power)) * self.dV
     else:
-      return np.sum(np.ravel(abs(self.data))) * dV
+      return np.sum(np.ravel(abs(self.data))) * self.dV
 
   def isCubic(self):
     grid_vector = self.grid[1:,1:]
