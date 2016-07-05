@@ -50,6 +50,16 @@ However, it is also possible to modify the system behaviour
 by edditing the easy_install path ```/usr/local/lib/python2.7/dist-packages/easy-install.pth```
 Simply comment out the second line ```/usr/lib/python2.7/dist-packages``` 
 supresses the system to insert this path before PYTHONPATH.
+However, for some systems this fix is still not working. 
+In that case, one has to modify the python default behaviour of constructing ```sys.path```
+variable. It can be done via modifying ```/usr/lib/python2.7/site.py```
+and add
+```
+    sys.path.remove('/usr/lib/python2.7/dist-packages')
+    sys.path.append('/usr/lib/python2.7/dist-packages')
+```
+to the end of the file
+
 * **Note** that all code are writen with **2-space indentation**. 
   To change it according to pep8 standard, use the following command:
 ```cd /path/to/qctoolkit && find . -name "*.py"|xargs -n 1 autopep8 --in-place```
