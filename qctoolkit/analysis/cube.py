@@ -48,7 +48,7 @@ def read_vasp(chg_file):
   # numpy array.reshape does not change memory order
   # use ravel to unwine new order
   data = np.fromstring(''.join(content[10+N:]), dtype=float, sep=' ')
-  data = data.reshape(step, order='F')
+  data = data.reshape(step, order='F') / V
   data_rav = data.ravel()
   data = data_rav.reshape(step)
 
@@ -84,7 +84,7 @@ def read_casino(chg_file):
   shape = (len(x[-1]), len(y[-1]), len(z[-1]))
 
   zcoord = np.array([[1., 0., 0., 0.]])
-  data = c.reshape(*shape, order = 'F') / V
+  data = c.reshape(*shape, order = 'F')
   data_ref = data.ravel()
   data = data_ref.reshape(*shape)
 
