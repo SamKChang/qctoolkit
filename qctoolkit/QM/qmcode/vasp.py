@@ -76,9 +76,11 @@ class inp(PlanewaveInput):
     if 'pp_path' not in self.setting:
       if 'pp_theory' not in self.setting:
         theory_dict = {
+          'pbe': 'pbe',
           'pbe0': 'pbe',
           'hse06': 'pbe',
           'hse03': 'pbe',
+          'lda': 'lda',
         }
         theory = theory_dict[self.setting['theory']]
         if theory.lower() not in ['pbe', 'lda']:
@@ -219,61 +221,67 @@ class out(PlanewaveOutput):
   def __init__(self, qmoutXML, **kwargs):
     PlanewaveOutput.__init__(self, qmoutXML, **kwargs)
     if qmoutXML:
-      xml_file = open(qmoutXML)
+      #xml_file = open(qmoutXML)
       tree = ET.parse(qmoutXML)
-      xml_file.close()
+      #xml_file.close()
       self.xml = tree.getroot()
       self.Et, self.unit = qtk.convE(float(self.xml[-2][-5][1].text),
                                      'eV-Eh', '-')
       self.info = self.xml[0][1].text
       self.SCFStep = len(self.xml[-2])-9
 
-      # list all kpoint coordinates:
-      #self.xml[2][1]
+      try:
+        # kpoints and band structure data
+        kpoints = []
+        band = []
+        occ = []
+  
+        for i in range(len(self.xml[2][1])):
+          k_str = self.xml[2][1][i].text
+          weight = float(self.xml[2][2][i].text)
+          band_k = []
+          occ_k = []
+          bk_xml = self.xml[-2][-3][0][5][0][i]
+          for b_xml in bk_xml:
+            b, o = [float(c) for c in b_xml.text.split()]
+            band_k.append(b)
+            occ_k.append(o)
+          coord = [float(c) for c in k_str.split()]
+          coord.append(weight)
+          kpoints.append(coord)
+          band.append(band_k)
+          occ.append(occ_k)
+        self.mo_eigenvalues = copy.deepcopy(band[0])
+        self.kpoints = np.array(kpoints)
+        self.band = np.array(band)
+        self.occupation = occ[0]
+  
+        diff = np.diff(occ[0])
+        pos = diff[np.where(abs(diff) > 0.5)]
+        mask = np.in1d(diff, pos)
+        ind = np.array(range(len(diff)))
+        if len(ind[mask]) > 0:
+          N_state = ind[mask][0]
+          vb = max(self.band[:, N_state])
+          cb = min(self.band[:, N_state + 1])
+          vb_pos = np.argmax(self.band[:, N_state])
+          cb_pos = np.argmin(self.band[:, N_state + 1])
+          self.Eg = cb - vb
+          if vb_pos == cb_pos:
+            self.Eg_direct = True
+          else:
+            self.Eg_direct = False
+  
+        # DOS data
+        dos = []
+        self.E_fermi = float(self.xml[-2][-1][0].text) 
+        print self.E_fermi
+        for dos_xml in self.xml[-2][-1][1][0][5][0]:
+          dos_lst = filter(None, dos_xml.text.split(' '))
+          dos_E = [float(d) for d in dos_lst]
+          dos.append(dos_E)
+        self.dos = np.array(dos)
 
-      kpoints = []
-      band = []
-      occ = []
-
-      for i in range(len(self.xml[2][1])):
-        k_str = self.xml[2][1][i].text
-        weight = float(self.xml[2][2][i].text)
-        band_k = []
-        occ_k = []
-        bk_xml = self.xml[-2][-3][0][5][0][i]
-        for b_xml in bk_xml:
-          b, o = [float(c) for c in b_xml.text.split()]
-          band_k.append(b)
-          occ_k.append(o)
-        coord = [float(c) for c in k_str.split()]
-        coord.append(weight)
-        kpoints.append(coord)
-        band.append(band_k)
-        occ.append(occ_k)
-      self.mo_eigenvalues = copy.deepcopy(band[0])
-      self.kpoints = np.array(kpoints)
-      self.band = np.array(band)
-      self.occupation = occ[0]
-
-      diff = np.diff(occ[0])
-      pos = diff[np.where(abs(diff) > 0.5)]
-      mask = np.in1d(diff, pos)
-      ind = np.array(range(len(diff)))
-      if len(ind[mask]) > 0:
-        N_state = ind[mask][0]
-        vb = max(self.band[:, N_state])
-        cb = min(self.band[:, N_state + 1])
-        print vb
-        print cb
-        print self.band[:, N_state]
-        print np.argmax(self.band[:, N_state])
-        print np.max(self.band[:, N_state])
-        vb_pos = np.argmax(self.band[:, N_state])
-        cb_pos = np.argmin(self.band[:, N_state + 1])
-        print vb_pos
-        print cb_pos
-        self.Eg = cb - vb
-        if vb_pos == cb_pos:
-          self.Eg_direct = True
-        else:
-          self.Eg_direct = False
+      except:
+        qtk.warning("error when accessing kpoint data for %s"\
+                    % self.name)
