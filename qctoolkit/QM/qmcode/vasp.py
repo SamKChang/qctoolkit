@@ -74,13 +74,24 @@ class inp(PlanewaveInput):
 
     self.pp_path = None
     if 'pp_path' not in self.setting:
-      theory = copy.deepcopy(self.setting['theory'])
-      if theory.lower() not in ['pbe', 'lda']:
-        qtk.warning('xc: %s is not supported, using LDA PP')
-        theory = 'LDA'
-      self.pp_path = qtk.setting.vasp_pp + '_%s_%s' % \
-                     (theory.upper(), 
-                      self.setting['pp_type'].upper())
+      if 'pp_theory' not in self.setting:
+        theory_dict = {
+          'pbe0': 'pbe',
+          'hse06': 'pbe',
+          'hse03': 'pbe',
+        }
+        theory = theory_dict[self.setting['theory']]
+        if theory.lower() not in ['pbe', 'lda']:
+          qtk.warning('xc: %s is not supported, using LDA PP' % \
+                      theory.upper())
+          theory = 'LDA'
+        self.pp_path = qtk.setting.vasp_pp + '_%s_%s' % \
+                       (theory.upper(), 
+                        self.setting['pp_type'].upper())
+      else:
+        self.pp_path = qtk.setting.vasp_pp + '_%s_%s' % \
+                       (self.setting['pp_theory'].upper(), 
+                        self.setting['pp_type'].upper())
     else:
       self.pp_path = self.setting['pp_path']
 
@@ -120,13 +131,21 @@ class inp(PlanewaveInput):
           incar.write("IVDW = 212\n")
         else:
           qtk.exit("VDW '%s' is not supported for VASP" % vdw)
+    if 'ks_states' in self.setting:
+      vs = int(round(self.molecule.getValenceElectrons() / 2.0))
+      nbnd = vs + self.setting['ks_states']
+      incar.write("NBANDS = %d\n" % nbnd)
+    if 'full_kmesh' in self.setting and self.setting['full_kmesh']:
+      incar.write("ISYM = -1\n")
     if self.setting['theory'] == 'pbe0':
       incar.write("LHFCALC = .TRUE.\n")
       incar.write("GGA = PE\n")
     elif self.setting['theory'] == 'hse06':
+      incar.write("GGA = PE\n")
+      incar.write("\n##HSE setting\n")
       incar.write("LHFCALC = .TRUE.\n")
       incar.write("HFSCREEN = 0.2 \n")
-      incar.write("GGA = PE\n")
+      incar.write("ALGO = D\n")
 
     if molecule.charge != 0:
       nve = molecule.getValenceElectrons()
@@ -148,6 +167,13 @@ class inp(PlanewaveInput):
       kpoints.write(" 1       ! one k-point\n")
       kpoints.write("rec      ! in units of reciprocal vector\n")
       kpoints.write(" 0 0 0 1 ! coordinates and weight\n")
+    else:
+      k1, k2, k3 = self.setting['kmesh']
+      kpoints.write("Automatic mesh\n")
+      kpoints.write(" 0       ! number of k-points = 0")
+      kpoints.write(" ->automatic generation scheme\n")
+      kpoints.write("Gamma    ! generate a Gamma centered grid\n")
+      kpoints.write(" %d %d %d   ! number of k grids\n" % (k1, k2, k3))
     kpoints.close(no_cleanup=True)
 
     # !!!!!!!!!!!!!!!
