@@ -53,12 +53,11 @@ supresses the system to insert this path before PYTHONPATH.
 However, for some systems this fix is still not working. 
 In that case, one has to modify the python default behaviour of constructing ```sys.path```
 variable. It can be done via modifying ```/usr/lib/python2.7/site.py```
-and add
+and add the following two lines to the end of the file:
 ```
     sys.path.remove('/usr/lib/python2.7/dist-packages')
     sys.path.append('/usr/lib/python2.7/dist-packages')
 ```
-to the end of the file
 
 * **Note** that all code are writen with **2-space indentation**. 
   To change it according to pep8 standard, use the following command:
