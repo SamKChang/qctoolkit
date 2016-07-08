@@ -9,7 +9,13 @@ import universal as univ
 
 class inp(PlanewaveInput):
   def __init__(self, molecule, **kwargs):
+    if 'cutoff' not in kwargs:
+      cutoff_default = True
+    else:
+      cutoff_default = False
     PlanewaveInput.__init__(self, molecule, **kwargs)
+    if cutoff_default:
+      del self.setting['cutoff']
     self.setting['pp_type'] = 'PAW'
     self.setting.update(kwargs)
     self.backup()
@@ -82,6 +88,10 @@ class inp(PlanewaveInput):
           'hse03': 'pbe',
           'lda': 'lda',
         }
+        if self.setting['theory'] not in theory_dict:
+          qtk.warning("%s is not supported, change theory to LDA" \
+                      % (self.setting['theory']))
+          self.setting['theory'] = 'lda'
         theory = theory_dict[self.setting['theory']]
         if theory.lower() not in ['pbe', 'lda']:
           qtk.warning('xc: %s is not supported, using LDA PP' % \
@@ -116,6 +126,10 @@ class inp(PlanewaveInput):
     incar.write("SYSTEM = %s\n" % self.setting['info'])
     incar.write("ISMEAR = 0\n")
     incar.write("IBRION = 2\n")
+    if 'cutoff' in self.setting:
+      cutoff = self.setting['cutoff']
+      incar.write("ENCUT = %.2f" % (cutoff * 13.605698066))
+      incar.write(" # in eV, that is %.1f Ry\n" % cutoff)
     if 'scf_step' in self.setting:
       incar.write('NELM = %d\n' % self.setting['scf_step'])
     if 'vdw' in self.setting:
