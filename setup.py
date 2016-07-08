@@ -54,6 +54,10 @@ c_module = [Extension(name = "qctoolkit.ML.kernel_matrix",
               extra_compile_args=['-O3'],
               sources = ['qctoolkit/analysis/c_extension/'+\
                          'esp_point.c']),
+            Extension(name = "qctoolkit.analysis.esp_cube", 
+              extra_compile_args=['-O3'],
+              sources = ['qctoolkit/analysis/c_extension/'+\
+                         'esp_cube.c']),
             Extension(name = "qctoolkit.analysis.read_cube", 
               extra_compile_args=['-O3'],
               sources = ['qctoolkit/analysis/c_extension/'+\

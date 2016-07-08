@@ -9,6 +9,7 @@ import qctoolkit.utilities as ut
 import read_cube as rq
 import write_cube as wq
 import esp_point as ESP_c
+import esp_cube as ESP_cube_c
 import qctoolkit.setting as setting
 import numpy as np
 import matplotlib as mpl
@@ -99,7 +100,7 @@ class CUBE(object):
   pointwise addition, substraction, multiplication and division
   are implemented for wavefunction/density analysis
   """
-  def __init__(self, cube_file, **kwargs):
+  def __init__(self, cube_file = None, **kwargs):
     if not os.path.exists(cube_file):
       ut.exit("CUBE file:%s not found" % cube_file)
     self.path, self.name = os.path.split(cube_file)
@@ -429,30 +430,49 @@ class CUBE(object):
     self.grid[0][1:] = self.grid[0][1:] + vectorb
     self.molecule.shift(np.array(vector))
 
-  def ESP(self, coord):
+  def ESP(self, coord=None, **kwargs):
     """
     method for electron density
     Note: CUBE file is assumed to be orthorohmbic
     """
-    x, y, z = np.array(coord) * 1.889725989
     data = self.data
     grid = self.grid
-    N = self.molecule.N
+    if 'molecule' not in kwargs:
+      mol = self.molecule
+    else:
+      try:
+        mol = copy.deepcopy(qtk.toMolecule(kwargs['molecule']))
+      except:
+        qtk.exit("error when loading molecule:%s" % \
+                 str(kwargs['molecule']))
+    N = mol.N
 
     Q = self.integrate()
-    Z_sum = sum(self.molecule.Z)
+    Z_sum = sum(mol.Z)
     ne_diff = abs(Q - Z_sum)
-    ve_diff = abs(Q - self.molecule.getValenceElectrons())
+    ve_diff = abs(Q - mol.getValenceElectrons())
     if min(ne_diff, ve_diff) > 1E-2:
       qtk.warning("charge not conserved... ESP is wrong!")
+      qtk.warning("charge integrate to %.2f, " % Q + \
+                  "while nuclear charge adds to %.2f" % Z_sum)
     if ve_diff < ne_diff:
-      Z = [qtk.n2ve(qtk.Z2n(z)) for z in self.molecule.Z]
+      Z = [qtk.n2ve(qtk.Z2n(z)) for z in mol.Z]
       Z = np.array(Z).reshape(N, 1)
     else:
-      Z = self.molecule.Z.reshape(N, 1)
-    structure = np.hstack([Z, self.molecule.R * 1.889725989])
-    V = ESP_c.esp_point(grid, structure, data, x, y, z)
-    return V
+      Z = mol.Z.reshape(N, 1)
+    structure = np.hstack([Z, mol.R * 1.889725989])
+    if coord:
+      x, y, z = np.array(coord) * 1.889725989
+      V = ESP_c.esp_point(grid, structure, data, x, y, z)
+      return V
+    else:
+      qtk.warning("known issue: unidentifed memory leak")
+      out = copy.deepcopy(self)
+      out.molecule = mol
+      out.data = np.nan_to_num(
+        ESP_cube_c.esp_cube(grid, structure, data)
+      )
+      return out
 
   def __add__(self, other):
     if isinstance(other, CUBE):
