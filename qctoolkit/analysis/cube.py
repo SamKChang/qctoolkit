@@ -432,12 +432,24 @@ class CUBE(object):
   def ESP(self, coord):
     """
     method for electron density
+    Note: CUBE file is assumed to be orthorohmbic
     """
     x, y, z = np.array(coord) * 1.889725989
     data = self.data
     grid = self.grid
     N = self.molecule.N
-    Z = self.molecule.Z.reshape(N, 1)
+
+    Q = self.integrate()
+    Z_sum = sum(self.molecule.Z)
+    ne_diff = abs(Q - Z_sum)
+    ve_diff = abs(Q - self.molecule.getValenceElectrons())
+    if min(ne_diff, ve_diff) > 1E-2:
+      qtk.warning("charge not conserved... ESP is wrong!")
+    if ve_diff < ne_diff:
+      Z = [qtk.n2ve(qtk.Z2n(z)) for z in self.molecule.Z]
+      Z = np.array(Z).reshape(N, 1)
+    else:
+      Z = self.molecule.Z.reshape(N, 1)
     structure = np.hstack([Z, self.molecule.R * 1.889725989])
     V = ESP_c.esp_point(grid, structure, data, x, y, z)
     return V
