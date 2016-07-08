@@ -8,6 +8,7 @@ import re, copy
 import qctoolkit.utilities as ut
 import read_cube as rq
 import write_cube as wq
+import esp_point as ESP_c
 import qctoolkit.setting as setting
 import numpy as np
 import matplotlib as mpl
@@ -140,7 +141,6 @@ class CUBE(object):
     new = copy.deepcopy(self)
     new.data = new.data[key]
     corner = new.grid[0, 1:]
-    print key
     for i in range(len(key)):
       k = key[i]
       v = self.grid[i+1, 1:]
@@ -216,7 +216,6 @@ class CUBE(object):
     return qtk.CUBE(cube)
 
   def write(self, out):
-    x, y, z = self.data.shape
     data = self.data
     grid = self.grid
     N = self.molecule.N
@@ -429,6 +428,19 @@ class CUBE(object):
     vectorb = np.array(vector) / 0.529177249
     self.grid[0][1:] = self.grid[0][1:] + vectorb
     self.molecule.shift(np.array(vector))
+
+  def ESP(self, coord):
+    """
+    method for electron density
+    """
+    x, y, z = np.array(coord) * 1.889725989
+    data = self.data
+    grid = self.grid
+    N = self.molecule.N
+    Z = self.molecule.Z.reshape(N, 1)
+    structure = np.hstack([Z, self.molecule.R * 1.889725989])
+    V = ESP_c.esp_point(grid, structure, data, x, y, z)
+    return V
 
   def __add__(self, other):
     if isinstance(other, CUBE):
