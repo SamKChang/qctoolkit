@@ -497,7 +497,7 @@ class CUBE(object):
     else:
       Z = mol.Z.reshape(N, 1)
     structure = np.hstack([Z, mol.R * 1.889725989])
-    if coord:
+    if coord is not None:
       x, y, z = np.array(coord) * 1.889725989
       V = ESP_c.esp_point(grid, structure, data, x, y, z)
       return V
