@@ -165,7 +165,7 @@ class CUBE(object):
     if 'unit' not in kwargs:
       unit = 'angstrom'
     else:
-      unit = kwargs['kwargs'].lower()
+      unit = kwargs['unit'].lower()
       if unit not in ['angstrom', 'bohr']:
         qtk.warning('unit %s not reconized, set to Bohr' % unit)
         unit = 'bohr'
