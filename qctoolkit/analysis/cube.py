@@ -125,6 +125,7 @@ class CUBE(object):
     self.molecule.Z = self.zcoord[:,0]
     self.molecule.N = len(self.zcoord)
     self.molecule.type_list = [ut.Z2n(z) for z in self.molecule.Z]
+    self.interp = None
 
     def vec(i):
       return self.grid[i,1:]
@@ -160,9 +161,35 @@ class CUBE(object):
     new.grid[0, 1:] = corner
     return new
 
-  def remesh(self, other, **kwargs):
-    # maybe reimplemented via scipy.interpolate.rbf
-    self = copy.deepcopy(self)
+  def __call__(self, *coord, **kwargs):
+    if 'unit' not in kwargs:
+      unit = 'angstrom'
+    else:
+      unit = kwargs['kwargs'].lower()
+      if unit not in ['angstrom', 'bohr']:
+        qtk.warning('unit %s not reconized, set to Bohr' % unit)
+        unit = 'bohr'
+
+    R = np.atleast_2d(np.array(coord))
+    if len(coord) == 3:
+      try:
+        x, y, z = [float(c) for c in coord]
+        R = np.atleast_2d(np.array([x,y,z]))
+      except TypeError:
+        pass
+
+    if unit == 'angstrom':
+      R = [r / 0.529177249 for r in R]
+
+    if not self.interp:
+      self.interpolate()
+
+    if len(R) == 1:
+      return self.interp(R)[0]
+    else:
+      return self.interp(R)
+
+  def interpolate(self, **kwargs):
 
     def linepoints(cube, i):
       return np.linspace(cube.grid[0, i+1],
@@ -177,13 +204,22 @@ class CUBE(object):
     xs = linepoints(self, 0)
     ys = linepoints(self, 1)
     zs = linepoints(self, 2)
+    interp = RGI((xs, ys, zs), self.data, method = method, 
+                 bounds_error=False, fill_value=0)
+    self.interp = interp
+    return interp
+
+  def remesh(self, other, **kwargs):
+    # maybe reimplemented via scipy.interpolate.rbf
+    self = copy.deepcopy(self)
+
     xo = linepoints(other, 0)
     yo = linepoints(other, 1)
     zo = linepoints(other, 2)
     X, Y, Z = np.meshgrid(xo, yo, zo, indexing='ij')
     points = np.vstack([X.ravel(), Y.ravel(), Z.ravel()]).T
-    interp = RGI((xs, ys, zs), self.data, method = method, 
-                 bounds_error=False, fill_value=0)
+
+    interp = self.interpolate()
     self.data = interp(points)
     self.grid = copy.deepcopy(other.grid)
 
