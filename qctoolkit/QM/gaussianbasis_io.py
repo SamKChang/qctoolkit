@@ -129,7 +129,7 @@ class GaussianBasisInput(GenericQMInput):
     self.setting.update(kwargs)
 
     if 'basis_set' not in kwargs:
-      self.setting['basis_set'] = '6-31g'
+      self.setting['basis_set'] = 'def2-tzvp'
 
 class GaussianBasisOutput(GenericQMOutput):
   def __init__(self, output=None, **kwargs):
