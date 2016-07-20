@@ -234,7 +234,8 @@ class CUBE(object):
       ut.exit("gaussian fchk file:%s not found" % fchk)
     cube = 'gcube_tmp_' + str(id(self)) + '.cube'
     cube = os.path.join(path, cube)
-    cmd = '%s 1 density=scf %s %s -1' % (qtk.cubegen_exe, fchk, cube)
+    cmd = '%s 1 density=scf %s %s -1' % (qtk.gaussiancubegen_exe, 
+                                         fchk, cube)
     run = sp.Popen(cmd, shell=True, stdin=sp.PIPE)
     for i in range(len(self.grid)):
       vec = self.grid[i]

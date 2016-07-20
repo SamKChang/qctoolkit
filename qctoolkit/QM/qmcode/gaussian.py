@@ -53,6 +53,7 @@ class inp(GaussianBasisInput):
       'save_density',
       'ks_states',
       'save_wf',
+      'save_restart',
     ]
     for s in save_list:
       if s in self.setting and self.setting[s]:

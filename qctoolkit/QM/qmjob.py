@@ -221,11 +221,20 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
       exe = kwargs['exe']
     else:
       exe = setting.gaussian_exe
+
     exestr = "%s %s" % (exe, inp)
     qmoutput = os.path.splitext(inp)[0] + '.out'
     qmlog = os.path.splitext(inp)[0] + '.log'
     compute(exestr, qmoutput, _threads)
     os.rename(qmlog, qmoutput)
+
+    chks = glob.glob('*.chk')
+    for chk in chks:
+      exe = setting.gaussian_formchk_exe
+      exestr = "%s %s" % (exe, chk)
+      run = sp.Popen(exestr, shell=True)
+      run.wait()
+
     qio_out = qio.QMOut(qmoutput, program='gaussian')
 
   ##################################

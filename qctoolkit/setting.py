@@ -112,7 +112,9 @@ bigdft_pp_nlcc_url = 'http://bigdft.org/Wiki/index.php?title=New_Soft-Accurate_N
 #bigdft_pp_url = 'https://sourceforge.net/p/cp2k/code/HEAD/tree/trunk/potentials/Goedecker/abinit/'
 #bigdft_pp = '/home/samio/Works/PhD/packages/BigDFT/PP'
 gaussian_exe = 'g09'
-cubegen_exe = 'cubegen'
+gaussian_cubegen_exe = 'cubegen'
+gaussian_formchk_exe = 'formchk'
+
 
 program_dict = {
   'cpmd': cpmd_exe,
