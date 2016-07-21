@@ -21,7 +21,6 @@ def exit(text):
   msg = bcolors.FAIL + bcolors.BOLD + name + bcolors.ENDC \
         + bcolors.FAIL + ": " + text + bcolors.ENDC
   raise RuntimeError(msg)
-  sys.exit(msg)
   
 def warning(text):
   if qtk.setting.no_warning or not qtk.setting.quiet:

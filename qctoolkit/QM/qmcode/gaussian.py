@@ -135,8 +135,11 @@ class out(GaussianBasisOutput):
       final_str = ''.join(report)
       final_str = final_str.replace('\n', '')
       final_list = final_str.split('\\')
-      pattern = re.compile("R *M *S *D *=")
-      rmsd = filter(pattern.match, final_list)[0]
+      pattern = re.compile(".*R *M *S *D *=")
+      try:
+        rmsd = filter(pattern.match, final_list)[0]
+      except:
+        qtk.exit("something wrong when accessing final energy")
       ind = final_list.index(rmsd) - 1
       Et_str = final_list[ind]
       self.Et = float(Et_str.split('=')[1].replace(' ',''))

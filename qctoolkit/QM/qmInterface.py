@@ -46,8 +46,7 @@ def QMOut(out=None, **kwargs):
       p_str = kwargs['program']
       try:
         return out_dict[p_str](out)
-      except:
-        e = sys.exc_info()[0]
+      except Exception as e:
         qtk.warning("%s failed with message: %s" % (out, e))
         qout = qtk.QMOut()
         qout.path, qout.name = os.path.split(out)
