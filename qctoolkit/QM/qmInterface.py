@@ -7,6 +7,7 @@ import qmcode.gaussian as gaussian
 import qmcode.bigdft as bigdft
 import qmcode.gaussian as gaussian
 import sys, os
+import qmcode.hortonInterface as horton
 
 def QMInp(molecule, **kwargs):
   inp_dict = {
@@ -15,6 +16,7 @@ def QMInp(molecule, **kwargs):
     'espresso': [espresso.inp, 'inp'],
     'nwchem': [nwchem.inp, 'inp'],
     'gaussian': [gaussian.inp, 'com'],
+    'horton': [horton.inp, 'inp'],
     'bigdft': [bigdft.inp, 'ymal'],
   }
 
@@ -34,6 +36,7 @@ def QMOut(out=None, **kwargs):
     'vasp': vasp.out,
     'espresso': espresso.out,
     'nwchem': nwchem.out,
+    'horton': horton.out,
     'gaussian': gaussian.out,
     'bigdft': bigdft.out,
   }
