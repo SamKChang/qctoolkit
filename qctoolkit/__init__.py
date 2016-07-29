@@ -23,9 +23,13 @@ import setting
 
 import os
 import copy_reg
+import copy
 import types
 import pickle
 import urllib2
+import numpy
+import scipy
+import pyscf
 
 # check for qtk setting
 missing_files = []

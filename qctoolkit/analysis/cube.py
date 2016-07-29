@@ -101,43 +101,52 @@ class CUBE(object):
   are implemented for wavefunction/density analysis
   """
   def __init__(self, cube_file = None, **kwargs):
-    if not os.path.exists(cube_file):
-      ut.exit("CUBE file:%s not found" % cube_file)
-    self.path, self.name = os.path.split(cube_file)
-    if 'format' not in kwargs:
-      ext = os.path.splitext(self.name)[1]
-      if ext == '.cube':
-        kwargs['format'] = 'cube'
-      elif ext == '.casino':
-        kwargs['format'] = 'casino'
-      elif self.name == 'CHGCAR' or ext =='.vasp':
-        kwargs['format'] = 'vasp'
-    if kwargs['format'] == 'cube':
-      self.data, self.zcoord, self.grid, self.coords\
-        = rq.read_cube(cube_file)
-    elif kwargs['format'] == 'vasp':
-      self.data, self.zcoord, self.grid = read_vasp(cube_file)
-    elif kwargs['format'] == 'casino':
-      self.data, self.zcoord, self.grid = read_casino(cube_file)
-    self.molecule = qtk.Molecule()
-    self.shape = self.data.shape
-    self.molecule.R = self.zcoord[:,1:4]*0.529177249
-    self.molecule.Z = self.zcoord[:,0]
-    self.molecule.N = len(self.zcoord)
-    self.molecule.type_list = [ut.Z2n(z) for z in self.molecule.Z]
-    self.interp = None
+    if cube_file:
+      if not os.path.exists(cube_file):
+        ut.exit("CUBE file:%s not found" % cube_file)
+      self.path, self.name = os.path.split(cube_file)
+      if 'format' not in kwargs:
+        ext = os.path.splitext(self.name)[1]
+        if ext == '.cube':
+          kwargs['format'] = 'cube'
+        elif ext == '.casino':
+          kwargs['format'] = 'casino'
+        elif self.name == 'CHGCAR' or ext =='.vasp':
+          kwargs['format'] = 'vasp'
+      if kwargs['format'] == 'cube':
+        self.data, self.zcoord, self.grid, self.coords\
+          = rq.read_cube(cube_file)
+      elif kwargs['format'] == 'vasp':
+        self.data, self.zcoord, self.grid = read_vasp(cube_file)
+      elif kwargs['format'] == 'casino':
+        self.data, self.zcoord, self.grid = read_casino(cube_file)
+      self.molecule = qtk.Molecule()
+      self.shape = self.data.shape
+      self.molecule.R = self.zcoord[:,1:4]*0.529177249
+      self.molecule.Z = self.zcoord[:,0]
+      self.molecule.N = len(self.zcoord)
+      self.molecule.type_list = [ut.Z2n(z) for z in self.molecule.Z]
+      self.interp = None
 
-    def vec(i):
-      return self.grid[i,1:]
+      def vec(i):
+        return self.grid[i,1:]
+  
+      self.dV = np.dot(vec(1), np.cross(vec(2), vec(3)))
+      self.V = self.dV*self.grid[1,0]*self.grid[2,0]*self.grid[3,0]
 
-    self.dV = np.dot(vec(1), np.cross(vec(2), vec(3)))
-    self.V = self.dV * self.grid[1,0] * self.grid[2,0] * self.grid[3,0]
+    else:
+      self.grid = np.zeros([4, 4])
+      self.molecule = qtk.Molecule()
+
 
   def __repr__(self):
-    return '\nCUBE mesh:\n' + str(self.grid) +\
-           '\n\nmolecule:\n' +\
-           str(np.hstack([self.molecule.Z[:, np.newaxis], 
-                          self.molecule.R]))
+    if np.sum(self.grid) > 0:
+      return '\nCUBE mesh:\n' + str(self.grid) +\
+             '\n\nmolecule:\n' +\
+             str(np.hstack([self.molecule.Z[:, np.newaxis], 
+                            self.molecule.R]))
+    else:
+      return "None\n"
 
   def __getitem__(self, key):
     new = copy.deepcopy(self)
@@ -188,6 +197,17 @@ class CUBE(object):
       return self.interp(R)[0]
     else:
       return self.interp(R)
+
+  def build(self, molecule, grid, data):
+    self.molecule = molecule
+    self.grid = grid
+    self.data = data
+
+    def vec(i):
+      return self.grid[i,1:]
+
+    self.dV = np.dot(vec(1), np.cross(vec(2), vec(3)))
+    self.V = self.dV*self.grid[1,0]*self.grid[2,0]*self.grid[3,0]
 
   def interpolate(self, **kwargs):
 

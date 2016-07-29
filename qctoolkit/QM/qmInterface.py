@@ -6,8 +6,9 @@ import qmcode.nwchem as nwchem
 import qmcode.gaussian as gaussian
 import qmcode.bigdft as bigdft
 import qmcode.gaussian as gaussian
-import sys, os
 import qmcode.hortonInterface as horton
+import qmcode.ofdft as ofdft
+import sys, os
 
 def QMInp(molecule, **kwargs):
   inp_dict = {
@@ -17,6 +18,7 @@ def QMInp(molecule, **kwargs):
     'nwchem': [nwchem.inp, 'inp'],
     'gaussian': [gaussian.inp, 'com'],
     'horton': [horton.inp, 'inp'],
+    'ofdft': [ofdft.inp, 'inp'],
     'bigdft': [bigdft.inp, 'ymal'],
   }
 

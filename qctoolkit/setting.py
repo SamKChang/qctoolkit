@@ -1,8 +1,9 @@
 import multiprocessing as mp
 from psutil import virtual_memory
 import os
+import copy
 
-__version__ = '0.0.10'
+__version__ = '0.0.12'
 quiet = False
 debug = False
 no_warning = False
@@ -124,3 +125,62 @@ program_dict = {
   'nwchem': nwchem_exe,
   'gaussian': gaussian_exe,
 }
+
+popleList = [
+  "3-21g",
+  '3-21g*',
+  '3-21++g',
+  '3-21++g*',
+  '6-31g',
+  '6-31g*',
+  '6-31g**',
+  '6-31+g',
+  '6-31+g*',
+  '6-31+g**',
+  '6-31++g',
+  '6-31++g*',
+  '6-31++g**',
+  '6-311g',
+  '6-311g*',
+  '6-311g**',
+  '6-311+g',
+  '6-311+g*',
+  '6-311+g**',
+  '6-311++g',
+  '6-311++g*',
+  '6-311++g**',
+]
+
+ccList = [
+  'cc-pVDZ',
+  'cc-pVTZ',
+  'cc-pVDZ',
+  'cc-pVQZ',
+  'cc-pV5Z',
+  'cc-pV6Z',
+  'cc-pV8Z',
+  'cc-pV9Z',
+  'aug-cc-pVDZ',
+  'aug-cc-pVTZ',
+  'aug-cc-pVDZ',
+  'aug-cc-pVQZ',
+  'aug-cc-pV5Z',
+  'aug-cc-pV6Z',
+]
+
+defList = [
+  'Def2-ECP',
+  'Def2-SV',
+  'Def2-SVP',
+  'Def2-SVPD',
+  'Def2-TZVP',
+  'Def2-TZVPD',
+  'Def2-TZVPP',
+  'Def2-TZVPPD',
+  'Def2-QZVP',
+  'Def2-QZVPD',
+  'Def2-QZVPP',
+  'Def2-QZVPPD',
+]
+
+basis = [popleList, ccList, defList]
