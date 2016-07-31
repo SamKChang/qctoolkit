@@ -57,35 +57,10 @@ class inp(GaussianBasisInput):
             "cint2e_sph", comp=1, hermi=1,
           ).reshape(nao, nao, nao, nao)
 
-    # double check
-    ht_mol = IOData(coordinates=molecule.R*1.8897261245650618,
-                    numbers=molecule.Z)
-    obasis = get_gobasis(ht_mol.coordinates, ht_mol.numbers,
-                         self.setting['basis_set'])
-    lf = DenseLinalgFactory(obasis.nbasis)
-    ht_ovl = obasis.compute_overlap(lf)
-    ht_kin = obasis.compute_kinetic(lf)
-    ht_rep = obasis.compute_electron_repulsion(lf)
-    na = obasis.compute_nuclear_attraction(
-           ht_mol.coordinates, ht_mol.pseudo_numbers, lf
-         )
-    two = obasis.compute_electron_repulsion(lf)
-    print ovl.shape
-    print ht_kin._array.shape
-    print np.sum(abs(kin - ht_kin._array))
-    print np.sum(abs(ovl - ht_ovl._array))
-    print np.sum(abs(ext - na._array))
-    print np.sum(abs(ext))
-    print two._array[0,0,0,0]
-    print vee[0,0,0,0]
-    print np.sum(two._array - vee)
-
-    s, U = eig(ovl)
-    sqrS = U.dot(diag(sqrt(s))).dot(U.T)
-    X = U.dot(diag(1/sqrt(s))).dot(U.T)
-    P = sqrS.dot(ig.dot(sqrS.T))
-    dv_orth = sqrt(diag(P))
-    dv = X.dot(dv_orth) 
+    dv = sqrt(diag(ig))
+    dv = dv / sqrt(sum(diag(outer(dv, dv).dot(ovl))))
+    dv = dv * sqrt(mol.nelectron)
+    dm = outer(dv, dv)
 
     coord = np.array(np.atleast_2d(molecule.R*1.8897261245650618))
     grid = BeckeMolGrid(coord, molecule.Z.astype(int), molecule.Z)
@@ -98,10 +73,62 @@ class inp(GaussianBasisInput):
     self.vee = vee
     self.nao = nao
     self.initial_guess = copy.deepcopy(dv)
+    self.ig = ig
     self.dv = dv
     self.dm = outer(dv, dv)
     self.grid = grid
-    
+    self.P = diag(self.dm.dot(ovl))
+    self.P_milliken = diag(ig.dot(ovl))
+
+    self.population = [0 for i in range(molecule.N)]
+    self.population_lowdin = [0 for i in range(molecule.N)]
+    self.population_milliken = [0 for i in range(molecule.N)]
+    itr = 0
+    for i in range(len(mol._bas)):
+      atom = mol.bas_atom(i)
+      s = i + itr
+      for j in range(2*mol.bas_angular(i)+1):
+        self.population[atom] += self.P[s]
+        self.population_milliken[atom] += self.P_milliken[s]
+        s += 1 
+      itr += j
+
+  def getRho(self, coords):
+    psi = self.mol.eval_gto("GTOval_sph", coords).T
+    rho = np.zeros(len(coords))
+    for i in range(len(self.dv)):
+      n_i = self.dv[i]
+      psi_i = psi[i]
+      rho += n_i * psi_i
+    rho = rho**2
+    return rho
+
+  def getRhoSigma(self, coords):
+    psi = self.mol.eval_gto("GTOval_sph", coords).T
+    dpsi = self.mol.eval_gto("GTOval_ip_sph", coords, comp=3).T
+    rho = np.zeros(len(coords))
+    for i in range(len(self.dv)):
+      n_i = self.dv[i]
+      psi_i = psi[i]
+      rho += n_i * psi_i
+    rho = rho**2
+
+    drho = np.zeros([len(coords), 3])
+    for i in range(len(self.dv)):
+      n_i = self.dv[i]
+      psi_i = psi[i]
+      for j in range(len(self.dv)):
+        n_j = self.dv[j]
+        dpsi_j = dpsi[j]
+        drho += 2 * n_i * n_j * dpsi_j * psi_i[:, np.newaxis]
+    sigma = np.sum(drho**2, axis=1)
+
+    return rho, sigma
+
+  def libxc(self, **kwargs):
+    coords = self.grid.points
+    rho = self.getRho(coords)
+
   def getCubeGrid(self, margin=7, step=0.2):
     coord_min = np.min(self.mol.atom_coords(), axis=0) - margin
     coord_max = np.max(self.mol.atom_coords(), axis=0) + margin
@@ -113,9 +140,9 @@ class inp(GaussianBasisInput):
     out[1:, 1:] = diag((coord_max - coord_min) / steps)
     return out
 
-  def dm2cube(self, dm=None, cube_header=None):
-    if not dm:
-      dm = self.dm
+  def dm2cube(self, dv=None, cube_header=None):
+    if not dv:
+      dv = self.dv
     if not cube_header:
       cube_header = self.getCubeGrid()
 
@@ -132,16 +159,7 @@ class inp(GaussianBasisInput):
     Y = Y.reshape(Y.size)
     Z = Z.reshape(Z.size)
     coords = np.array([X,Y,Z]).T
-    psi = self.mol.eval_gto("GTOval_sph", coords).T
-
-    rho = np.zeros(X.size)
-    for i in range(len(dm)):
-      psi_i = psi[i]
-      for j in range(len(dm)):
-        n_ij = dm[i, j]
-        psi_j = psi[j]
-       
-        rho += n_ij * (psi_i * psi_j)
+    rho = self.getRho(coords)
     rho = rho.reshape(*step)
     cube = qtk.CUBE()
     cube.build(self.molecule, cube_header, rho)
