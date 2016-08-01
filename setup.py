@@ -1,7 +1,5 @@
 from setuptools import setup
 from distutils.core import Extension
-#from Cython.Build import cythonize
-#import numpy as np
 import os
 
 version = '0.0.12'
@@ -156,6 +154,12 @@ c_module = [Extension(name = "qctoolkit.ML.kernel_matrix",
                                   '-Wno-write-strings'],
               extra_link_args=['-lgomp', '-shared',
                                '-lgsl', '-lgslcblas', '-llapack'],
+              #include_dirs = [np.get_include()]
+            ),
+            Extension(name = "qctoolkit.QM.qmcode.libxc", 
+              sources = ['qctoolkit/QM/qmcode/c_extension/libxc.c'],
+              extra_compile_args=['-fPIC', '-lm'],
+              extra_link_args=['-lxc'],
               #include_dirs = [np.get_include()]
             ),
            ]

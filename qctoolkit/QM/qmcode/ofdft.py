@@ -1,21 +1,27 @@
 import qctoolkit as qtk
-from pyscf import gto
-import pyscf as ps
 import pkgutil
-eggs_loader = pkgutil.find_loader('horton')
-found = eggs_loader is not None
-if found:
-  from horton import BeckeMolGrid
-else:
-  pass
 from qctoolkit.QM.gaussianbasis_io import GaussianBasisInput
 from qctoolkit.QM.gaussianbasis_io import GaussianBasisOutput
 import os, sys, copy, shutil, re
 import numpy as np
 import qctoolkit.QM.qmjob as qmjob
 import periodictable as pt
+from libxc import libxc
 
-from horton import *
+ps_eggs_loader = pkgutil.find_loader('pyscf')
+ps_found = ps_eggs_loader is not None
+ht_eggs_loader = pkgutil.find_loader('horton')
+ht_found = ht_eggs_loader is not None
+
+if ps_found:
+  from pyscf import gto
+  import pyscf as ps
+else:
+  pass
+if ht_found:
+  from horton import BeckeMolGrid
+else:
+  pass
 
 dot = np.dot
 diag = np.diag
@@ -25,8 +31,10 @@ eig = np.linalg.eigh
 
 class inp(GaussianBasisInput):
   def __init__(self, molecule, **kwargs):
-    if not found:
+    if not ht_found:
       qtk.exit("horton module not found.")
+    if not ps_found:
+      qtk.exit("pyscf module not found.")
     if 'wf_convergence' not in kwargs:
       kwargs['wf_convergence'] = 1e-06
     GaussianBasisInput.__init__(self, molecule, **kwargs)
@@ -125,9 +133,10 @@ class inp(GaussianBasisInput):
 
     return rho, sigma
 
-  def libxc(self, **kwargs):
+  def xc(self, xcFlag=1):
     coords = self.grid.points
-    rho = self.getRho(coords)
+    rho, sigma = self.getRhoSigma(coords)
+    libxc(rho, sigma, len(coords), 1)
 
   def getCubeGrid(self, margin=7, step=0.2):
     coord_min = np.min(self.mol.atom_coords(), axis=0) - margin
