@@ -7,6 +7,7 @@ import numpy as np
 import qctoolkit.QM.qmjob as qmjob
 import periodictable as pt
 from libxc import libxc
+from libxc_dict import xc_dict
 
 ps_eggs_loader = pkgutil.find_loader('pyscf')
 ps_found = ps_eggs_loader is not None
@@ -101,7 +102,9 @@ class inp(GaussianBasisInput):
         s += 1 
       itr += j
 
-  def getRho(self, coords):
+  def getRho(self, coords=None):
+    if coords is None:
+      coords = self.grid.points
     psi = self.mol.eval_gto("GTOval_sph", coords).T
     rho = np.zeros(len(coords))
     for i in range(len(self.dv)):
@@ -111,7 +114,9 @@ class inp(GaussianBasisInput):
     rho = rho**2
     return rho
 
-  def getRhoSigma(self, coords):
+  def getRhoSigma(self, coords=None):
+    if coords is None:
+      coords = self.grid.points
     psi = self.mol.eval_gto("GTOval_sph", coords).T
     dpsi = self.mol.eval_gto("GTOval_ip_sph", coords, comp=3).T
     rho = np.zeros(len(coords))
@@ -133,10 +138,26 @@ class inp(GaussianBasisInput):
 
     return rho, sigma
 
-  def xc(self, xcFlag=1):
+  def xc(self, xcFlag=1, report=True):
+    if type(xcFlag) is int:
+      if xcFlag not in xc_dict.values():
+        qtk.exit("libxc functional id number %d is not valid" % xcFlag)
+      else:
+        xc_id = xcFlag
+    elif type(xcFlag) is str:
+      if xcFlag not in xc_dict:
+        qtk.exit("libxc functional id %s is not valid" % xcFlag)
+      else:
+        xc_id = xc_dict[xcFlag]
+    if report:
+      for k, v in xc_dict.iteritems():
+        if v == xc_id:
+          key = k
+          qtk.report("libxc", "xc: %s, id: %d\n" % (key, xc_id))
+          break
     coords = self.grid.points
     rho, sigma = self.getRhoSigma(coords)
-    libxc(rho, sigma, len(coords), 1)
+    return libxc(rho, sigma, len(coords), xc_id)
 
   def getCubeGrid(self, margin=7, step=0.2):
     coord_min = np.min(self.mol.atom_coords(), axis=0) - margin

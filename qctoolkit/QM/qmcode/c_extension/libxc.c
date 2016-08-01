@@ -13,9 +13,7 @@
 static void libxc_c(double *rho, double *sigma, double *out, 
                int N, int xcID){
   xc_func_type func;
-  int i, vmajor, vminor, vmicro;
-  xc_version(&vmajor, &vminor, &vmicro);
-  printf("Libxc version: %d.%d.%d\n", vmajor, vminor, vmicro);
+  int i;
   if(xc_func_init(&func, xcID, XC_UNPOLARIZED) != 0){
     fprintf(stderr, "Functional '%d' not found\n", xcID);
     return 1;
@@ -26,14 +24,13 @@ static void libxc_c(double *rho, double *sigma, double *out,
       xc_lda_exc(&func, N, rho, out);
       break;
     case XC_FAMILY_GGA:
+      // something wrong with vw kinetic energy functional?
+      xc_gga_exc(&func, N, rho, sigma, out);
+      break;
     case XC_FAMILY_HYB_GGA:
       xc_gga_exc(&func, N, rho, sigma, out);
       break;
 
-  }
-
-  for(i=0; i<5; i+=1){
-    printf("%lf %lf\n", rho[i], out[i]);
   }
 
   xc_func_end(&func);
