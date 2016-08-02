@@ -6,13 +6,14 @@ import os, sys, copy, shutil, re
 import numpy as np
 import qctoolkit.QM.qmjob as qmjob
 import periodictable as pt
-from libxc import libxc
 from libxc_dict import xc_dict
 
 ps_eggs_loader = pkgutil.find_loader('pyscf')
 ps_found = ps_eggs_loader is not None
 ht_eggs_loader = pkgutil.find_loader('horton')
 ht_found = ht_eggs_loader is not None
+xc_eggs_loader = pkgutil.find_loader('libxc')
+xc_found = ps_eggs_loader is not None
 
 if ps_found:
   from pyscf import gto
@@ -21,6 +22,10 @@ else:
   pass
 if ht_found:
   from horton import BeckeMolGrid
+else:
+  pass
+if xc_found:
+  from libxc import libxc
 else:
   pass
 
@@ -36,6 +41,8 @@ class inp(GaussianBasisInput):
       qtk.exit("horton module not found.")
     if not ps_found:
       qtk.exit("pyscf module not found.")
+    if not xc_found:
+      qtk.exit("libxc not found.")
     if 'wf_convergence' not in kwargs:
       kwargs['wf_convergence'] = 1e-06
     GaussianBasisInput.__init__(self, molecule, **kwargs)
