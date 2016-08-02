@@ -2,6 +2,7 @@ from molecule import *
 from QM.qmInterface import *
 from QM.qmjob import *
 from QM.qmresult import *
+from QM.qmcode.libxc_dict import xc_dict
 from alchemy.aljob import *
 from alchemy.alpath import *
 from analysis import CUBE
