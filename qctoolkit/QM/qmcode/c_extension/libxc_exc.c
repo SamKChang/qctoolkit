@@ -11,9 +11,8 @@
 // only minor changes should be necessary
 // to interface other type of calculation
 static void libxc_c(double *rho, double *sigma, double *out, 
-               int N, int xcID){
+                    int N, int xcID){
   xc_func_type func;
-  int i;
   if(xc_func_init(&func, xcID, XC_UNPOLARIZED) != 0){
     fprintf(stderr, "Functional '%d' not found\n", xcID);
     return 1;
@@ -24,15 +23,12 @@ static void libxc_c(double *rho, double *sigma, double *out,
       xc_lda_exc(&func, N, rho, out);
       break;
     case XC_FAMILY_GGA:
-      // something wrong with vw kinetic energy functional?
       xc_gga_exc(&func, N, rho, sigma, out);
       break;
     case XC_FAMILY_HYB_GGA:
       xc_gga_exc(&func, N, rho, sigma, out);
       break;
-
   }
-
   xc_func_end(&func);
 }
 
@@ -83,24 +79,7 @@ static double *pyvector_to_Carrayptrs(PyArrayObject *arrayin){
 //////////////////////////////
 // python callable function //
 //////////////////////////////
-// input: grid, structure, data 
-// output: none
-static PyObject * libxc(PyObject * self, PyObject * args){
-//  PyObject *py_list_holder; // variable to pass python to C
-//  double x, y, z; // coordinate from python
-//  PyArrayObject *py_data; // numpy data from python
-//  PyArrayObject *py_structure; // numpy data from python
-//  PyArrayObject *py_grid; // numpy data from python
-//  PyArrayObject *py_data_out; // numpy data to return
-//  double *data; // C-data need to be converted from python object
-//  double *structure; // C-data need to be converted from python object
-//  double *grid; // C-data need to be converted from python object
-//  double *data_out; // C-data for output
-//  double V; // resaulting ESP at (x, y, z)
-//  int Ndim[4], N3, Ns;
-//  int i;
-//  int dims[1];
-
+static PyObject * libxc_exc(PyObject * self, PyObject * args){
   PyArrayObject *py_rho;
   PyArrayObject *py_sigma;
   PyArrayObject *py_data_out;
@@ -149,8 +128,8 @@ static PyObject * libxc(PyObject * self, PyObject * args){
 //   PyCFunction: method_function
 //   int: flag
 //   string: documentation
-static PyMethodDef libxcMethods[] = {
-  {"libxc", libxc, METH_VARARGS, "libxc interface"},
+static PyMethodDef libxc_excMethods[] = {
+  {"libxc_exc", libxc_exc, METH_VARARGS, "libxc_exc interface"},
   {NULL, NULL, 0, NULL} // sentinel?
 };
 
@@ -161,7 +140,7 @@ static PyMethodDef libxcMethods[] = {
 // depends on numpy C-API, import_array()
 // and/or import_ufunc() are necessary
 // otherwise the code return segfault
-PyMODINIT_FUNC initlibxc(void){
-  Py_InitModule("libxc", libxcMethods);
+PyMODINIT_FUNC initlibxc_exc(void){
+  Py_InitModule("libxc_exc", libxc_excMethods);
   import_array(); // necessary!
 }

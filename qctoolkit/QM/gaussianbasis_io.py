@@ -11,6 +11,25 @@ import numpy as np
 from numpy import tensordot as td
 import warnings 
 
+class GaussianBasisInput(GenericQMInput):
+  """
+  From GaussianBasis Input:
+  generic class holder for gaussian basis qmcode. It provide basic
+  default settings.
+  ===
+  """
+  __doc__ = GenericQMInput.__doc__ + __doc__
+  def __init__(self, molecule, **kwargs):
+    GenericQMInput.__init__(self, molecule, **kwargs)
+
+    self.setting.update(kwargs)
+
+    if 'basis_set' not in kwargs:
+      self.setting['basis_set'] = 'def2-tzvp'
+
+class GaussianBasisOutput(GenericQMOutput):
+  def __init__(self, output=None, **kwargs):
+    GenericQMOutput.__init__(self, output, **kwargs)
 
 def veMatrix(basis, coord, Z):
   basis_data, center, lm = basisData(basis)
@@ -115,22 +134,3 @@ def basisData(basis, **kwargs):
   return out, np.array(centers), lm_xyz
   
 
-class GaussianBasisInput(GenericQMInput):
-  """
-  From GaussianBasis Input:
-  generic class holder for gaussian basis qmcode. It provide basic
-  default settings.
-  ===
-  """
-  __doc__ = GenericQMInput.__doc__ + __doc__
-  def __init__(self, molecule, **kwargs):
-    GenericQMInput.__init__(self, molecule, **kwargs)
-
-    self.setting.update(kwargs)
-
-    if 'basis_set' not in kwargs:
-      self.setting['basis_set'] = 'def2-tzvp'
-
-class GaussianBasisOutput(GenericQMOutput):
-  def __init__(self, output=None, **kwargs):
-    GenericQMOutput.__init__(self, output, **kwargs)

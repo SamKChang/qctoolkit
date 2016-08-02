@@ -25,7 +25,8 @@ if ht_found:
 else:
   qtk.warning("horton not found.")
 if xc_found:
-  from libxc import libxc
+  from libxc_exc import libxc_exc
+  from libxc_vxc import libxc_vxc
 else:
   qtk.warning("libxc not found.")
 
@@ -34,6 +35,8 @@ diag = np.diag
 outer = np.outer
 sqrt = np.sqrt
 eig = np.linalg.eigh
+td = np.tensordot
+trace = np.trace
 
 class inp(GaussianBasisInput):
   def __init__(self, molecule, **kwargs):
@@ -45,9 +48,38 @@ class inp(GaussianBasisInput):
       qtk.exit("libxc not found.")
     if 'wf_convergence' not in kwargs:
       kwargs['wf_convergence'] = 1e-06
+
+    if 'kinetic_functional' not in kwargs:
+      kwargs['kinetic_functional'] = 'LLP'
+
     GaussianBasisInput.__init__(self, molecule, **kwargs)
     self.setting.update(kwargs)
     self.backup()
+
+    if 'dft_setting' not in kwargs:
+      kf = self.setting['kinetic_functional']
+      if kf == 'LLP':
+        self.setting['dft_setting'] = {
+          'K': {1.0: 'XC_GGA_K_LLP'},
+        }
+        
+      ss = self.setting['theory']
+      sdft = self.setting['dft_setting']
+      if ss == 'pbe':
+        sdft['X'] = 'XC_GGA_X_PBE'
+        sdft['C'] = 'XC_GGA_C_PBE'
+      elif ss == 'blyp':
+        sdft['X'] = 'XC_GGA_X_B88'
+        sdft['C'] = 'XC_GGA_C_LYP'
+
+    dft = self.setting['dft_setting']
+    for k, v in dft.iteritems():
+      if type(dft[k]) is str:
+        dft[k] = xc_dict[v]
+      elif type(dft[k]) is dict:
+        for key, value in dft[k].iteritems():
+          if type(value) is str:
+            dft[k][key] = xc_dict[value]
 
     mol_str = []
     for i in range(molecule.N):
@@ -91,61 +123,160 @@ class inp(GaussianBasisInput):
     self.initial_guess = copy.deepcopy(dv)
     self.ig = ig
     self.dv = dv
-    self.dm = outer(dv, dv)
     self.grid = grid
-    self.P = diag(self.dm.dot(ovl))
-    self.P_milliken = diag(ig.dot(ovl))
+    self.update(dv)
 
-    self.population = [0 for i in range(molecule.N)]
-    self.population_lowdin = [0 for i in range(molecule.N)]
-    self.population_milliken = [0 for i in range(molecule.N)]
+  def update(self, dv):
+    self.dv = dv
+    self.dm = outer(dv, dv)
+    self.P = diag(self.dm.dot(self.ovl))
+    self._phi = None
+    self._dphi = None
+    self._psi = None
+    self._dpsi = None
+    self._rho = None
+    self._drho = None
+    self._sigma = None
+    self.population = [0 for i in range(self.molecule.N)]
+    mol = self.mol
     itr = 0
     for i in range(len(mol._bas)):
       atom = mol.bas_atom(i)
       s = i + itr
       for j in range(2*mol.bas_angular(i)+1):
         self.population[atom] += self.P[s]
-        self.population_milliken[atom] += self.P_milliken[s]
         s += 1 
       itr += j
 
+  def getPhi(self, coords):
+    if self._phi is None:
+      self._phi = self.mol.eval_gto("GTOval_sph", coords).T
+    return self._phi
+
+  def getDphi(self, coords):
+    if self._dphi is None:
+      self._dphi = self.mol.eval_gto("GTOval_ip_sph", coords, comp=3).T
+    return self._dphi
+
+  def getPsi(self, coords=None):
+    if self._psi is None:
+      if coords is None:
+        coords = self.grid.points
+      phi = self.getPhi(coords)
+      psi = np.zeros(len(coords))
+      for i in range(len(self.dv)):
+        c_i = self.dv[i]
+        phi_i = phi[i]
+        psi += c_i * phi_i
+      self._psi = psi
+    return self._psi
+
+  def getDpsi(self, coords=None):
+    if self._dpsi is None:
+      if coords is None:
+        coords = self.grid.points
+      dphi = self.getDphi(coords)
+      dpsi = np.zeros([len(coords), 3])
+      for i in range(len(self.dv)):
+        c_i = self.dv[i]
+        dphi_i = dphi[i]
+        dpsi += c_i * dphi_i
+      self._dpsi = dpsi
+    return self._dpsi
+
   def getRho(self, coords=None):
+    if self._rho is None:
+      if coords is None:
+        coords = self.grid.points
+      self._rho = self.getPsi(coords)**2
+    return self._rho
+
+  def getDrho(self, coords=None):
+    if self._drho is None:
+      if coords is None:
+        coords = self.grid.points
+      psi = self.getPsi(coords)
+      dpsi = self.getDpsi(coords)
+      self._drho = 2 * dpsi * psi[:, np.newaxis]
+    return self._drho
+
+  def getSigma(self, coords=None):
+    if self._sigma is None:
+      if coords is None:
+        coords = self.grid.points
+      drho = self.getDrho(coords)
+      self._sigma = np.sum(drho**2, axis=1)
+    return self._sigma
+
+  def dE_dc(self, i, coords = None):
     if coords is None:
       coords = self.grid.points
-    psi = self.mol.eval_gto("GTOval_sph", coords).T
-    rho = np.zeros(len(coords))
-    for i in range(len(self.dv)):
-      n_i = self.dv[i]
-      psi_i = psi[i]
-      rho += n_i * psi_i
-    rho = rho**2
-    return rho
 
-  def getRhoSigma(self, coords=None):
+    phi = self.getPhi(coords)
+    dphi = self.getDphi(coords)
+    psi = self.getPsi(coords)
+    dpsi = self.getDpsi(coords)
+    drho = self.getDrho(coords)
+
+    def drho_dc(i):
+      return 2 * self.dv[i] * phi[i] * psi
+
+    def nabla_drho_dc(i):
+      term1 = 2 * self.dv[i] * dphi[i] * psi[:, np.newaxis]
+      term2 = 2 * self.dv[i] * dpsi * phi[i][:, np.newaxis]
+      return term1 + term2
+
+    def dsigma_dc(i):
+      return np.sum(2 * drho * nabla_drho_dc(i), axis=1)
+
+    return drho_dc(i), dsigma_dc(i)
+
+  def dE(self, coords = None):
     if coords is None:
       coords = self.grid.points
-    psi = self.mol.eval_gto("GTOval_sph", coords).T
-    dpsi = self.mol.eval_gto("GTOval_ip_sph", coords, comp=3).T
-    rho = np.zeros(len(coords))
-    for i in range(len(self.dv)):
-      n_i = self.dv[i]
-      psi_i = psi[i]
-      rho += n_i * psi_i
-    rho = rho**2
 
-    drho = np.zeros([len(coords), 3])
-    for i in range(len(self.dv)):
-      n_i = self.dv[i]
-      psi_i = psi[i]
-      for j in range(len(self.dv)):
-        n_j = self.dv[j]
-        dpsi_j = dpsi[j]
-        drho += 2 * n_i * n_j * dpsi_j * psi_i[:, np.newaxis]
-    sigma = np.sum(drho**2, axis=1)
 
-    return rho, sigma
+  def E(self, coords = None, **kwargs):
+    if coords is None:
+      coords = self.grid.points
+    rho = self.getRho(coords)
+    sigma = self.getSigma(coords)
+    dft = self.setting['dft_setting']
+    if 'term' not in kwargs:
+      e_k = np.zeros(len(coords))
+      for fraction, kf in dft['K'].iteritems():
+        e_k += fraction * self.exc(kf, [rho, sigma], False)
+      K = self.grid.integrate(rho*e_k)
+      V = trace(self.dm.dot(self.ext))
+      int_vee_rho = td(self.dm, self.vee, axes=([0,1], [0,1]))
+      U = trace(self.dm.dot(int_vee_rho))/2.
+      pbec = self.exc(dft['C'], [rho, sigma], False)
+      pbex = self.exc(dft['X'], [rho, sigma], False)
+      XC = self.grid.integrate(rho * (pbec + pbex))
+      E = K + V + U + XC
+    elif kwargs['term'] == 'K':
+      llp = self.exc(dft['K'], [rho, sigma], False)
+      E = self.grid.integrate(rho*llp)
+    elif kwargs['term'] == 'vw':
+      E = trace(self.dm.dot(self.kin))
+    elif kwargs['term'] == 'U':
+      int_vee_rho = td(self.dm, self.vee, axes=([0,1], [0,1]))
+      E = trace(self.dm.dot(int_vee_rho))/2.
+    elif kwargs['term'] == 'V':
+      E = trace(self.dm.dot(self.ext))
+    elif kwargs['term'] == 'X':
+      pbex = self.exc(dft['X'], [rho, sigma], False)
+      E = self.grid.integrate(rho * pbex)
+    elif kwargs['term'] == 'C':
+      pbec = self.exc(dft['C'], [rho, sigma], False)
+      E = self.grid.integrate(rho * pbec)
+    elif kwargs['term'] in xc_dict.values() \
+    or kwargs['term'] in xc_dict:
+      epsilon = self.exc(kwargs['term'], [rho, sigma])
+      E = self.grid.integrate(rho*epsilon)
+    return E
 
-  def xc(self, xcFlag=1, report=True):
+  def exc(self, xcFlag=1, rhoSigma = None, report=True):
     if type(xcFlag) is int:
       if xcFlag not in xc_dict.values():
         qtk.exit("libxc functional id number %d is not valid" % xcFlag)
@@ -163,8 +294,37 @@ class inp(GaussianBasisInput):
           qtk.report("libxc", "xc: %s, id: %d\n" % (key, xc_id))
           break
     coords = self.grid.points
-    rho, sigma = self.getRhoSigma(coords)
-    return libxc(rho, sigma, len(coords), xc_id)
+    if rhoSigma is None:
+      rho = self.getRho(coords)
+      sigma = self.getSigma(coords)
+    else:
+      rho, sigma = rhoSigma
+    return libxc_exc(rho, sigma, len(coords), xc_id)
+
+  def vxc(self, xcFlag=1, rhoSigma = None, report=True):
+    if type(xcFlag) is int:
+      if xcFlag not in xc_dict.values():
+        qtk.exit("libxc functional id number %d is not valid" % xcFlag)
+      else:
+        xc_id = xcFlag
+    elif type(xcFlag) is str:
+      if xcFlag not in xc_dict:
+        qtk.exit("libxc functional id %s is not valid" % xcFlag)
+      else:
+        xc_id = xc_dict[xcFlag]
+    if report:
+      for k, v in xc_dict.iteritems():
+        if v == xc_id:
+          key = k
+          qtk.report("libxc", "xc: %s, id: %d\n" % (key, xc_id))
+          break
+    coords = self.grid.points
+    if rhoSigma is None:
+      rho = self.getRho(coords)
+      sigma = self.getSigma(coords)
+    else:
+      rho, sigma = rhoSigma
+    return libxc_vxc(rho, sigma, len(coords), xc_id)
 
   def getCubeGrid(self, margin=7, step=0.2):
     coord_min = np.min(self.mol.atom_coords(), axis=0) - margin
