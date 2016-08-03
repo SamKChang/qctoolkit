@@ -105,10 +105,6 @@ class inp(GaussianBasisInput):
             "cint2e_sph", comp=1, hermi=1,
           ).reshape(nao, nao, nao, nao)
 
-    dv = sqrt(diag(ig))
-    dv = dv / sqrt(sum(diag(outer(dv, dv).dot(ovl))))
-    dv = dv * sqrt(mol.nelectron)
-    dm = outer(dv, dv)
 
     coord = np.array(np.atleast_2d(molecule.R*1.8897261245650618))
     grid = BeckeMolGrid(coord, molecule.Z.astype(int), molecule.Z)
@@ -120,11 +116,13 @@ class inp(GaussianBasisInput):
     self.ext = ext
     self.vee = vee
     self.nao = nao
-    self.initial_guess = copy.deepcopy(dv)
+    self.dv = self.normalize(sqrt(diag(ig)))
+    self.initial_guess = copy.deepcopy(self.dv)
     self.ig = ig
-    self.dv = dv
     self.grid = grid
-    self.update(dv)
+    self.update(self.dv)
+    self.old_deltadv = None
+    self.new_deltadv = None
 
   def update(self, dv):
     self.dv = dv
@@ -148,28 +146,46 @@ class inp(GaussianBasisInput):
         s += 1 
       itr += j
 
-  def getPhi(self, coords):
-    if self._phi is None:
-      self._phi = self.mol.eval_gto("GTOval_sph", coords).T
-    return self._phi
+  def normalize(self, dv):
+    dv = dv / sqrt(sum(diag(outer(dv, dv).dot(self.ovl))))
+    dv = dv * sqrt(self.mol.nelectron)
+    return dv
+
+  def getPhi(self, coords, **kwargs):
+    if 'new' in kwargs and kwargs['new']:
+      out = self.mol.eval_gto("GTOval_sph", coords).T
+    else:
+      if self._phi is None:
+        self._phi = self.mol.eval_gto("GTOval_sph", coords).T
+      out = self._phi
+    return out
 
   def getDphi(self, coords):
     if self._dphi is None:
       self._dphi = self.mol.eval_gto("GTOval_ip_sph", coords, comp=3).T
     return self._dphi
 
-  def getPsi(self, coords=None):
-    if self._psi is None:
-      if coords is None:
-        coords = self.grid.points
-      phi = self.getPhi(coords)
-      psi = np.zeros(len(coords))
+  def getPsi(self, coords=None, **kwargs):
+    if coords is None:
+      coords = self.grid.points
+    if 'new' in kwargs and kwargs['new']:
+      phi = self.getPhi(coords, new=True)
+      out = np.zeros(len(coords))
       for i in range(len(self.dv)):
         c_i = self.dv[i]
         phi_i = phi[i]
-        psi += c_i * phi_i
-      self._psi = psi
-    return self._psi
+        out += c_i * phi_i
+    else:
+      if self._psi is None:
+        phi = self.getPhi(coords)
+        psi = np.zeros(len(coords))
+        for i in range(len(self.dv)):
+          c_i = self.dv[i]
+          phi_i = phi[i]
+          psi += c_i * phi_i
+        self._psi = psi
+      out = self._psi
+    return out
 
   def getDpsi(self, coords=None):
     if self._dpsi is None:
@@ -184,12 +200,16 @@ class inp(GaussianBasisInput):
       self._dpsi = dpsi
     return self._dpsi
 
-  def getRho(self, coords=None):
-    if self._rho is None:
-      if coords is None:
-        coords = self.grid.points
-      self._rho = self.getPsi(coords)**2
-    return self._rho
+  def getRho(self, coords=None, **kwargs):
+    if coords is None:
+      coords = self.grid.points
+    if 'new' in kwargs and kwargs['new']:
+      out = self.getPsi(coords, new=True)**2
+    else:
+      if self._rho is None:
+        self._rho = self.getPsi(coords)**2
+      out = self._rho
+    return out
 
   def getDrho(self, coords=None):
     if self._drho is None:
@@ -208,7 +228,7 @@ class inp(GaussianBasisInput):
       self._sigma = np.sum(drho**2, axis=1)
     return self._sigma
 
-  def dE_dc(self, i, coords = None):
+  def drhoSigma_dc(self, i, coords = None):
     if coords is None:
       coords = self.grid.points
 
@@ -219,11 +239,11 @@ class inp(GaussianBasisInput):
     drho = self.getDrho(coords)
 
     def drho_dc(i):
-      return 2 * self.dv[i] * phi[i] * psi
+      return 2 * phi[i] * psi
 
     def nabla_drho_dc(i):
-      term1 = 2 * self.dv[i] * dphi[i] * psi[:, np.newaxis]
-      term2 = 2 * self.dv[i] * dpsi * phi[i][:, np.newaxis]
+      term1 = 2 * dphi[i] * psi[:, np.newaxis]
+      term2 = 2 * dpsi * phi[i][:, np.newaxis]
       return term1 + term2
 
     def dsigma_dc(i):
@@ -231,10 +251,45 @@ class inp(GaussianBasisInput):
 
     return drho_dc(i), dsigma_dc(i)
 
-  def dE(self, coords = None):
+  def dE_ddv(self, coords = None):
     if coords is None:
       coords = self.grid.points
 
+    rho = self.getRho(coords)
+    sigma = self.getSigma(coords)
+    dft = self.setting['dft_setting']
+
+    dEk_drho = np.zeros(len(coords))
+    dEk_dsigma = np.zeros(len(coords))
+    Ek = np.zeros(len(coords))
+    for fraction, kf in dft['K'].iteritems():
+      dEk_drho_f, dEk_dsigma_f = self.vxc(kf, [rho, sigma], False)
+      dEk_drho += fraction * dEk_drho_f
+      dEk_dsigma += fraction * dEk_dsigma_f
+      Ek += self.exc(kf, [rho, sigma], False)
+
+    dEc_drho, dEc_dsigma = self.vxc(dft['C'], [rho, sigma], False)
+    dEx_drho, dEx_dsigma = self.vxc(dft['X'], [rho, sigma], False)
+    Ec = self.exc(dft['C'], [rho, sigma], False)
+    Ex = self.exc(dft['X'], [rho, sigma], False)
+    dE_drho = dEk_drho + dEc_drho + dEx_drho
+    dE_dsigma = dEk_dsigma + dEc_dsigma + dEx_dsigma
+    epsilon = Ek + Ec + Ex
+
+    dE_kxc = np.zeros(len(self.dv))
+    for i in range(len(self.dv)):
+      drho_dci, dsigma_dci = self.drhoSigma_dc(i)
+      rho_dE_dc = dE_drho * drho_dci + dE_dsigma * dsigma_dci
+      E_drho_dc = drho_dci * epsilon
+      integrand = rho_dE_dc
+      dE_kxc[i] = self.grid.integrate(integrand)
+
+    vee_rho = td(self.dm, self.vee, axes=([0,1], [0,1]))
+    dE_ee = 2 * vee_rho.dot(self.dv)
+    dE_ext = 2 * self.ext.dot(self.dv)
+    out = dE_kxc + dE_ee + dE_ext
+
+    return out
 
   def E(self, coords = None, **kwargs):
     if coords is None:
@@ -250,13 +305,15 @@ class inp(GaussianBasisInput):
       V = trace(self.dm.dot(self.ext))
       int_vee_rho = td(self.dm, self.vee, axes=([0,1], [0,1]))
       U = trace(self.dm.dot(int_vee_rho))/2.
-      pbec = self.exc(dft['C'], [rho, sigma], False)
-      pbex = self.exc(dft['X'], [rho, sigma], False)
-      XC = self.grid.integrate(rho * (pbec + pbex))
+      intc = self.exc(dft['C'], [rho, sigma], False)
+      intx = self.exc(dft['X'], [rho, sigma], False)
+      XC = self.grid.integrate(rho * (intc + intx))
       E = K + V + U + XC
     elif kwargs['term'] == 'K':
-      llp = self.exc(dft['K'], [rho, sigma], False)
-      E = self.grid.integrate(rho*llp)
+      e_k = np.zeros(len(coords))
+      for fraction, kf in dft['K'].iteritems():
+        e_k += fraction * self.exc(kf, [rho, sigma], False)
+      E = self.grid.integrate(rho*e_k)
     elif kwargs['term'] == 'vw':
       E = trace(self.dm.dot(self.kin))
     elif kwargs['term'] == 'U':
@@ -265,16 +322,37 @@ class inp(GaussianBasisInput):
     elif kwargs['term'] == 'V':
       E = trace(self.dm.dot(self.ext))
     elif kwargs['term'] == 'X':
-      pbex = self.exc(dft['X'], [rho, sigma], False)
-      E = self.grid.integrate(rho * pbex)
+      intx = self.exc(dft['X'], [rho, sigma], False)
+      E = self.grid.integrate(rho * intx)
     elif kwargs['term'] == 'C':
-      pbec = self.exc(dft['C'], [rho, sigma], False)
-      E = self.grid.integrate(rho * pbec)
+      intc = self.exc(dft['C'], [rho, sigma], False)
+      E = self.grid.integrate(rho * intc)
     elif kwargs['term'] in xc_dict.values() \
     or kwargs['term'] in xc_dict:
       epsilon = self.exc(kwargs['term'], [rho, sigma])
       E = self.grid.integrate(rho*epsilon)
     return E
+
+  def iterate(self, size=0.005):
+    dv = self.dv
+    oldE = self.E()
+    if self.new_deltadv is None:
+      self.old_deltadv = self.dE_ddv()
+    else:
+      self.old_deltadv = self.new_deltadv
+    self.dv = self.normalize(dv - self.old_deltadv*size)
+    self.update(self.dv)
+    self.new_deltadv = self.dE_ddv()
+    newE = self.E()
+    print newE, np.dot(self.old_deltadv, self.new_deltadv),\
+          np.linalg.norm(self.old_deltadv)
+
+  def libxc_report(self, xc_id, flag):
+    for k, v in xc_dict.iteritems():
+      if v == xc_id:
+        key = k
+        qtk.report("libxc_%s" % flag, "xc: %s, id: %d\n" % (key, xc_id))
+        break
 
   def exc(self, xcFlag=1, rhoSigma = None, report=True):
     if type(xcFlag) is int:
@@ -288,11 +366,7 @@ class inp(GaussianBasisInput):
       else:
         xc_id = xc_dict[xcFlag]
     if report:
-      for k, v in xc_dict.iteritems():
-        if v == xc_id:
-          key = k
-          qtk.report("libxc", "xc: %s, id: %d\n" % (key, xc_id))
-          break
+      self.libxc_report(xc_id, 'exc')
     coords = self.grid.points
     if rhoSigma is None:
       rho = self.getRho(coords)
@@ -313,11 +387,7 @@ class inp(GaussianBasisInput):
       else:
         xc_id = xc_dict[xcFlag]
     if report:
-      for k, v in xc_dict.iteritems():
-        if v == xc_id:
-          key = k
-          qtk.report("libxc", "xc: %s, id: %d\n" % (key, xc_id))
-          break
+      self.libxc_report(xc_id, 'vxc')
     coords = self.grid.points
     if rhoSigma is None:
       rho = self.getRho(coords)
@@ -329,24 +399,33 @@ class inp(GaussianBasisInput):
   def getCubeGrid(self, margin=7, step=0.2):
     coord_min = np.min(self.mol.atom_coords(), axis=0) - margin
     coord_max = np.max(self.mol.atom_coords(), axis=0) + margin
-    steps = np.ceil((coord_max - coord_min)/float(step))
+    steps = np.ceil((coord_max - coord_min)/float(step)) + 1
     out = np.zeros([4, 4])
     out[0, 0] = self.molecule.N
     out[0, 1:] = coord_min
     out[1:, 0] = steps
-    out[1:, 1:] = diag((coord_max - coord_min) / steps)
+    out[1:, 1:] = diag((coord_max - coord_min) / (steps - 1))
     return out
 
-  def dm2cube(self, dv=None, cube_header=None):
+  def getCube(self, dv=None, cube_header=None, **kwargs):
     if not dv:
       dv = self.dv
     if not cube_header:
-      cube_header = self.getCubeGrid()
+      if 'resolution' not in kwargs:
+        res = 0.2
+      else:
+        res = float(kwargs['resolution'])
+      if 'margin' not in kwargs:
+        margin = 7.0
+      else:
+        margin = float(kwargs['resolution'])
+      cube_header = self.getCubeGrid(margin, res)
 
     def getSpace(i):
       coord_min = cube_header[0, 1+i]
       step = cube_header[1+i, 0]
-      coord_max = coord_min + step*cube_header[1+i, 1+i]
+      size = cube_header[1+i, 1+i]
+      coord_max = coord_min + (step-1)*size
       return np.linspace(coord_min, coord_max, step)
 
     coord_axes = [getSpace(i) for i in range(3)]
@@ -356,10 +435,9 @@ class inp(GaussianBasisInput):
     Y = Y.reshape(Y.size)
     Z = Z.reshape(Z.size)
     coords = np.array([X,Y,Z]).T
-    rho = self.getRho(coords)
+    rho = self.getRho(coords, new=True)
     rho = rho.reshape(*step)
     cube = qtk.CUBE()
     cube.build(self.molecule, cube_header, rho)
 
     return cube
-  
