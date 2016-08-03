@@ -19,16 +19,16 @@ if ps_found:
   from pyscf import gto
   import pyscf as ps
 else:
-  qtk.warning("pyscf not found.")
+  print "pyscf not found."
 if ht_found:
   from horton import BeckeMolGrid
 else:
-  qtk.warning("horton not found.")
+  print "horton not found."
 if xc_found:
   from libxc_exc import libxc_exc
   from libxc_vxc import libxc_vxc
 else:
-  qtk.warning("libxc not found.")
+  print "libxc not found."
 
 dot = np.dot
 diag = np.diag
