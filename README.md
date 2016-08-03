@@ -79,12 +79,14 @@ and add the following two lines to the end of the file:
 * paramiko (newest version might be problematic, 1.17 works fine)
 * And standard libraries: sys, re, os, glob, math, subprocess, multiprocessing, copy, collections, compiler.ast, shutil, fileinput, operator, inspect, xml.etree.ElementTree
 * pymol is also used for visualization
+* pyscf and horton is optional
 
 **Implemented interfaces to QM codes**:
 * Gaussian basis:
   - [Gaussian](www.gaussian.com/)
   - [NWChem](www.nwchem-sw.org/index.php/Main_Page)
   - [horton](theochem.github.io/horton/)
+  - [pyscf](http://sunqm.github.io/pyscf/)
 * Plane wave basis:
   - [VASP](www.vasp.at)
   - [QuantumESPRESSO](www.quantum-espresso.org/)
@@ -98,5 +100,6 @@ and add the following two lines to the end of the file:
 * gsl
 (GNU Scientific Library)
 * LAPACK
+* libxc-3.0.0
 
 *20150702 KYSC*
