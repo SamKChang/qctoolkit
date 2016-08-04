@@ -7,7 +7,7 @@ import qmcode.gaussian as gaussian
 import qmcode.bigdft as bigdft
 import qmcode.gaussian as gaussian
 import qmcode.hortonInterface as horton
-import qmcode.ofdft as ofdft
+import ofdft.main as ofdft
 import sys, os
 
 def QMInp(molecule, **kwargs):

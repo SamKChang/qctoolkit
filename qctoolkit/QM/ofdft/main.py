@@ -14,7 +14,7 @@ ps_eggs_loader = pkgutil.find_loader('pyscf')
 ps_found = ps_eggs_loader is not None
 ht_eggs_loader = pkgutil.find_loader('horton')
 ht_found = ht_eggs_loader is not None
-xc_eggs_loader = pkgutil.find_loader('libxc')
+xc_eggs_loader = pkgutil.find_loader('libxc_exc')
 xc_found = ps_eggs_loader is not None
 
 if ps_found:
