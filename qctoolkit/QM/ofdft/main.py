@@ -10,6 +10,7 @@ import grid_points as gp
 import cube as cube
 import os
 import evaluation as evaluate
+import scipy.optimize as opt
 
 ps_eggs_loader = pkgutil.find_loader('pyscf')
 ps_found = ps_eggs_loader is not None
@@ -104,7 +105,6 @@ class inp(GaussianBasisInput):
             "cint2e_sph", comp=1, hermi=1,
           ).reshape(nao, nao, nao, nao)
 
-
     coord = np.array(np.atleast_2d(molecule.R*1.8897261245650618))
     grid = BeckeMolGrid(coord, molecule.Z.astype(int), molecule.Z)
 
@@ -122,6 +122,20 @@ class inp(GaussianBasisInput):
     self.update(self.dv)
     self.old_deltadv = None
     self.new_deltadv = None
+
+    self.optimizers = {
+      'tnc': opt.fmin_tnc,
+      'ncg': opt.fmin_ncg,
+      'cg': opt.fmin_cg,
+      'bfgs': opt.fmin_bfgs,
+      'l_bfgs_b': opt.fmin_l_bfgs_b,
+    }
+    self.optimizer_settings = {
+      'tnc': {'xtol': 0.0, 'pgtol': 0.0, 'maxfun': 1000}
+    }
+
+  def initialize(self):
+    self.update(self.initial_guess)
 
   def update(self, dv):
     self.dv = self.normalize(dv)
@@ -145,16 +159,48 @@ class inp(GaussianBasisInput):
         s += 1 
       itr += j
 
-  def normalize(self, dv):
+  def normalize(self, dv=None):
+    update = False
+    if dv is None:
+      update = True
+      dv = self.dv
     dv = dv / sqrt(sum(diag(outer(dv, dv).dot(self.ovl))))
     dv = dv * sqrt(self.mol.nelectron)
+    if update:
+      self.update(dv)
     return dv
 
   def E(self, coords = None, **kwargs):
+    self.normalize()
     return evaluate.E(self, coords, **kwargs)
 
   def dE_ddv(self, coords = None):
     return evaluate.dE_ddv(self, coords = None)
+
+  def new_E(self, dv):
+    return evaluate.eval_E(self, dv)
+
+  def new_dE(self, dv):
+    return evaluate.eval_dE_ddv(self, dv)
+
+  def optimize(self, **kwargs):
+    f = self.new_E
+    x0 = copy.deepcopy(self.dv)
+    df = self.new_dE
+    if 'method' in kwargs:
+      method = kwargs['method']
+    else:
+      method = 'tnc'
+    if 'setting' not in kwargs:
+      if method in self.optimizer_settings:
+        setting = self.optimizer_settings[method]
+      else:
+        setting = {}
+    else:
+      setting = kwargs['setting']
+    setting['fprime'] = df
+    minE = self.optimizers[method]
+    dv_final = minE(f, x0, **setting)
 
   def iterate(self, size=0.005):
     dv = self.dv

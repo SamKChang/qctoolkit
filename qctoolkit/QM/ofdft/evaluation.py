@@ -130,6 +130,7 @@ def eval_E(inp, dv):
   intx = xcio.exc(inp, dft['X'], [rho, sigma], False)
   XC = inp.grid.integrate(rho * (intc + intx))
   E = K + V + U + XC
+  inp.update(dv)
   return E
 
 def eval_dE_ddv(inp, dv):
