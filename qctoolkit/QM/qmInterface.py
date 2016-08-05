@@ -29,6 +29,8 @@ def QMInp(molecule, **kwargs):
     kwargs['program'] = qtk.setting.qmcode
   p_str = kwargs['program'].lower()
   p = inp_dict[p_str][0]
+  if 'charge' in kwargs:
+    molecule.charge = kwargs['charge']
   kwargs['extension'] = inp_dict[p_str][1]
   return p(molecule, **kwargs)
 

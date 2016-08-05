@@ -9,6 +9,8 @@ def runCode(self, parrent, name, **kwargs):
     self.setting['root_dir'] = name
 
   def run():
+    if 'charge' in kwargs:
+      self.setChargeMultiplicity(kwargs['charge'], 1)
     inp = self.write(name, **kwargs)
     new_name = None
     if 'new_name' in kwargs:
@@ -18,6 +20,7 @@ def runCode(self, parrent, name, **kwargs):
   if not os.path.exists(name):
     return run()
   elif self.setting['overwrite']:
+    qtk.warning("Overwrite existing folder %s" % name)
     return run()
   else:
     qtk.report("QMInp.run", "%s exists" % name)
