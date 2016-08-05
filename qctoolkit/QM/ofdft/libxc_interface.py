@@ -5,9 +5,9 @@ from libxc_dict import xc_dict
 import os
 
 
-selfPath = os.path.realpath(__file__)
-selfPath = os.path.split(selfPath)[0]
-xcpath = os.path.join(selfPath, 'libxc_exc.so')
+inpPath = os.path.realpath(__file__)
+inpPath = os.path.split(inpPath)[0]
+xcpath = os.path.join(inpPath, 'libxc_exc.so')
 xc_found = os.path.exists(xcpath)
 if xc_found:
   from libxc_exc import libxc_exc
@@ -15,14 +15,14 @@ if xc_found:
 else:
   pass
 
-def libxc_report(self, xc_id, flag):
+def libxc_report(inp, xc_id, flag):
   for k, v in xc_dict.iteritems():
     if v == xc_id:
       key = k
       qtk.report("libxc_%s" % flag, "xc: %s, id: %d\n" % (key, xc_id))
       break
 
-def exc(self, xcFlag=1, rhoSigma = None, report=True):
+def exc(inp, xcFlag=1, rhoSigma = None, report=True):
   if type(xcFlag) is int:
     if xcFlag not in xc_dict.values():
       qtk.exit("libxc functional id number %d is not valid" % xcFlag)
@@ -34,16 +34,16 @@ def exc(self, xcFlag=1, rhoSigma = None, report=True):
     else:
       xc_id = xc_dict[xcFlag]
   if report:
-    self.libxc_report(xc_id, 'exc')
-  coords = self.grid.points
+    libxc_report(inp, xc_id, 'exc')
+  coords = inp.grid.points
   if rhoSigma is None:
-    rho = gp.getRho(self, coords)
-    sigma = gp.getSigma(self, coords)
+    rho = gp.getRho(inp, coords)
+    sigma = gp.getSigma(inp, coords)
   else:
     rho, sigma = rhoSigma
   return libxc_exc(rho, sigma, len(coords), xc_id)
 
-def vxc(self, xcFlag=1, rhoSigma = None, report=True):
+def vxc(inp, xcFlag=1, rhoSigma = None, report=True):
   if type(xcFlag) is int:
     if xcFlag not in xc_dict.values():
       qtk.exit("libxc functional id number %d is not valid" % xcFlag)
@@ -55,11 +55,11 @@ def vxc(self, xcFlag=1, rhoSigma = None, report=True):
     else:
       xc_id = xc_dict[xcFlag]
   if report:
-    self.libxc_report(xc_id, 'vxc')
-  coords = self.grid.points
+    inp.libxc_report(xc_id, 'vxc')
+  coords = inp.grid.points
   if rhoSigma is None:
-    rho = gp.getRho(self, coords)
-    sigma = gp.getSigma(self, coords)
+    rho = gp.getRho(inp, coords)
+    sigma = gp.getSigma(inp, coords)
   else:
     rho, sigma = rhoSigma
   return libxc_vxc(rho, sigma, len(coords), xc_id)

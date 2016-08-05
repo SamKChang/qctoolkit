@@ -52,15 +52,25 @@ class inp(GaussianBasisInput):
     if 'kinetic_functional' not in kwargs:
       kwargs['kinetic_functional'] = 'LLP'
 
+    if 'aufbau' in kwargs:
+      self.aufbau = True
+    else:
+      self.aufbau = False
+
     GaussianBasisInput.__init__(self, molecule, **kwargs)
     self.setting.update(kwargs)
     self.backup()
 
     if 'dft_setting' not in kwargs:
-      kf = self.setting['kinetic_functional']
-      if kf == 'LLP':
+      if not self.aufbau:
+        kf = self.setting['kinetic_functional']
+        if kf == 'LLP':
+          self.setting['dft_setting'] = {
+            'K': {1.0: 'XC_GGA_K_LLP'},
+          }
+      else:
         self.setting['dft_setting'] = {
-          'K': {1.0: 'XC_GGA_K_LLP'},
+          'K': {1.0: 'XC_GGA_K_VW'}
         }
         
       ss = self.setting['theory']
@@ -134,6 +144,8 @@ class inp(GaussianBasisInput):
       'tnc': {'xtol': 0.0, 'pgtol': 0.0, 'maxfun': 1000}
     }
 
+    self.orbitals = []
+
   def initialize(self):
     self.update(self.initial_guess)
 
@@ -164,8 +176,12 @@ class inp(GaussianBasisInput):
     if dv is None:
       update = True
       dv = self.dv
+    if self.aufbau:
+      N = 2
+    else:
+      N = self.mol.nelectron
     dv = dv / sqrt(sum(diag(outer(dv, dv).dot(self.ovl))))
-    dv = dv * sqrt(self.mol.nelectron)
+    dv = dv * sqrt(N)
     if update:
       self.update(dv)
     return dv

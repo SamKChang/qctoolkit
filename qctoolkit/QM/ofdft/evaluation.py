@@ -1,5 +1,6 @@
 import grid_points as gp
 import numpy as np
+from libxc_dict import xc_dict
 import libxc_interface as xcio
 
 outer = np.outer
