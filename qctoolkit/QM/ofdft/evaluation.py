@@ -134,6 +134,26 @@ def eval_E(inp, dv):
   inp.update(dv)
   return E
 
+def E_dv(inp, dv):
+  dv = inp.normalize(dv)
+  coords = inp.grid.points
+  dm = outer(dv, dv)
+  rho = gp.getRho(inp, coords, dv=dv, new=True)
+  sigma = gp.getSigma(inp, coords, dv=dv, new=True)
+  dft = inp.setting['dft_setting']
+  e_k = np.zeros(len(coords))
+  for fraction, kf in dft['K'].iteritems():
+    e_k += fraction * xcio.exc(inp, kf, [rho, sigma], False)
+  K = inp.grid.integrate(rho*e_k)
+  V = trace(dm.dot(inp.ext))
+  int_vee_rho = td(dm, inp.vee, axes=([0,1], [0,1]))
+  U = trace(dm.dot(int_vee_rho))/2.
+  intc = xcio.exc(inp, dft['C'], [rho, sigma], False)
+  intx = xcio.exc(inp, dft['X'], [rho, sigma], False)
+  XC = inp.grid.integrate(rho * (intc + intx))
+  E = K + V + U + XC
+  return E
+
 def eval_dE_ddv(inp, dv):
   coords = inp.grid.points
   dm = outer(dv,dv)

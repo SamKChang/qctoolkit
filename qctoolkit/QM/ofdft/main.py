@@ -132,6 +132,7 @@ class inp(GaussianBasisInput):
     self.update(self.dv)
     self.old_deltadv = None
     self.new_deltadv = None
+    self.old_E = None
 
     self.optimizers = {
       'tnc': opt.fmin_tnc,
@@ -190,6 +191,10 @@ class inp(GaussianBasisInput):
     self.normalize()
     return evaluate.E(self, coords, **kwargs)
 
+  def E_dv(self, dv):
+    dv = self.normalize(dv)
+    return evaluate.E_dv(self, dv)
+
   def dE_ddv(self, coords = None):
     return evaluate.dE_ddv(self, coords = None)
 
@@ -201,12 +206,17 @@ class inp(GaussianBasisInput):
 
   def optimize(self, **kwargs):
     f = self.new_E
-    x0 = copy.deepcopy(self.dv)
     df = self.new_dE
+    if self.old_E is None:
+      self.old_E = self.E()
     if 'method' in kwargs:
       method = kwargs['method']
     else:
       method = 'tnc'
+    if 'tolerance' not in kwargs:
+      tolerance = 1E-8
+    else:
+      tolerance = kwargs['tolerance']
     if 'setting' not in kwargs:
       if method in self.optimizer_settings:
         setting = self.optimizer_settings[method]
@@ -214,9 +224,17 @@ class inp(GaussianBasisInput):
         setting = {}
     else:
       setting = kwargs['setting']
+
+    err, itr = 1, 1
     setting['fprime'] = df
     minE = self.optimizers[method]
-    dv_final = minE(f, x0, **setting)
+    while abs(abs(err) - tolerance) > 1E-8:
+      print itr, err, self.old_E
+      x0 = copy.deepcopy(self.dv)
+      dv_final = minE(f, x0, **setting)
+      err = self.E() - self.old_E
+      self.old_E += err
+      itr += 1
 
   def iterate(self, size=0.005):
     dv = self.dv
