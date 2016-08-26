@@ -194,6 +194,22 @@ class Molecule(object):
         out = out + qtk.Z2n(element[0]) + str(element[1])
       return out
 
+  def build(self, moleculeData, name=None):
+    if type(moleculeData) is list:
+      moleculeData = np.array(moleculeData)
+      if len(moleculeData.shape) == 1:
+        moleculeData = np.atleast_2d(moleculeData)
+      self.N = moleculeData.shape[0]
+      self.Z = moleculeData[:, 0]
+      self.R = moleculeData[:, 1:]
+      self.type_list = [qtk.Z2n(z) for z in self.Z]
+      self.string = ['' for i in range(self.N)]
+      if name is None:
+        self.name = self.stoichiometry()
+      else:
+        self.name = name
+    return self
+
   # tested
   def findBonds(self, ratio=setting.bond_ratio, **kwargs):
     del self.segments
