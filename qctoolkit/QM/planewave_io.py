@@ -30,6 +30,8 @@ class PlanewaveInput(GenericQMInput):
     if 'theory' in self.setting and self.setting['theory'] == 'hse06':
       if 'pp_theory' not in self.setting:
         self.setting['pp_theory'] = 'pbe'
+    if 'fractional_coordinate' not in kwargs:
+      self.setting['fractional_coordinate'] = False
 
     univ.getCelldm(self) 
 

@@ -144,6 +144,7 @@ class inp(PlanewaveInput):
       if 'symmetry' in setting:
         if setting['symmetry'] == 'fcc':
           self.content['system']['ibrav'] = 2
+          setting['fractional_coordinate'] = True
           dm = ['A', 'B', 'C', 'cosBC', 'cosAC', 'cosAB']
           for i in range(6):
             self.content['system'][dm[i]] = float(self
@@ -183,8 +184,12 @@ class inp(PlanewaveInput):
 
       inp.write("ATOMIC_POSITIONS ")
       if self.content['system']['ibrav'] == 0:
-        inp.write("angstrom\n")
-        R = molecule.R
+        if not setting['fractional_coordinate']:
+          inp.write("angstrom\n")
+          R = molecule.R
+        else:
+          inp.write("crystal\n")
+          R = molecule.R_scale
       else:
         inp.write("\n")
         R = molecule.R_scale
@@ -258,7 +263,14 @@ def PPString(inp, mol, i, n, outFile):
       and element in inp.setting['d_shell']:
         shell = '-d'
       else:
-        shell = ''
+        element = qtk.element[mol.type_list[i].title()]
+        if element.group < 3 and mol.Z[i] > 1:
+          if mol.Z[i] != 3:
+            shell = '-sp'
+          else:
+            shell = '-s'
+        else:
+          shell = ''
       pp_xc_dict = {
         'lda': 'pz',
         'pbe0': 'pbe',
@@ -331,6 +343,7 @@ def PPCheck(xc, element, pp_file_str, **kwargs):
   ne = qtk.n2ve(element)
   saved_pp_path = os.path.join(qtk.setting.espresso_pp, pp_file_str)
   if not os.path.exists(saved_pp_path) and qtk.setting.download_pp:
+    qtk.status("PPCheck", pp_file_str)
     url = os.path.join(qtk.setting.espresso_pp_url, pp_file_str)
     try:
       pp_content = urllib2.urlopen(url).read()
