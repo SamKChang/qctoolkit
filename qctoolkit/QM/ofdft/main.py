@@ -52,8 +52,9 @@ class inp(GaussianBasisInput):
     if 'kinetic_functional' not in kwargs:
       kwargs['kinetic_functional'] = 'LLP'
 
-    if 'aufbau' in kwargs:
+    if 'aufbau' in kwargs and kwargs['aufbau']:
       self.aufbau = True
+      self.orbitals = []
     else:
       self.aufbau = False
 
@@ -133,6 +134,9 @@ class inp(GaussianBasisInput):
     self.old_deltadv = None
     self.new_deltadv = None
     self.old_E = None
+    self.dv_list = []
+    self.psi_list = []
+    self.dpsi_list = []
 
     self.optimizers = {
       'tnc': opt.fmin_tnc,
@@ -140,9 +144,11 @@ class inp(GaussianBasisInput):
       'cg': opt.fmin_cg,
       'bfgs': opt.fmin_bfgs,
       'l_bfgs_b': opt.fmin_l_bfgs_b,
+      'simplex': opt.fmin,
     }
     self.optimizer_settings = {
-      'tnc': {'xtol': 0.0, 'pgtol': 0.0, 'maxfun': 1000}
+      'tnc': {'xtol': 0.0, 'pgtol': 0.0, 'maxfun': 1000},
+      'simplex': {'xtol': 1E-10, 'ftol': 1E-10, 'maxfun': 1000},
     }
 
     self.orbitals = []
@@ -224,9 +230,13 @@ class inp(GaussianBasisInput):
         setting = {}
     else:
       setting = kwargs['setting']
+    if 'finit_difference' in kwargs and kwargs['finit_difference']:
+      pass
+    else:
+      if method != 'simplex':
+        setting['fprime'] = df
 
     err, itr = 1, 1
-    setting['fprime'] = df
     minE = self.optimizers[method]
     while abs(abs(err) - tolerance) > 1E-8:
       print itr, err, self.old_E
@@ -235,6 +245,7 @@ class inp(GaussianBasisInput):
       err = self.E() - self.old_E
       self.old_E += err
       itr += 1
+    self.update(self.dv)
 
   def iterate(self, size=0.005):
     dv = self.dv

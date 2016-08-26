@@ -49,9 +49,14 @@ def E(inp, coords = None, **kwargs):
     E = inp.grid.integrate(rho*epsilon)
   return E
 
+def E_aufbau(inp, **kwargs):
+  pass
+
 def dE_ddv(inp, coords = None):
   if coords is None:
     coords = inp.grid.points
+
+  # derivative is buggy... 
 
   rho = gp.getRho(inp, coords)
   sigma = gp.getSigma(inp, coords)
@@ -68,17 +73,17 @@ def dE_ddv(inp, coords = None):
 
   dEc_drho, dEc_dsigma = xcio.vxc(inp, dft['C'], [rho, sigma], False)
   dEx_drho, dEx_dsigma = xcio.vxc(inp, dft['X'], [rho, sigma], False)
-  Ec = xcio.exc(inp, dft['C'], [rho, sigma], False)
-  Ex = xcio.exc(inp, dft['X'], [rho, sigma], False)
+  #Ec = xcio.exc(inp, dft['C'], [rho, sigma], False)
+  #Ex = xcio.exc(inp, dft['X'], [rho, sigma], False)
   dE_drho = dEk_drho + dEc_drho + dEx_drho
   dE_dsigma = dEk_dsigma + dEc_dsigma + dEx_dsigma
-  epsilon = Ek + Ec + Ex
+  #epsilon = Ek + Ec + Ex
 
   dE_kxc = np.zeros(len(inp.dv))
   for i in range(len(inp.dv)):
     drho_dci, dsigma_dci = drhoSigma_dc(inp, i)
     rho_dE_dc = dE_drho * drho_dci + dE_dsigma * dsigma_dci
-    E_drho_dc = drho_dci * epsilon
+    #E_drho_dc = drho_dci * epsilon
     integrand = rho_dE_dc
     dE_kxc[i] = inp.grid.integrate(integrand)
 
@@ -164,27 +169,27 @@ def eval_dE_ddv(inp, dv):
 
   dEk_drho = np.zeros(len(coords))
   dEk_dsigma = np.zeros(len(coords))
-  Ek = np.zeros(len(coords))
+  #Ek = np.zeros(len(coords))
   for fraction, kf in dft['K'].iteritems():
     dEk_drho_f, dEk_dsigma_f = xcio.vxc(inp, kf, [rho, sigma], False)
     dEk_drho += fraction * dEk_drho_f
     dEk_dsigma += fraction * dEk_dsigma_f
-    Ek += xcio.exc(inp, kf, [rho, sigma], False)
+    #Ek += xcio.exc(inp, kf, [rho, sigma], False)
 
   dEc_drho, dEc_dsigma = xcio.vxc(inp, dft['C'], [rho, sigma], False)
   dEx_drho, dEx_dsigma = xcio.vxc(inp, dft['X'], [rho, sigma], False)
-  Ec = xcio.exc(inp, dft['C'], [rho, sigma], False)
-  Ex = xcio.exc(inp, dft['X'], [rho, sigma], False)
+  #Ec = xcio.exc(inp, dft['C'], [rho, sigma], False)
+  #Ex = xcio.exc(inp, dft['X'], [rho, sigma], False)
   dE_drho = dEk_drho + dEc_drho + dEx_drho
   dE_dsigma = dEk_dsigma + dEc_dsigma + dEx_dsigma
-  epsilon = Ek + Ec + Ex
+  #epsilon = Ek + Ec + Ex
 
   dE_kxc = np.zeros(len(dv))
   for i in range(len(dv)):
     drho_dci, dsigma_dci = drhoSigma_dc(inp, i, dv=dv)
     rho_dE_dc = dE_drho * drho_dci + dE_dsigma * dsigma_dci
-    E_drho_dc = drho_dci * epsilon
-    integrand = rho_dE_dc
+    #E_drho_dc = drho_dci * epsilon
+    integrand = rho_dE_dc# + E_drho_dc
     dE_kxc[i] = inp.grid.integrate(integrand)
 
   vee_rho = td(dm, inp.vee, axes=([0,1], [0,1]))
