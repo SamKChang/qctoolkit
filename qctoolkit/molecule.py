@@ -677,8 +677,11 @@ class Molecule(object):
         self.box = celldm[:3]
         for i in range(self.N):
           for j in range(3):
-            self.R[i, j] = self.R_scale[i, j] * \
-                           self.celldm[j] / float(self.scale[j])
+            if self.scale:
+              self.R[i, j] = self.R_scale[i, j] * \
+                             self.celldm[j] / float(self.scale[j])
+            else:
+              self.R[i, j] = self.R_scale[i, j] * celldm[j]
     return self.celldm
 
   def extend(self, ratio):
@@ -771,6 +774,8 @@ class Molecule(object):
       stem, extension = os.path.splitext(name)
       if re.match('\.xyz', extension):
         self.read_xyz(name, **kwargs)
+      elif re.match('\.ascii', extension):
+        self.read_ascii(name, **kwargs)
       else:
         qtk.exit("suffix " + extension + " is not reconized")
 
@@ -841,6 +846,48 @@ class Molecule(object):
       self.R_scale = copy.deepcopy(self.R)
       self.R = qtk.fractional2xyz(self.R_scale, self.celldm)
 
+  def read_ascii(self, name, **kwargs):
+    def getParameters(content):
+      line1 = content[1]
+      line2 = content[2]
+      # v_sim cell format
+      # a_x b_x b_y
+      # c_x c_y c_z
+      [a, b_cosC, b_sinC] = [
+        float(p) for p in filter(None, line1.split(' '))
+      ]
+      [c_cosB, c_cosAsinC, c_z] = [
+        float(p) for p in filter(None, line2.split(' '))
+      ]
+      b = np.sqrt(b_cosC**2 + b_sinC**2)
+      gamma = np.arccos(b_cosC / b)
+      c = np.sqrt(c_z**2 + c_cosB**2 + c_cosAsinC**2)
+      beta = np.arccos(c_cosB / c)
+      alpha = np.arccos(c_cosAsinC / c / np.sin(gamma))
+      return [a, b, c, np.cos(alpha), np.cos(beta), np.cos(gamma)]
+
+    def getMolecule(content):
+      comment_p = re.compile(r'^ *\t*(?!([!#])).*$')
+      data_p = re.compile(r'^[\ \t0-9\-\. ]+.*$')
+      dataContent = filter(comment_p.match, content[3:])
+      dataContent = filter(data_p.match, dataContent)
+      N = len(dataContent)
+      R = []
+      molData = []
+      for line in dataContent:
+        data = filter(None, line.replace('\n', '').split(' '))
+        molLine = [qtk.n2Z(data[3])]
+        molLine.extend([float(r) for r in data[:3]])
+        molData.append(molLine)
+      return molData
+
+    xyz = open(name, 'r')
+    content = xyz.readlines()
+    xyz.close()
+    self.build(getMolecule(content))
+    celldm = getParameters(content)
+    self.setCelldm(celldm)
+
   # tested
   def write(self, *args, **kwargs):
     if len(args) > 0:
@@ -852,6 +899,8 @@ class Molecule(object):
       self.write_xyz(*args, **kwargs)
     elif kwargs['format'] == 'pdb':
       self.write_pdb(*args, **kwargs)
+    elif kwargs['format'] == 'ascii':
+      self.write_ascii(*args, **kwargs)
     #elif kwargs['format'] == 'cyl':
     #  self.write_cyl(*args, **kwargs)
     else:
@@ -941,3 +990,24 @@ class Molecule(object):
     print >> out, "END"
     if not re.match("",name):
       out.close()
+
+  def write_ascii(self, name = None, **kwargs):
+    assert len(self.celldm) == 6
+    cdm = self.celldm
+    gamma = np.arccos(cdm[5])
+    ax = cdm[0]
+    bx = cdm[1] * cdm[5]
+    by = cdm[1] * np.sin(gamma)
+    cx = cdm[2] * cdm[4]
+    cy = cdm[2] * cdm[3] * np.sin(gamma)
+    cz = np.sqrt(cdm[2]**2 - cy**2 - cx**2)
+
+    out = sys.stdout if not name else open(name,"w")
+    out.write("%d\n" % self.N)
+    out.write("% 9.6f % 9.6f % 9.6f\n" % (ax, bx, by))
+    out.write("% 9.6f % 9.6f % 9.6f\n" % (cx, cy, cz))
+    for I in xrange(0, self.N):
+      out.write(" ".join("% 8.4f" % i for i in self.R[I][:]))
+      out.write(" %-2s " % self.type_list[I])
+      out.write("\n")
+    out.close()
