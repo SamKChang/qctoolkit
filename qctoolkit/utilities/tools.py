@@ -5,6 +5,14 @@ import qctoolkit as qtk
 import yaml
 import pickle
 
+def flatten(container):
+  for i in container:
+    if isinstance(i, (list,tuple)):
+      for j in flatten(i):
+        yield j
+    else:
+      yield i
+
 def pdump(obj, name):
   with open(name, 'wb') as pfile:
     pickle.dump(obj, pfile)
