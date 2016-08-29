@@ -374,7 +374,7 @@ class GenericQMOutput(object):
         unitStr = self.unit + '-' + other.unit
         out.Et = self.Et + qtk.convE(other.Et, unitStr, '-')
       out.scp_step = max(self.scf_step, other.scf_step)
-    elif type(other) is (int or float):
+    elif (type(other) is int) or (type(other) is float):
       out.Et = self.Et + other
     else:
       out.Et = np.nan
@@ -389,7 +389,7 @@ class GenericQMOutput(object):
         unitStr = self.unit + '-' + other.unit
         out.Et = self.Et + qtk.convE(other.Et, unitStr, '-')
       out.scp_step = max(self.scf_step, other.scf_step)
-    elif type(other) is (int or float):
+    elif (type(other) is int) or (type(other) is float):
       out.Et = self.Et - other
     else:
       out.Et = np.nan
@@ -397,7 +397,7 @@ class GenericQMOutput(object):
 
   def __mul__(self, other):
     out = copy.deepcopy(self)
-    if type(other) is (int or float):
+    if (type(other) is int) or (type(other) is float):
       out.Et = self.Et * other
     else:
       out.Et = np.nan
@@ -405,7 +405,7 @@ class GenericQMOutput(object):
 
   def __div__(self, other):
     out = copy.deepcopy(self)
-    if type(other) is (int or float):
+    if (type(other) is int) or (type(other) is float):
       out.Et = self.Et / other
     else:
       out.Et = np.nan
