@@ -110,6 +110,9 @@ class inp(PlanewaveInput):
 
       if 'save_wf' in setting and setting['save_wf']:
         self.content['control']['wf_collect'] = True
+      if 'print_force' not in setting or not setting['print_force']:
+        self.content['control']['tprnfor'] = True
+   
 
       if not setting['periodic']:
         self.content['system']['assume_isolated'] = 'mt'
