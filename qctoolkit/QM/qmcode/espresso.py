@@ -366,7 +366,16 @@ class out(PlanewaveOutput):
     data = out_file.readlines()
     out_file.close()
     Et_pattern = re.compile("^.*total energy *=.*$")
+    f_pattern = re.compile("^.*atom.*type.*force.*=.*$")
     Et_list = filter(Et_pattern.match, data)
+    f_list = filter(f_pattern.match, data)
+    if len(f_list) > 0:
+      fstr = [filter(None, fstr.split('=')[-1].split(' ')) 
+              for fstr in f_list]
+      # atomic unit force, HF/au, converted from Ry/au
+      self.force = 0.5 * np.array(
+        [[float(comp) for comp in atm] for atm in fstr]
+      )
     if len(Et_list) > 0:
       Et_str = filter(Et_pattern.match, data)[-1]
       Et = float(Et_str.split()[-2])
