@@ -20,10 +20,16 @@ def PPCheck(xc, pp_theory, pp_path, element):
       url = url_root + '%s/%s' % (pp_theory, element_str)
       page = False
       try:
-        page = urllib2.urlopen(url).read()
+        page = urllib2.urlopen(url).readlines()
+        pattern = re.compile(r'^.*</*pre>.*$')
+        pp_se = filter(pattern.match, page)
+        pp_start = page.index(pp_se[0])
+        pp_end = page.index(pp_se[1])
+        page = page[pp_start:pp_end]
+        page[0] = page[0].split('>')[-1]
       except:
         qtk.warning('something wrong with url:%s' % url)
-      pp = page
+      pp = ''.join(page)
     else:
       url = qtk.setting.bigdft_pp_nlcc_url
       page = urllib2.urlopen(url).readlines()

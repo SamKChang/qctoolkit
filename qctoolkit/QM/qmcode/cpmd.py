@@ -8,6 +8,7 @@ import pkg_resources
 import numpy as np
 import urllib2
 import universal as univ
+import sys
 
 class inp(PlanewaveInput):
   """
@@ -404,12 +405,21 @@ def PPCheck(xc, element, pp_file_str, **kwargs):
     if not os.path.exists(saved_pp_path) and qtk.setting.download_pp:
       if pp_file:
         new_pp = os.path.join(qtk.setting.cpmd_pp, pp_file_str)
-        pp_content = urllib2.urlopen(pp_file).read()
+        pp_content = urllib2.urlopen(pp_file).readlines()
+        pattern = re.compile(r'^.*</*pre>.*$')
+        pp_se = filter(pattern.match, pp_content)
+        pp_start = pp_content.index(pp_se[0])
+        pp_end = pp_content.index(pp_se[1])
+        pp_content = pp_content[pp_start:pp_end]
+        pp_content[0] = pp_content[0].split('>')[-1]
+        for i in range(len(pp_content)):
+           pp_str = pp_content[i]
+           pp_content[i] = pp_str.replace('&amp;', '&')
         qtk.report('PPCheck', 'pp file %s not found in %s, ' \
                    % (pp_file_str, qtk.setting.cpmd_pp) + \
-                   'but found on internet, download now...')
+                   'download now...')
         new_pp_file = open(new_pp, 'w')
-        new_pp_file.write(pp_content)
+        new_pp_file.write(''.join(pp_content))
         new_pp_file.close()
         pp_file = new_pp
     return saved_pp_path

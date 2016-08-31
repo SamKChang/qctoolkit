@@ -19,7 +19,7 @@ def QMInp(molecule, **kwargs):
     'gaussian': [gaussian.inp, 'com'],
     'horton': [horton.inp, 'inp'],
     'ofdft': [ofdft.inp, 'inp'],
-    'bigdft': [bigdft.inp, 'ymal'],
+    'bigdft': [bigdft.inp, 'yaml'],
   }
 
   if type(molecule) is str:

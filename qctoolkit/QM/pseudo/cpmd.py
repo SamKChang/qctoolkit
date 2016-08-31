@@ -20,6 +20,14 @@ def read(self, path):
     end = re.compile('^ *&END.*$')
     try:
       pp_file = urllib2.urlopen(path).readlines()
+      pattern = re.compile(r'^.*</*pre>.*$')
+      pp_se = filter(pattern.match, pp_file)
+      pp_start = pp_file.index(pp_se[0])
+      pp_end = pp_file.index(pp_se[1])
+      pp_file = pp_file[pp_start:pp_end]
+      pp_file[0] = pp_file[0].split('>')[-1]
+      for ppStr in pp_file:
+        ppStr.replace('&amp;', '&')
     except:
       pp_file = open(path)
     pp = pp_file.readlines()

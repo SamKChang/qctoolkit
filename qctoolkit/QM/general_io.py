@@ -84,7 +84,10 @@ class InpContent(object):
 
     if self.output:
       # process file name
-      name = self.file_name
+      if 'name' in kwargs:
+        name = kwargs['name']
+      else:
+        name = self.file_name
       if self.prefix:
         name = self.prefix + name
         self.root_dir = self.prefix + self.root_dir
@@ -124,7 +127,7 @@ class InpContent(object):
             dep = dep_entry[1]
             dep_name = os.path.split(dep)[1]
             dep_src = os.path.abspath(dep_entry[0])
-            dep_src = os.path.join(dep_src, dep_name)
+            #dep_src = os.path.join(dep_src, dep_name)
             dep_tar = os.path.join(full_dir_path, dep_name)
           elif type(dep_entry) is dict:
             # copy file to different path/name {src: path/name}
@@ -132,7 +135,7 @@ class InpContent(object):
             dep_name = os.path.split(dep)[1]
             dep_src = os.path.abspath(dep)
             dep_tar = os.path.join(full_dir_path, dep_entry[dep])
-          if os.path.exists(dep):
+          if os.path.exists(dep_src):
             try:
               shutil.copytree(dep_src, dep_tar)
             except OSError:
