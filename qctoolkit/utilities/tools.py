@@ -78,6 +78,15 @@ def fractionalMatrix(celldm_list):
     ]
   )
 
+def cellVec2celldm(v):
+  a = np.linalg.norm(v[0])
+  b = np.linalg.norm(v[1])
+  c = np.linalg.norm(v[2])
+  cosA = np.dot(v[1], v[2]) / (b*c)
+  cosB = np.dot(v[0], v[2]) / (a*c)
+  cosC = np.dot(v[0], v[1]) / (a*b)
+  return [a, b, c, cosA, cosB, cosC]
+
 #  return np.array(
 #    [
 #      [a * sc * sw, 0, 0],

@@ -369,19 +369,22 @@ class out(PlanewaveOutput):
     f_pattern = re.compile("^.*atom.*type.*force.*=.*$")
     Et_list = filter(Et_pattern.match, data)
     f_list = filter(f_pattern.match, data)
-    if len(f_list) > 0:
-      fstr = [filter(None, fstr.split('=')[-1].split(' ')) 
-              for fstr in f_list]
-      # atomic unit force, HF/au, converted from Ry/au
-      self.force = 0.5 * np.array(
-        [[float(comp) for comp in atm] for atm in fstr]
-      )
     if len(Et_list) > 0:
       Et_str = filter(Et_pattern.match, data)[-1]
       Et = float(Et_str.split()[-2])
       self.Et, self.unit = qtk.convE(Et, 'Ry-Eh')
       out_folder = os.path.split(os.path.abspath(qmout))[0]
       save = glob.glob(os.path.join(out_folder, '*.save'))
+
+      # extract force information
+      if len(f_list) > 0:
+        fstr = [filter(None, fstr.split('=')[-1].split(' ')) 
+                for fstr in f_list]
+        # atomic unit force, HF/au, converted from Ry/au
+        self.force = 0.5 * np.array(
+          [[float(comp) for comp in atm] for atm in fstr]
+        )
+
       # extract band structure from xml files
       if save:
         save = save[0]
@@ -393,6 +396,31 @@ class out(PlanewaveOutput):
           self.xml = tree.getroot()
           kpoints = []
           band = []
+
+          # extract celldm
+          celldm = []
+          cellVec = []
+          for i in range(1, 4):
+            cellvStr = filter(None, 
+              self.xml[2][4][i].text.replace('\n', '').split(' ')
+            )
+            cellVec.append([float(v) for v in cellvStr])
+          self.celldm = qtk.cellVec2celldm(cellVec)
+    
+          # extract structure
+          R = []
+          N = int(self.xml[3][0].text.replace('\n', ''))
+          Nsp = int(self.xml[3][1].text.replace('\n', ''))
+          for i in range(N):
+            RiStr = self.xml[3][5+Nsp+i].get('tau')
+            Ri = [float(r) * 0.529177249 for r in RiStr.split(' ')]
+            ni = self.xml[3][5+Nsp+i].get('SPECIES')
+            Z = [qtk.n2Z(ni)]
+            Z.extend(Ri)
+            R.append(Z)
+          self.molecule = qtk.Molecule()
+          self.molecule.build(R)
+
           # access data for each kpoint
           for k in self.xml[-2]:
             k_str = k[0].text
