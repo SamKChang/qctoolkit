@@ -600,16 +600,17 @@ class Molecule(object):
         self.Z[i] = minZ
 
   def mutateElement(self, oldZ, newZ):
-    if type(oldZ) is str:
-      oldZ = qtk.n2Z(oldZ)
-    if type(newZ) is str:
-      newZ = qtk.n2Z(newZ)
-    newElem = qtk.Z2n(newZ)
-    indices = []
-    for i in range(self.N):
-      if abs(self.Z[i] - oldZ) < 0.1:
-        indices.append(i)
-    self.setAtoms(indices, element=newElem)
+    if oldZ != newZ:
+      if type(oldZ) is str:
+        oldZ = qtk.n2Z(oldZ)
+      if type(newZ) is str:
+        newZ = qtk.n2Z(newZ)
+      newElem = qtk.Z2n(newZ)
+      indices = []
+      for i in range(self.N):
+        if abs(self.Z[i] - oldZ) < 0.1:
+          indices.append(i)
+      self.setAtoms(indices, element=newElem)
 
   # tested
   def removeAtoms(self, indices):
