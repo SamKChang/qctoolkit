@@ -126,7 +126,8 @@ class inp(PlanewaveInput):
         self.content['system']['tot_charge'] = molecule.charge
       if molecule.multiplicity != 1:
         self.content['system']['nspin'] = 2
-        self.content['tot_magnetization'] = molecule.multiplicity - 1
+        diff = molecule.multiplicity - 1
+        self.content['system']['tot_magnetization'] = diff
 
       if 'theory' in setting:
         if self.setting['theory'] in dft_dict:
