@@ -12,6 +12,8 @@ def qmRunAll(inp_list, **kwargs):
   job = []
   for inp in inp_list:
     job.append([inp, inp.molecule.name])
+  if inp.setting['threads'] != 1:
+    kwargs['threads'] = setting.cpu_count / inp.setting['threads']
   qtk.parallelize(qtk.qmRunJob, job, **kwargs)
 
 def qmRunJob(inp, name):
