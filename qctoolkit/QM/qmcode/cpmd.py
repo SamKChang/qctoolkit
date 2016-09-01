@@ -136,7 +136,7 @@ class inp(PlanewaveInput):
         for vec in lattice_vec:
           inp.write(' ')
           for component in vec:
-            inp.write(' %9.6f' % component)
+            inp.write(' % 11.6f' % component)
           inp.write('\n')
       else:
         inp.write(' SYMMETRY\n')

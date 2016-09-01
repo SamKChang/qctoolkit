@@ -229,7 +229,7 @@ class inp(PlanewaveInput):
         lattice_vec = self.setting['lattice']
         for vec in lattice_vec:
           for component in vec:
-            inp.write(' %9.6f' % component)
+            inp.write(' % 11.6f' % component)
           inp.write('\n')
   
       for pp in pp_files:
