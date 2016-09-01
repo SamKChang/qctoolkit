@@ -124,6 +124,8 @@ class inp(PlanewaveInput):
 
       if molecule.charge != 0:
         self.content['system']['tot_charge'] = molecule.charge
+      if molecule.multiplicity != 1:
+        self.content['system']['nspin'] = 2
 
       if 'theory' in setting:
         if self.setting['theory'] in dft_dict:
