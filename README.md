@@ -91,6 +91,7 @@ and add the following two lines to the end of the file:
   - [VASP](www.vasp.at)
   - [QuantumESPRESSO](www.quantum-espresso.org/)
   - [CPMD](www.cpmd.org/)
+  - [Abinit](http://www.abinit.org/)
 * Wavelet basis:
   - [BigDFT](bigdft.org/Wiki/index.php?title=BigDFT_website)
 

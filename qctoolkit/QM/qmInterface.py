@@ -2,6 +2,7 @@ import qctoolkit as qtk
 import qmcode.cpmd as cpmd
 import qmcode.espresso as espresso
 import qmcode.vasp as vasp
+import qmcode.abinit as abinit
 import qmcode.nwchem as nwchem
 import qmcode.gaussian as gaussian
 import qmcode.bigdft as bigdft
@@ -15,6 +16,7 @@ def QMInp(molecule, **kwargs):
     'cpmd': [cpmd.inp, 'inp'],
     'vasp': [vasp.inp, ''],
     'espresso': [espresso.inp, 'inp'],
+    'abinit': [abinit.inp, 'inp'],
     'nwchem': [nwchem.inp, 'inp'],
     'gaussian': [gaussian.inp, 'com'],
     'horton': [horton.inp, 'inp'],
@@ -38,6 +40,7 @@ def QMOut(out=None, **kwargs):
   out_dict = {
     'cpmd': cpmd.out,
     'vasp': vasp.out,
+    'abinit': abinit.out,
     'espresso': espresso.out,
     'nwchem': nwchem.out,
     'horton': horton.out,

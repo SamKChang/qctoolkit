@@ -198,7 +198,6 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
       if not _save_restart:
         os.remove(f)
 
-  # !!!!! TODO LIST !!!!! #
   #########################
   # BigDFT IMPLEMENTATION #
   #########################
@@ -212,6 +211,21 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
     qmoutput = inp + '.out'
     compute(exestr, qmoutput, _threads)
     qio_out = qio.QMOut(qmoutput, program='bigdft')
+
+  #########################
+  # Abinit IMPLEMENTATION #
+  #########################
+  elif program.lower() == 'abinit':
+    if 'exe' in kwargs:
+      exe = kwargs['exe']
+    else:
+      exe = setting.abinit_exe
+    inp = os.path.splitext(inp)[0]
+    exestr = "%s < %s" % (exe, inp + '.files')
+    print exestr
+    qmoutput = inp + '.log'
+    compute(exestr, qmoutput, _threads)
+    qio_out = qio.QMOut(qmoutput, program='abinit')
 
   #############################
   # Gaussian09 IMPLEMENTATION #
