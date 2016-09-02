@@ -165,9 +165,15 @@ class out(PlanewaveOutput):
     Rstr[0] = Rstr[0].replace('xangst', '')
     R = [[float(r) for r in filter(None, s.split(' '))] for s in Rstr]
     N = len(R)
-    Zstr = filter(lambda x: ' typat' in x, data)[-1]
-    Zstr = Zstr.replace('typat', '')
+    ZstrOriginal = filter(lambda x: ' typat' in x, data)[-1]
+    Zstr = ZstrOriginal.replace('typat', '')
     Zind = [int(z) for z in filter(None, Zstr.split(' '))]
+    ZindItr = data.index(ZstrOriginal)
+    while len(Zind) != N:
+      ZindItr += 1
+      ZindNewStr = filter(None, data[ZindItr].split(' '))
+      ZindNew = [int(z) for z in ZindNewStr]
+      Zind.extend(ZindNew)
     Znuc = filter(lambda x: 'znucl ' in x, data)[-1]
     Znuc = filter(None, Znuc.replace('znucl', '').split(' '))
     Znuc = [float(z) for z in Znuc]
