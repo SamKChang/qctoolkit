@@ -26,6 +26,18 @@ def Al1st(qminp, **setting):
     else:
       setting['dependent_files'] = [rst]
 
+  elif qminp.setting['program'] == 'abinit':
+    setting['restart'] = True
+    setting['scf_step'] = 1
+    rstList = glob.glob(os.path.join(setting['ref_dir'], '*o_WFK'))
+    assert len(rstList) > 0
+    rstSrc = rstList[-1]
+    rstTar = rstSrc.replace('o_WFK', 'i_WFK')
+    if 'dependent_file' in setting:
+      setting['dependent_files'].append([rstSrc, rstTar])
+    else:
+      setting['dependent_files'] = [rstSrc, rstTar]
+
   elif qminp.setting['program'] == 'espresso':
     wfn = glob.glob(setting['ref_dir'] + '/*.wfc[0-9]*')
     if 'threads' not in setting or setting['threads'] != len(wfn):
