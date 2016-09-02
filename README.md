@@ -1,5 +1,15 @@
 Python modules for quantum chemistry applications
 =====================================================
+qctoolkit is quantum chemistry tool kit. 
+It meant to provide universal interface to ab initio code
+to test ideas or to produce data reliably. 
+The code includes Abinit, QuantumESPRESSO, Gaussian, NwChem,
+CPMD, BigDFT, ... etc.
+It also provide some basic molecule operations, including 
+rotation, stretching, alignment, bond identification, ... etc,
+and data formatting, including
+xyz files, Gaussian CUBE files, V\_SIM ascii files, pdb files, ... etc.
+
 It seems worthwile to put effort to rewrite my bash/perl/python/C 
 tools in to an integrated module or package. It should boosts the
 reusability, productivity, and reproducibility of my results 
