@@ -44,7 +44,7 @@ class inp(PlanewaveInput):
     # cell definition
     inp.write('\n# cell definition\n')
     # cell specified by Bohr
-    inp.write('acell 3*0.5291772108\n')
+    inp.write('acell 3*1.889726124993\n')
     if 'lattice' not in self.setting:
       self.celldm2lattice()
     lattice_vec = self.setting['lattice']

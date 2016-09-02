@@ -222,9 +222,9 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
       exe = setting.abinit_exe
     inp = os.path.splitext(inp)[0]
     exestr = "%s < %s" % (exe, inp + '.files')
-    print exestr
-    qmoutput = inp + '.log'
-    compute(exestr, qmoutput, _threads)
+    qmlog = inp + '.log'
+    qmoutput = inp + '.out'
+    compute(exestr, qmlog, _threads)
     qio_out = qio.QMOut(qmoutput, program='abinit')
 
   #############################
