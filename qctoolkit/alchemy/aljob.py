@@ -33,10 +33,11 @@ def Al1st(qminp, **setting):
     assert len(rstList) > 0
     rstSrc = rstList[-1]
     rstTar = rstSrc.replace('o_WFK', 'i_WFK')
+    rstTar = os.path.split(rstTar)[-1]
     if 'dependent_file' in setting:
-      setting['dependent_files'].append([rstSrc, rstTar])
+      setting['dependent_files'].append([rstSrc, name+'i_WFK'])
     else:
-      setting['dependent_files'] = [rstSrc, rstTar]
+      setting['dependent_files'] = [[rstSrc, name+'i_WFK']]
 
   elif qminp.setting['program'] == 'espresso':
     wfn = glob.glob(setting['ref_dir'] + '/*.wfc[0-9]*')

@@ -43,7 +43,7 @@ class inp(PlanewaveInput):
 
     # restart section
     if 'restart' in self.setting and self.setting['restart']:
-      inp.write('\n# restart, reading wavefunction from file')
+      inp.write('\n# restart, reading wavefunction from file\n')
       inp.write('irdwfk 1\n')
       inp.write('getwfk -1\n')
  
