@@ -50,7 +50,7 @@ class inp(PlanewaveInput):
     # cell definition
     inp.write('\n# cell definition\n')
     inp.write('\n# NOTE: cell defined by lattice vector, ')
-    inp.write('NOT supported by abinit spacegroup detector!')
+    inp.write('NOT supported by abinit spacegroup detector!\n')
     # cell specified by Bohr
     inp.write('acell 3*1.889726124993\n')
     if 'lattice' not in self.setting:
@@ -142,12 +142,21 @@ class out(PlanewaveOutput):
     data = out_file.readlines()
     out_file.close()
 
+    EStrList = filter(lambda x: 'Etotal' in x, data)
     EList = filter(lambda x: 'ETOT' in x, data)
     self.scf_step = len(EList)
-    Et_list = [float(filter(None, s.split(' '))[2]) for s in EList]
-    self.Et = Et_list[-1]
-    self.detail = Et_list
+    if self.scf_step > 0:
+      Et_list = [float(filter(None, s.split(' '))[2]) for s in EList]
+      self.Et = Et_list[-1]
+    elif len(EStrList) > 0:
+      EStr = EStrList[-1]
+      self.Et = float(EStr.split(' ')[-1])
 
+    if len(EStrList) > 0:
+      EStr = EStrList[-1]
+      detailInd = data.index(EStr)
+      self.detail = data[detailInd-7:detailInd]
+  
     xangst = filter(lambda x: 'xangst' in x, data)[-1]
     angst_n = len(data) - data[::-1].index(xangst) - 1
     xcart = filter(lambda x: 'xcart' in x, data)[-1]
@@ -170,11 +179,12 @@ class out(PlanewaveOutput):
     self.molecule = qtk.Molecule()
     self.molecule.build(build)
 
-    fStr = filter(lambda x: 'tesian forces (hartree/b' in x, data)[-1]
-    fInd = data.index(fStr)
-    fData = data[fInd+1:fInd+1+N]
-    force = []
-    for f in fData:
-      fStr = filter(None, f.split(' '))[1:]
-      force.append([float(fs) for fs in fStr])
-    self.force = np.array(force)
+    if self.scf_step > 0:
+      fStr = filter(lambda x: 'tesian forces (hartree/b' in x, data)[-1]
+      fInd = data.index(fStr)
+      fData = data[fInd+1:fInd+1+N]
+      force = []
+      for f in fData:
+        fStr = filter(None, f.split(' '))[1:]
+        force.append([float(fs) for fs in fStr])
+      self.force = np.array(force)
