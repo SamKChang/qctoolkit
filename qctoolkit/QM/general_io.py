@@ -174,9 +174,10 @@ class QMWorker(object):
       else:
         try:
           out = qmjob.QMRun(self.name, self.qmcode, **run_setup)
-        except:
+        except Exception, err:
           qtk.warning("qmjob finished unexpectedly for '" + \
-                      self.name + "'")
+                      self.name + "'" + ", with error message:\n"\
+                      + str(err))
           out = GenericQMOutput()
         finally:
           os.chdir(cwd)

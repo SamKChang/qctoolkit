@@ -45,6 +45,10 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
     _save_restart = kwargs['save_restart']
   else:
     _save_restart = False
+  if 'save_density' in kwargs:
+    _save_density = kwargs['save_density']
+  else:
+    _save_density = False
 
   if 'chdir' in kwargs and kwargs['chdir']:
     cwd = os.getcwd()
@@ -226,6 +230,25 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
     qmoutput = inp + '.out'
     compute(exestr, qmlog, _threads)
     qio_out = qio.QMOut(qmoutput, program='abinit')
+
+    # clean up files
+    files = glob.glob('*')
+    tmp = filter(\
+      lambda x: '.out' not in x \
+                and '.log' not in x\
+                and '.inp' not in x\
+                and '.files' not in x\
+                and '_EIG' not in x\
+                and '_WFK' not in x\
+                and '_DEN' not in x, files
+    )
+    for f in tmp: os.remove(f)
+    if not _save_restart:
+      for rst in glob.glob('*_WFK'):
+        os.remove(rst)
+    if not _save_density:
+      for den in glob.glob('*_DEN'):
+        os.remove(den)
 
   #############################
   # Gaussian09 IMPLEMENTATION #

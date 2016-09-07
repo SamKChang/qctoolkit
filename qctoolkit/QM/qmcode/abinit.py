@@ -108,9 +108,21 @@ class inp(PlanewaveInput):
     inp.write('ecut %.2f\n' % float(self.setting['cutoff']/2.))
     if 'kmesh' not in self.setting:
       self.setting['kmesh'] = [1,1,1]
+    if self.setting['full_kmesh']:
+      inp.write('kptopt 3\n')
     inp.write('ngkpt')
     for k in self.setting['kmesh']:
       inp.write(' %d' % k)
+    if 'kshift' not in self.setting:
+      inp.write('\nshiftk 0.0 0.0 0.0')
+    if 'ks_states' in self.setting and self.setting['ks_states']:
+      vs = int(round(molecule.getValenceElectrons() / 2.0))
+      nbnd = self.setting['ks_states'] + vs
+      if 'd_shell' in self.setting:
+        for a in molecule.type_list:
+          if a in self.setting['d_shell'] and qtk.n2ve(a) < 10:
+            nbnd += 5
+      inp.write('\nnband %d' % nbnd)
     inp.write('\nnstep %d\n' % self.setting['scf_step']) 
     if 'wf_convergence' in self.setting:
       inp.write('toldfe %.2E\n' % self.setting['wf_convergence'])
