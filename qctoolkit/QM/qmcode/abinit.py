@@ -62,6 +62,7 @@ class inp(PlanewaveInput):
       inp.write('%5s % 11.6f % 11.6f % 11.6f\n' % (
         strList[i], vec[0], vec[1], vec[2],
       ))
+    inp.write('chkprim 0\n')
       
 
     # atom definition
