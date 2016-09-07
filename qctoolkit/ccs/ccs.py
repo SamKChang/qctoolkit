@@ -84,15 +84,18 @@ class CCS(object):
   # easier to maintain and extend
 
   def read_param(self,parameter_file):
-    stem, extension = os.path.splitext(parameter_file)
-    if extension == '.txt':
-      self.read_param_txt(parameter_file)
-    elif extension == '.xml':
-      self.read_param_xml(parameter_file)
-    elif extension == '.yml' or extension == '.yaml':
+    try:
+      stem, extension = os.path.splitext(parameter_file)
+      if extension == '.txt':
+        self.read_param_txt(parameter_file)
+      elif extension == '.xml':
+        self.read_param_xml(parameter_file)
+      elif extension == '.yml' or extension == '.yaml':
+        self.read_param_yml(parameter_file)
+      else:
+        qtk.exit("extension " + extension + " not reconized...")
+    except AttributeError:
       self.read_param_yml(parameter_file)
-    else:
-      qtk.exit("extension " + extension + " not reconized...")
     size_list = [len(self.mutation_target[i]) ** \
                  len(self.mutation_list[i])\
                  for i in range(len(self.mutation_list))
@@ -132,8 +135,11 @@ class CCS(object):
   # read ccs_param from yaml file #
   #################################
   def read_param_yml(self, parameter_file):
-    f = open(parameter_file, "r")
-    param = yaml.safe_load(f)
+    if type(parameter_file) is str:
+      f = open(parameter_file, "r")
+      param = yaml.safe_load(f)
+    elif type(parameter_file) is dict:
+      param = copy.deepcopy(parameter_file)
 
     # !!!!!!!!!!!!!!!!!
     # read span section
@@ -166,7 +172,8 @@ class CCS(object):
       for constraint in param['constraint'].itervalues():
         read_constraint(constraint)
 
-    f.close()
+    if type(parameter_file) is str:
+      f.close()
   ##### END OF READING YAML FILE #####
 
   ###############################################
