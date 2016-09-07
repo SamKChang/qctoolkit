@@ -238,6 +238,7 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
                 and '.log' not in x\
                 and '.inp' not in x\
                 and '.files' not in x\
+                and 'psp' not in x\
                 and '_EIG' not in x\
                 and '_WFK' not in x\
                 and '_DEN' not in x, files

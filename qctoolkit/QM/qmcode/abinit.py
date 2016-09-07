@@ -126,6 +126,10 @@ class inp(PlanewaveInput):
     inp.write('\nnstep %d\n' % self.setting['scf_step']) 
     if 'wf_convergence' in self.setting:
       inp.write('toldfe %.2E\n' % self.setting['wf_convergence'])
+    if molecule.charge != 0:
+      inp.write('charge=%d\n' % molecule.charge)
+    if molecule.multiplicity != 1:
+      inp.write('nsppol 2\n')
 
     inp.close(dependent_files=pp_files)
 
