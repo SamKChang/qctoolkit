@@ -10,11 +10,17 @@ import yaml
 import urllib2
 
 def PPCheck(xc, pp_theory, pp_path, element):
-  
+
+  theory_dict = {
+    'lda': 'pade',
+  }
+
   name = '%s_%s_%s' % (element, xc, pp_theory)
   pp_file = os.path.join(pp_path, name)
   if not os.path.exists(pp_file) and qtk.setting.download_pp:
     if pp_theory != 'nlcc':
+      if pp_theory in theory_dict.keys():
+        pp_theory = theory_dict[pp_theory]
       url_root = qtk.setting.bigdft_pp_url
       element_str = element + '-q%d' % qtk.n2ve(element)
       url = url_root + '%s/%s' % (pp_theory, element_str)

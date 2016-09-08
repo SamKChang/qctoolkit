@@ -49,21 +49,39 @@ class inp(PlanewaveInput):
  
     # cell definition
     inp.write('\n# cell definition\n')
-    inp.write('\n# NOTE: cell defined by lattice vector, ')
-    inp.write('NOT supported by abinit spacegroup detector!\n')
     # cell specified by Bohr
-    inp.write('acell 3*1.889726124993\n')
-    if 'lattice' not in self.setting:
-      self.celldm2lattice()
-    lattice_vec = self.setting['lattice']
+    if not molecule.symmetry:
+      inp.write('# NOTE: cell defined by lattice vector, ')
+      inp.write('NOT supported by abinit spacegroup detector!\n')
+      inp.write('acell 3*1.889726124993\n')
+      if 'lattice' not in self.setting:
+        self.celldm2lattice()
+      lattice_vec = self.setting['lattice']
+      inp.write('chkprim 0\n')
+    elif molecule.symmetry.lower() == 'fcc':
+      inp.write("# fcc primitive cell\n")
+      a0 = molecule.celldm[0] * 1.889726124993
+      inp.write('acell 1 1 1\n')
+      lattice_vec = 0.5 * a0 * np.array([
+        [0, 1, 1],
+        [1, 0, 1],
+        [1, 1, 0],
+      ])
+    elif molecule.symmetry.lower() == 'bcc':
+      inp.write("# bcc primitive cell\n")
+      inp.write('acell 1 1 1\n')
+      a0 = molecule.celldm[0] * 1.889726124993
+      lattice_vec = 0.5 * a0 * np.array([
+        [-1, 1, 1],
+        [ 1,-1, 1],
+        [ 1, 1,-1],
+      ])
     strList = ['rprim', '', '']
     for i in range(3):
       vec = lattice_vec[i]
       inp.write('%5s % 11.6f % 11.6f % 11.6f\n' % (
         strList[i], vec[0], vec[1], vec[2],
       ))
-    inp.write('chkprim 0\n')
-      
 
     # atom definition
     inp.write("\n# atom definition\n")
@@ -223,28 +241,45 @@ class out(PlanewaveOutput):
       spinList = filter(lambda x: 'SPIN' in x, eigData)
       if len(spinList) != 0:
         spinFactor = 2
+        maxInd = eigData.index(spinList[-1])
       else:
         spinFactor = 1
+        maxInd = len(eigData)
       ind = []
       for kStr in filter(lambda x: 'kpt#' in x, eigData):
         ind.append(eigData.index(kStr))
       band = []
       kpoints = []
-      for i in range(len(ind)/spinFactor - 1):
-        wcoord = eigData[ind[i]].split('wtk=')[-1].split(', kpt=')
+      if (len(ind)/spinFactor - 1) != 0:
+        for i in range(len(ind)/spinFactor - 1):
+          wcoord = eigData[ind[i]].split('wtk=')[-1].split(', kpt=')
+          weight = float(wcoord[0])
+          cStr = filter(None, wcoord[1].split('(')[0].split(' '))
+          coord = [float(c) for c in cStr]
+          coord.append(weight)
+          kpoints.append(coord)
+          s = ind[i] + 1
+          e = ind[i+1]
+          eig_i = filter(None, ''.join(eigData[s:e]).split(' '))
+          band.append([qtk.convE(float(ew), 'Eh-eV')[0]
+                       for ew in eig_i])
+      else:
+        wcoord = eigData[ind[0]].split('wtk=')[-1].split(', kpt=')
         weight = float(wcoord[0])
         cStr = filter(None, wcoord[1].split('(')[0].split(' '))
         coord = [float(c) for c in cStr]
         coord.append(weight)
         kpoints.append(coord)
-        s = ind[i] + 1
-        e = ind[i+1]
+        s = ind[0] + 1
+        e = maxInd
         eig_i = filter(None, ''.join(eigData[s:e]).split(' '))
         band.append([qtk.convE(float(ew), 'Eh-eV')[0]
-                     for ew in eig_i])
+                       for ew in eig_i])
+
       self.band = np.array(band)
       self.kpoints = np.array(kpoints)
       self.mo_eigenvalues = np.array(band[0])
+
       if spinFactor == 2:
         qtk.warning("spin polarized band data " +\
                     "extraction is not yet implemented")
