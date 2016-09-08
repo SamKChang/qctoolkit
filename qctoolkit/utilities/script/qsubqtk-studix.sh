@@ -18,6 +18,8 @@ else
   PREFIX='q'
 fi
 
+EXE=`echo $EXE|sed "s/\"//g"`
+
 if [[ $FLAG == "None" ]];then
   FLAG=''
 else

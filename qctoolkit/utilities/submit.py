@@ -130,7 +130,7 @@ def submit(inp_list, root, **remote_settings):
       qtk.warning('scp message: %s' % p.before)
 
   exe = qtk.setting.program_dict[program]
-  remote_cmd = "%s %s %s %d %d '%s' %s" % \
+  remote_cmd = "%s \"%s\" %s %d %d '%s' %s" % \
     (submission_script, exe, 
      remote_path, threads, qthreads, flags, prefix)
   
