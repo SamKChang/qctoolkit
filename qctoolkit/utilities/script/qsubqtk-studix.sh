@@ -36,9 +36,14 @@ cd $ROOT
 for dir in `ls -d */`; do
   cd $dir
   inp=`ls|grep -E "(inp|com|yaml)$"`
+  files=`ls|grep "files$"`
   BASE=${inp%.*}
   BCHK=$BASE".chk"
   out=`echo $inp|sed 's/\.[^\.]*$/.out/g'`
+  if ! [ -z "$files" ];then
+    inp=$files
+    out=`echo $inp|sed 's/\.[^\.]*$/.log/g'`
+  fi
   log=`echo $inp|sed 's/\.[^\.]*$/.log/g'`
   fchk=`echo $inp|sed 's/\.[^\.]*$/.fchk/g'`
   job=$BASE$$
@@ -51,9 +56,11 @@ for dir in `ls -d */`; do
   echo "#$ -S /bin/bash"                              >> jobsub
   echo -n "mpirun -np $NSLOTS -mca btl tcp,self "     >> jobsub
   echo "$EXE $inp > $out"                             >> jobsub
-  echo "if [ -e '$log' ];then"                        >> jobsub
-  echo "  mv $log $out"                               >> jobsub
-  echo "fi"                                           >> jobsub
+  if [ -z "$files" ];then
+    echo "if [ -e '$log' ];then"                      >> jobsub
+    echo "  mv $log $out"                             >> jobsub
+    echo "fi"                                         >> jobsub
+  fi
   echo "if [ -e tmp.chk ];then"                       >> jobsub
   echo "  formchk tmp.chk tmp.fchk"                   >> jobsub
   echo "  mv tmp.chk $BASE.chk"                       >> jobsub

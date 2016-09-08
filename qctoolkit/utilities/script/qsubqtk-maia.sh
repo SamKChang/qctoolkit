@@ -38,9 +38,15 @@ for dir in `ls -d */`; do
   cd $dir
   mydir=$PWD
   inp=`ls|grep -E "(inp|com|yaml)$"`
+  files=`ls|grep "files$"`
   BASE=${inp%.*}
   BCHK=$BASE".chk"
   out=`echo $inp|sed 's/\.[^\.]*$/.out/g'`
+  if ! [ -z "$files" ];then
+    sed -i '1iiomode 1' $inp
+    inp=$files
+    out=`echo $inp|sed 's/\.[^\.]*$/.log/g'`
+  fi
   log=`echo $inp|sed 's/\.[^\.]*$/.log/g'`
   fchk=`echo $inp|sed 's/\.[^\.]*$/.fchk/g'`
   job=$BASE$$
@@ -48,7 +54,10 @@ for dir in `ls -d */`; do
 
   # job setup
   echo "#!/bin/bash"                                   > jobsub
-  echo "module load OpenMPI/1.8.4-GCC-4.8.4"          >> jobsub
+  #echo "module load OpenMPI/1.8.4-GCC-4.8.4"          >> jobsub
+  echo "module load OpenMPI/1.6.4-GCC-4.7.2"          >> jobsub
+  echo "module load hwloc/1.6.2-GCC-4.7.2"            >> jobsub
+  echo "module load ABINIT/8.0.8-goolf-1.7.20"        >> jobsub
   echo "module load gaussian"                         >> jobsub
   echo "#$ -cwd"                                      >> jobsub
   echo "#$ -N $PREFIX${inp%.*}"                       >> jobsub
@@ -68,9 +77,11 @@ for dir in `ls -d */`; do
 
   # unified outputs
   # gaussian output
-  echo "if [ -e '$log' ];then"                        >> jobsub
-  echo "  mv $log $out"                               >> jobsub
-  echo "fi"                                           >> jobsub
+  if [ -z "$files" ];then
+    echo "if [ -e '$log' ];then"                      >> jobsub
+    echo "  mv $log $out"                             >> jobsub
+    echo "fi"                                         >> jobsub
+  fi
   echo "if [ -e tmp.chk ];then"                       >> jobsub
   echo "  formchk tmp.chk tmp.fchk"                   >> jobsub
   echo "  mv tmp.chk $BASE.chk"                       >> jobsub
