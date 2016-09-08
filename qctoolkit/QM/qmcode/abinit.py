@@ -1,7 +1,7 @@
 import qctoolkit as qtk
 from qctoolkit.QM.planewave_io import PlanewaveInput
 from qctoolkit.QM.planewave_io import PlanewaveOutput
-import os, copy
+import os, copy, glob
 import qctoolkit.QM.qmjob as qmjob
 import numpy as np
 import universal as univ
@@ -211,3 +211,42 @@ class out(PlanewaveOutput):
         fStr = filter(None, f.split(' '))[1:]
         force.append([float(fs) for fs in fStr])
       self.force = np.array(force)
+
+    eigStr = os.path.join(os.path.split(qmout)[0], '*_EIG')
+    eigFileList = glob.glob(eigStr)
+    if len(eigFileList) != 0:
+      if len(eigFileList) > 1:
+        qtk.warning("more than one o_EIG files found")
+      eigFile = open(eigFileList[0])
+      eigData = eigFile.readlines()
+      eigFile.close()
+      spinList = filter(lambda x: 'SPIN' in x, eigData)
+      if len(spinList) != 0:
+        spinFactor = 2
+      else:
+        spinFactor = 1
+      ind = []
+      for kStr in filter(lambda x: 'kpt#' in x, eigData):
+        ind.append(eigData.index(kStr))
+      band = []
+      kpoints = []
+      for i in range(len(ind)/spinFactor - 1):
+        wcoord = eigData[ind[i]].split('wtk=')[-1].split(', kpt=')
+        weight = float(wcoord[0])
+        cStr = filter(None, wcoord[1].split('(')[0].split(' '))
+        coord = [float(c) for c in cStr]
+        coord.append(weight)
+        kpoints.append(coord)
+        s = ind[i] + 1
+        e = ind[i+1]
+        eig_i = filter(None, ''.join(eigData[s:e]).split(' '))
+        band.append([qtk.convE(float(ew), 'Eh-eV')[0]
+                     for ew in eig_i])
+      self.band = np.array(band)
+      self.kpoints = np.array(kpoints)
+      self.mo_eigenvalues = np.array(band[0])
+      if spinFactor == 2:
+        qtk.warning("spin polarized band data " +\
+                    "extraction is not yet implemented")
+    else:
+      qtk.warning('no k-point information (o_EIG file) found')
