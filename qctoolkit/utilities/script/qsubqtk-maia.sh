@@ -46,7 +46,7 @@ for dir in `ls -d */`; do
 
   # job setup
   echo "#!/bin/bash"                                   > jobsub
-  echo "module load openmpi/gnu/1.6.5"                >> jobsub
+  echo "module load OpenMPI/1.8.4-GCC-4.8.4"          >> jobsub
   echo "module load gaussian"                         >> jobsub
   echo "#$ -cwd"                                      >> jobsub
   echo "#$ -N $PREFIX${inp%.*}"                       >> jobsub
