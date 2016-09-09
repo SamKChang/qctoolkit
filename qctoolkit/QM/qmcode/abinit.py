@@ -16,6 +16,7 @@ class inp(PlanewaveInput):
     PlanewaveInput.__init__(self, molecule, **kwargs)
     self.setting.update(**kwargs)
     self.backup()
+    self.content = ['']
 
   def run(self, name=None, **kwargs):
     self.setting.update(kwargs)
@@ -148,7 +149,11 @@ class inp(PlanewaveInput):
     if molecule.charge != 0:
       inp.write('charge=%d\n' % molecule.charge)
     if molecule.multiplicity != 1:
-      inp.write('nsppol 2\n')
+      inp.write('nsppol 2 # for spin polarized\n')
+      inp.write('occopt 7 # for relaxed occupation\n')
+
+    for item in self.content:
+      inp.write(item)
 
     inp.close(dependent_files=pp_files)
 
