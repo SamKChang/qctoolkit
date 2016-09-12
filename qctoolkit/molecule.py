@@ -698,9 +698,12 @@ class Molecule(object):
     return self.celldm
 
   def expand(self, ratio):
-    for i in range(3):
-      self.celldm[i] = self.celldm[i] * ratio
-    self.R = qtk.fractional2xyz(self.R_scale, self.celldm)
+    if self.celldm:
+      for i in range(3):
+        self.celldm[i] = self.celldm[i] * ratio
+      self.R = qtk.fractional2xyz(self.R_scale, self.celldm)
+    else:
+      self.R = self.R * ratio
 
   def extend(self, ratio):
 
