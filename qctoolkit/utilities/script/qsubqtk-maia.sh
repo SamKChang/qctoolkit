@@ -72,7 +72,11 @@ for dir in `ls -d */`; do
   echo "cd /tmp/$USER/$job"                           >> jobsub
 
   # mpi jobs
-  echo -n "mpirun -np $NSLOTS -mca btl tcp,self "     >> jobsub
+  if [[ $NSLOT > 8 ]];then
+    echo -n "mpirun -np $NSLOTS -mca btl tcp,self "   >> jobsub
+  elif [[ $NSLOT > 1 ]];then
+    echo -n "mpirun -np $NSLOTS "                     >> jobsub
+  fi
   echo "$EXE $inp > $out"                             >> jobsub
 
   # unified outputs

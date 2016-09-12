@@ -54,7 +54,11 @@ for dir in `ls -d */`; do
   echo "#$ -N $PREFIX${inp%.*}"                       >> jobsub
   echo "$paraSetup"                                   >> jobsub
   echo "#$ -S /bin/bash"                              >> jobsub
-  echo -n "mpirun -np $NSLOTS -mca btl tcp,self "     >> jobsub
+  if [[ $NSLOT > 8 ]];then
+    echo -n "mpirun -np $NSLOTS -mca btl tcp,self "   >> jobsub
+  elif [[ $NSLOT > 1 ]];then
+    echo -n "mpirun -np $NSLOTS "                     >> jobsub
+  fi
   echo "$EXE $inp > $out"                             >> jobsub
   if [ -z "$files" ];then
     echo "if [ -e '$log' ];then"                      >> jobsub
