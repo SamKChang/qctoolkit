@@ -152,6 +152,11 @@ class inp(PlanewaveInput):
       inp.write('nsppol 2 # for spin polarized\n')
       inp.write('occopt 7 # for relaxed occupation\n')
 
+    if 'save_restart' in self.setting and self.setting['save_restart']:
+      pass
+    else:
+      inp.write('prtwf 0\n')
+
     for item in self.content:
       inp.write(item)
 
