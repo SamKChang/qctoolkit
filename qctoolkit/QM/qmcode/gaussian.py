@@ -122,24 +122,6 @@ class out(GaussianBasisOutput):
       data = outfile.readlines()
 
       pattern = re.compile(".*R *M *S *D *=")
-#      report_str = filter(lambda x: 'N-N=' in x, data)[0]
-#      start = data.index(report_str)
-#      not_found = True
-#      i = 1
-#      while not_found:
-#        end = start + i
-#        i += 1
-#        if data[end] == '\n':
-#          not_found = False
-#          break
-#      report = data[start:end]
-#      final_str = ''.join(report)
-#      final_str = final_str.replace('\n', '')
-#      final_list = final_str.split('\\')
-#      try:
-#        rmsd = filter(pattern.match, final_list)[0]
-#      except:
-#        qtk.exit("something wrong when accessing final energy")
       try:
         rmsd = filter(pattern.match, data)[0]
       except:
