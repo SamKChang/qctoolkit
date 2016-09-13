@@ -121,27 +121,60 @@ class out(GaussianBasisOutput):
       outfile = open(qmout)
       data = outfile.readlines()
 
-      report_str = filter(lambda x: 'N-N=' in x, data)[0]
-      start = data.index(report_str)
-      not_found = True
-      i = 1
-      while not_found:
-        end = start + i
-        i += 1
-        if data[end] == '\n':
-          not_found = False
+      pattern = re.compile(".*R *M *S *D *=")
+#      report_str = filter(lambda x: 'N-N=' in x, data)[0]
+#      start = data.index(report_str)
+#      not_found = True
+#      i = 1
+#      while not_found:
+#        end = start + i
+#        i += 1
+#        if data[end] == '\n':
+#          not_found = False
+#          break
+#      report = data[start:end]
+#      final_str = ''.join(report)
+#      final_str = final_str.replace('\n', '')
+#      final_list = final_str.split('\\')
+#      try:
+#        rmsd = filter(pattern.match, final_list)[0]
+#      except:
+#        qtk.exit("something wrong when accessing final energy")
+      try:
+        rmsd = filter(pattern.match, data)[0]
+      except:
+        qtk.exit("something wrong when accessing final energy")
+      start = data.index(rmsd)
+      end = data.index(rmsd)
+      while True:
+        if data[start] != '\n':
+          start = start - 1
+        else:
+          break
+      while True:
+        if data[end] != '\n':
+          end = end + 1
+        else:
           break
       report = data[start:end]
       final_str = ''.join(report)
       final_str = final_str.replace('\n', '')
       final_list = final_str.split('\\')
-      pattern = re.compile(".*R *M *S *D *=")
       try:
         rmsd = filter(pattern.match, final_list)[0]
       except:
         qtk.exit("something wrong when accessing final energy")
+        
       ind = final_list.index(rmsd) - 1
       Et_str = final_list[ind]
+      term = Et_str.split('=')[0].replace(' ', '')
+      E_list = ['HF', 'CCSD', 'CCSD(T)', 'MP4SDQ', 'MP4DQ'
+                'MP4D', 'MP3', 'MP2', 'HF']
+      while term not in E_list:
+        ind = ind - 1
+        Et_str = final_list[ind]
+        term = Et_str.split('=')[0].replace(' ', '')
+        
       self.Et = float(Et_str.split('=')[1].replace(' ',''))
       self.detail = final_list
 
