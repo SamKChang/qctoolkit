@@ -184,15 +184,17 @@ class Molecule(object):
     elements = collections.Counter(sorted(self.Z))
     data = zip(elements.keys(), elements.values())
     data.sort(key=lambda tup: tup[0])
-    if 'format' not in kwargs:
-      kwargs['format'] = 'string'
-    if kwargs['format'] == 'list':
-      return data
-    elif kwargs['format'] == 'string':
+    if 'output' not in kwargs:
+      kwargs['output'] = 'string'
+    if kwargs['output'] == 'count':
+      out = {}
+      for element in data:
+        out[qtk.Z2n(element[0])] = element[1]
+    elif kwargs['output'] == 'string':
       out = ''
       for element in data:
         out = out + qtk.Z2n(element[0]) + str(element[1])
-      return out
+    return out
 
   def build(self, moleculeData, name=None):
     if type(moleculeData) is list:
