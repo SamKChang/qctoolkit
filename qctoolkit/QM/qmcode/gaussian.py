@@ -144,6 +144,22 @@ class out(GaussianBasisOutput):
       Et_str = final_list[ind]
       self.Et = float(Et_str.split('=')[1].replace(' ',''))
       self.detail = final_list
+
+      crdStr = filter(lambda x: 'Angstroms' in x, data)[-1]
+      ind = len(data) - data[::-1].index(crdStr) + 2
+      ZR = []
+      while True:
+        if not data[ind].startswith(' ---'):
+          crdData = [float(c) 
+                     for c in filter(None, data[ind].split(' '))]
+          crd = [crdData[1]]
+          crd.extend(crdData[3:])
+          ZR.append(crd)
+          ind = ind + 1
+        else:
+          break
+      self.molecule = qtk.Molecule()
+      self.molecule.build(ZR)
       
       fchk = os.path.join(self.path, self.stem) + ".fchk"
       if os.path.exists(fchk):
