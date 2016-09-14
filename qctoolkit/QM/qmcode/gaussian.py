@@ -121,11 +121,12 @@ class out(GaussianBasisOutput):
       outfile = open(qmout)
       data = outfile.readlines()
 
-      pattern = re.compile(".*R *M *S *D *=")
+      pattern = re.compile(".*R*[ \n]*M*[ \n]*S*[ \n]*D[ \n]*=")
       try:
-        rmsd = filter(pattern.match, data)[0]
+        rmsd = filter(pattern.match, data)[-1]
       except:
-        qtk.exit("something wrong when accessing final energy")
+        qtk.exit("something wrong when accessing final energy" + \
+                 " at index construction")
       start = data.index(rmsd)
       end = data.index(rmsd)
       while True:
