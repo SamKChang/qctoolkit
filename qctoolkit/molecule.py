@@ -284,10 +284,14 @@ class Molecule(object):
     for s in range(len(segments)):
       segment = list(segments[s])
       new_mol = self.getSegment(segment, **kwargs)
+      ns = len(self.segments)
+      new_mol.name = new_mol.name + '_%d' % ns
       self.segments.append(new_mol)
     for s in [i for i in range(self.N) if not bonded[i]]:
       segment = [s]
       new_mol = self.getSegment(segment, **kwargs)
+      ns = len(self.segments)
+      new_mol.name = new_mol.name + '_%d' % ns
       self.segments.append(new_mol)
 
   # tested
@@ -405,8 +409,7 @@ class Molecule(object):
     template[targets] = 1
     ref = copy.deepcopy(self.R)
     ref[targets,:] = 0
-    ref = self.R - ref
-    shift = np.kron(vector, template) - ref
+    shift = np.kron(vector, template)
     self.R += shift
 
   # tested
