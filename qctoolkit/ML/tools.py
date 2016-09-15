@@ -6,10 +6,12 @@ def pack(data_list, **kwargs):
     typ = 'molecule'
     Z = [m.Z for m in data_list]
     max_N = max(map(len, Z))
-  elif isinstance(data_list[0], qtk.QMOut):
-    tpy = 'output'
+  elif isinstance(data_list[0], qtk.QMOutput):
+    typ = 'output'
     Z = [o.molecule.Z for o in data_list]
     max_N = max(map(len, Z))
+  else:
+    qtk.warning("not supported datatype")
 
   if 'output' not in kwargs:
     kwargs['output'] = 'dictionary'
@@ -22,20 +24,21 @@ def pack(data_list, **kwargs):
   for i in range(len(data_list)):
     if typ == 'output':
       molecule = data_list[i].molecule
-      E.append(data_list[i].Et)
+      Es.append(data_list[i].Et)
     elif typ == 'molecule':
       molecule = data_list[i]
 
     zeroR = np.zeros([max_N - molecule.N, 3])
     zeroZ = np.zeros(max_N - molecule.N)
-    xyz = np.vstack([molecule.R, zeroR])
+    xyz = np.vstack([molecule.R, zeroR]).tolist()
     Z = np.hstack([molecule.Z, zeroZ])
     if len(xyzs) == 0:
-      xyzs = xyz
+      #xyzs = xyz
       Zs = Z
     else:
-      xyzs = np.stack([xyzs,xyz])
+      #xyzs = np.stack([xyzs,xyz])
       Zs = np.vstack([Zs,Z])
+    xyzs.append(xyz)
 
     if kwargs['output'] == 'extended_xyz':
       xyzStr.append('%d\n' % molecule.N)
@@ -47,6 +50,7 @@ def pack(data_list, **kwargs):
         r = molecule.R[I]
         xyzStr.append('%-2s % 8.4f % 8.4f % 8.4f\n'\
                       % (molecule.type_list[I], r[0], r[1], r[2]))
+  xyzs = np.array(xyzs)
   
   if len(Es) > 0:
     Es = np.array(Es)
