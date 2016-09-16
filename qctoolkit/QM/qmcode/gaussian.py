@@ -40,6 +40,11 @@ class inp(GaussianBasisInput):
       theory = theory_dict[self.setting['theory']]
     else:
       theory = self.setting['theory']
+    if 'openshell' in self.setting :
+      if self.setting['openshell'] == 'restricted':
+        theory = 'ro' + theory
+      elif self.setting['openshell'] == 'unrestricted':
+        theory = 'u' + theory
     basis = self.setting['basis_set']
     if 'def2' in basis.lower():
       basis = basis.replace('-', '')
@@ -83,6 +88,10 @@ class inp(GaussianBasisInput):
         gaussian_setting.append('EmpiricalDispersion=GD3')
       elif self.setting['vdw'] == 'd2':
         gaussian_setting.append('EmpiricalDispersion=GD2')
+    if 'print_energy' in self.setting and self.setting['print_energy']:
+      gaussian_setting.append('ExtraLinks=L608')
+    if 'mode' in self.setting and self.setting['mode'] == 'geopt':
+      gaussian_setting.append('Opt')
     inp.write("# %s/%s" % (theory, basis))
     for s in list(set(gaussian_setting)):
       inp.write(" %s" % s)
@@ -160,6 +169,23 @@ class out(GaussianBasisOutput):
         
       self.Et = float(Et_str.split('=')[1].replace(' ',''))
       self.detail = final_list
+
+      EJStr = filter(lambda x: 'EJ' in x, data)
+      if len(EJStr) > 0:
+        EJStr = EJStr[-1]
+        EJind = data.index(EJStr)
+        EJStr = data[EJind].replace(' ', '')
+        EComponents = filter(None, EJStr.split('E'))
+        tags_dict = {
+          'T':'Ekin',
+          'V':'Ene',
+          'J':'Eee',
+          'K':'Ex',
+          'Nuc':'Enn',
+        }
+        for EStr in EComponents:
+          tag, E = EStr.split('=')
+          self.energies[tags_dict[tag]] = float(E)
 
       crdStr = filter(lambda x: 'Angstroms' in x, data)[-1]
       ind = len(data) - data[::-1].index(crdStr) + 2

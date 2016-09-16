@@ -348,6 +348,7 @@ class GenericQMInput(object):
 class GenericQMOutput(object):
   def __init__(self, output=None, **kwargs):
     self.Et = np.nan
+    self.energies = {}
     self.nuclear_repulsion = np.nan
     self.scf_step = np.nan
     self.unit = 'Eh'
@@ -366,7 +367,9 @@ class GenericQMOutput(object):
   def inUnit(self, unit):
     unitStr = self.unit + '-' + unit
     if not unitStr.lower() == 'eh-eh':
-      self.Et, self.unit = qtk.convE(self.Et, unitStr, '-')
+      self.Et, self.unit = qtk.convE(self.Et, unitStr)
+      for key in self.energies.keys():
+        self.energies[key], _ = qtk.convE(self.energies[key], unitStr)
     return self
 
   def __add__(self, other):

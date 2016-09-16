@@ -54,13 +54,16 @@ def QMOut(out=None, **kwargs):
   else:
     if 'program' in kwargs:
       p_str = kwargs['program']
-      try:
+      if 'debug' in kwargs and kwargs['debug']:
         return out_dict[p_str](out)
-      except Exception as e:
-        qtk.warning("%s failed with message: %s" % (out, e))
-        qout = qtk.QMOut()
-        qout.path, qout.name = os.path.split(out)
-        return qout
+      else:
+        try:
+          return out_dict[p_str](out)
+        except Exception as e:
+          qtk.warning("%s failed with message: %s" % (out, e))
+          qout = qtk.QMOut()
+          qout.path, qout.name = os.path.split(out)
+          return qout
     else:
       for p in out_dict.itervalues():
         try:
