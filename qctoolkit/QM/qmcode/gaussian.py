@@ -48,8 +48,17 @@ class inp(GaussianBasisInput):
     basis = self.setting['basis_set']
     if 'def2' in basis.lower():
       basis = basis.replace('-', '')
-    charge, multiplicity = \
-      self.molecule.charge, self.molecule.multiplicity
+    if 'charge_multiplicity' not in self.setting:
+      charge, multiplicity = \
+        self.molecule.charge, self.molecule.multiplicity
+    else:
+      charge, multiplicity = \
+        self.setting['charge_multiplicity']
+      if (charge + sum(self.molecule.Z) + 1) % 2 != multiplicity % 2:
+        qtk.exit("charge: %3.1f and multiplicity %d is " \
+                 % (float(charge), multiplicity) + 
+                 "not competible with number of electron %d\n"
+                 % sum(self.molecule.Z))
 
     gaussian_setting = self.setting['gaussian_setting']
 
@@ -178,7 +187,7 @@ class out(GaussianBasisOutput):
         EComponents = filter(None, EJStr.split('E'))
         tags_dict = {
           'T':'Ekin',
-          'V':'Ene',
+          'V':'Eext',
           'J':'Eee',
           'K':'Ex',
           'Nuc':'Enn',

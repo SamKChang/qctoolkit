@@ -9,9 +9,10 @@ import qmcode.bigdft as bigdft
 import qmcode.gaussian as gaussian
 import qmcode.hortonInterface as horton
 import ofdft.main as ofdft
-import sys, os
+import sys, os, copy
 
-def QMInp(molecule, **kwargs):
+def QMInp(molecule, **kwargs_in):
+  kwargs = copy.deepcopy(kwargs_in)
   inp_dict = {
     'cpmd': [cpmd.inp, 'inp'],
     'vasp': [vasp.inp, ''],
@@ -48,28 +49,38 @@ def QMOut(out=None, **kwargs):
     'bigdft': bigdft.out,
   }
 
+
+  if 'unit' in kwargs:
+    unit = kwargs['unit']
+  else:
+    unit = 'Ha'
+
+  output = qtk.QMOutput()
+
   if out is not None and not os.path.exists(out):
     qtk.warning("%s not found" % out)
-    return qtk.QMOut()
+    #return qtk.QMOut()
   else:
     if 'program' in kwargs:
       p_str = kwargs['program']
       if 'debug' in kwargs and kwargs['debug']:
-        return out_dict[p_str](out)
+        #return out_dict[p_str](out).inUnit(unit)
+        output = out_dict[p_str](out)
       else:
         try:
-          return out_dict[p_str](out)
+          #return out_dict[p_str](out)
+          output = out_dict[p_str](out)
         except Exception as e:
           qtk.warning("%s failed with message: %s" % (out, e))
-          qout = qtk.QMOut()
-          qout.path, qout.name = os.path.split(out)
-          return qout
+          #qout = qtk.QMOut()
+          output.path, output.name = os.path.split(out)
+          #return output.inUnit(unit)
     else:
       for p in out_dict.itervalues():
         try:
-          return p(out)
+          output = p(out)
         except:
           pass
       qtk.warning("something wrong with output file, "+\
                   "pass 'program' eplicitly")
-      
+  return output.inUnit(unit)

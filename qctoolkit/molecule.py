@@ -186,7 +186,7 @@ class Molecule(object):
     data.sort(key=lambda tup: tup[0])
     if 'output' not in kwargs:
       kwargs['output'] = 'string'
-    if kwargs['output'] == 'count':
+    if kwargs['output'] == 'dictionary' or kwargs['output'] == 'count':
       out = {}
       for element in data:
         out[qtk.Z2n(element[0])] = element[1]
@@ -196,26 +196,40 @@ class Molecule(object):
         out = out + qtk.Z2n(element[0]) + str(element[1])
     return out
 
-  def build(self, moleculeData, name=None):
-    if type(moleculeData) is list:
-      moleculeData = np.array(moleculeData)
-      if len(moleculeData.shape) == 1:
-        moleculeData = np.atleast_2d(moleculeData)
-      self.N = moleculeData.shape[0]
-      self.Z = moleculeData[:, 0]
-      self.R = moleculeData[:, 1:]
+  def build(self, moleculeData=None, name=None, **kwargs):
+    if moleculeData is not None:
+      if type(moleculeData) is list:
+        moleculeData = np.array(moleculeData)
+        if len(moleculeData.shape) == 1:
+          moleculeData = np.atleast_2d(moleculeData)
+        self.N = moleculeData.shape[0]
+        self.Z = moleculeData[:, 0]
+        self.R = moleculeData[:, 1:]
+        self.type_list = [qtk.Z2n(z) for z in self.Z]
+        self.string = ['' for i in range(self.N)]
+        if name is None:
+          self.name = self.stoichiometry()
+        else:
+          self.name = name
+    else:
+      assert 'Z' in kwargs
+      assert 'R' in kwargs
+      Z = np.array(kwargs['Z'])
+      R = np.array(kwargs['R'])
+      self.N = len(Z)
+      self.Z = Z
+      self.R = R
       self.type_list = [qtk.Z2n(z) for z in self.Z]
       self.string = ['' for i in range(self.N)]
-      if name is None:
-        self.name = self.stoichiometry()
-      else:
-        self.name = name
+      self.name = self.stoichiometry()
     return self
 
   # tested
   def findBonds(self, ratio=setting.bond_ratio, **kwargs):
     del self.segments
+    del self.bond_types
     self.segments = []
+    self.bond_types = {}
     qtk.report("Molecule", 
                "finding bonds with cutoff ratio", 
                ratio)
@@ -274,6 +288,7 @@ class Molecule(object):
           type_begin = qtk.Z2n(atom_begin)
           type_end   = qtk.Z2n(atom_end)
           bond_type  = type_begin + "-" + type_end
+          self.bonds[itr]['name'] = bond_type
           if bond_type in self.bond_types:
             self.bond_types[bond_type] += 1
           else:
