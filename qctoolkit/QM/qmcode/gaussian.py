@@ -18,6 +18,7 @@ class inp(GaussianBasisInput):
         'nosymm',
         'Scf(maxcycle=1000,verytight)',
         'int(grid=ultrafine)',
+        'IOp(2/12=3)', # allow atoms to be too near
       ]
       self.setting['gaussian_setting'] = gaussian_setting
 
@@ -86,10 +87,17 @@ class inp(GaussianBasisInput):
       density_dict = {'ccsd', 'mp2', 'mp3', 'ccd', 'cid', 'cisd'}
 
       if 'save_density' in self.setting\
-      and self.setting['save_density']\
-      and theory.lower() in density_dict\
-      and 'Density=Current' not in self.setting['gaussian_setting']:
-        self.setting['gaussian_setting'].append('Density=Current')
+      and self.setting['save_density']:
+        if 'density_theory' in self.setting\
+        and self.setting['density_theory'] in density_dict:
+          densityStr = 'Density=%s' % self.setting['density_theory']
+          self.setting['gaussian_setting'].append(densityStr)
+        elif theory.lower() in density_dict\
+        and 'Density=Current' not in self.setting['gaussian_setting']:
+          self.setting['gaussian_setting'].append('Density=Current')
+        else:
+          self.setting['gaussian_setting'].append('Density=SCF')
+       
     if 'nuclear_charges' in self.setting:
       gaussian_setting.append('Charge')
     if 'vdw' in self.setting:
