@@ -166,19 +166,22 @@ def submit(inp_list, root, **remote_settings):
     status = "remove remote tar file"
     cmd = 'rm %s' % rootToSend
     remoteRun(cmd, status, ssh)
+    qtk.report('submit', 'done')
 
   exe = qtk.setting.program_dict[program]
   cmd = "%s \"%s\" %s %d %d '%s' %s" % (submission_script, exe,
     remote_path, threads, qthreads, flags, prefix)
-  status = 'submitting jobs'
+  status = 'submitting jobs...'
   remoteRun(cmd, status, ssh)
   ssh.exec_command("echo %s > %s/cmd.log" % (cmd, remote_path))
+  qtk.report('submit', 'submission completed')
 
   ssh.close()
 
   if 'debug' in remote_settings and remote_settings['debug']:
     pass
   else:
+    qtk.report('submit', 'cleanup local files')
     shutil.rmtree(root)
     if os.path.exists(root + '.tar.gz'):
       os.remove(root + '.tar.gz')
