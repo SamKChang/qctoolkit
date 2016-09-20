@@ -92,6 +92,36 @@ def read_casino(chg_file):
 
   return data, zcoord, grid
 
+def read_gaussian(fchk, **kwargs):
+  root, ext = os.path.splitext(fchk)
+  cube = root + '.cube'
+  if 'grid' in kwargs:
+    grid = kwargs['grid']
+    cmd = '%s 1 density=scf %s %s -1' % (qtk.gaussian_cubegen_exe, 
+                                         fchk, cube)
+    run = sp.Popen(cmd, shell=True, stdin=sp.PIPE)
+    for i in range(len(grid)):
+      vec = grid[i]
+      if i == 0:
+        # for formated output
+        msg = '-1 %f %f %f\n' % (vec[1], vec[2], vec[3])
+      elif i == 1:
+        # for Bohr as grid unit
+        msg = '%d %f %f %f\n' % (-vec[0], vec[1], vec[2], vec[3])
+      else:
+        msg = '%d %f %f %f\n' % (vec[0], vec[1], vec[2], vec[3])
+      run.stdin.write(msg)
+  else:
+    cmd = '%s 1 density=scf %s %s' % (qtk.gaussian_cubegen_exe, 
+                                      fchk, cube)
+    run = sp.Popen(cmd, shell=True, stdin=sp.PIPE)
+  run.stdin.flush()
+  run.communicate()
+  run.wait()
+  q = qtk.CUBE(cube, format='cube')
+  zcoord = np.hstack([q.molecule.Z[:, np.newaxis], q.molecule.R])
+  return q.data, zcoord, q.grid
+
 class CUBE(object):
   """
   read Gaussian CUBE file into numpy 3D array
@@ -109,10 +139,14 @@ class CUBE(object):
         ext = os.path.splitext(self.name)[1]
         if ext == '.cube':
           kwargs['format'] = 'cube'
-        elif ext == '.casino':
+        elif ext == '.casino' or ext == '.dat':
           kwargs['format'] = 'casino'
         elif self.name == 'CHGCAR' or ext =='.vasp':
           kwargs['format'] = 'vasp'
+        elif ext == '.fchk':
+          kwargs['format'] = 'gaussian'
+        else:
+          qtk.exit("unknown extension %s" % ext)
       if kwargs['format'] == 'cube':
         self.data, self.zcoord, self.grid, self.coords\
           = rq.read_cube(cube_file)
@@ -120,6 +154,10 @@ class CUBE(object):
         self.data, self.zcoord, self.grid = read_vasp(cube_file)
       elif kwargs['format'] == 'casino':
         self.data, self.zcoord, self.grid = read_casino(cube_file)
+      elif kwargs['format'] == 'gaussian':
+        self.data, self.zcoord, self.grid = \
+          read_gaussian(cube_file, **kwargs)
+
       self.molecule = qtk.Molecule()
       self.shape = self.data.shape
       self.molecule.R = self.zcoord[:,1:4]*0.529177249
@@ -127,10 +165,10 @@ class CUBE(object):
       self.molecule.N = len(self.zcoord)
       self.molecule.type_list = [ut.Z2n(z) for z in self.molecule.Z]
       self.interp = None
-
+  
       def vec(i):
         return self.grid[i,1:]
-  
+    
       self.dV = np.dot(vec(1), np.cross(vec(2), vec(3)))
       self.V = self.dV*self.grid[1,0]*self.grid[2,0]*self.grid[3,0]
 
@@ -254,7 +292,7 @@ class CUBE(object):
       ut.exit("gaussian fchk file:%s not found" % fchk)
     cube = 'gcube_tmp_' + str(id(self)) + '.cube'
     cube = os.path.join(path, cube)
-    cmd = '%s 1 density=scf %s %s -1' % (qtk.gaussiancubegen_exe, 
+    cmd = '%s 1 density=scf %s %s -1' % (qtk.gaussian_cubegen_exe, 
                                          fchk, cube)
     run = sp.Popen(cmd, shell=True, stdin=sp.PIPE)
     for i in range(len(self.grid)):
