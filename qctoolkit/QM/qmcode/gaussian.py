@@ -181,7 +181,7 @@ class out(GaussianBasisOutput):
       self.Et = float(Et_str.split('=')[1].replace(' ',''))
       self.detail = final_list
 
-      EJStr = filter(lambda x: 'EJ' in x, data)
+      EJStr = filter(lambda x: 'EJ=' in x, data)
       if len(EJStr) > 0:
         EJStr = EJStr[-1]
         EJind = data.index(EJStr)
