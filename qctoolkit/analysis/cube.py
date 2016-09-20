@@ -385,7 +385,9 @@ class CUBE(object):
                     self.grid[i, i])
       xout = np.arange(xi, xf, dx)*0.529177249
       yout = np.sum(self.data, axis=tuple(axes))*np.prod(steps)
-      if not 'no_show' in kwargs:
+      if 'no_show' in kwargs and kwargs['no_show']:
+        pass
+      else:
         if 'name' in kwargs:
           name = kwargs['name']
         else:
@@ -484,49 +486,52 @@ class CUBE(object):
         qtk.exit("failed when accessing cube data")
         
     X, Y = np.meshgrid(*tuple(_axis), indexing='ij')
-    if 'name' in kwargs:
-      name = kwargs['name']
+    if 'no_show' in kwargs and kwargs['no_show']:
+      pass
     else:
-      name = self.name
-    if 'plargs' in kwargs:
-      plargs = kwargs['plargs']
-    else:
-      plargs = []
-    plkwargs = {}
-    if 'plkwargs' in kwargs:
-      plkwargs.update(kwargs['plkwargs'])
-    fig = plt.figure(name)
-    ax = fig.add_subplot(111)
-    CS = plt.contour(X, Y, Z, levels, *plargs, **plkwargs)
-    CB = plt.colorbar(CS, shrink=0.8, extend='both')
-    plt.xlabel(_label[0] + r" [$\rm \AA$]", fontsize=15)
-    plt.ylabel(_label[1] + r" [$\rm \AA$]", fontsize=15)
-    plt.axes().set_aspect('equal')
-
-    x_list = []
-    y_list = []
-
-    def plotElement(i):
-      to_plot = True
-      for j in range(2):
-        if _coord[j][i] > _range[j][1] or _coord[j][i] < _range[j][0]:
-          to_plot = False
-      if to_plot:
-        symbol = self.molecule.type_list[i]
-        x = _coord[0][i]
-        y = _coord[1][i]
-        x_list.append(x)
-        y_list.append(y)
-        ax.annotate(symbol, xytext=(x+0.02, y+0.02), xy=(0, 0))
-
-    for i in range(self.molecule.N):
-      plotElement(i)
-
-    plt.plot(x_list, y_list, ls='', marker='o', color='k')
-    x_min, x_max = _range[0]
-    y_min, y_max = _range[1]
-    plt.xlim(_range[0])
-    plt.ylim(_range[1])
+      if 'name' in kwargs:
+        name = kwargs['name']
+      else:
+        name = self.name
+      if 'plargs' in kwargs:
+        plargs = kwargs['plargs']
+      else:
+        plargs = []
+      plkwargs = {}
+      if 'plkwargs' in kwargs:
+        plkwargs.update(kwargs['plkwargs'])
+      fig = plt.figure(name)
+      ax = fig.add_subplot(111)
+      CS = plt.contour(X, Y, Z, levels, *plargs, **plkwargs)
+      CB = plt.colorbar(CS, shrink=0.8, extend='both')
+      plt.xlabel(_label[0] + r" [$\rm \AA$]", fontsize=15)
+      plt.ylabel(_label[1] + r" [$\rm \AA$]", fontsize=15)
+      plt.axes().set_aspect('equal')
+  
+      x_list = []
+      y_list = []
+  
+      def plotElement(i):
+        to_plot = True
+        for j in range(2):
+          if _coord[j][i] > _range[j][1] or _coord[j][i] < _range[j][0]:
+            to_plot = False
+        if to_plot:
+          symbol = self.molecule.type_list[i]
+          x = _coord[0][i]
+          y = _coord[1][i]
+          x_list.append(x)
+          y_list.append(y)
+          ax.annotate(symbol, xytext=(x+0.02, y+0.02), xy=(0, 0))
+  
+      for i in range(self.molecule.N):
+        plotElement(i)
+  
+      plt.plot(x_list, y_list, ls='', marker='o', color='k')
+      x_min, x_max = _range[0]
+      y_min, y_max = _range[1]
+      plt.xlim(_range[0])
+      plt.ylim(_range[1])
 
     ut.report('CUBE', 'axis:%d, slice:%f' % (axis, loc))
     ut.report("CUBE", "slice coordinate: %f" % loc_coord)
