@@ -3,6 +3,7 @@ import paramiko
 import pexpect
 import os
 import shutil
+import subprocess as sp
 
 def submit(inp_list, root, **remote_settings):
   necessary_list = [
@@ -80,6 +81,25 @@ def submit(inp_list, root, **remote_settings):
       inp.write(inp.molecule.name)
     os.chdir(cwd)
 
+  if 'compress' not in remote_settings:
+    remote_settings['compress'] = False
+    if len(inp_list) > 500:
+      remote_settings['compress'] = True
+
+  if remote_settings['compress']:
+    qtk.report("submit", "compressing input files")
+    cmd = 'tar -zcf %s %s' % (root + '.tar.gz', root)
+    run = sp.Popen(cmd, shell=True, stdin=sp.PIPE)
+    run.stdin.flush()
+    run.communicate()
+    run.wait()
+    rootToSend = root + '.tar.gz'
+    remote_dest = remote_path + '.tar.gz'
+    qtk.report("submit", "compression completed")
+  else:
+    rootToSend = root
+    remote_dest = remote_path
+
   paramiko_kwargs = {}
   if username:
     paramiko_kwargs['username'] = username
@@ -107,9 +127,11 @@ def submit(inp_list, root, **remote_settings):
   ssh_newkey = 'Are you sure you want to continue connecting'
   patterns = [ssh_newkey, '[Pp]assword:', pexpect.EOF]
   if username:
-    cmd = 'scp -qr %s %s@%s:%s' % (root, username, ip, remote_path)
+    userStr = username + '@'
   else:
-    cmd = 'scp -qr %s %s:%s' % (root, ip, remote_path)
+    userStr = ''
+
+  cmd = 'scp -qr %s %s%s:%s' % (rootToSend, userStr, ip, remote_dest)
 
   qtk.report('submit', cmd)
   
@@ -128,6 +150,16 @@ def submit(inp_list, root, **remote_settings):
       qtk.report('submit', 'scp completed')
     else:
       qtk.warning('scp message: %s' % p.before)
+
+  if remote_settings['compress']:
+    qtk.report("submit", "decompress remote input files")
+    remote_cmd = 'tar xf %s' % rootToSend
+    qtk.report('submit', remote_cmd)
+
+    ssh_stdin, ssh_stdout, ssh_stderr = \
+      ssh.exec_command(remote_cmd)
+    sshout = trimMsg(ssh_stdout)
+    ssherr = trimMsg(ssh_stderr)
 
   exe = qtk.setting.program_dict[program]
   remote_cmd = "%s \"%s\" %s %d %d '%s' %s" % \
