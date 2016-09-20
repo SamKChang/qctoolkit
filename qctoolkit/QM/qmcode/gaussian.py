@@ -145,7 +145,7 @@ class out(GaussianBasisOutput):
       pattern2 = re.compile("[0-9].[0-9]")
       try:
         rmsd_list = filter(pattern.match, data)
-        rmsd = filter(pattern2.match, rmsd_list)
+        rmsd = filter(pattern2.match, rmsd_list)[-1]
       except:
         qtk.exit("something wrong when accessing final energy" + \
                  " at index construction")
