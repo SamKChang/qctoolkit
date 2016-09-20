@@ -142,8 +142,10 @@ class out(GaussianBasisOutput):
       data = outfile.readlines()
 
       pattern = re.compile(".*R*[ \n]*M*[ \n]*S*[ \n]*D[ \n]*=")
+      pattern2 = re.compile("[0-9].[0-9]")
       try:
-        rmsd = filter(pattern.match, data)[-1]
+        rmsd_list = filter(pattern.match, data)
+        rmsd = filter(pattern2.match, rmsd_list)
       except:
         qtk.exit("something wrong when accessing final energy" + \
                  " at index construction")
