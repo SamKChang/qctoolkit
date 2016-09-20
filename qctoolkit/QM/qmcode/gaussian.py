@@ -213,16 +213,21 @@ class out(GaussianBasisOutput):
           break
       self.molecule = qtk.Molecule()
       self.molecule.build(ZR)
-      
-      fchk = os.path.join(self.path, self.stem) + ".fchk"
-      if os.path.exists(fchk):
-        if qtk.setting.debug: 
-          self.getMO(fchk)
-        else:
-          try:
+
+      read_fchk = True
+      if 'read_fchk' in kwargs:
+        read_fchk = kwargs['read_fchk']
+
+      if read_fchk:
+        fchk = os.path.join(self.path, self.stem) + ".fchk"
+        if os.path.exists(fchk):
+          if qtk.setting.debug: 
             self.getMO(fchk)
-          except:
-            qtk.warning("something wrong while loading fchk file")
+          else:
+            try:
+              self.getMO(fchk)
+            except:
+              qtk.warning("something wrong while loading fchk file")
 
   def getMO(self, fchk):
     fchkfile = open(fchk)
