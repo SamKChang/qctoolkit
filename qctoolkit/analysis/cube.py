@@ -93,8 +93,17 @@ def read_casino(chg_file):
   return data, zcoord, grid
 
 def read_gaussian(fchk, **kwargs):
-  root, ext = os.path.splitext(fchk)
-  cube = root + '.cube'
+  if 'name' in kwargs:
+    cube = kwargs['name']
+    root, ext = os.path.splitext(cube)
+    if ext != '.cube':
+      print ext
+      qtk.warning("extension .cube is required for many " + \
+                  "visualization programs")
+  else:
+    root, ext = os.path.splitext(fchk)
+    cube = root + '.cube'
+  qtk.progress("CUBE", "writing file %s\n" % cube)
   if 'grid' in kwargs:
     grid = kwargs['grid']
     cmd = '%s 1 density=scf %s %s -1' % (qtk.gaussian_cubegen_exe, 
