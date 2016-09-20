@@ -5,6 +5,18 @@ import os
 import shutil
 import subprocess as sp
 
+def remoteRun(cmd, status, session):
+  qtk.report('submit', status)
+  qtk.report('submit-remote-command', cmd)
+  ssh_stdin, ssh_stdout, ssh_stderr = \
+    session.exec_command(cmd)
+  sshout = trimMsg(ssh_stdout)
+  ssherr = trimMsg(ssh_stderr)
+  if len(sshout) > 0:
+    qtk.report('submit-remote-output', sshout)
+  if len(ssherr) > 0:
+	  qtk.report('submit-remote-error', ssherr)
+
 def submit(inp_list, root, **remote_settings):
   necessary_list = [
     'ip',
@@ -115,12 +127,9 @@ def submit(inp_list, root, **remote_settings):
   if len(sshout) > 0:
     if 'overwrite' in remote_settings \
     and remote_settings['overwrite']:
-      qtk.warning('remote path %s exists, overwrite...' % remote_path)
-      ssh_stdin, ssh_stdout, ssh_stderr = \
-        ssh.exec_command('rm -r %s' % remote_path)
-      ssherr = trimMsg(ssh_stderr)
-      if len(ssherr) > 0:
-    	  qtk.report('submit-remote-error for removing file', ssherr)
+      status = 'remote path %s exists, overwrite...' % remote_path
+      cmd = 'rm -r %s' % remote_path
+      remoteRun(cmd, status, ssh)
     else:
       qtk.exit('remote path %s exists' % remote_path)
 
@@ -132,9 +141,8 @@ def submit(inp_list, root, **remote_settings):
     userStr = ''
 
   cmd = 'scp -qr %s %s%s:%s' % (rootToSend, userStr, ip, remote_dest)
-
-  qtk.report('submit', cmd)
-  
+  qtk.report('submit', 'scp input files...')
+  qtk.report('submit-remote_command', cmd)
 
   p = pexpect.spawn(cmd)
   i = p.expect(patterns, timeout=timeout)
@@ -152,37 +160,19 @@ def submit(inp_list, root, **remote_settings):
       qtk.warning('scp message: %s' % p.before)
 
   if remote_settings['compress']:
-    qtk.report("submit", "decompress remote input files")
-    remote_cmd = 'tar xf %s' % rootToSend
-    qtk.report('submit', remote_cmd)
-
-    ssh_stdin, ssh_stdout, ssh_stderr = \
-      ssh.exec_command(remote_cmd)
-    sshout = trimMsg(ssh_stdout)
-    ssherr = trimMsg(ssh_stderr)
+    status = "decompress remote input files"
+    cmd = 'tar xf %s' % rootToSend
+    remoteRun(cmd, status, ssh)
+    status = "remove remote tar file"
+    cmd = 'rm %s' % rootToSend
+    remoteRun(cmd, status, ssh)
 
   exe = qtk.setting.program_dict[program]
-  remote_cmd = "%s \"%s\" %s %d %d '%s' %s" % \
-    (submission_script, exe, 
-     remote_path, threads, qthreads, flags, prefix)
-  
-  qtk.report('submit', remote_cmd)
-
-  ssh_stdin, ssh_stdout, ssh_stderr = \
-    ssh.exec_command(remote_cmd)
-  sshout = trimMsg(ssh_stdout)
-  ssherr = trimMsg(ssh_stderr)
-  qtk.report('submit-remote-output', sshout)
-  if len(ssherr) > 0:
-	  qtk.report('submit-remote-error', ssherr)
-  
-  ssh_stdin, ssh_stdout, ssh_stderr = \
-    ssh.exec_command("echo %s > %s/cmd.log" % (remote_cmd, remote_path))
-  sshout = trimMsg(ssh_stdout)
-  ssherr = trimMsg(ssh_stderr)
-  qtk.report('submit-remote-output', sshout)
-  if len(ssherr) > 0:
-	  qtk.report('submit-remote-error', ssherr)
+  cmd = "%s \"%s\" %s %d %d '%s' %s" % (submission_script, exe,
+    remote_path, threads, qthreads, flags, prefix)
+  status = 'submitting jobs'
+  remoteRun(cmd, status, ssh)
+  ssh.exec_command("echo %s > %s/cmd.log" % (cmd, remote_path))
 
   ssh.close()
 
@@ -190,6 +180,8 @@ def submit(inp_list, root, **remote_settings):
     pass
   else:
     shutil.rmtree(root)
+    if os.path.exists(root + '.tar.gz'):
+      os.remove(root + '.tar.gz')
 
 def trimMsg(msg_in):
   out = msg_in.readlines()
