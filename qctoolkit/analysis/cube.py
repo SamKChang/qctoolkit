@@ -129,6 +129,7 @@ def read_gaussian(fchk, **kwargs):
   run.wait()
   q = qtk.CUBE(cube, format='cube')
   zcoord = np.hstack([q.molecule.Z[:, np.newaxis], q.molecule.R])
+  zcoord[:,1:4] = zcoord[:,1:4] / 0.529177249
   return q.data, zcoord, q.grid
 
 class CUBE(object):
@@ -440,30 +441,32 @@ class CUBE(object):
       ut.report("CUBE", 
                 "center of mass on %s-axis:" % _text[axis], level)
       level = level
-    O = self.grid[0,1:4]
+    _grid = copy.deepcopy(self.grid)
+    _grid[:, 1:4] = _grid[:, 1:4] * 0.529177249
+    O = _grid[0,1:4]
     _max = []
     for i in range(1, 4):
-      _max.append(self.grid[i,i] * self.grid[i,0])
+      _max.append(_grid[i,i] * _grid[i,0] + O[i-1])
     _max = np.array(_max)
     _axis = []
     _axis_text = ['$x$', '$y$', '$z$']
     _label = []
     _coord = []
     _range = []
+    _origin = []
 
     for i in range(3):
-      line = np.linspace(O[i], _max[i], self.grid[i+1, 0])
-      line = line * 0.529177249
+      line = np.linspace(O[i], _max[i], _grid[i+1, 0])
       if i != axis:
         _axis.append(line)
         _label.append(_axis_text[i])
         _coord.append(list(self.molecule.R[:,i]))
-        _range.append([self.grid[0, 1+i]* 0.529177249, 
-                       _max[i]* 0.529177249])
+        _range.append([_grid[0, 1+i], _max[i]])
+        _origin.append(O[i])
       else:
         if not loc:
           loc = np.argmin(abs(line - level))
-        loc_coord = (O[i] + loc * self.grid[i+1, i+1]) * 0.529177249
+        loc_coord = (O[i] + loc * _grid[i+1, i+1])
     if axis == 0:
       try:
         Z = self.data[loc, :, :]
