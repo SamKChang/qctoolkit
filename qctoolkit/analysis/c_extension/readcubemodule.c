@@ -28,7 +28,7 @@ void readCubeHeader(char *inp, int dims[3], int size[2]){
     getline(&string, &len, fr);
   }
 
-  size[0] = grid[0];
+  size[0] = abs(grid[0]);
   size[1] = 4;
   for(i=0;i<3;i++){
     dims[i] = (int) grid[4 * (i+1)];
@@ -59,6 +59,7 @@ void readcube_c(char *inp,
   double r;
   char *string = (char *) malloc(80);
   size_t len=0;
+
 
   // CUBE file contains fixed size grid specification
   fr = fopen(inp, "r");

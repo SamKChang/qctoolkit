@@ -104,10 +104,14 @@ def read_gaussian(fchk, **kwargs):
     root, ext = os.path.splitext(fchk)
     cube = root + '.cube'
   qtk.progress("CUBE", "writing file %s\n" % cube)
+  if 'flag' not in kwargs:
+    flag = 'density=scf'
+  else:
+    flag = kwargs['flag']
   if 'grid' in kwargs:
     grid = kwargs['grid']
-    cmd = '%s 1 density=scf %s %s -1' % (qtk.gaussian_cubegen_exe, 
-                                         fchk, cube)
+    cmd = '%s 1 %s %s %s -1' % (qtk.gaussian_cubegen_exe, 
+                                flag, fchk, cube)
     run = sp.Popen(cmd, shell=True, stdin=sp.PIPE)
     for i in range(len(grid)):
       vec = grid[i]
@@ -121,8 +125,8 @@ def read_gaussian(fchk, **kwargs):
         msg = '%d %f %f %f\n' % (vec[0], vec[1], vec[2], vec[3])
       run.stdin.write(msg)
   else:
-    cmd = '%s 1 density=scf %s %s' % (qtk.gaussian_cubegen_exe, 
-                                      fchk, cube)
+    cmd = '%s 1 %s %s %s' % (qtk.gaussian_cubegen_exe, 
+                             flag, fchk, cube)
     run = sp.Popen(cmd, shell=True, stdin=sp.PIPE)
   run.stdin.flush()
   run.communicate()
