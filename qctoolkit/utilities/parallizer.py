@@ -5,8 +5,9 @@ import operator
 from compiler.ast import flatten
 import numpy as np
 import sys, os
+import shutil
 
-def qmRunAll(inp_list, **kwargs):
+def qmRunAll(inp_list, root=None,**kwargs):
   if 'block_size' not in kwargs:
     kwargs['block_size'] = 1
   job = []
@@ -14,7 +15,20 @@ def qmRunAll(inp_list, **kwargs):
     job.append([inp, inp.molecule.name])
   if inp.setting['threads'] != 1:
     kwargs['threads'] = setting.cpu_count / inp.setting['threads']
-  qtk.parallelize(qtk.qmRunJob, job, **kwargs)
+  if root is None:
+    qtk.parallelize(qtk.qmRunJob, job, **kwargs)
+  else:
+    if os.path.exists(root):
+      if 'overwrite' in kwargs and kwargs['overwrite']:
+        qtk.warning("overwrite existing folder %s" % root)
+        shutil.rmtree(root)
+      else:
+        qtk.exit('%s exists' % s)
+    cwd = os.getcwd()
+    os.makedirs(root)
+    os.chdir(root)
+    qtk.parallelize(qtk.qmRunJob, job, **kwargs)
+    os.chdir(cwd)
 
 def qmRunJob(inp, name):
   qtk.report("qmRunJob", "runing qmjob:'%s'" % inp,
