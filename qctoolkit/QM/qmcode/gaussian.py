@@ -141,7 +141,7 @@ class out(GaussianBasisOutput):
       outfile = open(qmout)
       data = outfile.readlines()
 
-      pattern = re.compile("R *M *S *D *=")
+      pattern = re.compile(" *R *M *S *D *=")
       start_lst = filter(lambda x: 'Test job not archived.' in x, data)
       if len(start_lst) == 1:
         start = data.index(start_lst[0]) + 1
