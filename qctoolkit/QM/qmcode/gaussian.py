@@ -141,21 +141,15 @@ class out(GaussianBasisOutput):
       outfile = open(qmout)
       data = outfile.readlines()
 
-      pattern = re.compile(".*R*[ \n]*M*[ \n]*S*[ \n]*D[ \n]*=")
-      pattern2 = re.compile("^.*[0-9]\.[0-9].*$")
-      try:
-        rmsd_list = filter(pattern.match, data)
-        rmsd = filter(pattern2.match, rmsd_list)[-1]
-      except:
-        qtk.exit("something wrong when accessing final energy" + \
-                 " at index construction")
-      start = data.index(rmsd)
-      end = data.index(rmsd)
-      while True:
-        if data[start] != '\n':
-          start = start - 1
-        else:
-          break
+      pattern = re.compile("R *M *S *D *=")
+      start_lst = filter(lambda x: 'Test job not archived.' in x, data)
+      if len(start_lst) == 1:
+        start = data.index(start_lst[0]) + 1
+        end = start
+      else:
+        qtk.exit("Error when finding string " + \
+                 "'Test job not archived.'")
+
       while True:
         if data[end] != '\n':
           end = end + 1
