@@ -198,7 +198,13 @@ class out(GaussianBasisOutput):
         }
         for EStr in EComponents:
           tag, E = EStr.split('=')
-          self.energies[tags_dict[tag]] = float(E)
+          try:
+	          self.energies[tags_dict[tag]] = float(E)
+          except:
+            qtk.warning("FORTRAN float overflow " + \
+                        "when extracting energy components for " +\
+                        qmout)
+            self.energies[tags_dict[tag]] = np.nan
 
       crdStr = filter(lambda x: 'Angstroms' in x, data)[-1]
       ind = len(data) - data[::-1].index(crdStr) + 2
