@@ -19,6 +19,7 @@ class inp(GaussianBasisInput):
         'Scf(maxcycle=1000,verytight)',
         'int(grid=ultrafine)',
         'IOp(2/12=3)', # allow atoms to be too near
+        'force',
       ]
       self.setting['gaussian_setting'] = gaussian_setting
 
@@ -46,6 +47,14 @@ class inp(GaussianBasisInput):
         theory = 'ro' + theory
       elif self.setting['openshell'] == 'unrestricted':
         theory = 'u' + theory
+    if 'geopt' in self.setting and self.setting['geopt']:
+      self.setting['gaussian_setting'].append('opt')
+      if 'force' in self.setting['gaussian_setting']:
+        ind = self.setting['gaussian_setting'].index('force')
+        del self.setting['gaussian_setting'][ind]
+    if 'print_polarizability' in self.setting\
+    and self.setting['print_polarizability']:
+      self.setting['gaussian_setting'].append('polar')
     basis = self.setting['basis_set']
     if 'def2' in basis.lower():
       basis = basis.replace('-', '')
@@ -215,6 +224,48 @@ class out(GaussianBasisOutput):
           break
       self.molecule = qtk.Molecule()
       self.molecule.build(ZR)
+
+      force = []
+      fStr_list = filter(lambda x: 'Forces (Hartrees' in x, data)
+      if len(fStr_list) > 0:
+        fStr = fStr_list[-1]
+        ind = len(data) - data[::-1].index(fStr) + 2
+        for i in range(self.molecule.N):
+          fLst = filter(None, data[ind+i].split(' '))[2:]
+          force.append([float(s) for s in fLst])
+        self.force = np.array(force)
+      else:
+        self.force = np.nan
+
+      dipole = []
+      uStr_list = filter(lambda x: 'Debye)' in x, data)
+      if len(uStr_list) > 0:
+        uStr = uStr_list[-1]
+        ind = len(data) - data[::-1].index(uStr)
+        dipoleStr = filter(None, data[ind].split(' '))
+        for i in [1,3,5]:
+          dipole.append(float(dipoleStr[i]))
+        self.dipole = np.array(dipole)
+      else:
+        self.dipole = np.nan
+
+      qp = []
+      qStr_list = filter(lambda x: ' Quadrupole moment' in x, data)
+      if len(qStr_list) > 0:
+        qStr = qStr_list[-1]
+        ind = len(data) - data[::-1].index(qStr)
+        for i in range(2):
+          tmp = dipoleStr = filter(None, data[ind+i].split(' '))
+          for j in [1,3,5]:
+            qp.append(float(tmp[j]))
+        xx, yy, zz, xy, xz, yz = qp
+        self.quadrupole = np.array([
+          [xx, xy, xz],
+          [xy, yy, yz],
+          [xz, yz, zz],
+        ])
+      else:
+        self.quadrupole = np.nan
 
       read_fchk = True
       if 'read_fchk' in kwargs:
