@@ -55,6 +55,9 @@ class inp(GaussianBasisInput):
     if 'print_polarizability' in self.setting\
     and self.setting['print_polarizability']:
       self.setting['gaussian_setting'].append('polar')
+      if 'force' in self.setting['gaussian_setting']:
+        ind = self.setting['gaussian_setting'].index('force')
+        del self.setting['gaussian_setting'][ind]
     basis = self.setting['basis_set']
     if 'def2' in basis.lower():
       basis = basis.replace('-', '')
@@ -274,7 +277,7 @@ class out(GaussianBasisOutput):
       if read_fchk:
         fchk = os.path.join(self.path, self.stem) + ".fchk"
         if os.path.exists(fchk):
-          if qtk.setting.debug: 
+          if 'debug' in kwargs and kwargs['debug']: 
             self.getMO(fchk)
           else:
             try:
@@ -283,8 +286,10 @@ class out(GaussianBasisOutput):
               qtk.warning("something wrong while loading fchk file")
 
   def getMO(self, fchk):
+    self.program = 'gaussian'
     fchkfile = open(fchk)
     fchk = fchkfile.readlines()
+    self.basis_name = filter(None, fchk[1].split(' '))[2]
 
     def basisList(L):
       N_dict = {4: 'g', 5: 'h', 6: 'k'}

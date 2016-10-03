@@ -10,6 +10,29 @@ from keint import keint
 import numpy as np
 from numpy import tensordot as td
 import warnings 
+import pkgutil
+import os
+
+from ofdft.libxc_dict import xc_dict
+import ofdft.libxc_interface as xcio
+ps_eggs_loader = pkgutil.find_loader('pyscf')
+ps_found = ps_eggs_loader is not None
+ht_eggs_loader = pkgutil.find_loader('horton')
+ht_found = ht_eggs_loader is not None
+
+selfPath = os.path.realpath(__file__)
+selfPath = os.path.split(selfPath)[0] + 'ofdft'
+xcpath = os.path.join(selfPath, 'libxc_exc.so')
+xc_found = os.path.exists(xcpath)
+if ps_found:
+  from pyscf import gto
+  import pyscf as ps
+else:
+  pass
+if ht_found:
+  from horton import BeckeMolGrid
+else:
+  pass
 
 class GaussianBasisInput(GenericQMInput):
   """
@@ -30,6 +53,119 @@ class GaussianBasisInput(GenericQMInput):
 class GaussianBasisOutput(GenericQMOutput):
   def __init__(self, output=None, **kwargs):
     GenericQMOutput.__init__(self, output, **kwargs)
+
+  def mo_g09_nwchem(self):
+    mo = self.mo_vectors
+    ind = np.arange(len(mo[0]))
+    itr = 0
+
+    order = {
+     'd': [0, 3, 4, 1, 5, 2],
+     'f': [0, 4, 5, 3, 9, 6, 1, 8, 7, 2],
+    }
+
+    while itr < len(mo[0]):
+      bStr = self.basis[itr]['type']
+      if len(bStr) > 2:
+        key = bStr[0]
+        if key in order.keys():
+          ind_itr = ind[itr: itr+len(order[key])]
+          ind_itr = ind_itr[order[key]]
+          for i in range(len(order[bStr[0]])):
+            ind[itr + i] = ind_itr[i]
+          itr += len(order[bStr[0]]) - 1
+        else:
+          qtk.exit("basis reordering for %s orbital " % key\
+                 + "not implemented yet")
+      itr += 1
+    return mo[:, ind]
+
+  def basisFormat():
+    if not hasattr(self, 'basis'):
+      qtk.exit("no basis found")
+    pass
+
+  def getBeckeGrid(self, grid='fine'):
+    """
+    coarse, medium, fine, veryfine, ultrafine and insane
+    """
+    if not hasattr(self, 'molecule'):
+      qtk.exit("no molecule structure found")
+    molecule = self.molecule
+    coord = np.array(np.atleast_2d(molecule.R*1.8897261245650618))
+    self.grid = BeckeMolGrid(coord, 
+                             molecule.Z.astype(int), 
+                             molecule.Z,
+                             grid)
+
+    mol_str = []
+    for i in range(molecule.N):
+      atm_str = [molecule.type_list[i]]
+      for j in range(3):
+         atm_str.append(str(molecule.R[i,j]))
+      mol_str.append(' '.join(atm_str))
+    mol_str = '; '.join(mol_str)
+
+    mol = gto.Mole()
+    #mol.build(atom=mol_str, basis=self.setting['basis_set'])
+    if hasattr(self, 'basis_name'):
+      basis = self.basis_name
+    mol.build(atom=mol_str, basis=basis)
+    self.mol = mol
+
+  def getPhi(self, cartesian=True, grid='fine'):
+    self.getBeckeGrid(grid)
+    coords = self.grid.points
+    if cartesian:
+      mode = "GTOval_cart"
+    else:
+      mode = "GTOval_sph"
+    self._phi = self.mol.eval_gto(mode, coords).T
+    norm = np.dot(self._phi * self.grid.weights, self._phi.T)
+    self._phi = self._phi / np.sqrt(np.diag(norm))[:, np.newaxis]
+    return self._phi
+
+  def getPsi(self, cartesian=True, grid='fine'):
+    self.getPhi(cartesian, grid)
+    if not hasattr(self, 'mo_vectors'):
+      qtk.exit('mo_vectors not found')
+    mo = self.mo_vectors
+    if hasattr(self, 'program'):
+      if self.program == 'gaussian':
+        mo = self.mo_g09_nwchem()
+    self._psi = np.dot(mo, self._phi)
+    return self._psi
+
+  def getRho(self, cartesian=True, grid='fine'):
+    self.getPsi(cartesian, grid)
+    if not hasattr(self, 'occupation'):
+      qtk.exit("occupation number not found")
+    self.rho = np.zeros(self.grid.size)
+    for i in range(len(self.occupation)):
+      n = self.occupation[i]
+      psi = self._psi[i]
+      self.rho += n * psi**2
+    return self.rho
+
+  def getDipole(self, cartesian=True, grid='find', unit='debye'):
+    if not hasattr(self, 'molecule'):
+      qtk.exit('molecule structure not found')
+    if not hasattr(self, 'rho'):
+      self.getRho(cartesian, grid)
+    pQ = np.array(
+      [sum(self.molecule.Z * self.molecule.R[:,i]) for i in range(3)]
+    )
+    pQ = pQ * 1.8897259885789
+    pq = np.array(
+      [self.grid.integrate(self.rho * self.grid.points[:,i]) 
+       for i in range(3)]
+    )
+    pq = pq 
+    mu = pQ - pq
+    if unit == 'debye':
+      return mu / 0.393430307
+    else:
+      return mu
 
 def veMatrix(basis, coord, Z):
   basis_data, center, lm = basisData(basis)

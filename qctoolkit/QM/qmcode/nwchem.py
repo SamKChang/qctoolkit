@@ -101,7 +101,7 @@ class inp(GaussianBasisInput):
                  n_charge
                ))
     inp.write('end\n\n')
-    inp.write('basis\n')
+    inp.write('basis cartesian\n')
     if self.setting['basis_set'] != 'gen':
       eStr = []
       for e in range(len(molecule.Z)):
@@ -213,6 +213,7 @@ class out(GaussianBasisOutput):
   def __init__(self, qmout=None, **kwargs):
     GaussianBasisOutput.__init__(self, qmout, **kwargs)
     if qmout:
+      self.program = 'nwchem'
       outfile = open(qmout, 'r')
       data = outfile.readlines()
       outfile.close()
@@ -305,6 +306,13 @@ class out(GaussianBasisOutput):
         self.N = len(self.R)
         self.Z = [qtk.n2Z(e) for e in self.type_list]
         self.R_bohr = 1.889725989 * self.R
+        ZR = []
+        for i in range(self.N):
+          vec = [self.Z[i]]
+          vec.extend(self.R[i])
+          ZR.append(vec)
+        self.molecule = qtk.Molecule()
+        self.molecule.build(ZR)
   
         _N.append(0)
         self.basis = []

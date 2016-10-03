@@ -352,6 +352,7 @@ class GenericQMOutput(object):
     self.nuclear_repulsion = np.nan
     self.scf_step = np.nan
     self.unit = 'Eh'
+    self.molecule = qtk.Molecule()
     if output:
       #self.path = qtk.getPath(output)
       if output:
