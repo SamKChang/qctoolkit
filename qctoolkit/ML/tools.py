@@ -120,7 +120,7 @@ def pack(data_list, **kwargs):
   if kwargs['output'] == 'dictionary':
     out = {'xyz': xyzs, 'Z': Zs}
     if len(Es) > 0:
-      out['E'] = Es
+      out['E'] = np.array(Es)
   elif kwargs['output'] == 'extended_xyz':
     out = xyzStr
   else:
