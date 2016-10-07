@@ -4,6 +4,7 @@
 from sklearn.base import BaseEstimator, TransformerMixin
 import numpy as np
 import scipy
+from __future__ import division
 
 class OrthogonalLeastSquares(BaseEstimator, TransformerMixin):
 

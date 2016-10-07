@@ -12,6 +12,7 @@ from sklearn.cross_validation import cross_val_score
 from sklearn.linear_model import Ridge
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.externals.joblib import Parallel, delayed
+from __future__ import division
 
 def make_dirac_densities(x, z, grid_step=.01,
                          left_bound=None,
