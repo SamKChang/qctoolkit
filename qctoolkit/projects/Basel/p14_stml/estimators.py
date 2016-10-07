@@ -1,10 +1,10 @@
+from __future__ import division
 # code from michael.eickenberg@gmail.com 
 # meant to be sklearn module
 
 from sklearn.base import BaseEstimator, TransformerMixin
 import numpy as np
 import scipy
-from __future__ import division
 
 class OrthogonalLeastSquares(BaseEstimator, TransformerMixin):
 
