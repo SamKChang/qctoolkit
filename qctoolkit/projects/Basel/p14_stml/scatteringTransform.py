@@ -208,7 +208,8 @@ def stCoefs_1d(signals, filters, second_layer=False, parallel = False, block_siz
         
         f_signals = fft.fft(np.abs(signals), axis = -1)
         f_filters = fft.fft(fft.ifftshift(filters, axes=(-1,)), axis = -1)
-        f_conv = np.zeros(new_signal_shape, dtype=np.complex64)
+        #f_conv = np.zeros(new_signal_shape, dtype=np.complex64)
+        f_conv = np.zeros(new_signal_shape)
         
         counter = 0
         for i in range(n_scale - 1):
