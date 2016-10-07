@@ -61,7 +61,13 @@ def gabor_k(k, grid_x, xi0=np.pi * 3 / 4, sigma0=.5, scale=0):
     wave = np.exp(1j * xi * grid_x)
     return hermite_eval * gauss * wave
 
-def loadData(fname, batch = (1, 1), return_range = False):
+def trimData(data, start, end):
+    data_all = copy.deepcopy(data)
+    for k in data_all.keys():
+        data[k] = np.array(data_all[k])[start:end]
+    return data
+
+def loadData(fname, batch = (1, 1), return_range = False, size = None):
 #    # hack from http://stackoverflow.com/questions/11305790
 #    # /pickle-incompatability-of-numpy-arrays-between-python-2-and-3
 #    with open(fname, 'rb') as f:
@@ -78,13 +84,13 @@ def loadData(fname, batch = (1, 1), return_range = False):
     p_min = positions.min()
     p_max = positions.max()
     
-    if batch[0] != 1:
-        data_all = copy.deepcopy(data)
+    if size is not None:
+        data = trimData(data, 0, size)
+    elif batch[0] != 1:
         N = len(data['E'])
         start = int(np.round((batch[1] - 1) * N / batch[0]))
         end = int(np.round((batch[1]) * N / batch[0]))
-        for k in data_all.keys():
-            data[k] = np.array(data_all[k])[start:end]
+        data = trimData(data, start, end)
     
     if return_range:
         return data, [p_min, p_max]
