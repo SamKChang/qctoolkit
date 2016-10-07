@@ -1,4 +1,5 @@
 from __future__ import division
+from future_builtins import *
 from numbers import Number
 import pickle
 import gzip
@@ -146,6 +147,7 @@ def getFilter_1d(signal, derivatives = np.array([0, 1, 2]), scales = np.arange(3
     
     wavelets = np.array([[wavelet(derivative, grid, scale=scale)
                           for scale in scales] for derivative in derivatives])
+    wavelets /= np.abs(wavelets).sum(-1)[..., np.newaxis]
     return wavelets
 
 def ifft(x):

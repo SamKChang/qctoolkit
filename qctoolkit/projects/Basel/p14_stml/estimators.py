@@ -1,4 +1,5 @@
 from __future__ import division
+from future_builtins import *
 # code from michael.eickenberg@gmail.com 
 # meant to be sklearn module
 
