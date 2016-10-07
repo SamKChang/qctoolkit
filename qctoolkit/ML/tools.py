@@ -1,18 +1,25 @@
 import qctoolkit as qtk
 import numpy as np
 
-def coulomb_matrix(mol, n = -2, size = 0, sort = True):
+def coulomb_matrix(mol, n = -2, size = 0, 
+                   sort = True, nuclear_charges = True):
   if size == 0:
     size = mol.N
   if size < mol.N:
     qtk.exit("matrix size too small")
   positions = mol.R
-  charges = mol.Z
+  if nuclear_charges:
+    charges = mol.Z
+  else:
+    charges = np.ones(mol.N)
   differences = positions[:, np.newaxis, :] \
               - positions[np.newaxis, :, :]
   distances = np.sqrt((differences ** 2).sum(axis=-1))
   distances[distances == 0] = np.nan # replace 0 for division
-  invR = (distances ** n)
+  if n != 0:
+    invR = (distances ** n)
+  else:
+    invR = distances
   invR[np.isnan(invR)] = 0 # change 0 back for getting diagonal
   diag_mask = (invR == 0).astype(int)
   charge_mask_Zij = charges[:, np.newaxis] \
@@ -28,16 +35,26 @@ def coulomb_matrix(mol, n = -2, size = 0, sort = True):
   out[:cm.shape[0], :cm.shape[1]] = cm
   return out
 
-def coulomb_matrices(positions, charges, n = -2, sort=True):
+def coulomb_matrices(positions, nuclear_charges = None, 
+                     n = -2, sort=True):
   """
   return 3D numpy array of sorted Coulomb matrix
   """
+
+  if nuclear_charges is None:
+    shape = positions.shape
+    charges = np.ones([shape[0], shape[1]])
+  else:
+    charges = nuclear_charges
+
   differences = positions[..., :, np.newaxis, :] \
               - positions[..., np.newaxis, :, :]
   distances = np.sqrt((differences ** 2).sum(axis=-1))
   distances[distances == 0] = np.nan
-  distances[distances == 0] = -1 # replace 0 for division
-  invR = (distances ** n)
+  if n != 0:
+    invR = (distances ** n)
+  else:
+    invR = distances
   invR[np.isnan(invR)] = 0 # change 0 back for getting diagonal
   diag_mask = (invR == 0).astype(int)
   charge_mask_Zij = charges[..., :, np.newaxis] \
