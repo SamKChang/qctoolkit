@@ -257,7 +257,11 @@ def stCoefs_1d(signals, filters, second_layer=False, parallel = False, block_siz
     #return np.abs(filtered).astype('float32')
     #return np.abs(filtered)
 
-def regressionMatrix(*filtered_list, normalize = True):
+def regressionMatrix(*filtered_list, **kwargs):
+    if 'normalize' in kwargs:
+        normalize = kwargs['normalize']
+    else:
+        normalize = True
     features = []
     for filtered in filtered_list:
         filtered = filtered.view()
