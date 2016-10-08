@@ -264,13 +264,21 @@ def regressionMatrix(*filtered_list):
         data_size = filtered.shape[-1]
         sample_size = filtered.shape[0]
         shape = filtered.size // data_size // sample_size
-        filtered_reshaped = filtered.reshape(sample_size, np.prod(shape), data_size)
-        # integrate over signal length
-        l1 = np.abs(filtered_reshaped).sum(-1)
-        l1 /= np.sqrt((l1 ** 2).sum(0)).reshape(sample_size, shape)
-        l2 = (np.abs(filtered_reshaped) ** 2).sum(-1)
-        l2 /= np.sqrt((l2 ** 2).sum(0)).reshape(sample_size, shape)
-        features.append(np.hstack([l1, l2]))
+        filtered_reshaped = filtered.reshape(sample_size, shape, data_size)
+        l1_list = []
+        l2_list = []
+        for i in range(shape):
+            # integrate over signal length
+            l1 = np.abs(filtered_reshaped[:, i, :]).sum(-1)
+            # normalize over all samples
+            l1 /= np.sqrt((l1 ** 2).sum(0))
+            l1_list.append(l1.tolist())
+            l2 = (np.abs(filtered_reshaped[:, i, :]) ** 2).sum(-1)
+            l2 /= np.sqrt((l2 ** 2).sum(0))
+            l2_list.append(l2.tolist())
+        l1_list = np.array(l1_list).reshape(sample_size, shape)
+        l2_list = np.array(l2_list).reshape(sample_size, shape)
+        features.append(np.hstack([l1_list, l2_list]))
     return np.hstack(features)
 
 def stModel_1d(fname, batch = 1, signal_setting = {}, filter_setting = {}):
