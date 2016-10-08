@@ -1,5 +1,6 @@
-from __future__ import division
+from __future__ import absolute_import, division, print_function, unicode_literals
 from future_builtins import *
+
 from numbers import Number
 import pickle
 import gzip
@@ -263,12 +264,12 @@ def regressionMatrix(*filtered_list):
         data_size = filtered.shape[-1]
         sample_size = filtered.shape[0]
         shape = filtered.size // data_size // sample_size
-        filtered_reshaped = filtered.reshape(sample_size, shape, data_size)
+        filtered_reshaped = filtered.reshape(sample_size, np.prod(shape), data_size)
         # integrate over signal length
         l1 = np.abs(filtered_reshaped).sum(-1)
-        l1 /= np.sqrt((l1 ** 2).sum(0))
+        l1 /= np.sqrt((l1 ** 2).sum(0)).reshape(sample_size, shape)
         l2 = (np.abs(filtered_reshaped) ** 2).sum(-1)
-        l2 /= np.sqrt((l2 ** 2).sum(0))
+        l2 /= np.sqrt((l2 ** 2).sum(0)).reshape(sample_size, shape)
         features.append(np.hstack([l1, l2]))
     return np.hstack(features)
 
