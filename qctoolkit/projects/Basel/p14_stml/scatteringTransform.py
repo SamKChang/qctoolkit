@@ -306,6 +306,6 @@ def stModel_1d(fname, batch = 1, signal_setting = {}, filter_setting = {}):
         st_matrix_chunks.append(chunk)
         E.extend(data['E'])
         del data, rho, wlt, st_1st, st_2nd
-    st_matrix = np.vstack(st_matrix_cuhunks)
+    st_matrix = np.vstack(st_matrix_chunks)
     norm = np.sqrt(np.sum(st_matrix ** 2, axis = -1))
     return np.vstack(st_matrix_chunks), E
