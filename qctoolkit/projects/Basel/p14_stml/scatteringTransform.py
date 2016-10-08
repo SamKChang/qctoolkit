@@ -253,11 +253,11 @@ def stCoefs_1d(signals, filters, second_layer=False, parallel = False, block_siz
     if not second_layer:
         filtered.shape = signal_shape + filter_shape + (signal_length,)
 
-    #return filtered
+    return filtered
     #return np.abs(filtered).astype('float32')
-    return np.abs(filtered)
+    #return np.abs(filtered)
 
-def regressionMatrix(*filtered_list):
+def regressionMatrix(*filtered_list, normalize = True):
     features = []
     for filtered in filtered_list:
         filtered = filtered.view()
@@ -271,9 +271,10 @@ def regressionMatrix(*filtered_list):
             # integrate over signal length
             l1 = np.abs(filtered_reshaped[:, i, :]).sum(-1)
             # normalize over all samples
-            l1 /= np.sqrt((l1 ** 2).sum(0))
             l2 = (np.abs(filtered_reshaped[:, i, :]) ** 2).sum(-1)
-            l2 /= np.sqrt((l2 ** 2).sum(0))
+            if normalize:
+                l1 /= np.sqrt((l1 ** 2).sum(0))
+                l2 /= np.sqrt((l2 ** 2).sum(0))
             try:
                 l1_list = np.hstack([l1_list, l1[:, np.newaxis]])
                 l2_list = np.hstack([l2_list, l2[:, np.newaxis]])
@@ -297,8 +298,10 @@ def stModel_1d(fname, batch = 1, signal_setting = {}, filter_setting = {}):
         st_2nd = stCoefs_1d(st_1st, wlt, 
                             second_layer=True, 
                             parallel=True)
-        chunk = regressionMatrix(st_1st, st_2nd)
+        chunk = regressionMatrix(st_1st, st_2nd, normalize = False)
         st_matrix_chunks.append(chunk)
         E.extend(data['E'])
         del data, rho, wlt, st_1st, st_2nd
+    st_matrix = np.vstack(st_matrix_cuhunks)
+    norm = np.sqrt(np.sum(st_matrix ** 2, axis = -1))
     return np.vstack(st_matrix_chunks), E
