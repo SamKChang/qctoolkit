@@ -252,8 +252,9 @@ def stCoefs_1d(signals, filters, second_layer=False, parallel = False, block_siz
     if not second_layer:
         filtered.shape = signal_shape + filter_shape + (signal_length,)
 
-    return filtered
+    #return filtered
     #return np.abs(filtered).astype('float32')
+    return np.abs(filtered)
 
 def regressionMatrix(*filtered_list):
     features = []
