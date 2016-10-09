@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import absolute_import, division, print_function, unicode_literals
 from future_builtins import *
 # code from michael.eickenberg@gmail.com 
 # meant to be sklearn module

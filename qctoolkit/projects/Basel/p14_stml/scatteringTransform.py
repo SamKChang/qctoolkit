@@ -8,13 +8,20 @@ import copy
 import numpy as np
 from numpy.polynomial.hermite_e import hermeval
 import matplotlib.pyplot as plt
-import pyfftw.interfaces.numpy_fft as fft
+import pkgutil
 from scipy.special import binom
-from sklearn.cross_validation import ShuffleSplit
-from sklearn.cross_validation import cross_val_score
-from sklearn.linear_model import Ridge
-from sklearn.kernel_ridge import KernelRidge
-from sklearn.externals.joblib import Parallel, delayed
+fft_eggs_loader = pkgutil.find_loader('pyfftw')
+fft_found = fft_eggs_loader is not None
+if fft_found:
+    import pyfftw.interfaces.numpy_fft as fft
+skl_eggs_loader = pkgutil.find_loader('pyfftw')
+skl_found = skl_eggs_loader is not None
+if skl_found:
+    from sklearn.cross_validation import ShuffleSplit
+    from sklearn.cross_validation import cross_val_score
+    from sklearn.linear_model import Ridge
+    from sklearn.kernel_ridge import KernelRidge
+    from sklearn.externals.joblib import Parallel, delayed
 
 def make_dirac_densities(x, z, grid_step=.01,
                          left_bound=None,
@@ -318,3 +325,39 @@ def stModel_1d(fname, batch = 1, signal_setting = {}, filter_setting = {}):
     st_matrix = np.vstack(st_matrix_chunks)
     norm = np.sqrt(np.sum(st_matrix ** 2, axis = -1))
     return np.vstack(st_matrix_chunks), E
+
+def _get_best_components_from_folds(n_components, best_components):
+    selected_best_components = np.array(best_components)[:, :n_components]
+    selected_components = np.argsort(np.bincount(selected_best_components.ravel()))[::-1][:n_components]
+    return selected_components
+
+def stScore(data,
+            n_samples_list = None,
+            alphas = [1e-11],
+            n_components_list = None,
+            ols_components = None,
+            regression_matrix = None,
+            cs = None,
+            threads = 1,
+            st_setting = {},
+           ):
+
+    vec = data['E']
+
+    selected_components_list = [_get_best_components_from_folds(n_components, ols_components) for n_components in n_components_list]
+    all_st_scores = []
+    for alpha in alphas:
+        alpha_scores = []
+        all_st_scores.append(alpha_scores)
+        for selected_components in selected_components_list:
+            component_scores = []
+            alpha_scores.append(component_scores)
+            reg = regression_matrix[:, selected_components]
+            for n_samples in n_samples_list:
+                #print((len(selected_components), n_samples), end=" ")
+                #sys.stdout.flush()
+                cv_ = [(train[:n_samples], test) for train, test in cv]
+                scores = cross_val_score(Ridge(alpha=1e-8), reg, vec, cv=cv_, n_jobs=threads, scoring='mean_absolute_error')
+                component_scores.append(scores)
+    return -np.array(all_st_scores)
+    

@@ -1,5 +1,14 @@
 import qctoolkit as qtk
 import numpy as np
+import copy
+import pkgutil
+skl_eggs_loader = pkgutil.find_loader('pyfftw')
+skl_found = skl_eggs_loader is not None
+if skl_found:
+  from sklearn.cross_validation import ShuffleSplit
+  from sklearn.cross_validation import cross_val_score
+  from sklearn.linear_model import Ridge
+  from sklearn.kernel_ridge import KernelRidge
 
 def coulomb_matrix(mol, n = -2, size = 0, 
                    sort = True, nuclear_charges = True):
@@ -73,6 +82,71 @@ def coulomb_matrices(positions, nuclear_charges = None,
       ind[:, np.newaxis, :]
     ]
   return out
+
+def krrScore(data, 
+             n_samples_list = None,
+             kernel='laplacian', 
+             cv = None, 
+             threads = 1, 
+             alphas = [1e-11],
+             gammas = [0.01, 1],
+             descriptor = coulomb_matrices,
+             descriptor_setting = {}
+            ):
+  """
+  return scores in the format of [alphas, gammas, samples, cv]
+  """
+  if n_samples_list is None:
+    n_samples_list = [
+      int(len(data['E']) / 10.),
+      int(len(data['E']) / 5.),
+      int(len(data['E']) / 2.),
+    ]
+  
+  dsetting = copy.deepcopy(descriptor_setting)
+  if 'charges' in dsetting and dsetting['charges']:
+    dsetting['charges'] = data['Z']
+  matrix_list = descriptor(data['xyz'], **dsetting)
+  E = data['E']
+  
+  if cv is None:
+    cv = ShuffleSplit(len(E), 
+                      n_iter=5,
+                      test_size=.1, 
+                      random_state=42)
+
+  qtk.report("ML.tools.krrScores setting",
+             "alphas:", alphas, "\n", 
+             "gammas:", gammas, "\n",
+             "n_samples_list:", n_samples_list, "\n",
+             "cross_validation:", cv, "\n",
+             "cv_threads:", threads, "\n",
+             "final score format: [alphas, gammas, samples, cv]")
+      
+  all_scores = []
+  for alpha in alphas:
+    alpha_scores = []
+    all_scores.append(alpha_scores)
+    for gamma in gammas:
+      gamma_scores = []
+      alpha_scores.append(gamma_scores)
+      kernel_ridge = KernelRidge(alpha=alpha, 
+                                 gamma=gamma, 
+                                 kernel=kernel)
+      for n_samples in n_samples_list:
+        cv_ = [(train[:n_samples], test) for train, test in cv]
+        scores = cross_val_score(kernel_ridge, 
+                                 matrix_list.reshape(
+                                   len(matrix_list), -1
+                                 ), 
+                                 E, 
+                                 cv=cv_, 
+                                 n_jobs=threads, 
+                                 scoring='mean_absolute_error')
+        gamma_scores.append(scores)
+              
+  # [alphas, gammas, samples, cv]
+  return -np.array(all_scores)
 
 def pack(data_list, **kwargs):
   if isinstance(data_list[0], qtk.Molecule):
