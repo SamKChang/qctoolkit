@@ -142,7 +142,7 @@ def krrScore(data,
                                  E, 
                                  cv=cv_, 
                                  n_jobs=threads, 
-                                 scoring='neq_mean_absolute_error')
+                                 scoring=r'neq_mean_absolute_error')
         gamma_scores.append(scores)
               
   # [alphas, gammas, samples, cv]
