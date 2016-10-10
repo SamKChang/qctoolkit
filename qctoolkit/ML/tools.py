@@ -1,3 +1,6 @@
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+
 import qctoolkit as qtk
 import numpy as np
 import copy
@@ -142,7 +145,7 @@ def krrScore(data,
                                  E, 
                                  cv=cv_, 
                                  n_jobs=threads, 
-                                 scoring=r'neq_mean_absolute_error')
+                                 scoring='mean_absolute_error')
         gamma_scores.append(scores)
               
   # [alphas, gammas, samples, cv]
