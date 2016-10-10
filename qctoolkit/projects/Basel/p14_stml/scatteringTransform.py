@@ -3,7 +3,7 @@ from future_builtins import *
 
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
-
+import qctoolkit as qtk
 from numbers import Number
 import pickle
 import gzip
@@ -347,7 +347,17 @@ def stScore(data,
 
     vec = data['E']
 
-    selected_components_list = [_get_best_components_from_folds(n_components, ols_components) for n_components in n_components_list]
+    qtk.report("ML.tools.krrScores setting",
+               "alphas:", alphas, "\n", 
+               "gammas:", gammas, "\n",
+               "n_samples_list:", n_samples_list, "\n",
+               "cross_validation:", cv, "\n",
+               "cv_threads:", threads, "\n",
+               "final score format: [alphas, gammas, samples, cv]")
+
+    selected_components_list = [
+      _get_best_components_from_folds(n_components, ols_components)\
+      for n_components in n_components_list]
     all_st_scores = []
     for alpha in alphas:
         alpha_scores = []
@@ -360,7 +370,9 @@ def stScore(data,
                 #print((len(selected_components), n_samples), end=" ")
                 #sys.stdout.flush()
                 cv_ = [(train[:n_samples], test) for train, test in cv]
-                scores = cross_val_score(Ridge(alpha=1e-8), reg, vec, cv=cv_, n_jobs=threads, scoring='mean_absolute_error')
+                scores = cross_val_score(Ridge(alpha=1e-8), 
+                         reg, vec, cv=cv_, n_jobs=threads, 
+                         scoring='mean_absolute_error')
                 component_scores.append(scores)
     return -np.array(all_st_scores)
     
