@@ -357,7 +357,7 @@ def stScore(data,
                 #print((len(selected_components), n_samples), end=" ")
                 #sys.stdout.flush()
                 cv_ = [(train[:n_samples], test) for train, test in cv]
-                scores = cross_val_score(Ridge(alpha=1e-8), reg, vec, cv=cv_, n_jobs=threads, scoring='mean_absolute_error')
+                scores = cross_val_score(Ridge(alpha=1e-8), reg, vec, cv=cv_, n_jobs=threads, scoring='neq_mean_absolute_error')
                 component_scores.append(scores)
     return -np.array(all_st_scores)
     
