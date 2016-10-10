@@ -337,7 +337,7 @@ def stScore(data,
             n_components_list = None,
             ols_components = None,
             regression_matrix = None,
-            cs = None,
+            cv = None,
             threads = 1,
             st_setting = {},
            ):
