@@ -3,6 +3,9 @@ from future_builtins import *
 # code from michael.eickenberg@gmail.com 
 # meant to be sklearn module
 
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+
 from sklearn.base import BaseEstimator, TransformerMixin
 import numpy as np
 import scipy

@@ -118,7 +118,8 @@ def krrScore(data,
                       test_size=.1, 
                       random_state=42)
 
-  qtk.report("ML.tools.krrScores setting",
+  qtk.report("ML.tools.krrScores setting", "\n",
+             "kernel:", kernel, "\n",
              "alphas:", alphas, "\n", 
              "gammas:", gammas, "\n",
              "n_samples_list:", n_samples_list, "\n",

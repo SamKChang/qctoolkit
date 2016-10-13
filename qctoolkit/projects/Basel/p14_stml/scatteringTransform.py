@@ -347,7 +347,7 @@ def stScore(data,
 
     vec = data['E']
 
-    qtk.report("ML.tools.krrScores setting",
+    qtk.report("ML.tools.stScores setting", "\n",
                "alphas:", alphas, "\n", 
                "n_components_list:", n_components_list, "\n",
                "ols_components:", ols_components, "\n",
