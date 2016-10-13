@@ -13,7 +13,7 @@ if skl_found:
   from sklearn.linear_model import Ridge
   from sklearn.kernel_ridge import KernelRidge
 
-def coulomb_matrix(mol, n = -2, size = 0, 
+def coulomb_matrix(mol, n = -1, size = 0, 
                    sort = True, nuclear_charges = True):
   if size == 0:
     size = mol.N
@@ -48,7 +48,7 @@ def coulomb_matrix(mol, n = -2, size = 0,
   return out
 
 def coulomb_matrices(positions, nuclear_charges = None, 
-                     n = -2, sort=True):
+                     n = -1, sort=True):
   """
   return 3D numpy array of sorted Coulomb matrix
   """
