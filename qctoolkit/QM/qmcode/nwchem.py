@@ -316,8 +316,8 @@ class out(GaussianBasisOutput):
   
         _N.append(0)
         self.basis = []
-        for i in range(len(self.type_list_unique)):
-          e = self.type_list_unique[i]
+        for i in range(len(self.type_list)):
+          e = self.type_list[i]
           center = self.R_bohr[i]
           ind = self.type_list_unique.index(e)
           bfn_base = {}
