@@ -3,7 +3,10 @@ import pkgutil
 eggs_loader = pkgutil.find_loader('horton')
 found = eggs_loader is not None
 if found:
-  from horton import *
+  try:
+    from horton import *
+  except:
+    pass
 else:
   pass
 from qctoolkit.QM.gaussianbasis_io import GaussianBasisInput

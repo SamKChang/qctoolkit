@@ -27,7 +27,10 @@ if ps_found:
 else:
   pass
 if ht_found:
-  from horton import BeckeMolGrid
+  try:
+    from horton import BeckeMolGrid
+  except:
+    pass
 else:
   pass
 

@@ -227,6 +227,7 @@ class out(GaussianBasisOutput):
           break
       self.molecule = qtk.Molecule()
       self.molecule.build(ZR)
+      self.nuclear_repulsion = self.molecule.nuclear_repulsion()
 
       force = []
       fStr_list = filter(lambda x: 'Forces (Hartrees' in x, data)

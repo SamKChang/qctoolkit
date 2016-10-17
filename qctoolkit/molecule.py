@@ -161,6 +161,14 @@ class Molecule(object):
     out.name = self.name + "_" + other.name
     return out
 
+  def nuclear_repulsion(self):
+    out = 0.
+    for i in range(self.N):
+      for j in range(i+1, self.N):
+        Rij = np.linalg.norm(self.R[i] - self.R[j]) * 1.8897261245650618
+        out -= self.Z[i] * self.Z[j] / Rij
+    return out
+
   def view(self, name=None):
     tmp = copy.deepcopy(self)
     if qtk.imported('pymol'):
