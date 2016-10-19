@@ -126,6 +126,8 @@ class inp(PlanewaveInput):
     incar.write("SYSTEM = %s\n" % self.setting['info'])
     incar.write("ISMEAR = 0\n")
     incar.write("IBRION = 2\n")
+    if 'restart' in self.setting and self.setting['restart']:
+      incar.write("ISTART = 1\n")
     if 'cutoff' in self.setting:
       cutoff = self.setting['cutoff']
       incar.write("ENCUT = %.2f" % (cutoff * 13.605698066))

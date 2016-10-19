@@ -57,6 +57,16 @@ def Al1st(qminp, **setting):
       for lst in [rst, save]:
         setting['dependent_files'].extend(lst)
 
+  elif qminp.setting['program'] == 'vasp':
+    setting['restart'] = True
+    setting['scf_step'] = 1
+    wfn = glob.glob(setting['ref_dir'] + '/WAVECAR')
+    assert os.path.exists(wfn)
+    if 'dependent_files' in setting:
+      setting['dependent_files'].append(wfn)
+    else:
+      setting['dependent_files'] = [wfn]
+
   elif qminp.setting['program'] == 'bigdft':
     pass
 
