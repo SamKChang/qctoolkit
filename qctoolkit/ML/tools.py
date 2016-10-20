@@ -88,72 +88,115 @@ def coulomb_matrices(positions, nuclear_charges = None,
 
 def krrScore(data, 
              n_samples_list = None,
-             kernel='laplacian', 
+             kernels = ['laplacian'], 
              cv = None, 
              threads = 1, 
              alphas = [1e-11],
-             gammas = [0.01, 1],
-             descriptor = coulomb_matrices,
-             descriptor_setting = {}
+             gammas = [1e-11],
+             descriptors = [coulomb_matrices],
+             descriptor_settings = [{}],
             ):
   """
   return scores in the format of [alphas, gammas, samples, cv]
   """
+
+  E = data['E']
+
   if n_samples_list is None:
     n_samples_list = [
-      int(len(data['E']) / 10.),
-      int(len(data['E']) / 5.),
-      int(len(data['E']) / 2.),
+      int(len(E) / 10.),
+      int(len(E) / 5.),
+      int(len(E) / 2.),
     ]
-  
-  dsetting = copy.deepcopy(descriptor_setting)
-  if 'charges' in dsetting and dsetting['charges']:
-    dsetting['charges'] = data['Z']
-  if descriptor is not None:
-    matrix_list = descriptor(data['xyz'], **dsetting)
-  else:
-    matrix_list = data['samples']
-  E = data['E']
+ 
+  def listWrap(param):
+    if '__getitem__' not in dir(param):
+      param = [param]
+    return param
+
+  descriptors = listWrap(descriptors)
+  kernels = listWrap(kernels)
+  alphas = listWrap(alphas)
+  gammas = listWrap(gammas)
+
+  if type(descriptor_settings) is not list:
+    descriptor_settings = [descriptor_settings]
   
   if cv is None:
     cv = ShuffleSplit(len(E), 
                       n_iter=5,
                       test_size=.1, 
                       random_state=42)
+  try:
+    cv_fold = cv.n_iter
+  except:
+    cv_fold = len(cv)
+
+  param_names = np.array([
+    'descriptors', 
+    'kernels', 
+    'alphas', 
+    'gammas',
+    'samples',
+    'cv_folds',
+  ])
+  param_len = np.array([
+    len(descriptors), 
+    len(kernels), 
+    len(alphas), 
+    len(gammas),
+    len(n_samples_list),
+    cv_fold,
+  ])
+  out_format = param_names[param_len > 1].tolist()
 
   qtk.report("ML.tools.krrScores setting", "\n",
-             "kernel:", kernel, "\n",
+             "kernel:", kernels, "\n",
              "alphas:", alphas, "\n", 
              "gammas:", gammas, "\n",
              "n_samples_list:", n_samples_list, "\n",
-             "cross_validation:", cv, "\n",
              "cv_threads:", threads, "\n",
-             "final score format: [alphas, gammas, samples, cv]")
-      
+             "cv_fold:", cv_fold, "\n",
+             "final score format: ", out_format)
+
   all_scores = []
-  for alpha in alphas:
-    alpha_scores = []
-    all_scores.append(alpha_scores)
-    for gamma in gammas:
-      gamma_scores = []
-      alpha_scores.append(gamma_scores)
-      kernel_ridge = KernelRidge(alpha=alpha, 
-                                 gamma=gamma, 
-                                 kernel=kernel)
-      for n_samples in n_samples_list:
-        cv_ = [(train[:n_samples], test) for train, test in cv]
-        scores = cross_val_score(kernel_ridge, 
-                                 matrix_list.reshape(
-                                   len(matrix_list), -1
-                                 ), 
-                                 E, 
-                                 cv=cv_, 
-                                 n_jobs=threads, 
-                                 scoring='mean_absolute_error')
-        gamma_scores.append(scores)
+  for descriptor in descriptors:
+    descriptor_scores = []
+    all_scores.append(descriptor_scores)
+    dsetting = copy.deepcopy(descriptor_settings)
+    if 'charges' in dsetting and dsetting['charges']:
+      dsetting['charges'] = data['Z']
+    if descriptor is not None:
+      matrix_list = descriptor(data['xyz'], **dsetting)
+    else:
+      matrix_list = data['samples']
+
+    for kernel in kernels:
+      kernel_scores = []
+      descriptor_scores.append(kernel_scores)
+      for alpha in alphas:
+        alpha_scores = []
+        kernel_scores.append(alpha_scores)
+        for gamma in gammas:
+          gamma_scores = []
+          alpha_scores.append(gamma_scores)
+          kernel_ridge = KernelRidge(alpha=alpha, 
+                                     gamma=gamma, 
+                                     kernel=kernel)
+          for n_samples in n_samples_list:
+            cv_ = [(train[:n_samples], test) for train, test in cv]
+            scores = cross_val_score(kernel_ridge, 
+                                     matrix_list.reshape(
+                                       len(matrix_list), -1
+                                     ), 
+                                     E, 
+                                     cv=cv_, 
+                                     n_jobs=threads, 
+                                     scoring='mean_absolute_error')
+            gamma_scores.append(scores)
               
   # [alphas, gammas, samples, cv]
-  return -np.array(all_scores)
+  return np.squeeze(-np.array(all_scores))
 
 def pack(data_list, **kwargs):
   if isinstance(data_list[0], qtk.Molecule):
