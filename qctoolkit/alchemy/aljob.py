@@ -60,8 +60,9 @@ def Al1st(qminp, **setting):
   elif qminp.setting['program'] == 'vasp':
     setting['restart'] = True
     setting['scf_step'] = 1
-    wfn = glob.glob(setting['ref_dir'] + '/WAVECAR')
-    assert os.path.exists(wfn)
+    wfn_list = glob.glob(setting['ref_dir'] + '/WAVECAR')
+    assert len(wfn_list) == 1
+    wfn = wfn_list[0]
     if 'dependent_files' in setting:
       setting['dependent_files'].append(wfn)
     else:
