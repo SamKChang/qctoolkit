@@ -109,7 +109,10 @@ def krrScore(data,
   dsetting = copy.deepcopy(descriptor_setting)
   if 'charges' in dsetting and dsetting['charges']:
     dsetting['charges'] = data['Z']
-  matrix_list = descriptor(data['xyz'], **dsetting)
+  if descriptor is not None:
+    matrix_list = descriptor(data['xyz'], **dsetting)
+  else:
+    matrix_list = data['samples']
   E = data['E']
   
   if cv is None:
