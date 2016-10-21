@@ -161,6 +161,9 @@ class Molecule(object):
     out.name = self.name + "_" + other.name
     return out
 
+  def copy(self):
+    return copy.deepcopy(self)
+
   def nuclear_repulsion(self):
     out = 0.
     for i in range(self.N):
@@ -619,6 +622,7 @@ class Molecule(object):
             Zn = qtk.Z2n(Z)
         elif 'Z' in kwargs:
           Z = kwargs['Z']
+          Zn = qtk.Z2n(Z)
         self.Z[i] = Z
         self.type_list[i] = Zn
     if 'string' in kwargs:
