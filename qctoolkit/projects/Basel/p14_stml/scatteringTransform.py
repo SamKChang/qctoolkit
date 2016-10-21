@@ -1,6 +1,3 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
-from future_builtins import *
-
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 import qctoolkit as qtk
