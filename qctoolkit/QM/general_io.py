@@ -369,8 +369,9 @@ class GenericQMOutput(object):
     unitStr = self.unit + '-' + unit
     if not unitStr.lower() == 'eh-eh':
       self.Et, self.unit = qtk.convE(self.Et, unitStr)
-      for key in self.energies.keys():
-        self.energies[key], _ = qtk.convE(self.energies[key], unitStr)
+      if hasattr(self, 'energies'):
+        for key in self.energies.keys():
+          self.energies[key], _ = qtk.convE(self.energies[key], unitStr)
     return self
 
   def __add__(self, other):
