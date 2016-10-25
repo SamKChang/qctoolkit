@@ -98,7 +98,6 @@ def krrScore(data,
              descriptors = OrderedDict({
                coulomb_matrices: {'nuclear_charges': True}
              }),
-             #descriptor_settings = [{}],
              return_key = False,
              report = False,
             ):
@@ -130,7 +129,10 @@ def krrScore(data,
   if not isinstance(descriptors, OrderedDict):
     if descriptors is None:
       descriptors = OrderedDict({None:None})
-    else:
+    elif type(descriptors) is type(coulomb_matrices):
+      descriptors = OrderedDict({descriptors: {}})
+    elif type(descriptors) is list \
+    and type(descriptors[0]) is tuple:
       descriptors = OrderedDict(descriptors)
   if type(kernels) is not list:
     kernels = [kernels]
@@ -138,34 +140,28 @@ def krrScore(data,
   if cv is None:
     cv = ShuffleSplit(len(E), 
                       n_iter=5,
-                      test_size=.1, 
-                      random_state=42)
+                      test_size=.1)
   try:
     cv_fold = cv.n_iter
   except:
     cv_fold = len(cv)
 
   input_key = OrderedDict()
-  input_key['descriptors'] = descriptors,
-  input_key['kernels'] = kernels,
-  input_key['alphas'] = alphas,
-  input_key['gammas'] = gammas,
-  input_key['n_samples'] = n_samples,
-  input_key['cv_folds'] = cv_fold,
+  input_key['descriptors'] = descriptors
+  input_key['kernels'] = kernels
+  input_key['alphas'] = alphas
+  input_key['gammas'] = gammas
+  input_key['n_samples'] = n_samples
+  input_key['cv_fold'] = cv_fold
 
   output_key = OrderedDict()
   for k, v in input_key.items():
-    if k != 'cv_folds':
-      v = v[0]
-    if k != 'descriptors':
-      try:
-        if len(v) > 1:
-          output_key[k] = v
-      except:
-        output_key[k] = None
+    if k == 'cv_fold':
+      if cv_fold > 1:
+        output_key[k] = cv_fold
     else:
       if len(v) > 1:
-        output_key[k] = v.keys()
+        output_key[k] = v
 
   if report:
     qtk.report("ML.tools.krrScores setting", "\n",
@@ -179,12 +175,9 @@ def krrScore(data,
 
   all_scores = []
   for descriptor, dsetting in descriptors.items():
-  #for d_i in range(len(descriptors)):
     descriptor_scores = []
     all_scores.append(descriptor_scores)
-
     if descriptor is not None:
-      #descriptor, dsetting = descriptors.items()[d_i]
       dsetting = copy.deepcopy(dsetting)
       if 'nuclear_charges' in dsetting\
       and dsetting['nuclear_charges']:
