@@ -22,10 +22,13 @@ def qmRunAll(inp_list, root=None,**kwargs):
       if 'overwrite' in kwargs and kwargs['overwrite']:
         qtk.warning("overwrite existing folder %s" % root)
         shutil.rmtree(root)
+        os.makedirs(root)
       else:
-        qtk.exit('%s exists' % s)
+        qtk.warning("%s exists, "+\
+          "joining calculations with other threads" % root)
+    else:
+      os.makedirs(root)
     cwd = os.getcwd()
-    os.makedirs(root)
     os.chdir(root)
     qtk.parallelize(qtk.qmRunJob, job, **kwargs)
     os.chdir(cwd)
