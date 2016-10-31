@@ -24,8 +24,8 @@ def qmRunAll(inp_list, root=None,**kwargs):
         shutil.rmtree(root)
         os.makedirs(root)
       else:
-        qtk.warning("%s exists, "+\
-          "joining calculations with other threads" % root)
+        qtk.warning("%s exists, " % root +\
+          "joining calculations with other threads")
     else:
       os.makedirs(root)
     cwd = os.getcwd()
