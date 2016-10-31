@@ -6,7 +6,7 @@ import pkgutil
 
 skl_eggs_loader = pkgutil.find_loader('sklearn')
 skl_found = skl_eggs_loader is not None
-fftw_eggs_loader = pkgutil.find_loader('sklearn')
+fftw_eggs_loader = pkgutil.find_loader('pyfftw')
 fftw_found = fftw_eggs_loader is not None
 if skl_found:
   from sklearn.externals.joblib import Parallel, delayed
