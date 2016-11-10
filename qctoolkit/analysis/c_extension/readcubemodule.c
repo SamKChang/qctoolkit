@@ -59,11 +59,14 @@ void readcube_c(char *inp,
   double r;
   char *string = (char *) malloc(80);
   size_t len=0;
+  int MO_flag = 0;
 
 
   // CUBE file contains fixed size grid specification
   fr = fopen(inp, "r");
   for(i=0;i<2;i++) getline(&string, &len, fr);
+  if(strcmp(string, " MO coefficients\n") == 0)
+    MO_flag = 1;
   for(i=0;i<4;i++){
     for(j=0;j<4;j++){
       s = i*4 + j;
@@ -89,12 +92,12 @@ void readcube_c(char *inp,
   // signiture of corner wavefunction/density 
   // value is always a small
   fscanf(fr, "%lf", &read);
-  if(read*read<1.0E-4){
+  if(MO_flag == 0){
     cube[0] = read; 
     j=1; // without MO index
   }else{
     getline(&string, &len, fr);
-    printf("skipping line: (double)% le (string)%s\n", 
+    printf("skipping gaussian MO line: (double)% le (string)%s\n", 
            read, string);
     j=0; // with MO index
   }
