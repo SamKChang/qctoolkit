@@ -96,7 +96,8 @@ cpmd_cpmd2cube_exe = 'cpmd2cube.x'
 cpmd_pp = os.path.join(_root, 'data/PP/cpmd')
 #cpmd_pp_url = 'http://cp2k.web.psi.ch/potentials/Goedecker-Teter-Hutter/cpmd/'
 cpmd_pp_url = 'https://sourceforge.net/p/cp2k/code/HEAD/tree/trunk/potentials/Goedecker/cpmd'
-cpmd_dcacp_url = 'http://lcbc.epfl.ch/files/content/sites/lcbc/files/DCACPs/download/SG/'
+#cpmd_dcacp_url = 'http://lcbc.epfl.ch/files/content/sites/lcbc/files/DCACPs/download/SG/'
+cpmd_dcacp_url = 'http://lcbc.epfl.ch/page-71135-en.html'
 # espresso setting
 espresso_exe = 'pw.x'
 espresso_cpmd2upf_exe = 'cpmd2upf.x'
