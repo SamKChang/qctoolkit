@@ -7,6 +7,9 @@ def Al1st(qminp, **setting):
   assert 'ref_dir' in setting
   assert os.path.exists(setting['ref_dir'])
 
+  if 'runjob' not in setting:
+    setting['runjob'] = True
+
   qminp = copy.deepcopy(univ.toInp(qminp, **setting))
 
   name = qminp.molecule.name
@@ -74,9 +77,12 @@ def Al1st(qminp, **setting):
   elif qminp.setting['program'] == 'nwchem':
     pass
 
-  #qminp.write(name, **setting)
-  qmout = qminp.run(name, **setting)
-  return qmout
+  if setting['runjob']:
+    qmout = qminp.run(name, **setting)
+    return qmout
+  else:
+    qminp.molecule.name = name
+    return qminp
 
 def mutatePP(pp1, pp2, fraction):
   if type(pp1) is str:
