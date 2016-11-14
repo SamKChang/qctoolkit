@@ -7,6 +7,23 @@ import numpy as np
 import sys, os
 import shutil
 
+def qmWriteAll(inp_list, root):
+  if os.path.exists(root):
+    if 'overwrite' in kwargs and kwargs['overwrite']:
+      qtk.warning("overwrite existing folder %s" % root)
+      shutil.rmtree(root)
+      os.makedirs(root)
+    else:
+      qtk.warning("%s exists, " % root +\
+        "joining calculations with other threads")
+  else:
+    os.makedirs(root)
+  cwd = os.getcwd()
+  os.chdir(root)
+  for inp in inp_list:
+    inp.write(inp.molecule.name)
+  os.chdir(cwd)
+
 def qmRunAll(inp_list, root=None,**kwargs):
   if 'block_size' not in kwargs:
     kwargs['block_size'] = 1
