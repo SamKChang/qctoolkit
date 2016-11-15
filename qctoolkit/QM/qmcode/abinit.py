@@ -1,7 +1,7 @@
 import qctoolkit as qtk
 from qctoolkit.QM.planewave_io import PlanewaveInput
 from qctoolkit.QM.planewave_io import PlanewaveOutput
-import os, copy, glob
+import os, copy, glob, re
 import qctoolkit.QM.qmjob as qmjob
 import numpy as np
 import universal as univ
@@ -240,6 +240,26 @@ class out(PlanewaveOutput):
         force.append([float(fs) for fs in fStr])
       self.force = np.array(force)
 
+    self.occupation = []
+    try:
+      r1p = re.compile(r'^[ a-z]{17} +[ 0-9.E+-]+$')
+      r2p = re.compile(r'^ +[a-z]+ +.*$')
+      report = filter(r2p.match, filter(r1p.match, data))
+      occ_pattern = filter(lambda x: ' occ ' in x, report)[-1]
+      occ_pattern_ind = len(report) - report[::-1].index(occ_pattern)
+      occ_pattern_end = report[occ_pattern_ind]
+      occ_ind_start = len(data) - data[::-1].index(occ_pattern) - 1
+      occ_ind_end = len(data) - data[::-1].index(occ_pattern_end) - 1
+      for i in range(occ_ind_start, occ_ind_end):
+        for occ in filter(None, data[i].split(' ')):
+          try:
+            self.occupation.append(float(occ))
+          except:
+            pass
+    except Exception as err:
+      qtk.warning("error when extracting occupation number with" +\
+        " error message: %s" % str(err))
+
     eigStr = os.path.join(os.path.split(qmout)[0], '*_EIG')
     eigFileList = glob.glob(eigStr)
     if len(eigFileList) != 0:
@@ -260,8 +280,8 @@ class out(PlanewaveOutput):
         ind.append(eigData.index(kStr))
       band = []
       kpoints = []
-      if (len(ind)/spinFactor - 1) != 0:
-        for i in range(len(ind)/spinFactor - 1):
+      if spinFactor == 1:
+        for i in range(len(ind)):
           wcoord = eigData[ind[i]].split('wtk=')[-1].split(', kpt=')
           weight = float(wcoord[0])
           cStr = filter(None, wcoord[1].split('(')[0].split(' '))
@@ -269,28 +289,35 @@ class out(PlanewaveOutput):
           coord.append(weight)
           kpoints.append(coord)
           s = ind[i] + 1
-          e = ind[i+1]
+          if i < len(ind) - 1:
+            e = ind[i+1]
+          else:
+            e = len(eigData)
           eig_i = filter(None, ''.join(eigData[s:e]).split(' '))
           band.append([qtk.convE(float(ew), 'Eh-eV')[0]
                        for ew in eig_i])
+  
+        self.band = np.array(band)
+        self.kpoints = np.array(kpoints)
+        self.mo_eigenvalues = np.array(band[0]).copy()
+        if len(self.occupation) > 0:
+          diff = np.diff(self.occupation)
+          ind = np.array(range(len(diff)))
+          pos = diff[np.where(abs(diff) > 0.5)]
+          mask = np.in1d(diff, pos)
+          if len(ind[mask]) > 0:
+            N_state = ind[mask][0]
+            vb = max(self.band[:, N_state])
+            cb = min(self.band[:, N_state + 1])
+            vb_pos = np.argmax(self.band[:, N_state])
+            cb_pos = np.argmin(self.band[:, N_state + 1])
+            self.Eg = cb - vb
+            if vb_pos == cb_pos:
+              self.Eg_direct = True
+            else:
+              self.Eg_direct = False
+  
       else:
-        wcoord = eigData[ind[0]].split('wtk=')[-1].split(', kpt=')
-        weight = float(wcoord[0])
-        cStr = filter(None, wcoord[1].split('(')[0].split(' '))
-        coord = [float(c) for c in cStr]
-        coord.append(weight)
-        kpoints.append(coord)
-        s = ind[0] + 1
-        e = maxInd
-        eig_i = filter(None, ''.join(eigData[s:e]).split(' '))
-        band.append([qtk.convE(float(ew), 'Eh-eV')[0]
-                       for ew in eig_i])
-
-      self.band = np.array(band)
-      self.kpoints = np.array(kpoints)
-      self.mo_eigenvalues = np.array(band[0])
-
-      if spinFactor == 2:
         qtk.warning("spin polarized band data " +\
                     "extraction is not yet implemented")
     else:
