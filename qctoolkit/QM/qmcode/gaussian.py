@@ -353,6 +353,7 @@ class out(GaussianBasisOutput):
     _neStr = filter(lambda x: 'Number of electrons' in x, fchk)[0]
     _ne = float(filter(None, _neStr.split(' '))[-1])
     self.occupation = []
+    warned = False
     for i in range(self.n_mo):
       if i < _ne/2:
         self.occupation.append(2.0)
@@ -376,11 +377,26 @@ class out(GaussianBasisOutput):
         exp.append(_exp[i+shift+g])
         cef.append(_cef[i+shift+g])
       shift = shift + _ng[i] - 1
+
+      if _types[i] == 0:
+        l_max = 1
+        blist = ['s']
+      else:
+        if _types[i] > 0:
+          l_max = sum(range(_types[i]+2))
+          blist = basis_list[_types[i]]
+        else:
+          l_max = 2 * abs(_types[i]) + 1
+          blist = ['D0' for _ in range(l_max)]
+          if not warned:
+            qtk.warning("sp shell or spherical basis are used, " +\
+              "some functions will not work")
+            warned = True
  
-      for l in range(sum(range(_types[i]+2))):
+      for l in range(l_max):
         bfn = copy.deepcopy(bfn_base)
         bfn['exponents'] = copy.deepcopy(exp)
         bfn['coefficients'] = copy.deepcopy(cef)
-        bfn['type'] = basis_list[_types[i]][l]
+        bfn['type'] = blist[l]
         tmp = tmp + 1
         self.basis.append(bfn)

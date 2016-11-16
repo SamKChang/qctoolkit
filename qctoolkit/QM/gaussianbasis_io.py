@@ -193,7 +193,7 @@ class GaussianBasisOutput(GenericQMOutput):
         * occ[:, np.newaxis, np.newaxis],
         axis = 0
       )
-    return self.drho
+    return self._drho
 
   def getDipole(self, cartesian=True, grid='fine', unit='debye'):
     if not hasattr(self, 'molecule'):
