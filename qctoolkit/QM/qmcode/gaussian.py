@@ -154,27 +154,18 @@ class out(GaussianBasisOutput):
       data = outfile.readlines()
 
       pattern = re.compile(" *R *M *S *D *=")
-      start_lst = filter(lambda x: 'Test job not archived.' in x, data)
-      if len(start_lst) == 1:
-        start = data.index(start_lst[0]) + 1
-        end = start
-      else:
-        qtk.exit("Error when finding string " + \
-                 "'Test job not archived.'")
-
-      while True:
-        if data[end] != '\n':
-          end = end + 1
-        else:
-          break
-      report = data[start:end]
+      try:
+        report = filter(lambda x: "\\" in x, data)
+      except Exception as e:
+        qtk.exit("error when access final report with message %s" % str(e))
       final_str = ''.join(report)
       final_str = final_str.replace('\n', '')
       final_list = final_str.split('\\')
       try:
         rmsd = filter(pattern.match, final_list)[0]
-      except:
-        qtk.exit("something wrong when accessing final energy")
+      except Exception as e:
+        qtk.exit("something wrong when accessing final energy" +\
+          " with error message: %s" % str(e))
         
       ind = final_list.index(rmsd) - 1
       Et_str = final_list[ind]
@@ -206,10 +197,10 @@ class out(GaussianBasisOutput):
           tag, E = EStr.split('=')
           try:
 	          self.energies[tags_dict[tag]] = float(E)
-          except:
+          except Exception as e:
             qtk.warning("FORTRAN float overflow " + \
                         "when extracting energy components for " +\
-                        qmout)
+                        qmout + " with error message %s" % str(e))
             self.energies[tags_dict[tag]] = np.nan
 
       crdStr = filter(lambda x: 'Angstroms' in x, data)[-1]
@@ -283,8 +274,9 @@ class out(GaussianBasisOutput):
           else:
             try:
               self.getMO(fchk)
-            except:
-              qtk.warning("something wrong while loading fchk file")
+            except Exception as e:
+              qtk.warning("something wrong while loading fchk file"+\
+                " with error message: %s" % str(e))
 
   def getMO(self, fchk):
     self.program = 'gaussian'
