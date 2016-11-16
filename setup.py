@@ -18,6 +18,7 @@ required = [
   'paramiko',
   'cryptography',
   'pexpect',
+  'beautifulsoup',
 ]
 
 # to enable openmp, use:
