@@ -70,7 +70,7 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
 
     outfile = open(outpath, "w")
     if threads_per_job > 1:
-      mpi_cmd = "%s %d %s"% (setting.mpistr, threads_per_job, ompstr)
+      mpi_cmd = "%s %d"% (setting.mpistr, threads_per_job)
       for mpi_flag in setting.mpi_setting:
         if mpi_flag == '--cpus-per-proc':
           flag = mpi_flag + ' ' + str(threads_per_job)
