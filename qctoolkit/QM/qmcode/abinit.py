@@ -260,6 +260,17 @@ class out(PlanewaveOutput):
       qtk.warning("error when extracting occupation number with" +\
         " error message: %s" % str(err))
 
+    cell_pattern = re.compile(r'^ R.*=.* G.*=.*$')
+    cell_list = filter(cell_pattern.match, data)
+    cell = []
+    for cstr in cell_list:
+      cell.append(
+        [float(c) for c in filter(None, cstr.split(' '))[1:4]])
+    self.lattice = np.array(cell) / 1.889726124993
+    self.celldm = qtk.lattice2celldm(self.lattice)
+    self.molecule.R_scale = qtk.xyz2fractional(
+      self.molecule.R, self.celldm)
+
     eigStr = os.path.join(os.path.split(qmout)[0], '*_EIG')
     eigFileList = glob.glob(eigStr)
     if len(eigFileList) != 0:

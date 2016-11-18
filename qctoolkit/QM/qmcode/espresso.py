@@ -462,6 +462,17 @@ class out(PlanewaveOutput):
               self.Eg_direct = True
             else:
               self.Eg_direct = False
+
+          cell = []
+          for i in range(1, 4):
+            vec = filter(
+              None, 
+              self.xml[2][4][i].text.replace('\n', '').split(' '))
+            cell.append([float(v) for v in vec])
+          self.lattice = np.array(cell) / 1.889726124993
+          self.celldm = qtk.lattice2celldm(self.lattice)
+          self.molecule.R_scale = qtk.xyz2fractional(
+            self.molecule.R, self.celldm)
             
         except IOError:
           qtk.warning('xml file of job %s not found' % qmout)

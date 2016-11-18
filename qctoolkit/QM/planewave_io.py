@@ -94,6 +94,21 @@ class PlanewaveOutput(GenericQMOutput):
       'U':[0.1, 0.25, 0.25],
     }
 
+  def vbEdge(self):
+
+    if hasattr(self, 'band_symmetrized'):
+      band = self.band_symmetrized
+    else:
+      band = self.band
+
+    diff = np.diff(self.occupation)
+    pos = diff[np.where(abs(diff) > 0.5)]
+    mask = np.in1d(diff, pos)
+    ind = np.array(range(len(diff)))
+    N_state = ind[mask][0]
+    vb = max(band[:, N_state])
+    return vb, N_state
+
   def _k_basis(self):
 
     basis = []
@@ -110,32 +125,41 @@ class PlanewaveOutput(GenericQMOutput):
 
     return np.stack(basis)
 
+  def _fillBox(self, krange, n_point):
+    if not hasattr(self, '_filled_band'):
+      lattice = self._k_basis()
+  
+      kpoints = copy.deepcopy(self.kpoints)
+      band = copy.deepcopy(self.band)
+  
+      for i in [-1, 0, 1]:
+        for j in [-1, 0, 1]:
+          for k in [-1, 0, 1]:
+            if i**2 + j**2 + k**2 != 0:
+              vec = lattice[0]*i + lattice[1]*j + lattice[2]*k
+              kpoints = np.vstack([kpoints, self.kpoints + 2*vec])
+              band = np.vstack([band, self.band])
+      self._filled_band = band
+      self._filled_kpoints = kpoints
+
+      self._kmeshgrid = np.mgrid[
+        -krange:krange:n_point,
+        -krange:krange:n_point,
+        -krange:krange:n_point]
+      self._rmeshgrid = [
+        np.mgrid[-krange:krange:n_point],
+        np.mgrid[-krange:krange:n_point],
+        np.mgrid[-krange:krange:n_point],
+      ]
 
   def _interpolate(self, single_band, n_point=13j, krange=1):
 
     if not hasattr(self, 'kpoints_symmetrized'):
-      qtk.exit('brillouinize is necessary')
+      qtk.warning('Make sure full kmesh is available. Brillouinize might help')
 
-    lattice = self._k_basis()
-
-    kpoints = copy.deepcopy(self.kpoints)
-    band = copy.deepcopy(self.band)
-    for i in [-1, 0, 1]:
-      for j in [-1, 0, 1]:
-        for k in [-1, 0, 1]:
-          if i**2 + j**2 + k**2 != 0:
-            vec = lattice[0]*i + lattice[1]*j + lattice[2]*k
-            kpoints = np.vstack([kpoints, self.kpoints + vec])
-            band = np.vstack([band, self.band])
-
-    kx,ky,kz = np.mgrid[
-      -krange:krange:n_point,
-      -krange:krange:n_point,
-      -krange:krange:n_point]
-    x = np.mgrid[-krange:krange:n_point]
-    y = np.mgrid[-krange:krange:n_point]
-    z = np.mgrid[-krange:krange:n_point]
-    #kx, ky, kz = np.meshgrid(k,k,k)
+    self._fillBox(krange, n_point)
+    band = self._filled_band
+    kpoints = self._filled_kpoints
     
     diff = np.diff(self.occupation)
     pos = diff[np.where(abs(diff) > 0.5)]
@@ -148,13 +172,16 @@ class PlanewaveOutput(GenericQMOutput):
     inter_k = griddata(
       kpoints[:,:3], 
       band[:, single_band], 
-      (kx, ky, kz), 
+      tuple(self._kmeshgrid), 
       method='linear'
     )
 
-    return RegularGridInterpolator((x,y,z), inter_k - vb), cb
+    interpolated = RegularGridInterpolator(
+      tuple(self._rmeshgrid), inter_k - vb
+    )
+    return interpolated, cb
 
-  def _kPath(self, special_points, dk = 0.01):
+  def _kPath(self, special_points, dk):
     spk = self.special_kpoints
     out = []
     pos = 0
@@ -164,11 +191,9 @@ class PlanewaveOutput(GenericQMOutput):
       ci = special_points[i]
       cf = special_points[i+1]
       if ci not in spk:
-        print "%c not in reconized" % ci
-        return None
+        qtk.exit("special point %c not in reconized" % ci)
       if cf not in spk:
-        print "%c not in reconized" % cf
-        return None
+        qtk.exit("special point %c not in reconized" % cf)
       if len(tick_txt) == 0:
         tick_txt.append("$\mathrm{" + ci + "}$")
       Ri = spk[ci]
@@ -178,14 +203,12 @@ class PlanewaveOutput(GenericQMOutput):
       vector = np.array(Rf) - np.array(Ri)
       n_points = int(ceil(np.linalg.norm(vector) / float(dk)))
       pos = pos + n_points
-      #print ci + '-' + cf + ": "  + str(n_points) + ', ' + str(pos)
       tick_pos.append(pos)
       tick_txt.append("$\mathrm{" + cf + "}$")
       for i in range(1, n_points+1 ):
         point = list(np.round(
           np.array(Ri) + (i/float(n_points))*vector, decimals=3
         ))
-        #print point
         out.append(point)
       tick_txt = [
         '$\Gamma$' if x == '$\mathrm{G}$' else x for x in tick_txt]
@@ -198,18 +221,20 @@ class PlanewaveOutput(GenericQMOutput):
     if ax is None:
       fig, ax = plt.subplots()
     bands = []
+    bands_out = []
     occ = np.array(self.occupation)
     vb_top = np.where(occ < 1)[0][0]
     for b in range(vb_top - n_vb, vb_top + n_cb):
-      bout = self._interpolate(b, krange=krange)
-      band_points, cb = bout[0](p), bout[1]
+      bout, cb = self._interpolate(b, krange=krange)
+      band_points = bout(p)
+      bands_out.append(bout)
       interb = interp1d(range(len(p)), band_points, kind='linear')
       if b < vb_top:
         color = 'r'
       else:
         color = 'b'
       if b == vb_top or b == vb_top + 1:
-        bands.append(bout[0])
+        bands.append(bout)
       plt.plot(x,interb(x), color=color)
       plt.plot(band_points, ls='', marker='x', color=color)
     for pos in tick_pos:
@@ -222,9 +247,8 @@ class PlanewaveOutput(GenericQMOutput):
 
     return ax
 
-  def brillouinize(self, kmesh):
-    if not ase_found:
-      qtk.exit('ase not found')
+  def brillouinize(self, kmesh=None, kgrid=None):
+
     if not hasattr(self, 'kpoints') or len(self.kpoints) == 0:
       qtk.exit('kpoints information not available')
     else:
@@ -234,68 +258,97 @@ class PlanewaveOutput(GenericQMOutput):
       else:
         k_old = self.kpoints_symmetrized[:,:3]
         b_old = self.band_symmetrized
-    k = asekpt.monkhorst_pack(kmesh)
-    k_min_ind = np.argmin(np.linalg.norm(k, axis=1))
-    k_min = k[k_min_ind]
-    k_shifted = k - k_min
 
-    k_min_old_ind = np.argmin(np.linalg.norm(k_old, axis=1))
-    k_min_old = k_old[k_min_old_ind]
-    kpoints = k_old - k_min_old
-    new_kpoints = k_shifted + k_min_old
-    k_x = kpoints[:, 0]
-    k_y = kpoints[:, 1]
-    k_z = kpoints[:, 2]
-    ind_key_base = range(len(k_x))
-    ind_key = range(len(k_x))
-    
-    k_dup = []
-    
-    k_dup.append(np.stack([ k_x,  k_y,  k_z]).T)
-    k_dup.append(np.stack([ k_x,  k_y, -k_z]).T)
-    k_dup.append(np.stack([ k_x, -k_y,  k_z]).T)
-    k_dup.append(np.stack([ k_x, -k_y, -k_z]).T)
-    k_dup.append(np.stack([-k_x,  k_y,  k_z]).T)
-    k_dup.append(np.stack([-k_x,  k_y, -k_z]).T)
-    k_dup.append(np.stack([-k_x, -k_y,  k_z]).T)
-    k_dup.append(np.stack([-k_x, -k_y, -k_z]).T)
-    
-    for i in range(len(k_dup)-1):
-      ind_key.extend(ind_key_base)
-    ind_key_base = copy.deepcopy(ind_key)
-    k_dup = np.concatenate(k_dup)
+    if kgrid is None and kmesh is not None:
+      new_kpoints, k_dup, ind_key = self._ase_kgrid(kmesh, k_old)
+      new_band = []
+      for k_new in new_kpoints:
+        norm = np.linalg.norm(k_dup - k_new, axis=1)
+        try:
+          key = np.where(norm < 1E-4)[0][0]
+        except Exception as e:
+          print k_new
+          qtk.exit('kmesh not matched with error message: %s' % str(e))
+        ind = ind_key[key]
+        new_band.append(b_old[ind])
+      
+      new_band = np.stack(new_band)
 
-    k_x = k_dup[:,0]
-    k_y = k_dup[:,1]
-    k_z = k_dup[:,2]
-    
-    k_dup = []
-    k_dup.append(np.stack([k_x, k_y, k_z]).T)
-    k_dup.append(np.stack([k_z, k_x, k_y]).T)
-    k_dup.append(np.stack([k_y, k_z, k_x]).T)
-    k_dup.append(np.stack([k_z, k_y, k_x]).T)
-    k_dup.append(np.stack([k_x, k_z, k_y]).T)
-    k_dup.append(np.stack([k_y, k_x, k_z]).T)
-    
-    for i in range(len(k_dup)-1):
-      ind_key.extend(ind_key_base)
-    ind_key_base = ind_key
-    k_dup = np.concatenate(k_dup)
-    
-    new_band = []
-    for k_new in new_kpoints:
-      norm = np.linalg.norm(k_dup - k_new, axis=1)
-      try:
-        key = np.where(norm < 1E-4)[0][0]
-      except Exception as e:
-        qtk.exit('kmesh not matched with error message: %s' % str(e))
-      ind = ind_key[key]
-      new_band.append(b_old[ind])
-    
-    new_band = np.stack(new_band)
+    elif kgrid is not None:
+      new_kpoints = kgrid[:, :3]
+      k_dup = self.kpoints[:, :3]
+      ind_key = range(len(self.kpoints))
+
+      new_band = np.zeros([len(new_kpoints), len(self.band[0])])
+
+      for i in range(len(k_dup)):
+        k = k_dup[i]
+        b = b_old[i]
+        norm = np.linalg.norm(new_kpoints - k, axis=1)
+        try:
+          key = np.where(norm < 1E-4)[0][0]
+        except Exception as e:
+          print k
+          qtk.exit('kmesh not matched with error message: %s' % str(e))
+        new_band[key] = b
 
     if not hasattr(self, 'kpoints_symmetrized'):
       self.kpoints_symmetrized = self.kpoints
       self.band_symmetrized = self.band
     self.kpoints = new_kpoints
     self.band = new_band
+
+  def _ase_kgrid(self, kmesh, k_old):
+    if not ase_found:
+      qtk.exit('ase not found')
+    k = asekpt.monkhorst_pack(kmesh)
+    k_min_ind = np.argmin(np.linalg.norm(k, axis=1))
+    k_min = k[k_min_ind]
+    k_shifted = k - k_min
+  
+    k_min_old_ind = np.argmin(np.linalg.norm(k_old, axis=1))
+    k_min_old = k_old[k_min_old_ind]
+    kpoints = k_old - k_min_old
+    new_kpoints = k_shifted + k_min_old
+  
+    k_x = kpoints[:, 0]
+    k_y = kpoints[:, 1]
+    k_z = kpoints[:, 2]
+    zeros = np.zeros(len(k_x))
+    ind_key_base = range(len(k_x))
+  
+    k_tmp = []
+    k_tmp.append(np.stack([ k_x,  k_y,  k_z]).T)
+    k_tmp.append(np.stack([ k_x,  k_y, -k_z]).T)
+    k_tmp.append(np.stack([ k_x, -k_y,  k_z]).T)
+    k_tmp.append(np.stack([ k_x, -k_y, -k_z]).T)
+    k_tmp.append(np.stack([-k_x,  k_y,  k_z]).T)
+    k_tmp.append(np.stack([-k_x,  k_y, -k_z]).T)
+    k_tmp.append(np.stack([-k_x, -k_y,  k_z]).T)
+    k_tmp.append(np.stack([-k_x, -k_y, -k_z]).T)
+    
+    ind_key_tmp = np.concatenate([ind_key_base for _ in k_tmp])
+    ind_key = ind_key_tmp
+    ind_key_base = ind_key.copy()
+    k_dup = np.concatenate(k_tmp)
+  
+    k_x = k_dup[:,0]
+    k_y = k_dup[:,1]
+    k_z = k_dup[:,2]
+    
+    k_tmp = []
+    k_tmp.append(np.stack([k_x, k_y, k_z]).T)
+    k_tmp.append(np.stack([k_z, k_x, k_y]).T)
+    k_tmp.append(np.stack([k_y, k_z, k_x]).T)
+    k_tmp.append(np.stack([k_z, k_y, k_x]).T)
+    k_tmp.append(np.stack([k_x, k_z, k_y]).T)
+    k_tmp.append(np.stack([k_y, k_x, k_z]).T)
+    
+    ind_key_tmp = np.concatenate([ind_key_base for _ in k_tmp])
+    ind_key = np.concatenate([ind_key, ind_key_tmp])
+    ind_key_base = ind_key.copy()
+  
+    k_tmp = np.concatenate(k_tmp)
+    k_dup = np.vstack([k_dup, k_tmp])
+
+    return new_kpoints, k_dup, ind_key

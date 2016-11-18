@@ -41,6 +41,8 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
       _bigmem = True
     else:
       _bigmem = False
+  if 'omp' in kwargs:
+    omp = kwargs['omp']
   if 'save_restart' in kwargs:
     _save_restart = kwargs['save_restart']
   else:
@@ -62,8 +64,7 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
     initiate a single MPI job, wait for it, and write to output
     """
     ompstr = setting.ompstr
-    if 'omp' in kwargs:
-      assert type(kwargs['omp']) is int
+    if omp > 1:
       os.environ["OMP_NUM_THREADS"] = kwargs['omp']
 
     outfile = open(outpath, "w")
