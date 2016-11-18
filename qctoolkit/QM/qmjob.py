@@ -66,7 +66,7 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
     initiate a single MPI job, wait for it, and write to output
     """
     if omp > 1:
-      os.environ["OMP_NUM_THREADS"] = omp
+      os.environ["OMP_NUM_THREADS"] = str(omp)
 
     outfile = open(outpath, "w")
     if threads_per_job > 1:
