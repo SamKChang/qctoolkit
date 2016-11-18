@@ -21,8 +21,6 @@ box_margin = 3     # for planewave box setup
 
 # MPI setting
 mpistr = 'mpirun -np'
-ompthreads = 1
-ompstr = '-x OMP_NUM_THREADS=%d' % ompthreads
 mpi_setting = {}
 
 # QM executables
