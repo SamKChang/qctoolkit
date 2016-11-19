@@ -7,7 +7,7 @@ import numpy as np
 import sys, os
 import shutil
 
-def qmWriteAll(inp_list, root):
+def qmWriteAll(inp_list, root, **kwargs):
   if os.path.exists(root):
     if 'overwrite' in kwargs and kwargs['overwrite']:
       qtk.warning("overwrite existing folder %s" % root)

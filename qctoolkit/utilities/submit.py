@@ -95,7 +95,7 @@ def submit(inp_list, root, **remote_settings):
 
   if 'compress' not in remote_settings:
     remote_settings['compress'] = False
-    if len(inp_list) > 500:
+    if len(inp_list) > 5:
       remote_settings['compress'] = True
 
   if remote_settings['compress']:

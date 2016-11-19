@@ -84,6 +84,8 @@ dcacp_dict = {
   'O': 'CO2',
   'S': 'CS2',
 }
+dcscp_list = ['H', 'He', 'C', 'N', 'O', 'Ne', 'P', 'S', 'Kr']
+
 _setting = os.path.realpath(__file__)
 _root = os.path.split(_setting)[0]
 # VASP setting

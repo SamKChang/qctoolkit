@@ -11,6 +11,8 @@ import universal as univ
 import sys
 from urlparse import urlparse
 from BeautifulSoup import BeautifulSoup
+#reload(sys)
+#sys.setdefaultencoding('utf8')
 
 class inp(PlanewaveInput):
   """
@@ -396,36 +398,39 @@ def PPCheck(xc, element, pp_file_str, **kwargs):
     xc = 'pbe'
   ne = qtk.n2ve(element)
   try:
-    if 'dcacp' in kwargs and kwargs['dcacp']:
+    if 'dcacp' in kwargs and kwargs['dcacp']\
+    and element in qtk.setting.dcscp_list:
       pp_path = os.path.join(xc.upper(), "%s_DCACP_%s" %\
                 (element, xc.upper()))
       if element in qtk.setting.dcacp_dict:
         pp_path = pp_path + "_%s" % qtk.setting.dcacp_dict[element]
       #pp_file = os.path.join(qtk.setting.cpmd_dcacp_url, pp_path)
-      root_list = filter(None, qtk.setting.cpmd_dcacp_url.split('/'))
-      root = '//'.join(root_list[:2])
-      url = qtk.setting.cpmd_dcacp_url
-      reload(sys)
-      sys.setdefaultencoding('utf8')
-      html = ''.join(urllib2.urlopen(url).readlines())
-      pp_links = BeautifulSoup(html).body.findAll(
-        'a', attrs={'class': 'table'}
-      )
-      if kwargs['pp_type'].title() == 'Goedecker':
-        pp_flag = r'/SG/'
-      elif kwargs['pp_type'].upper() == 'MT':
-        pp_flag = r'/MT/'
-      pp_path = filter(lambda x: xc.upper() in x and pp_flag in x, 
-          [l['href'] for l in pp_links if l.text == element.title()])
-      pp_content = urllib2.urlopen(root + pp_path[0]).readlines()
     else:
       pp_path = os.path.join(xc, 
         element + '-q' + str(qtk.n2ve(element)))
-      pp_file = os.path.join(qtk.setting.cpmd_pp_url, pp_path)
+    pp_file = os.path.join(qtk.setting.cpmd_pp_url, pp_path)
     saved_pp_path = os.path.join(qtk.setting.cpmd_pp, pp_file_str)
     if not os.path.exists(saved_pp_path) and qtk.setting.download_pp:
       new_pp = os.path.join(qtk.setting.cpmd_pp, pp_file_str)
-      if pp_file:
+
+      if 'dcacp' in kwargs and kwargs['dcacp']\
+      and element in qtk.setting.dcscp_list:
+        root_list = filter(None, qtk.setting.cpmd_dcacp_url.split('/'))
+        root = '//'.join(root_list[:2])
+        url = qtk.setting.cpmd_dcacp_url
+        html = ''.join(urllib2.urlopen(url).readlines())
+        pp_links = BeautifulSoup(html).body.findAll(
+          'a', attrs={'class': 'table'}
+        )
+        if kwargs['pp_type'].title() == 'Goedecker':
+          pp_flag = r'/SG/'
+        elif kwargs['pp_type'].upper() == 'MT':
+          pp_flag = r'/MT/'
+        pp_path = filter(lambda x: xc.upper() in x and pp_flag in x, 
+          [l['href'] for l in pp_links if l.text == element.title()])
+        pp_content = urllib2.urlopen(root + pp_path[0]).readlines()
+
+      elif pp_file:
         pp_content = urllib2.urlopen(pp_file).readlines()
         pattern = re.compile(r'^.*</*pre>.*$')
         pp_se = filter(pattern.match, pp_content)
@@ -446,7 +451,8 @@ def PPCheck(xc, element, pp_file_str, **kwargs):
         pp_file = new_pp
     return saved_pp_path
   except Exception as e:
-    qtk.warning('something wrong with pseudopotential with error', e)
+    qtk.warning('something wrong with pseudopotential with error: '+\
+      str(e))
 
 def alchemyPP(xc, pp_file_str):
   pp_path = os.path.join(qtk.setting.cpmd_pp, pp_file_str)

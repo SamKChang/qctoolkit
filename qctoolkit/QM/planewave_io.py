@@ -385,7 +385,7 @@ class PlanewaveOutput(GenericQMOutput):
 #    self.band = new_band
 #
 
-  def _kgrid_template(self, kgrid)
+  def _kgrid_template(self, kgrid):
     new_kpoints = kgrid[:, :3]
     k_dup = self.kpoints[:, :3]
     ind_key = range(len(self.kpoints))
