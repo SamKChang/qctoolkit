@@ -9,12 +9,17 @@ from scipy.interpolate import RegularGridInterpolator
 from scipy.interpolate import interp1d
 from math import ceil
 import matplotlib.pyplot as plt
+from itertools import permutations
 
 import pkgutil
 ase_eggs_loader = pkgutil.find_loader('ase')
 ase_found = ase_eggs_loader is not None
 if ase_found:
   import ase.dft.kpoints as asekpt
+spg_eggs_loader = pkgutil.find_loader('spglib')
+spg_found = spg_eggs_loader is not None
+if spg_found:
+  import spglib
 
 class PlanewaveInput(GenericQMInput):
   """
@@ -154,8 +159,6 @@ class PlanewaveOutput(GenericQMOutput):
 
   def _interpolate(self, single_band, n_point=13j, krange=1):
 
-    if not hasattr(self, 'kpoints_symmetrized'):
-      qtk.warning('Make sure full kmesh is available. Brillouinize might help')
 
     self._fillBox(krange, n_point)
     band = self._filled_band
@@ -215,6 +218,10 @@ class PlanewaveOutput(GenericQMOutput):
     return out, [tick_pos, tick_txt]
 
   def plot_band(self, path, dk=0.1, n_cb=2, n_vb=2, krange=1, ax=None):
+
+    if not hasattr(self, 'kpoints_symmetrized'):
+      qtk.warning('Make sure full kmesh is available. Brillouinize might help')
+
     p, ticks = self._kPath(path, dk)
     x = np.linspace(0, len(p)-1, 100)
     tick_pos, tick_txt = ticks[0], ticks[1]
@@ -247,6 +254,12 @@ class PlanewaveOutput(GenericQMOutput):
 
     return ax
 
+  def brillouinScale(self, scale):
+    length = np.linalg.norm(self.special_kpoints['X'])
+    factor = float(scale) / length
+    for k, v in self.special_kpoints.items():
+      self.special_kpoints[k] = (np.array(v) * factor).tolist()
+
   def brillouinize(self, kmesh=None, kgrid=None):
 
     if not hasattr(self, 'kpoints') or len(self.kpoints) == 0:
@@ -260,45 +273,138 @@ class PlanewaveOutput(GenericQMOutput):
         b_old = self.band_symmetrized
 
     if kgrid is None and kmesh is not None:
-      new_kpoints, k_dup, ind_key = self._ase_kgrid(kmesh, k_old)
-      new_band = []
-      for k_new in new_kpoints:
-        norm = np.linalg.norm(k_dup - k_new, axis=1)
+      try:
+        kgrid, new_band = self._spg_grid(k_old, b_old, kmesh)
+      except:
         try:
-          key = np.where(norm < 1E-4)[0][0]
+          kgrid, new_band = self._ase_grid(k_old, b_old, kmesh)
         except Exception as e:
-          print k_new
-          qtk.exit('kmesh not matched with error message: %s' % str(e))
-        ind = ind_key[key]
-        new_band.append(b_old[ind])
-      
-      new_band = np.stack(new_band)
-
-    elif kgrid is not None:
-      new_kpoints = kgrid[:, :3]
-      k_dup = self.kpoints[:, :3]
-      ind_key = range(len(self.kpoints))
-
-      new_band = np.zeros([len(new_kpoints), len(self.band[0])])
-
-      for i in range(len(k_dup)):
-        k = k_dup[i]
-        b = b_old[i]
-        norm = np.linalg.norm(new_kpoints - k, axis=1)
-        try:
-          key = np.where(norm < 1E-4)[0][0]
-        except Exception as e:
-          print k
-          qtk.exit('kmesh not matched with error message: %s' % str(e))
-        new_band[key] = b
+          qtk.exit('kpoint generation failed')
+    elif kmesh is None and kgrid is not None:
+      new_band = self._kgrid_template(kgrid)
 
     if not hasattr(self, 'kpoints_symmetrized'):
       self.kpoints_symmetrized = self.kpoints
       self.band_symmetrized = self.band
-    self.kpoints = new_kpoints
+    self.kpoints = kgrid
     self.band = new_band
 
-  def _ase_kgrid(self, kmesh, k_old):
+  def _spg_grid(self, k_old, b_old, kmesh):
+
+    shift_ind = np.argmin(
+      np.linalg.norm(np.abs(k_old[:,:3]), axis=1)
+    )
+    shift = k_old[shift_ind]
+    
+    lattice = self.lattice
+    positions = self.molecule.R_scale
+    numbers = self.molecule.Z
+    cell = (lattice, positions, numbers)
+    mapping, grid = spglib.get_ir_reciprocal_mesh(
+      kmesh, cell, is_shift=shift)
+    kgrid = grid.astype(float) / kmesh
+    kgrid_shifted = kgrid + np.array([1,1,1])
+
+    groups_dict = {}
+    for i in range(len(mapping)):
+      k_id = mapping[i]
+      if k_id not in groups_dict:
+        groups_dict[k_id] = [i]
+      else:
+        groups_dict[k_id].append(i)
+    groups = list(groups_dict.values())
+    
+    
+    new_band = np.zeros([len(kgrid), len(b_old[0])])
+    
+    for i in range(len(k_old[:,:3])):
+      k = k_old[i,:3]
+      norm = []
+      for k_permute in permutations(k):
+        norm.append(np.linalg.norm(kgrid - k_permute, axis=1))
+        norm.append(np.linalg.norm(kgrid + k_permute, axis=1))
+      for k_permute in permutations(k):
+        norm.append(np.linalg.norm(kgrid - np.abs(k_permute), axis=1))
+        norm.append(np.linalg.norm(kgrid + np.abs(k_permute), axis=1))
+      norm = np.min(np.stack(norm), axis=0)
+      try:
+        key = np.where(norm < 1E-3)[0][0]
+      except Exception as e:
+        msg = 'kpoint miss match with error message: ' + str(e)
+        msg = msg + '\ncurrtent kpoint: ' + str(k)
+        qtk.exit(msg)
+      for g in groups:
+        if key in g:
+          for key_g in g:
+            new_band[key_g] = b_old[i]
+
+    return kgrid, new_band
+
+#
+#    if kgrid is None and kmesh is not None:
+#      new_kpoints, k_dup, ind_key = self._ase_kgrid(kmesh, k_old)
+#      new_band = []
+#      for k_new in new_kpoints:
+#        norm1 = np.linalg.norm(k_dup - k_new, axis=1)
+#        norm2 = np.linalg.norm(k_dup + k_new, axis=1)
+#        try:
+#          key = np.where(norm1 < 1E-6)[0][0]
+#        except:
+#          try:
+#            key = np.where(norm2 < 1E-6)[0][0]
+#          except Exception as e:
+#            print k_new
+#            qtk.exit('kmesh not matched with error message: %s' % str(e))
+#        ind = ind_key[key]
+#        new_band.append(b_old[ind])
+#      
+#      new_band = np.stack(new_band)
+#
+#    elif kgrid is not None:
+#      new_kpoints = kgrid[:, :3]
+#      k_dup = self.kpoints[:, :3]
+#      ind_key = range(len(self.kpoints))
+#
+#      new_band = np.zeros([len(new_kpoints), len(self.band[0])])
+#
+#      for i in range(len(k_dup)):
+#        k = k_dup[i]
+#        b = b_old[i]
+#        norm = np.linalg.norm(new_kpoints - k, axis=1)
+#        try:
+#          key = np.where(norm < 1E-4)[0][0]
+#        except Exception as e:
+#          print k
+#          qtk.exit('kmesh not matched with error message: %s' % str(e))
+#        new_band[key] = b
+#
+#    if not hasattr(self, 'kpoints_symmetrized'):
+#      self.kpoints_symmetrized = self.kpoints
+#      self.band_symmetrized = self.band
+#    self.kpoints = new_kpoints
+#    self.band = new_band
+#
+
+  def _kgrid_template(self, kgrid)
+    new_kpoints = kgrid[:, :3]
+    k_dup = self.kpoints[:, :3]
+    ind_key = range(len(self.kpoints))
+
+    new_band = np.zeros([len(new_kpoints), len(self.band[0])])
+
+    for i in range(len(k_dup)):
+      k = k_dup[i]
+      b = b_old[i]
+      norm = np.linalg.norm(new_kpoints - k, axis=1)
+      try:
+        key = np.where(norm < 1E-4)[0][0]
+      except Exception as e:
+        print k
+        qtk.exit('kmesh not matched with error message: %s' % str(e))
+      new_band[key] = b
+    return new_band
+
+  def _ase_kgrid(self, k_old, b_old, kmesh):
     if not ase_found:
       qtk.exit('ase not found')
     k = asekpt.monkhorst_pack(kmesh)
@@ -351,4 +457,13 @@ class PlanewaveOutput(GenericQMOutput):
     k_tmp = np.concatenate(k_tmp)
     k_dup = np.vstack([k_dup, k_tmp])
 
-    return new_kpoints, k_dup, ind_key
+    new_band = np.zeros([len(new_kpoints), len(self.band[0])])
+
+    for i in range(len(k_dup)):
+      k = k_dup[i]
+      b = b_old[i]
+      norm = np.linalg.norm(new_kpoints - k, axis=1)
+      key = np.where(norm < 1E-3)[0][0]
+      new_band[key] = b
+
+    return new_kpoints, new_band
