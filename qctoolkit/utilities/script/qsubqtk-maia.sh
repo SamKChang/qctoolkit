@@ -28,11 +28,12 @@ else
   FLAG=`echo $FLAG|sed "s/'//g"`
 fi
 
-if (( $QSLOTS > 8 ));then
-  paraSetup="#$ -pe mpi $QSLOTS"
-else
-  paraSetup="#$ -pe smp $QSLOTS"
-fi
+#if (( $QSLOTS > 16 ));then
+#  paraSetup="#$ -pe mpi $QSLOTS"
+#else
+#  paraSetup="#$ -pe smp $QSLOTS"
+#fi
+paraSetup="#$ -pe smp $QSLOTS"
 
 cd $ROOT
 # submit job in each directory under ROOT
@@ -56,10 +57,11 @@ for dir in `ls -d */`; do
 
   # job setup
   echo "#!/bin/bash"                                   > jobsub
+  echo 'source $HOME/.bashrc'                         >> jobsub
+  #echo "module load ABINIT/8.0.8-goolf-1.7.20"        >> jobsub
+  echo "module load gaussian"                         >> jobsub
   echo "module load OpenMPI/1.6.4-GCC-4.7.2"          >> jobsub
   echo "module load hwloc/1.6.2-GCC-4.7.2"            >> jobsub
-  echo "module load ABINIT/8.0.8-goolf-1.7.20"        >> jobsub
-  echo "module load gaussian"                         >> jobsub
   echo "#$ -cwd"                                      >> jobsub
   echo "#$ -N $PREFIX${inp%.*}"                       >> jobsub
 #  echo 'NCPU=`nproc --all`'                           >> jobsub
@@ -73,19 +75,22 @@ for dir in `ls -d */`; do
   echo "#$ -S /bin/bash"                              >> jobsub
 
   # construct scratch folder
-  echo "rm -rf /tmp/$USER/$job"                       >> jobsub
-  echo "mkdir -p /tmp/$USER"                          >> jobsub
-  echo "mkdir /tmp/$USER/$job"                        >> jobsub
-  echo "cp -r * /tmp/$USER/$job"                      >> jobsub
-  echo "cd /tmp/$USER/$job"                           >> jobsub
+  echo "echo 'copy files...'"                         >> jobsub
+  echo "rm -rf /scratch/$USER/$job"                       >> jobsub
+  echo "mkdir -p /scratch/$USER"                          >> jobsub
+  echo "mkdir /scratch/$USER/$job"                        >> jobsub
+  echo "cp -r * /scratch/$USER/$job"                      >> jobsub
+  echo "cd /scratch/$USER/$job"                           >> jobsub
+  echo "echo 'copy files done'"                         >> jobsub
 
   # mpi jobs
   echo 'NCPU=`nproc --all`'                           >> jobsub
-  echo -n "if [[ $NSLOTS > "                          >> jobsub
+  echo 'echo "got node with $NCPU"'                   >> jobsub
+  echo -n "if [[ $NSLOTS -gt "                          >> jobsub
   echo '$NCPU ]];then'                                >> jobsub
   echo -n "  mpirun -np $NSLOTS -mca btl tcp,self "   >> jobsub
   echo "$EXE $inp > $out"                             >> jobsub
-  echo "elif [[ $NSLOTS > 1 ]];then"                  >> jobsub
+  echo "elif [[ $NSLOTS -gt 1 ]];then"                  >> jobsub
   echo "  mpirun -np $NSLOTS $EXE $inp > $out"        >> jobsub
   echo "else"                                         >> jobsub
   echo "  $EXE $inp > $out"                           >> jobsub
@@ -111,9 +116,9 @@ for dir in `ls -d */`; do
 
   # cleanup scratch
   echo "cd .."                                        >> jobsub
-  echo "cp -rT /tmp/$USER/$job/* $mydir"              >> jobsub
+  echo "cp -rT /scratch/$USER/$job/* $mydir"              >> jobsub
   echo "cd $mydir"                                    >> jobsub
-  echo "rm -rf /tmp/$USER/$job"                       >> jobsub
+  echo "rm -rf /scratch/$USER/$job"                       >> jobsub
 
   sed -i "/^%nproc/{s/=.*/=$NSLOTS/g}" $inp
   sed -i "/^%chk/{s|=.*|=$PWD/$BCHK|g}" $inp
