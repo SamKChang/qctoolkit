@@ -71,13 +71,16 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
     outfile = open(outpath, "w")
     if threads_per_job > 1:
       mpi_cmd = "%s %d"% (setting.mpistr, threads_per_job)
-      for mpi_flag in setting.mpi_setting:
+      for mpi_flag in setting.mpi_flags:
         if mpi_flag == '--cpus-per-proc':
           flag = mpi_flag + ' ' + str(threads_per_job)
+        else:
+          flag = mpi_flag
         mpi_cmd = mpi_cmd + ' ' + flag
       cmd = mpi_cmd + ' ' + exestr
     else:
       cmd = exestr
+    ut.progress('run', 'running job with command: %s' % cmd)
     run = sp.Popen(cmd, shell=True, stdout=outfile)
     # wait each mpijob to finish before lauching another
     # otherwise all mpijobs will be launched simutaniously

@@ -21,7 +21,7 @@ box_margin = 3     # for planewave box setup
 
 # MPI setting
 mpistr = 'mpirun -np'
-mpi_setting = {}
+mpi_flags = []
 
 # QM executables
 libgbasis = '/home/samio/src/science/nwchem-6.6/src/basis/libraries'
