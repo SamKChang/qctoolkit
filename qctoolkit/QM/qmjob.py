@@ -80,7 +80,7 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
       cmd = mpi_cmd + ' ' + exestr
     else:
       cmd = exestr
-    ut.progress('run', 'running job with command: %s' % cmd)
+    ut.progress('QMInp.run', 'running job with command: %s\n' % cmd)
     run = sp.Popen(cmd, shell=True, stdout=outfile)
     # wait each mpijob to finish before lauching another
     # otherwise all mpijobs will be launched simutaniously
