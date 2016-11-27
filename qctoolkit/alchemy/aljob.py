@@ -82,7 +82,8 @@ def Al1st(qminp, **setting):
     return qmout
   else:
     qminp.molecule.name = name
-    return qminp
+    new_inp = qtk.QMInp(qminp.molecule, **setting)
+    return new_inp
 
 def mutatePP(pp1, pp2, fraction):
   if type(pp1) is str:
