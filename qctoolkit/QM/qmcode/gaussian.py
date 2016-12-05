@@ -42,6 +42,13 @@ class inp(GaussianBasisInput):
       theory = theory_dict[self.setting['theory']]
     else:
       theory = self.setting['theory']
+    if 'cc' in theory:
+      try:
+        ind = self.setting['gaussian_setting'].index('force')
+        del self.setting['gaussian_setting'][ind]
+      except:
+        pass
+      
     if 'openshell' in self.setting :
       if self.setting['openshell'] == 'restricted':
         theory = 'ro' + theory
@@ -355,8 +362,10 @@ class out(GaussianBasisOutput):
     self.occupation = []
     warned = False
     for i in range(self.n_mo):
-      if i < _ne/2:
+      if i < _ne/2 - 1:
         self.occupation.append(2.0)
+      elif i >= _ne/2 -1 and i < _ne/2:
+        self.occupation.append(_ne % 2)
       else:
         self.occupation.append(0.0)
       

@@ -12,6 +12,7 @@ from numpy import tensordot as td
 import warnings 
 import pkgutil
 import os
+import copy
 
 from ofdft.libxc_dict import xc_dict
 import ofdft.libxc_interface as xcio
@@ -57,6 +58,13 @@ class GaussianBasisOutput(GenericQMOutput):
   def __init__(self, output=None, **kwargs):
     GenericQMOutput.__init__(self, output, **kwargs)
 
+  def copy(self):
+    if hasattr(self, 'mol'):
+      del self.mol
+    if hasattr(self, 'grid'):
+      del self.grid
+    return copy.deepcopy(self)
+
   def mo_g09_nwchem(self):
     mo = self.mo_vectors
     ind = np.arange(len(mo[0]))
@@ -89,7 +97,7 @@ class GaussianBasisOutput(GenericQMOutput):
       qtk.exit("no basis found")
     pass
 
-  def getBeckeGrid(self, grid='fine', new=False):
+  def getBeckeGrid(self, resolution='fine', new=False, **kwargs):
     """
     coarse, medium, fine, veryfine, ultrafine and insane
     """
@@ -101,7 +109,7 @@ class GaussianBasisOutput(GenericQMOutput):
       self.grid = BeckeMolGrid(coord, 
                                molecule.Z.astype(int), 
                                molecule.Z,
-                               grid)
+                               resolution)
   
       mol_str = []
       for i in range(molecule.N):
@@ -111,7 +119,11 @@ class GaussianBasisOutput(GenericQMOutput):
         mol_str.append(' '.join(atm_str))
       mol_str = '; '.join(mol_str)
   
-      mol = gto.Mole()
+      if 'gto_kwargs' in kwargs:
+        mol = gto.Mole(**kwargs['gto_kwargs'])
+      else:
+        mol = gto.Mole()
+
       #mol.build(atom=mol_str, basis=self.setting['basis_set'])
       if hasattr(self, 'basis_name'):
         basis = self.basis_name
@@ -122,23 +134,39 @@ class GaussianBasisOutput(GenericQMOutput):
         if hasattr(self, p):
           delattr(self, p)
 
-  def getPhi(self, cartesian=True, grid='fine', new=False):
+  def getPhi(self, cartesian=True, resolution='fine', new=False, **kwargs):
+    if 'gridpoint_list' in kwargs:
+      new = True
     if new or not hasattr(self, '_phi'):
-      self.getBeckeGrid(grid, new)
+      self.getBeckeGrid(resolution, new, **kwargs)
       coords = self.grid.points
+      if 'gridpoint_list' not in kwargs:
+        grid_coords = None
+      else:
+        grid_coords = np.array(kwargs['gridpoint_list'])
       if cartesian:
         mode = "GTOval_cart"
       else:
         mode = "GTOval_sph"
       self._phi = self.mol.eval_gto(mode, coords).T
       norm = np.dot(self._phi * self.grid.weights, self._phi.T)
-      self._phi = self._phi / np.sqrt(np.diag(norm))[:, np.newaxis]
+
+      if grid_coords is not None:
+        self._phi = self.mol.eval_gto(mode, grid_coords).T
+        self._phi = self._phi / np.sqrt(np.diag(norm))[:, np.newaxis]
+      else:
+        self._phi = self._phi / np.sqrt(np.diag(norm))[:, np.newaxis]
     return self._phi
 
-  def getDPhi(self, cartesian=True, grid='fine', new=False):
+  def getDPhi(self, cartesian=True, resolution='fine', new=False, **kwargs):
+    if 'gridpoint_list' in kwargs:
+      new = True
     if new or not hasattr(self, '_dphi'):
-      self.getBeckeGrid(grid, new)
-      coords = self.grid.points
+      self.getBeckeGrid(resolution, new, **kwargs)
+      if 'gridpoint_list' not in kwargs:
+        coords = self.grid.points
+      else:
+        coords = kwargs['gridpoint_list']
       if cartesian:
         mode = "GTOval_ip_cart"
       else:
@@ -146,9 +174,11 @@ class GaussianBasisOutput(GenericQMOutput):
       self._dphi = self.mol.eval_gto(mode, coords, comp=3).T
     return self._dphi
 
-  def getPsi(self, cartesian=True, grid='fine', new=False):
+  def getPsi(self, cartesian=True, resolution='fine', new=False, **kwargs):
+    if 'gridpoint_list' in kwargs:
+      new = True
     if new or not hasattr(self, '_psi'):
-      self.getPhi(cartesian, grid, new)
+      self.getPhi(cartesian, resolution, new, **kwargs)
       if not hasattr(self, 'mo_vectors'):
         qtk.exit('mo_vectors not found')
       mo = self.mo_vectors
@@ -158,9 +188,11 @@ class GaussianBasisOutput(GenericQMOutput):
       self._psi = np.dot(mo, self._phi)
     return self._psi
 
-  def getDPsi(self, cartesian=True, grid='fine', new=False):
+  def getDPsi(self, cartesian=True, resolution='fine', new=False, **kwargs):
+    if 'gridpoint_list' in kwargs:
+      new = True
     if new or not hasattr(self, '_dpsi'):
-      self.getDPhi(cartesian, grid, new)
+      self.getDPhi(cartesian, resolution, new, **kwargs)
       if not hasattr(self, 'mo_vectors'):
         qtk.exit('mo_vectors not found')
       mo = self.mo_vectors
@@ -170,21 +202,25 @@ class GaussianBasisOutput(GenericQMOutput):
       self._dpsi = np.dot(mo, np.swapaxes(self._dphi, 0, 1))
     return self._dpsi
 
-  def getRho(self, cartesian=True, grid='fine', new=False):
+  def getRho(self, cartesian=True, resolution='fine', new=False, **kwargs):
+    if 'gridpoint_list' in kwargs:
+      new = True
     if new or not hasattr(self, '_rho'):
-      self.getPsi(cartesian, grid, new)
+      self.getPsi(cartesian, resolution, new, **kwargs)
       if not hasattr(self, 'occupation'):
         qtk.exit("occupation number not found")
       occ = np.array(self.occupation)
       self._rho = np.sum(self._psi**2 * occ[:, np.newaxis], axis = 0)
     return self._rho
 
-  def getDRho(self, cartesian=True, grid='fine', new=False):
+  def getDRho(self, cartesian=True, resolution='fine', new=False, **kwargs):
+    if 'gridpoint_list' in kwargs:
+      new = True
     if new or not hasattr(self, '_drho'):
       if not hasattr(self, '_psi'):
-        self.getPsi(cartesian, grid, new)
+        self.getPsi(cartesian, resolution, new, **kwargs)
       if not hasattr(self, '_dpsi'):
-        self.getDPsi(cartesian, grid, new)
+        self.getDPsi(cartesian, resolution, new, **kwargs)
       if not hasattr(self, 'occupation'):
         qtk.exit("occupation number not found")
       occ = np.array(self.occupation)
@@ -195,11 +231,33 @@ class GaussianBasisOutput(GenericQMOutput):
       )
     return self._drho
 
-  def getDipole(self, cartesian=True, grid='fine', unit='debye'):
+  def freeRho(self, coord, gridpoint_list, **kwargs):
+    assert self.molecule.N == 1
+    new = self.copy()
+    for b in new.basis:
+      b['center'] = np.array(coord)
+    new.molecule.R[0] = np.array(coord) / 1.8897261245650618
+    if 'spin' not in kwargs:
+      if new.molecule.getValenceElectrons() % 2 != 0:
+        kw = {'gto_kwargs': {'spin': 1}}
+      else:
+        kw = {}
+    else:
+      kw = {'gto_kwargs': {'spin': kwargs['spin']}}
+    if type(gridpoint_list[0][0]) is not float:
+      pl = np.array(gridpoint_list).astype(float)
+    else:
+      pl = gridpoint_list
+    return new.getRho(gridpoint_list = pl, **kw)
+   
+    
+    
+
+  def getDipole(self, cartesian=True, resolution='fine', unit='debye'):
     if not hasattr(self, 'molecule'):
       qtk.exit('molecule structure not found')
     if not hasattr(self, '_rho'):
-      self.getRho(cartesian, grid)
+      self.getRho(cartesian, resolution)
     pQ = np.array(
       [sum(self.molecule.Z * self.molecule.R[:,i]) for i in range(3)]
     )
