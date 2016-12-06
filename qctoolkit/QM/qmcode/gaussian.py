@@ -365,7 +365,10 @@ class out(GaussianBasisOutput):
       if i < _ne/2 - 1:
         self.occupation.append(2.0)
       elif i >= _ne/2 -1 and i < _ne/2:
-        self.occupation.append(_ne % 2)
+        if abs(_ne % 2) < 1E-5:
+          self.occupation.append(2.0)
+        else:
+          self.occupation.append(_ne % 2)
       else:
         self.occupation.append(0.0)
       
