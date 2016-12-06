@@ -46,6 +46,9 @@ double F(int, double);
 double veMatrix(double*, double*, double*, double*, double*,
                 int*, int*, int, int, int, int);
 
+void eeKernel(double*, double*, double*, double*, double*, double*,
+              int*, int*, int, int, int, int);
+
 // 4D two-center electorn-repulsion integral
 double eeMatrix(double*, double*, double*, int*, int*,
                 int, int, int, int, int);
