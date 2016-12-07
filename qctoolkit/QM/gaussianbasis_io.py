@@ -3,6 +3,7 @@ from general_io import GenericQMInput
 from general_io import GenericQMOutput
 from veint import veint
 from eeint import eeint
+from eekernel import eekernel
 from neint import neint
 from nnint import nnint
 from vnint import vnint
@@ -13,6 +14,8 @@ import warnings
 import pkgutil
 import os
 import copy
+from ofdft.libxc_exc import libxc_exc
+from ofdft.libxc_dict import xc_dict
 
 from ofdft.libxc_dict import xc_dict
 import ofdft.libxc_interface as xcio
@@ -135,15 +138,15 @@ class GaussianBasisOutput(GenericQMOutput):
           delattr(self, p)
 
   def getPhi(self, cartesian=True, resolution='fine', new=False, **kwargs):
-    if 'gridpoint_list' in kwargs:
+    if 'gridpoints' in kwargs:
       new = True
     if new or not hasattr(self, '_phi'):
       self.getBeckeGrid(resolution, new, **kwargs)
       coords = self.grid.points
-      if 'gridpoint_list' not in kwargs:
+      if 'gridpoints' not in kwargs:
         grid_coords = None
       else:
-        grid_coords = np.array(kwargs['gridpoint_list'])
+        grid_coords = np.array(kwargs['gridpoints']).astype(float)
       if cartesian:
         mode = "GTOval_cart"
       else:
@@ -159,23 +162,24 @@ class GaussianBasisOutput(GenericQMOutput):
     return self._phi
 
   def getDPhi(self, cartesian=True, resolution='fine', new=False, **kwargs):
-    if 'gridpoint_list' in kwargs:
+    if 'gridpoints' in kwargs:
       new = True
     if new or not hasattr(self, '_dphi'):
       self.getBeckeGrid(resolution, new, **kwargs)
-      if 'gridpoint_list' not in kwargs:
+      if 'gridpoints' not in kwargs:
         coords = self.grid.points
       else:
-        coords = kwargs['gridpoint_list']
+        coords = np.array(kwargs['gridpoints']).astype(float)
       if cartesian:
         mode = "GTOval_ip_cart"
       else:
         mode = "GTOval_ip_sph"
       self._dphi = self.mol.eval_gto(mode, coords, comp=3).T
+      
     return self._dphi
 
   def getPsi(self, cartesian=True, resolution='fine', new=False, **kwargs):
-    if 'gridpoint_list' in kwargs:
+    if 'gridpoints' in kwargs:
       new = True
     if new or not hasattr(self, '_psi'):
       self.getPhi(cartesian, resolution, new, **kwargs)
@@ -189,7 +193,7 @@ class GaussianBasisOutput(GenericQMOutput):
     return self._psi
 
   def getDPsi(self, cartesian=True, resolution='fine', new=False, **kwargs):
-    if 'gridpoint_list' in kwargs:
+    if 'gridpoints' in kwargs:
       new = True
     if new or not hasattr(self, '_dpsi'):
       self.getDPhi(cartesian, resolution, new, **kwargs)
@@ -203,7 +207,7 @@ class GaussianBasisOutput(GenericQMOutput):
     return self._dpsi
 
   def getRho(self, cartesian=True, resolution='fine', new=False, **kwargs):
-    if 'gridpoint_list' in kwargs:
+    if 'gridpoints' in kwargs:
       new = True
     if new or not hasattr(self, '_rho'):
       self.getPsi(cartesian, resolution, new, **kwargs)
@@ -214,15 +218,16 @@ class GaussianBasisOutput(GenericQMOutput):
     return self._rho
 
   def getDRho(self, cartesian=True, resolution='fine', new=False, **kwargs):
-    if 'gridpoint_list' in kwargs:
+    if 'gridpoints' in kwargs:
       new = True
     if new or not hasattr(self, '_drho'):
       if not hasattr(self, '_psi'):
-        self.getPsi(cartesian, resolution, new, **kwargs)
+        _psi = self.getPsi(cartesian, resolution, new, **kwargs)
       if not hasattr(self, '_dpsi'):
-        self.getDPsi(cartesian, resolution, new, **kwargs)
+        _dpsi = self.getDPsi(cartesian, resolution, new, **kwargs)
       if not hasattr(self, 'occupation'):
         qtk.exit("occupation number not found")
+      self._psi, self._dpsi = _psi, _dpsi
       occ = np.array(self.occupation)
       self._drho = 2 * np.sum(
         self._psi[..., np.newaxis] * self._dpsi \
@@ -231,11 +236,9 @@ class GaussianBasisOutput(GenericQMOutput):
       )
     return self._drho
 
-  def freeRho(self, coord, gridpoint_list, **kwargs):
+  def freeRho(self, coord, gridpoints, **kwargs):
     assert self.molecule.N == 1
     new = self.copy()
-    for b in new.basis:
-      b['center'] = np.array(coord)
     new.molecule.R[0] = np.array(coord) / 1.8897261245650618
     if 'spin' not in kwargs:
       if new.molecule.getValenceElectrons() % 2 != 0:
@@ -244,14 +247,77 @@ class GaussianBasisOutput(GenericQMOutput):
         kw = {}
     else:
       kw = {'gto_kwargs': {'spin': kwargs['spin']}}
-    if type(gridpoint_list[0][0]) is not float:
-      pl = np.array(gridpoint_list).astype(float)
+    if type(gridpoints[0][0]) is not float:
+      pl = np.array(gridpoints).astype(float)
     else:
-      pl = gridpoint_list
-    return new.getRho(gridpoint_list = pl, **kw)
-   
-    
-    
+      pl = gridpoints
+    return new.getRho(gridpoints = pl, **kw)
+
+  def _e_setting(self, gridpoints, **kwargs):
+    new = self.copy()
+    kw = {}
+    if 'spin' not in kwargs:
+      if new.molecule.getValenceElectrons() % 2 != 0:
+        kw['gto_kwargs'] = {'spin': 1}
+    else:
+      kw['gto_kwargs'] = {'spin': spin}
+    if 'resolution' in kwargs:
+      kw['resolution'] = kwargs['resolution']
+    if 'cartesian' in kwargs:
+      kw['cartesian'] = kwargs['cartesian']
+    occ = np.array(new.occupation)
+    gridpoints = np.atleast_2d(gridpoints).astype(float)
+    return new, occ, kw, gridpoints
+
+  def e_kin(self, gridpoints, **kwargs):
+    """
+    kinetic energy density
+    """
+    new, occ, kw, gridpoints = self._e_setting(gridpoints, **kwargs)
+    dpsi = new.getDPsi(gridpoints = gridpoints, **kw)
+    dpsi2 = np.linalg.norm(dpsi, axis=-1) ** 2
+    return (0.5 * dpsi2 * occ[:, np.newaxis]).sum(axis=0)
+
+  def e_ext(self, gridpoints, **kwargs):
+    """
+    external potential energy density
+    """
+    new, occ, kw, gridpoints = self._e_setting(gridpoints, **kwargs)
+
+    ext = np.zeros(len(gridpoints))
+    for I in range(self.molecule.N):
+      RI = self.molecule.R[I]
+      ZI = self.molecule.Z[I]
+      R_list = gridpoints - RI
+      ext -= ZI / np.linalg.norm(R_list, axis=1)
+
+    psi = new.getPsi(gridpoints = gridpoints, **kw)
+    return (psi * occ[:, np.newaxis]).sum(axis=0) * ext
+
+  def e_xc(self, gridpoints, dft='pbe', **kwargs):
+    new, occ, kw, gridpoints = self._e_setting(gridpoints, **kwargs)
+    xc_list = [xc_dict[f] for f in qtk.setting.libxc_dict[dft]]
+
+    drho = new.getDRho(gridpoints=gridpoints, new=True, **kw)
+    sigma = np.sum(drho ** 2, axis = 1)
+    rho = new.getRho(gridpoints = gridpoints, **kw)
+    x = libxc_exc(rho, sigma, len(rho), xc_list[0])
+    c = libxc_exc(rho, sigma, len(rho), xc_list[1])
+    return x, c
+
+  def e_coulomb(self, gridpoints, **kwargs):
+    new, occ, kw, gridpoints = self._e_setting(gridpoints, **kwargs)
+    kernel = self.coulombKernel(gridpoints / 1.8897261245650618)
+    rho = new.getRho(gridpoints = gridpoints, **kw)
+    return 0.5 * rho * kernel
+
+  def epsilon(self, gridpoints, dft='pbe', **kwargs):
+    new, occ, kw, gridpoints = self._e_setting(gridpoints, **kwargs)
+    kin = self.e_kin(gridpoints, **kw)
+    ext = self.e_ext(gridpoints, **kw)
+    x, c = self.e_xc(gridpoints, **kw)
+    coulomb = self.e_coulomb(gridpoints, **kw)
+    return kin + ext + x + c + coulomb
 
   def getDipole(self, cartesian=True, resolution='fine', unit='debye'):
     if not hasattr(self, 'molecule'):
@@ -285,6 +351,20 @@ class GaussianBasisOutput(GenericQMOutput):
     if Z is None:
       Z = self.molecule.Z
     return veMatrix(self.basis, coord, Z)
+
+  def eeKernel(self, coord=None):
+    if coord is None:
+      coord = self.molecule.R
+    else:
+      coord = np.atleast_2d(coord).astype(float)
+    return eeKernel(self.basis, coord)
+
+  def coulombKernel(self, coord = None):
+    k = self.eeKernel(coord)
+    mo = self.mo_vectors
+    out = np.diagonal(td(mo, td(mo, k, axes=(1,1)), axes=(1,-1)))
+    out = (out * self.occupation).sum(1)
+    return out
 
   def eeMatrix(self):
     if not hasattr(self, '_eeMatrix'):
@@ -358,6 +438,13 @@ def eeMatrix(basis):
   basis_data, center, lm = basisData(basis)
   warnings.filterwarnings("ignore", category=DeprecationWarning) 
   return eeint(basis_data, center, lm)
+
+def eeKernel(basis, coord):
+  basis_data, center, lm = basisData(basis)
+  coord = np.array(coord) * 1.889725989
+  warnings.filterwarnings("ignore", category=DeprecationWarning)
+  dummy_Z = [1. for _ in range(len(coord))]
+  return eekernel(basis_data, center, lm, coord, dummy_Z).swapaxes(0,-1)
 
 def keMatrix(basis):
   basis_data, center, lm = basisData(basis)
