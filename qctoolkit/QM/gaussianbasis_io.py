@@ -313,7 +313,7 @@ class GaussianBasisOutput(GenericQMOutput):
 
   def e_coulomb(self, gridpoints, **kwargs):
     new, occ, kw, gridpoints = self._e_setting(gridpoints, **kwargs)
-    kernel = self.coulombKernel(gridpoints / 1.8897261245650618)
+    kernel = self.coulombKernel(gridpoints / 1.8897261245650618, **kwargs)
     rho = new.getRho(gridpoints = gridpoints, **kw)
     return 0.5 * rho * kernel
 
@@ -358,15 +358,22 @@ class GaussianBasisOutput(GenericQMOutput):
       Z = self.molecule.Z
     return veMatrix(self.basis, coord, Z)
 
-  def eeKernel(self, coord=None):
+  def eeKernel(self, coord=None, batch_size=1):
     if coord is None:
       coord = self.molecule.R
     else:
       coord = np.atleast_2d(coord).astype(float)
-    return eeKernel(self.basis, coord)
+    out = []
+    itr = 1
+    for chunk in np.array_split(coord, batch_size):
+      if itr > 1:
+        qtk.progress("eeKernel", "processing batch: %d" % itr)
+      itr += 1
+      out.append(eeKernel(self.basis, chunk))
+    return np.concatenate(out)
 
-  def coulombKernel(self, coord = None):
-    k = self.eeKernel(coord)
+  def coulombKernel(self, coord = None, **kwargs):
+    k = self.eeKernel(coord, **kwargs)
     mo = self.mo_vectors
     out = np.diagonal(td(mo, td(mo, k, axes=(1,1)), axes=(1,-1)))
     out = (out * self.occupation).sum(1)
