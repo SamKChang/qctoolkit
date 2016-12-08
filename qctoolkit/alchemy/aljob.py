@@ -24,6 +24,7 @@ def Al1st(qminp, **setting):
     setting['scf_step'] = 1
     rst = os.path.join(setting['ref_dir'], 'RESTART')
     assert os.path.exists(rst)
+    rst = os.path.abspath(rst)
     if 'dependent_files' in setting:
       setting['dependent_files'].append(rst)
     else:
