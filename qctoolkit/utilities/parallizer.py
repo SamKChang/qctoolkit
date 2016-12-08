@@ -30,6 +30,7 @@ def qmRunAll(inp_list, root=None,**kwargs):
   job = []
   for inp in inp_list:
     job.append([inp, inp.molecule.name])
+  inp = inp_list[0]
   if inp.setting['threads'] != 1 and 'threads' not in kwargs:
     kwargs['threads'] = setting.cpu_count / inp.setting['threads']
   if root is None:
