@@ -85,6 +85,10 @@ dcacp_dict = {
   'S': 'CS2',
 }
 dcscp_list = ['H', 'He', 'C', 'N', 'O', 'Ne', 'P', 'S', 'Kr']
+libxc_dict = {
+  'pbe': ['XC_GGA_X_PBE', 'XC_GGA_C_PBE'],
+  'blyp': ['XC_GGA_X_B88', 'XC_GGA_C_LYP'],
+}
 
 _setting = os.path.realpath(__file__)
 _root = os.path.split(_setting)[0]

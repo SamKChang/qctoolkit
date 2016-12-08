@@ -3,6 +3,7 @@ dist/
 qctoolkit.egg-info/
 fileList.txt
 **.swp
+**.swo
 **.pyc
 qctoolkit/test/
 qctoolkit/.test-old/

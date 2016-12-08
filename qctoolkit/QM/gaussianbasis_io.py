@@ -206,18 +206,21 @@ class GaussianBasisOutput(GenericQMOutput):
       self._dpsi = np.dot(mo, np.swapaxes(self._dphi, 0, 1))
     return self._dpsi
 
-  def getRho(self, cartesian=True, resolution='fine', new=False, **kwargs):
+  def getRho(self, cartesian=True, resolution='fine', new=False, occupation=None, **kwargs):
     if 'gridpoints' in kwargs:
       new = True
     if new or not hasattr(self, '_rho'):
       self.getPsi(cartesian, resolution, new, **kwargs)
       if not hasattr(self, 'occupation'):
         qtk.exit("occupation number not found")
-      occ = np.array(self.occupation)
+      if occupation is None:
+        occ = np.array(self.occupation)
+      else:
+        occ = np.array(occupation)
       self._rho = np.sum(self._psi**2 * occ[:, np.newaxis], axis = 0)
     return self._rho
 
-  def getDRho(self, cartesian=True, resolution='fine', new=False, **kwargs):
+  def getDRho(self, cartesian=True, resolution='fine', new=False, occupation=None, **kwargs):
     if 'gridpoints' in kwargs:
       new = True
     if new or not hasattr(self, '_drho'):
@@ -228,7 +231,10 @@ class GaussianBasisOutput(GenericQMOutput):
       if not hasattr(self, 'occupation'):
         qtk.exit("occupation number not found")
       self._psi, self._dpsi = _psi, _dpsi
-      occ = np.array(self.occupation)
+      if occupation is None:
+        occ = np.array(self.occupation)
+      else:
+        occ = np.array(occupation)
       self._drho = 2 * np.sum(
         self._psi[..., np.newaxis] * self._dpsi \
         * occ[:, np.newaxis, np.newaxis],
@@ -286,7 +292,7 @@ class GaussianBasisOutput(GenericQMOutput):
 
     ext = np.zeros(len(gridpoints))
     for I in range(self.molecule.N):
-      RI = self.molecule.R[I]
+      RI = self.molecule.R[I] * 1.8897261245650618
       ZI = self.molecule.Z[I]
       R_list = gridpoints - RI
       ext -= ZI / np.linalg.norm(R_list, axis=1)

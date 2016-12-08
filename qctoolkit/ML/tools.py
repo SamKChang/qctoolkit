@@ -251,6 +251,8 @@ def pack(data_list, **kwargs):
   xyzStr = []
 
   for i in range(len(data_list)):
+    if i % 5000 == 0:
+      qtk.progress("processing %d" % (i + 1))
     if typ == 'output':
       if hasattr(data_list[i], 'molecule'):
         molecule = data_list[i].molecule
