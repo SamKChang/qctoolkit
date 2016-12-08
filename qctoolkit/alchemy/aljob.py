@@ -7,6 +7,8 @@ def Al1st(qminp, **setting):
   assert 'ref_dir' in setting
   assert os.path.exists(setting['ref_dir'])
 
+  qminp.setting.update(setting)
+
   if 'runjob' not in setting:
     setting['runjob'] = True
 
