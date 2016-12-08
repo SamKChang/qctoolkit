@@ -7,8 +7,6 @@ def Al1st(qminp, **setting):
   assert 'ref_dir' in setting
   assert os.path.exists(setting['ref_dir'])
 
-  qminp.setting.update(setting)
-
   if 'runjob' not in setting:
     setting['runjob'] = True
 
@@ -84,7 +82,8 @@ def Al1st(qminp, **setting):
     return qmout
   else:
     qminp.molecule.name = name
-    new_inp = qtk.QMInp(qminp.molecule, **setting)
+    qminp.setting.update(setting)
+    new_inp = qtk.QMInp(qminp.molecule, **qminp.setting)
     return new_inp
 
 def mutatePP(pp1, pp2, fraction):
