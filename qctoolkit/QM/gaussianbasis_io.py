@@ -367,7 +367,7 @@ class GaussianBasisOutput(GenericQMOutput):
     itr = 1
     for chunk in np.array_split(coord, batch_size):
       if itr > 1:
-        qtk.progress("eeKernel", "processing batch: %d" % itr)
+        qtk.progress("eeKernel", "processing batch: %d\n" % itr)
       itr += 1
       out.append(eeKernel(self.basis, chunk))
     return np.concatenate(out)
@@ -375,7 +375,9 @@ class GaussianBasisOutput(GenericQMOutput):
   def coulombKernel(self, coord = None, **kwargs):
     k = self.eeKernel(coord, **kwargs)
     mo = self.mo_vectors
-    out = np.diagonal(td(mo, td(mo, k, axes=(1,1)), axes=(1,-1)))
+    mok = td(mo, td(mo, k, axes=(1,1))
+    del k
+    out = np.diagonal(td(mo, mok, axes(1,-1)))
     out = (out * self.occupation).sum(1)
     return out
 
