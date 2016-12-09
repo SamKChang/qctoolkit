@@ -375,11 +375,16 @@ class GaussianBasisOutput(GenericQMOutput):
   def coulombKernel(self, coord = None, **kwargs):
     k = self.eeKernel(coord, **kwargs)
     mo = self.mo_vectors
-    out = np.diagonal(np.einsum('is,jl, kl...s->kij', mo, mo, k)).sum(1)
-    #mok = td(mo, k, axes=(1,1))
-    #del k
-    #out = np.diagonal(td(mo, mok, axes(1,-1)))
-    #out = (out * self.occupation).sum(1)
+    # out = np.diagonal(
+    #   np.einsum('is,jl,kls->kij', mo, mo, k),
+    #   axis1=1, axis2=2,
+    # ).sum(1)
+    # 
+    # diagonal: np.einsum('is,il, kls->ki', mo, mo, k)
+    #   or np.einsum('ii->i', a) for diagonal
+    # sum diagonal: np.einsum('is,il, kls->k', mo, mo, k)
+    #   or np.einsum('ii', a) for trace
+    out = np.einsum('is,il, kls->k', mo, mo, k)
     return out
 
   def eeMatrix(self):
