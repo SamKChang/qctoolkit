@@ -375,7 +375,7 @@ class GaussianBasisOutput(GenericQMOutput):
   def coulombKernel(self, coord = None, **kwargs):
     k = self.eeKernel(coord, **kwargs)
     mo = self.mo_vectors
-    mok = td(mo, td(mo, k, axes=(1,1))
+    mok = td(mo, k, axes=(1,1))
     del k
     out = np.diagonal(td(mo, mok, axes(1,-1)))
     out = (out * self.occupation).sum(1)
