@@ -241,9 +241,10 @@ class Molecule(object):
     del self.bond_types
     self.segments = []
     self.bond_types = {}
-    qtk.report("Molecule", 
-               "finding bonds with cutoff ratio", 
-               ratio)
+    if 'no_report' not in kwargs or not kwargs['no_report']:
+      qtk.report("Molecule", 
+                 "finding bonds with cutoff ratio", 
+                 ratio)
     def to_graph(l):
       G = networkx.Graph()
       for part in l:
@@ -298,8 +299,33 @@ class Molecule(object):
           bond_list.append([i, j])
           type_begin = qtk.Z2n(atom_begin)
           type_end   = qtk.Z2n(atom_end)
-          bond_type  = type_begin + "-" + type_end
+          bond_table = qtk.data.elements.bond_table
+          bond_keys = []
+          bond_keys = [
+            type_begin + _ + type_end for _ in ['-', '=', '#']
+          ]
+          try:
+            bond_type_ind = np.argmin(
+              abs(
+                np.array([
+                          bond_table[k][0] for k in bond_keys
+                          if k in bond_table.keys()
+                         ]) - d_ij
+              )
+            )
+          except Exception as _e:
+            self.write_xyz()
+            qtk.exit(
+              "error while processing bond" +\
+              str(bond_keys) + "with error message %s" % str(_e))
+          bond_type = bond_keys[bond_type_ind]
           self.bonds[itr]['name'] = bond_type
+          bond_energy = \
+            bond_table[bond_keys[bond_type_ind]][1] * \
+            qtk.convE(1, 'kj-kcal')[0]
+          self.bonds[itr]['energy'] = bond_energy
+          if np.isnan(bond_energy):
+            qtk.warning("Non-tabliated covalent bond %s" % bond_type)
           if bond_type in self.bond_types:
             self.bond_types[bond_type] += 1
           else:
