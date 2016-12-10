@@ -302,3 +302,18 @@ def pack(data_list, **kwargs):
     qtk.warning('not supported output format:%s' % kwargs['output'])
     out = None
   return out
+
+def getMolecule(*args, **kwargs):
+  if 'scheme' not in kwargs:
+    kwargs['scheme'] = 'cheml_qmn'
+  if kwargs['scheme'] == 'cheml_qmn':
+    dataset = args[0]
+    index = args[1]
+    R_full = dataset.R[index]
+    Z_full = np.atleast_2d(dataset.Z[index]).T
+    Z = Z_full[Z_full > 0]
+    R = R_full[(Z_full).ravel() > 0] * 0.529177249
+    ZR = np.hstack([np.atleast_2d(Z).T, R])
+    mol = qtk.Molecule()
+    mol.build(ZR)
+    return mol
