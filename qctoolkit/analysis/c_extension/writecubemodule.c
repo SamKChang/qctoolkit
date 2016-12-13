@@ -118,11 +118,12 @@ static PyObject * write_cube(PyObject * self, PyObject * args){
   /*** access numpy array data ***/
   grid = (double *) malloc(16 * sizeof(double));
   nplist_to_C_double_array(py_grid, grid, 16);
-  for(i=0;i<4;i++) Ndim[i] = grid[i*4];
+  for(i=0;i<4;i++) Ndim[i] = abs(grid[i*4]);
   N3 = Ndim[1] * Ndim[2] * Ndim[3];
   Ns = Ndim[0] * 4;
   structure = (double *) malloc(Ns * sizeof(double));
   data = (double *) malloc(N3 * sizeof(double));
+
   nplist_to_C_double_array(py_structure, structure, Ns);
   nplist_to_C_double_array(py_data, data, N3);
   /*** end of list input data ***/

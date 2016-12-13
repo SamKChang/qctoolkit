@@ -605,6 +605,9 @@ class CUBE(object):
       _out.data = _out.data + other
       return _out
 
+  def __radd__(self, other):
+    return self.__add__(other)
+
   def __sub__(self, other):
     if isinstance(other, CUBE):
       _grid = self.grid[1:] - other.grid[1:]
@@ -619,6 +622,9 @@ class CUBE(object):
       _out = copy.deepcopy(self)
       _out.data = _out.data - other
       return _out
+
+  def __rsub__(self, other):
+    return self.__sub__(other)
 
   def __mul__(self, other):
     if isinstance(other, CUBE):
@@ -635,6 +641,9 @@ class CUBE(object):
       _out.data = _out.data * other
       return _out
 
+  def __rmul__(self, other):
+    return self.__mul__(other)
+
   def __div__(self, other):
     if isinstance(other, CUBE):
       _grid = self.grid[1:] - other.grid[1:]
@@ -649,3 +658,20 @@ class CUBE(object):
       _out = copy.deepcopy(self)
       _out.data = _out.data / other
       return _out
+
+  def __rdiv__(self, other):
+    if isinstance(other, CUBE):
+      return self.__div__(other)
+    else:
+      _out = copy.deepcopy(self)
+      _out.data = other / _out.data
+      return _out
+
+  def __pow__(self, other):
+    if isinstance(other, CUBE):
+      ut.exit("power operation is not allowed between CUBE objects")
+    else:
+      _out = copy.deepcopy(self)
+      _out.data = _out.data ** other
+      return _out
+
