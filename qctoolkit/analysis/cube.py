@@ -250,6 +250,10 @@ class CUBE(object):
     else:
       return self.interp(R)
 
+  def grid_points(self):
+    X, Y, Z = self.meshgrid()
+    return np.array(zip(X.ravel(), Y.ravel(), Z.ravel()))
+
   def build(self, molecule, grid, data):
     self.molecule = molecule
     self.grid = grid
@@ -357,21 +361,16 @@ class CUBE(object):
 
   def meshgrid(self):
     if self.isCubic():
-      xi, yi, zi = (self.grid[0, i] for i in range(1,4))
-      dx, dy, dz = (self.grid[i, i] for i in range(1,4))
-      xf, yf, zf = (self.grid[i, 0]*self.grid[i, i]\
-                    for i in range(1,4))
-      # convert cube file Bohr to angstrom
-      #xr = np.arange(xi, xf, dx)*0.529177249
-      #yr = np.arange(yi, yf, dy)*0.529177249
-      #zr = np.arange(zi, zf, dz)*0.529177249
-      xr = np.arange(xi, xf, dx)
-      yr = np.arange(yi, yf, dy)
-      zr = np.arange(zi, zf, dz)
-      # NOTE: numpy/matlab x-y switch feature...
-      #return np.meshgrid(yr, xr, zr)
+      def getList(i):
+        lim = self.grid[0, 1] + (self.grid[1, 0] - 1) * self.grid[1, 1]
+        return np.linspace(self.grid[0, i], lim, self.grid[i, 0])
+      x = getList(1)
+      y = getList(2)
+      z = getList(3)
       ut.warning("CUBE.meshgrid returns in the unit of Bohr!")
-      return np.meshgrid(xr, yr, zr, indexing='ij')
+      return np.meshgrid(x,y,z, indexing='ij')
+    else:
+      ut.exit("meshgrid only works for cubical system")
 
   def plot(self, **kwargs):
     if self.isCubic():
