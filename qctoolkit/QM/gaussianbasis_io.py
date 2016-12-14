@@ -289,6 +289,7 @@ class GaussianBasisOutput(GenericQMOutput):
       kw['cartesian'] = kwargs['cartesian']
     if 'free_coord' in kwargs:
       assert self.molecule.N == 1
+      # assume bohr input
       coord = kwargs['free_coord']
       new.molecule.R[0] = np.array(coord) / 1.8897261245650618
       for b in new.basis:
@@ -353,7 +354,7 @@ class GaussianBasisOutput(GenericQMOutput):
         chunk / 1.8897261245650618, 
         **kwargs
       )
-      rho = new.getRho(gridpoints = chuck, **kw)
+      rho = new.getRho(gridpoints = chunk, **kw)
       out.append(0.5 * rho * kernel)
     return np.concatenate(out)
 
