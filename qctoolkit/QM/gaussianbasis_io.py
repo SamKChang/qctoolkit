@@ -213,10 +213,10 @@ class GaussianBasisOutput(GenericQMOutput):
       self.getPsi(cartesian, resolution, new, **kwargs)
       if not hasattr(self, 'occupation'):
         qtk.exit("occupation number not found")
-      if occupation is None:
-        occ = np.array(self.occupation)
-      else:
-        occ = np.array(occupation)
+      occ = np.array(self.occupation)
+      if occupation is not None:
+        for i in range(len(occupation)):
+          occ[i] = occupation[i]
       self._rho = np.sum(self._psi**2 * occ[:, np.newaxis], axis = 0)
     return self._rho
 
@@ -242,7 +242,7 @@ class GaussianBasisOutput(GenericQMOutput):
       )
     return self._drho
 
-  def freeRho(self, coord, gridpoints, **kwargs):
+  def _freeSetup(self, coord, gridpoints, **kwargs):
     assert self.molecule.N == 1
     new = self.copy()
     new.molecule.R[0] = np.array(coord) / 1.8897261245650618
@@ -257,7 +257,23 @@ class GaussianBasisOutput(GenericQMOutput):
       pl = np.array(gridpoints).astype(float)
     else:
       pl = gridpoints
+    return new, kw, pl
+
+  def freePsi(self, coord, gridpoints, **kwargs):
+    new, kw, pl = self._freeSetup(coord, gridpoints)
     return new.getRho(gridpoints = pl, **kw)
+
+  def freeDPsi(self, coord, gridpoints, **kwargs):
+    new, kw, pl = self._freeSetup(coord, gridpoints)
+    return new.getDRho(gridpoints = pl, **kw)
+
+  def freeRho(self, coord, gridpoints, **kwargs):
+    new, kw, pl = self._freeSetup(coord, gridpoints)
+    return new.getRho(gridpoints = pl, **kw)
+
+  def freeDRho(self, coord, gridpoints, **kwargs):
+    new, kw, pl = self._freeSetup(coord, gridpoints)
+    return new.getDRho(gridpoints = pl, **kw)
 
   def _e_setting(self, gridpoints, **kwargs):
     new = self.copy()
@@ -271,6 +287,12 @@ class GaussianBasisOutput(GenericQMOutput):
       kw['resolution'] = kwargs['resolution']
     if 'cartesian' in kwargs:
       kw['cartesian'] = kwargs['cartesian']
+    if 'free_coord' in kwargs:
+      assert self.molecule.N == 1
+      coord = kwargs['free_coord']
+      new.molecule.R[0] = np.array(coord) / 1.8897261245650618
+      for b in new.basis:
+        b['center'] = np.array(coord)
     occ = np.array(new.occupation)
     gridpoints = np.atleast_2d(gridpoints).astype(float)
     return new, occ, kw, gridpoints
@@ -291,14 +313,15 @@ class GaussianBasisOutput(GenericQMOutput):
     new, occ, kw, gridpoints = self._e_setting(gridpoints, **kwargs)
 
     ext = np.zeros(len(gridpoints))
-    for I in range(self.molecule.N):
-      RI = self.molecule.R[I] * 1.8897261245650618
-      ZI = self.molecule.Z[I]
+    for I in range(new.molecule.N):
+      RI = new.molecule.R[I] * 1.8897261245650618
+      ZI = new.molecule.Z[I]
       R_list = gridpoints - RI
       ext -= ZI / np.linalg.norm(R_list, axis=1)
 
-    psi = new.getPsi(gridpoints = gridpoints, **kw)
-    return (psi * occ[:, np.newaxis]).sum(axis=0) * ext
+    rho = new.getRho(gridpoints = gridpoints, **kw)
+    #return (psi * occ[:, np.newaxis]).sum(axis=0) * ext
+    return rho * ext
 
   def e_xc(self, gridpoints, dft='pbe', **kwargs):
     new, occ, kw, gridpoints = self._e_setting(gridpoints, **kwargs)
@@ -313,16 +336,33 @@ class GaussianBasisOutput(GenericQMOutput):
 
   def e_coulomb(self, gridpoints, **kwargs):
     new, occ, kw, gridpoints = self._e_setting(gridpoints, **kwargs)
-    kernel = self.coulombKernel(gridpoints / 1.8897261245650618, **kwargs)
-    rho = new.getRho(gridpoints = gridpoints, **kw)
-    return 0.5 * rho * kernel
+
+    if 'batch_size' in kwargs:
+      batch_size = kwargs['batch_size']
+      del kwargs['batch_size']
+    else:
+      batch_size = 1
+
+    out = []
+    itr = 1
+    coord = gridpoints
+    for chunk in np.array_split(coord, batch_size):
+      qtk.progress("e_coulomb", "processing batch: %d\n" % itr)
+      itr += 1
+      kernel = new.coulombKernel(
+        chunk / 1.8897261245650618, 
+        **kwargs
+      )
+      rho = new.getRho(gridpoints = chuck, **kw)
+      out.append(0.5 * rho * kernel)
+    return np.concatenate(out)
 
   def epsilon(self, gridpoints, dft='pbe', **kwargs):
     new, occ, kw, gridpoints = self._e_setting(gridpoints, **kwargs)
     kin = self.e_kin(gridpoints, **kw)
     ext = self.e_ext(gridpoints, **kw)
-    x, c = self.e_xc(gridpoints, **kw)
-    coulomb = self.e_coulomb(gridpoints, **kw)
+    x, c = self.e_xc(gridpoints, dft=dft, **kw)
+    coulomb = self.e_coulomb(gridpoints, **kwargs)
     return kin + ext + x + c + coulomb
 
   def getDipole(self, cartesian=True, resolution='fine', unit='debye'):
@@ -358,7 +398,7 @@ class GaussianBasisOutput(GenericQMOutput):
       Z = self.molecule.Z
     return veMatrix(self.basis, coord, Z)
 
-  def eeKernel(self, coord=None, batch_size=1):
+  def eeKernel(self, coord=None, batch_size=1, **kwargs):
     if coord is None:
       coord = self.molecule.R
     else:
