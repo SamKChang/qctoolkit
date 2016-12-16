@@ -163,7 +163,7 @@ class inp(GaussianBasisInput):
         for b in basis[atom]:
           inp.write("%s  %2d   1.00\n" % (l_dict[b[0]], len(b)-1))
           for ec in b[1:]:
-            inp.write("  %7.8f  %7.8f\n" % (ec[0], ec[1]))
+            inp.write("  %16.8f  %16.8f\n" % (ec[0], ec[1]))
         inp.write('****\n')
     inp.write('\n\n')
     inp.close()
@@ -429,3 +429,4 @@ class out(GaussianBasisOutput):
         bfn['type'] = blist[l]
         tmp = tmp + 1
         self.basis.append(bfn)
+    self.basisFormat()
