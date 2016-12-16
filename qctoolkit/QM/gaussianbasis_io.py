@@ -95,10 +95,48 @@ class GaussianBasisOutput(GenericQMOutput):
       itr += 1
     return mo[:, ind]
 
-  def basisFormat():
+  def basisFormat(self):
+
+    l_dict = {'s': 0, 'p': 1, 'd': 2, 'f': 3, 'g': 4, 'h': 5}
+
     if not hasattr(self, 'basis'):
       qtk.exit("no basis found")
-    pass
+    basis = {}
+    for b in self.basis:
+      if b['atom'] not in basis:
+        basis[b['atom']] = []
+      l = None
+      for k, v in l_dict.items():
+        if k in b['type']:
+          l = v
+      if l is None:
+        qtk.exit('basis extraction failed at' + str(b))
+      cef = b['coefficients']
+      exp = b['exponents']
+      ncef = np.asarray(cef)
+      nexp = np.asarray(exp)
+      contained = False
+      for data in basis[b['atom']]:
+        if data[0] == l:
+          data_c = []
+          data_e = []
+          for d in data[1:]:
+            data_c.append(d[1])
+            data_e.append(d[0])
+          try:
+            norm_c = np.linalg.norm(ncef - data_c)
+            norm_e = np.linalg.norm(nexp - data_e)
+            if norm_e < 1E-5 and norm_c < 1E-5:
+              contained = True
+              break
+          except:
+            pass
+      if not contained:
+        new_b = [list(ec) for ec in zip(exp, cef)]
+        b_data = [l]
+        b_data.extend(new_b)
+        basis[b['atom']].append(b_data)
+    self.pybasis = basis
 
   def getBeckeGrid(self, resolution='fine', new=False, **kwargs):
     """
@@ -130,7 +168,8 @@ class GaussianBasisOutput(GenericQMOutput):
       #mol.build(atom=mol_str, basis=self.setting['basis_set'])
       if hasattr(self, 'basis_name'):
         basis = self.basis_name
-      mol.build(atom=mol_str, basis=basis)
+      self.basisFormat()
+      mol.build(atom=mol_str, basis=self.pybasis)
       self.mol = mol
       del_list = ['_phi', '_psi', '_dphi', '_dpsi', '_rho', '_drho']
       for p in del_list:

@@ -66,8 +66,9 @@ class inp(GaussianBasisInput):
         ind = self.setting['gaussian_setting'].index('force')
         del self.setting['gaussian_setting'][ind]
     basis = self.setting['basis_set']
-    if 'def2' in basis.lower():
-      basis = basis.replace('-', '')
+    if type(basis) is str:
+      if 'def2' in basis.lower():
+        basis = basis.replace('-', '')
     if 'charge_multiplicity' not in self.setting:
       charge, multiplicity = \
         self.molecule.charge, self.molecule.multiplicity
@@ -122,7 +123,10 @@ class inp(GaussianBasisInput):
       gaussian_setting.append('ExtraLinks=L608')
     if 'mode' in self.setting and self.setting['mode'] == 'geopt':
       gaussian_setting.append('Opt')
-    inp.write("# %s/%s" % (theory, basis))
+    if type(basis) is str:
+      inp.write("# %s/%s" % (theory, basis))
+    else:
+      inp.write("# %s/gen" % theory)
     for s in list(set(gaussian_setting)):
       inp.write(" %s" % s)
     inp.write("\n\n%s\n\n" % self.molecule.name)
@@ -148,6 +152,19 @@ class inp(GaussianBasisInput):
             charge = chg_list[1]
             inp.write('% 8.4f % 8.4f % 8.4f  % .3f\n' %\
                       (Ri[0], Ri[1], Ri[2], charge))
+
+    if type(basis) is dict:
+      inp.write('\n')
+      l_dict = {0: 'S', 1: 'P', 2: 'D', 3: 'F', 4: 'G'}
+      for atom in set(molecule.type_list):
+        if atom not in basis:
+          qtk.exit("basis function for atom %s is missing" % atom)
+        inp.write("%-2s   0\n" % atom)
+        for b in basis[atom]:
+          inp.write("%s  %2d   1.00\n" % (l_dict[b[0]], len(b)-1))
+          for ec in b[1:]:
+            inp.write("  %7.8f  %7.8f\n" % (ec[0], ec[1]))
+        inp.write('****\n')
     inp.write('\n\n')
     inp.close()
 
