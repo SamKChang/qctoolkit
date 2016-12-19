@@ -365,10 +365,20 @@ class out(GaussianBasisOutput):
     self.mo_eigenvalues, self.n_mo = \
       readFchk('Alpha Orbital Energies')
     _mo, _dim = readFchk('Alpha MO coefficients')
-    _map = readFchk('Shell to atom map', int)[0]
+    try:
+      self.mo_eigenvalues_beta, _ = \
+        readFchk('Beta Orbital Energies')
+      _mob, _dimb = readFchk('Beta MO coefficients')
+    except:
+      _mob, _dimb = None, None
+      self.mo_eigenvalues_beta = None
     self.n_ao = _dim/self.n_mo
     self.n_basis = self.n_ao
     self.mo_vectors = np.array(_mo).reshape([self.n_mo, self.n_ao])
+    if self.mo_eigenvalues_beta is not None:
+      self.mo_vectors_beta = np.array(_mob).reshape([self.n_mo, self.n_ao])
+
+    _map = readFchk('Shell to atom map', int)[0]
     _map_coord = list(np.diff(_map))
     _map_coord.insert(0,1)
     _R_ind = [i for i in range(_n_shell) if _map_coord[i]>0]

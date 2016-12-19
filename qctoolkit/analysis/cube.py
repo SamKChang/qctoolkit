@@ -503,10 +503,16 @@ class CUBE(object):
       plkwargs = {}
       if 'plkwargs' in kwargs:
         plkwargs.update(kwargs['plkwargs'])
+      if 'title' in plkwargs:
+        title = plkwargs.pop('title')
+      else:
+        title = None
       fig = plt.figure(name)
       ax = fig.add_subplot(111)
       CS = plt.contour(X, Y, Z, levels, *plargs, **plkwargs)
       CB = plt.colorbar(CS, shrink=0.8, extend='both')
+      if title is not None:
+        plt.title(title)
       plt.xlabel(_label[0] + r" [$\rm \AA$]", fontsize=15)
       plt.ylabel(_label[1] + r" [$\rm \AA$]", fontsize=15)
       plt.axes().set_aspect('equal')
