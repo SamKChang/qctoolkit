@@ -44,6 +44,8 @@ class inp(PlanewaveInput):
 
   def write(self, name=None, **kwargs):
     self.setting.update(kwargs)
+    if 'geopt' in self.setting and self.setting['geopt']:
+      self.setting['mode'] = 'geopt'
     if 'root_dir' not in kwargs:
       self.setting['root_dir'] = name
     self.setting['reset'] = True

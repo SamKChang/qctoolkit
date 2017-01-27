@@ -26,6 +26,8 @@ class inp(GaussianBasisInput):
     
   def write(self, name=None, **kwargs):
     self.setting.update(kwargs)
+    if 'geopt' in self.setting and self.setting['geopt']:
+      self.setting['mode'] = 'geopt'
     univ.cornerCube(self)
     inp, molecule = \
       super(GaussianBasisInput, self).write(name, **self.setting)

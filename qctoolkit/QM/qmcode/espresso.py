@@ -35,6 +35,7 @@ class inp(PlanewaveInput):
 
     mode_dict = {
       'single_point': 'scf',
+      'geopt': 'relax',
     }
 
     self.content = odict()
@@ -63,6 +64,13 @@ class inp(PlanewaveInput):
 
   def write(self, name=None, **kwargs):
     self.setting.update(kwargs)
+    if 'geopt' in self.setting and self.setting['geopt']:
+      self.content['control']['calculation'] = 'relax'
+      self.content['ions'] = odict([
+        ('ion_dynamics', 'damp'),
+        ('ion_damping', 0.2),
+        ('ion_velocities', 'zero'),
+      ])
     if 'root_dir' not in kwargs:
       self.setting['root_dir'] = name
 
