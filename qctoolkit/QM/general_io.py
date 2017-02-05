@@ -51,7 +51,6 @@ class InpContent(object):
       self.overwrite = kwargs['overwrite']
     else:
       self.overwrite = False
-    self.path = os.getcwd()
 
   def write(self, string):
     self.content.append(string)
@@ -82,6 +81,7 @@ class InpContent(object):
     for posprocessing
     """
 
+    self.path = os.getcwd()
     if self.output:
       # process file name
       if 'name' in kwargs:
