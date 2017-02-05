@@ -6,6 +6,7 @@ import universal as univ
 def Al1st(qminp, **setting):
   assert 'ref_dir' in setting
   assert os.path.exists(setting['ref_dir'])
+  setting['ref_dir'] = os.path.abspath(setting['ref_dir'])
 
   if 'runjob' not in setting:
     setting['runjob'] = True
