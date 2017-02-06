@@ -14,8 +14,6 @@ import warnings
 import pkgutil
 import os
 import copy
-from ofdft.libxc_exc import libxc_exc
-from ofdft.libxc_dict import xc_dict
 
 from ofdft.libxc_dict import xc_dict
 import ofdft.libxc_interface as xcio
@@ -40,6 +38,13 @@ if ht_found:
     pass
 else:
   pass
+if xc_found:
+  try:
+    from ofdft.libxc_exc import libxc_exc
+    from ofdft.libxc_dict import xc_dict
+  except:
+    pass
+
 
 class GaussianBasisInput(GenericQMInput):
   """
