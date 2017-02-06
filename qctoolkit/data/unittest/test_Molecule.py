@@ -148,12 +148,20 @@ def test_h2o_edit():
 def test_h2o_periodic_crystal():
   mol = setup(mol='h2o.xyz')[0]
   v = mol.R[1] - mol.R[2]
-  mol.align(v)
   mol.center(mol.R[2])
+  mol.align(v)
+  v_new = mol.R[1] - mol.R[2]
+  v_norm = np.linalg.norm(v_new)
+
+  assert abs(np.linalg.norm(np.array(v)) - v_norm) < 1E-7
+  assert abs(mol.R[1,0] - v_norm) < 1E-7
   assert mol.R[1,2] < 1E-7
+
   for i in range(1,6):
-    mol.stretch(1,[2,1],i)
-    assert mol.R[1,0] == i
+    mol_new = mol.copy()
+    mol_new.stretch(1,[2,1],i)
+
+    assert abs(mol_new.R[1,0] - (v_norm + i)) < 1E-7
 
 def test_crystal():
   mol = setup(mol='periodic_algaas.xyz')[0]

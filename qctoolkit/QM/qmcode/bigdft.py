@@ -13,6 +13,8 @@ def PPCheck(xc, pp_theory, pp_path, element):
 
   theory_dict = {
     'lda': 'pade',
+    'pbe0': 'pbe',
+    'pbesol': 'pbe',
   }
 
   name = '%s_%s_%s' % (element, xc, pp_theory)
