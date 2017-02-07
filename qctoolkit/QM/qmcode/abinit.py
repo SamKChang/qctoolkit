@@ -160,7 +160,7 @@ class inp(PlanewaveInput):
     for item in self.content:
       inp.write(item)
 
-    if hasattr(inp, 'abinit_setting'):
+    if 'abinit_setting' in self.setting:
       inp.write("\n# additional settings\n")
       for item in inp.abinit_setting:
         inp.write("%s\n" % item)
