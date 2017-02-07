@@ -24,7 +24,7 @@ purpose chemistry tool kit.
 * __To install__: ```cd /path/to/qctoolkit && python setup.py install --user``` or install by pip using ```pip install qctoolkit --user```. 
 * __Install on Amazon Ec2__: It is tested and working on amazon Ec2 ubuntu instances. For a fresh install, all dependencies must be installed
 ```
-sudo apt-get update && sudo apt-get install -y gcc g++ gfortran liblapack-dev liblapack-doc-man liblapack-doc liblapack-pic liblapack3 liblapack-test liblapack3gf liblapacke liblapacke-dev libgsl0-dev libatlas-base-dev build-essential libffi6 libffi-dev libssl-dev libyaml-dev libpython2.7-dev python-pip python-dev freetype* python-matplotlib cython
+sudo apt-get update && sudo apt-get install -y gcc g++ gfortran liblapack-dev liblapack-doc-man liblapack-doc liblapack-pic liblapack3 liblapack-test liblapacke liblapacke-dev libgsl0-dev libatlas-base-dev build-essential libffi6 libffi-dev libssl-dev libyaml-dev libpython2.7-dev python-pip python-dev freetype* python-matplotlib cython
 ```
 Note that matplotlib and cython are installed through ubuntu repository for convenience. It might be necessary to create temperary swap if the memory run out:
 ```
