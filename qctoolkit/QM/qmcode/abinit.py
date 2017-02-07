@@ -162,7 +162,7 @@ class inp(PlanewaveInput):
 
     if 'abinit_setting' in self.setting:
       inp.write("\n# additional settings\n")
-      for item in inp.abinit_setting:
+      for item in self.setting['abinit_setting']:
         inp.write("%s\n" % item)
         
 
