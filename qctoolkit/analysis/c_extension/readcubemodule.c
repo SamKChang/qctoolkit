@@ -83,7 +83,7 @@ void readcube_c(char *inp,
   j = 0;
   for(i=0;i<Na*5;i++){
     fscanf(fr, "%lf", &read);
-    if((i%5) != 0){
+    if((i%5) != 1){
       structure[j++] = read;
     }
   }

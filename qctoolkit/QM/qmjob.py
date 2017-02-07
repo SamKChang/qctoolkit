@@ -1,3 +1,4 @@
+import qctoolkit as qtk
 import multiprocessing as mp
 import qmInterface as qio
 import glob, re, os, shutil
@@ -259,6 +260,23 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
       for den in glob.glob('*_DEN'):
         os.remove(den)
 
+    densities = glob.glob('*_DEN')
+    #for i in range(len(densities)):
+    i = len(densities) - 1
+    exe = setting.abinit_cut3d_exe
+    den_inp = densities[i] + '.cov'
+    cube_file = inp + '.cube'
+    den_inp_file = open(den_inp, 'wb')
+    den_inp_file.write("%s\n1\n14\n%s" % (densities[i], cube_file))
+    den_inp_file.close()
+    log_name = densities[i] + '.log'
+    log = open(log_name, 'w')
+    run = sp.Popen("%s < %s" % (exe, den_inp), 
+             shell=True,
+             stdout=log)
+    run.wait()
+    log.close()
+
   #############################
   # Gaussian09 IMPLEMENTATION #
   #############################
@@ -280,6 +298,9 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
       exestr = "%s %s" % (exe, chk)
       run = sp.Popen(exestr, shell=True)
       run.wait()
+    if _save_density:
+      fchk = glob.glob("*.fchk")[-1]
+      q = qtk.CUBE(fchk)
 
     qio_out = qio.QMOut(qmoutput, program='gaussian')
 

@@ -160,6 +160,12 @@ class inp(PlanewaveInput):
     for item in self.content:
       inp.write(item)
 
+    if hasattr(inp, 'abinit_setting'):
+      inp.write("\n# additional settings\n")
+      for item in inp.abinit_setting:
+        inp.write("%s\n" % item)
+        
+
     inp.close(dependent_files=pp_files)
 
     if hasattr(inp, 'final_name'):
@@ -177,6 +183,7 @@ class inp(PlanewaveInput):
       for pp in pp_files:
         files.write(pp[1] + '\n')
       files.close(no_cleanup = True)
+
 
     return inp
 
