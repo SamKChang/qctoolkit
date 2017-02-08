@@ -238,7 +238,6 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
     qmlog = inp + '.log'
     qmoutput = inp + '.out'
     compute(exestr, qmlog, _threads)
-    qio_out = qio.QMOut(qmoutput, program='abinit')
 
     # clean up files
     files = glob.glob('*')
@@ -261,21 +260,23 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
         os.remove(den)
 
     densities = glob.glob('*_DEN')
-    #for i in range(len(densities)):
-    i = len(densities) - 1
-    exe = setting.abinit_cut3d_exe
-    den_inp = densities[i] + '.cov'
-    cube_file = inp + '.cube'
-    den_inp_file = open(den_inp, 'wb')
-    den_inp_file.write("%s\n1\n14\n%s" % (densities[i], cube_file))
-    den_inp_file.close()
-    log_name = densities[i] + '.log'
-    log = open(log_name, 'w')
-    run = sp.Popen("%s < %s" % (exe, den_inp), 
-             shell=True,
-             stdout=log)
-    run.wait()
-    log.close()
+    if len(densities) > 0:
+      i = len(densities) - 1
+      exe = setting.abinit_cut3d_exe
+      den_inp = densities[i] + '.cov'
+      cube_file = inp + '.cube'
+      den_inp_file = open(den_inp, 'wb')
+      den_inp_file.write("%s\n1\n14\n%s" % (densities[i], cube_file))
+      den_inp_file.close()
+      log_name = densities[i] + '.log'
+      log = open(log_name, 'w')
+      run = sp.Popen("%s < %s" % (exe, den_inp), 
+               shell=True,
+               stdout=log)
+      run.wait()
+      log.close()
+
+    qio_out = qtk.QMOut(qmoutput, program='abinit')
 
   #############################
   # Gaussian09 IMPLEMENTATION #

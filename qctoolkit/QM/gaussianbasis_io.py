@@ -410,7 +410,8 @@ class GaussianBasisOutput(GenericQMOutput):
     coulomb = self.e_coulomb(gridpoints, **kwargs)
     return kin + ext + x + c + coulomb
 
-  def getDipole(self, cartesian=True, resolution='fine', unit='debye'):
+  def getDipole(self, cartesian=True, resolution='fine', unit='debye', 
+                component='full'):
     if not hasattr(self, 'molecule'):
       qtk.exit('molecule structure not found')
     if not hasattr(self, '_rho'):
@@ -419,12 +420,19 @@ class GaussianBasisOutput(GenericQMOutput):
       [sum(self.molecule.Z * self.molecule.R[:,i]) for i in range(3)]
     )
     pQ = pQ * 1.8897259885789
-    pq = np.array(
-      [self.grid.integrate(self._rho * self.grid.points[:,i]) 
-       for i in range(3)]
-    )
-    pq = pq 
-    mu = pQ - pq
+
+    if component in ['full', 'ele']:
+      pq = np.array(
+        [self.grid.integrate(self._rho * self.grid.points[:,i]) 
+         for i in range(3)]
+      )
+
+    if component == 'full':
+      mu = pQ - pq
+    elif component == 'ele':
+      mu = pq
+    elif component == 'nuc':
+      mu = pQ
     if unit == 'debye':
       return mu / 0.393430307
     else:
