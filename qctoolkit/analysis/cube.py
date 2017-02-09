@@ -551,6 +551,35 @@ class CUBE(object):
     self.grid[0][1:] = self.grid[0][1:] + vectorb
     self.molecule.shift(np.array(vector))
 
+  def getDipole(self, Z_flag='no_core', component='full'):
+    if Z_flag == 'no_core':
+      Z = [qtk.ve_list[qtk.Z2n(z)] for z in self.molecule.Z]
+    else:
+      Z = self.molecule.Z
+    if abs(self.integrate() - sum(Z)) > 0.2:
+      qtk.setting.quiet = False
+      qtk.warning("net charge is not zero! check Z_flag='all'")
+    pQ = np.array([sum(Z * self.molecule.R[:,i]) 
+      for i in range(3)]) * 1.8897259885789
+    qtk.setting.quiet = True
+    mg = self.meshgrid()
+    qtk.setting.quite = False
+    pq = [(self.data * mg[i]).sum()*self.dV for i in range(3)]
+    if component == 'full':
+      return pQ - pq
+    elif component == 'nuc':
+      return pQ
+    elif component == 'ele':
+      return pq
+
+  def range_1D(self):
+    qrange =  [self.grid[i,i] * (self.grid[i,0]-1) + self.grid[0,i]
+      for i in range(1,4)]
+    x, y, z = [np.linspace(
+      self.grid[0,i+1], qrange[i], self.grid[i+1,0])
+      for i in range(3)]
+    return x, y, z
+
   def ESP(self, coord=None, **kwargs):
     """
     method for electron density
