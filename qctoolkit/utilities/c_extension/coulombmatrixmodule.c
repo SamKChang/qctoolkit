@@ -22,7 +22,7 @@ void coulombmatrix(char* inp,
   double Ri[3], Rj[3], dR;
   int *Z;
   int i=0, j=0, k=0, s1, s2;
-  char *string = (char *) malloc(80);
+  char *string = NULL;
   size_t len=0;
 
 

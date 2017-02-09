@@ -13,7 +13,7 @@ void readCubeHeader(char *inp, int dims[3], int size[2]){
   double read;
   int i, j=0, s;
   double grid[16];
-  char *string = (char *) malloc(80);
+  char *string = NULL;
   size_t len=0;
 
   // CUBE file contains fixed size grid specification
@@ -57,7 +57,7 @@ void readcube_c(char *inp,
   int i, j=0, k, s;
   int nx, ny, nz;
   double r;
-  char *string = (char *) malloc(80);
+  char *string = NULL;
   size_t len=0;
   int MO_flag = 0;
 
