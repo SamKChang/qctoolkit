@@ -146,7 +146,8 @@ class InpContent(object):
                     os.path.split(dep_tar)[-1])
                 except Exception as err:
                   qtk.warning('error when linking %s, ' + \
-                    'appempt to copy...' % os.path.split(dep_tar)[-1])
+                    'attempt to copy %s...' % \
+                    os.path.split(dep_tar)[-1])
                   try:
                     shutil.copy(dep_src, dep_tar)
                   except Exception as err:
