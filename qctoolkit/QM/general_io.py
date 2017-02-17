@@ -142,8 +142,8 @@ class InpContent(object):
               if hasattr(self, 'link_dep') and self.link_dep:
                 try:
                   os.link(dep_src, dep_tar)
-                  qtk.progress('QMInp', '%s is linked' % \
-                    os.path.split(dep_tar.split)[-1])
+                  qtk.progress('QMInp', '%s is linked\n' % \
+                    os.path.split(dep_tar)[-1])
                 except:
                   shutil.copy(dep_src, dep_tar)
               else:
