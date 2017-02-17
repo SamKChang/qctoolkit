@@ -144,8 +144,14 @@ class InpContent(object):
                   os.link(dep_src, dep_tar)
                   qtk.progress('QMInp', '%s is linked\n' % \
                     os.path.split(dep_tar)[-1])
-                except:
-                  shutil.copy(dep_src, dep_tar)
+                except Exception as err:
+                  qtk.warning('error when linking %s, ' + \
+                    'appempt to copy...' % os.path.split(dep_tar)[-1])
+                  try:
+                    shutil.copy(dep_src, dep_tar)
+                  except Exception as err:
+                    qtk.warning('failed! skipping %s' % \
+                      os.path.split(dep_tar)[-1])
               else:
                 shutil.copy(dep_src, dep_tar)
           else:
