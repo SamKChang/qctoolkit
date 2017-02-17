@@ -59,9 +59,9 @@ for dir in `ls -d */`; do
   echo "#!/bin/bash"                                   > jobsub
   echo 'source $HOME/.bashrc'                         >> jobsub
   #echo "module load ABINIT/8.0.8-goolf-1.7.20"        >> jobsub
-  echo "module load gaussian"                         >> jobsub
-  echo "module load OpenMPI/1.6.4-GCC-4.7.2"          >> jobsub
-  echo "module load hwloc/1.6.2-GCC-4.7.2"            >> jobsub
+  #echo "module load gaussian"                         >> jobsub
+  #echo "module load OpenMPI/1.6.4-GCC-4.7.2"          >> jobsub
+  #echo "module load hwloc/1.6.2-GCC-4.7.2"            >> jobsub
   echo "#$ -cwd"                                      >> jobsub
   echo "#$ -N $PREFIX${inp%.*}"                       >> jobsub
 #  echo 'NCPU=`nproc --all`'                           >> jobsub
@@ -116,7 +116,7 @@ for dir in `ls -d */`; do
 
   # cleanup scratch
   echo "cd .."                                        >> jobsub
-  echo "cp -rT /scratch/$USER/$job/* $mydir"              >> jobsub
+  echo "cp -r /scratch/$USER/$job/* $mydir"              >> jobsub
   echo "cd $mydir"                                    >> jobsub
   echo "rm -rf /scratch/$USER/$job"                       >> jobsub
 

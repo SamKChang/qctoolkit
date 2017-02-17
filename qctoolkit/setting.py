@@ -67,6 +67,7 @@ file_setup = {
                'output' : False,
                'dependent_files' : [],
                'finalized': False,
+               'link_dep': False,
              }
 planewave_setup = {
                     'periodic': True,

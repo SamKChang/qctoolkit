@@ -226,9 +226,18 @@ class out(PlanewaveOutput):
       ZindNewStr = filter(None, data[ZindItr].split(' '))
       ZindNew = [int(z) for z in ZindNewStr]
       Zind.extend(ZindNew)
+    NZnuc = filter(lambda x: 'ntypat' in x, data)[-1]
+    NZnuc = int(filter(None, NZnuc.split(' '))[-1])
     Znuc = filter(lambda x: 'znucl ' in x, data)[-1]
+    line_znuc = len(data) - data[::-1].index(Znuc) 
     Znuc = filter(None, Znuc.replace('znucl', '').split(' '))
     Znuc = [float(z) for z in Znuc]
+    while len(Znuc) < NZnuc:
+      Znuc_new = filter(None, data[line_znuc].split(' '))
+      Znuc_new = [float(z) for z in Znuc_new]
+      Znuc.extend(Znuc_new)
+      line_znuc = line_znuc + 1
+      
     build = []
     for i in range(N):
       Z = [Znuc[Zind[i]-1]]
@@ -261,7 +270,7 @@ class out(PlanewaveOutput):
         for occ in filter(None, data[i].split(' ')):
           try:
             self.occupation.append(float(occ))
-          except:
+          except Exception as err:
             pass
     except Exception as err:
       qtk.warning("error when extracting occupation number with" +\
@@ -334,6 +343,7 @@ class out(PlanewaveOutput):
               self.Eg_direct = True
             else:
               self.Eg_direct = False
+            self.fermi_index = N_state
   
       else:
         qtk.warning("spin polarized band data " +\
