@@ -274,6 +274,24 @@ class out(PlanewaveOutput):
     scf_str = filter(p1.match, data)
     if scf_str:
       self.scf_step = len(scf_str)
+
+    R_str = filter(lambda x: 'ATOMIC COORDINATES' in x, data)[-1]
+    R_ind = len(data) - data[::-1].index(R_str)
+    self.molecule.N = 1
+    R_more = True
+    ZR = []
+    while R_more:
+      ind = R_ind + self.molecule.N
+      zr_lst = filter(None, data[ind].split(' '))
+      if len(zr_lst) == 5:
+        zr = [qtk.n2Z(zr_lst[1])]
+        zr.extend([float(r) for r in zr_lst[2:]])
+        ZR.append(zr)
+        self.molecule.N = self.molecule.N + 1
+      else:
+        R_more = False
+    self.molecule.build(ZR)
+      
       
     Et_scf = float(filter(None, scf_str[-1].split(' '))[3])
     if abs(Et_report - Et_scf) > 1E-6 :
@@ -324,6 +342,8 @@ class out(PlanewaveOutput):
       N_state = ind[mask][0]
       self.Eg = self.mo_eigenvalues[N_state + 1] -\
                 self.mo_eigenvalues[N_state]
+
+    
 
 def PPName(inp, mol, i, n):
   if 'vdw' in inp.setting\
