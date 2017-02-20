@@ -415,7 +415,6 @@ class GenericQMOutput(object):
       else:
         unitStr = self.unit + '-' + other.unit
         out.Et = self.Et + qtk.convE(other.Et, unitStr, '-')
-      print 'yo', self.scf_step, other.scf_step, max(self.scf_step, other.scf_step)
       out.scf_step = max(self.scf_step, other.scf_step)
     elif (type(other) is int) or (type(other) is float):
       out.Et = self.Et - other
