@@ -380,6 +380,9 @@ class GenericQMOutput(object):
   def __repr__(self):
     return str(self.Et)
 
+  def __float__(self):
+    return self.Et
+
   def inUnit(self, unit):
     unitStr = self.unit + '-' + unit
     if not unitStr.lower() == 'eh-eh':
@@ -397,7 +400,7 @@ class GenericQMOutput(object):
       else:
         unitStr = self.unit + '-' + other.unit
         out.Et = self.Et + qtk.convE(other.Et, unitStr, '-')
-      out.scp_step = max(self.scf_step, other.scf_step)
+      out.scf_step = max(self.scf_step, other.scf_step)
     elif (type(other) is int) or (type(other) is float):
       out.Et = self.Et + other
     else:
@@ -412,7 +415,8 @@ class GenericQMOutput(object):
       else:
         unitStr = self.unit + '-' + other.unit
         out.Et = self.Et + qtk.convE(other.Et, unitStr, '-')
-      out.scp_step = max(self.scf_step, other.scf_step)
+      print 'yo', self.scf_step, other.scf_step, max(self.scf_step, other.scf_step)
+      out.scf_step = max(self.scf_step, other.scf_step)
     elif (type(other) is int) or (type(other) is float):
       out.Et = self.Et - other
     else:
@@ -434,3 +438,15 @@ class GenericQMOutput(object):
     else:
       out.Et = np.nan
     return out
+
+  def __radd__(self, other):
+    return self.__add__(other)
+
+  def __rsub__(self, other):
+    return self.__sub__(other)
+
+  def __rmul__(self, other):
+    return self.__mul__(other)
+
+  def __rdiv__(self, other):
+    return self.__div__(other)
