@@ -227,7 +227,9 @@ class inp(PlanewaveInput):
         inp.write("ALCHEMY reference\n\n")
 
       if 'restart' in setting and setting['restart']:
-        if 'scf_step' in setting and setting['scf_step'] == 1:
+        if 'scf_step' in setting:
+          if setting['scf_step'] != 1:
+            qtk.warning('alchemy with optimization...')
           inp.write("ALCHEMY prediction\n\n")
 
       if self.content['system']['ibrav'] == 0:

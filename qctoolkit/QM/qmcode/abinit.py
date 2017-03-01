@@ -6,6 +6,8 @@ import qctoolkit.QM.qmjob as qmjob
 import numpy as np
 import universal as univ
 from bigdft import PPCheck
+from collections import OrderedDict as odict
+from numbers import Number
 
 class inp(PlanewaveInput):
   """
@@ -16,176 +18,320 @@ class inp(PlanewaveInput):
     PlanewaveInput.__init__(self, molecule, **kwargs)
     self.setting.update(**kwargs)
     self.backup()
-    self.content = ['']
+    self.content = odict()
+
+  def write(self, name=None, **kwargs):
+
+    def writeInp(name=None, **setting):
+      self.setting.update(setting)
+      self.setting['no_molecule'] = False
+      inp, molecule = \
+        super(PlanewaveInput, self).write(name, **self.setting)
+
+      molecule.sort()
+      type_index = molecule.index
+      type_list = molecule.type_list
+
+      self.pp_path = qtk.setting.bigdft_pp
+      if 'pp_path' in self.setting:
+        self.pp_path = self.setting['pp_path']
+
+      if 'pp_theory' not in self.setting:
+        self.setting['pp_theory'] = self.setting['theory']
+
+      pp_files = []
+      typat = []
+      for a in range(len(type_index)-1):
+        start = type_index[a]
+        end = type_index[a+1]
+        for i in range(end - start):
+          typat.append(a+1)
+      for i in range(molecule.N):
+        pp_file = 'psppar.' + molecule.type_list[i]
+        pp_list = set([pp[1] for pp in pp_files])
+        if pp_file not in pp_list:
+          pp_src = PPCheck(self.setting['theory'],
+                           self.setting['pp_theory'],
+                           self.pp_path,
+                           molecule.type_list[i])
+          pp_files.append([pp_src, pp_file])
+
+      ###########
+      # dataset #
+      ###########
+      if 'band_scan' in self.setting:
+        self.content['dataset'] = odict()
+        self.content['dataset']['ndtset'] = 2
+        if molecule.symmetry and molecule.symmetry.lower() == 'fcc':
+          if 'kshift' not in self.setting:
+            self.setting['kshift'] = [
+              [0.5, 0.5, 0.5],
+              [0.5, 0.0, 0.0],
+              [0.0, 0.5, 0.0],
+              [0.0, 0.0, 0.5],
+            ]
+
+      ###################
+      # restart section #
+      ###################
+      if 'restart' in self.setting and self.setting['restart']:
+        self.content['restart'] = odict([
+          ('irdwfk', 1),
+          ('getwfk', -1),
+          #('iscf', -2), # for non-scf calculations
+        ])
+      if 'restart_density' in self.setting \
+      and self.setting['restart_density']:
+        self.content['restart']['irdden'] = 1
+        self.content['restart']['getden'] = -1
+  
+      ##################
+      # system section #
+      ##################
+      if 'kmesh' not in self.setting:
+        self.setting['kmesh'] = [1,1,1]
+      if 'kshift' not in self.setting:
+        self.setting['kshift'] = [0.0,0.0,0.0]
+
+      self.content['system'] = odict()
+      if self.setting['full_kmesh']:
+        self.content['system']['kptopt'] = 3
+      self.content['system']['ngkpt'] = self.setting['kmesh']
+      if len(np.array(self.setting['kshift']).shape) > 1:
+        self.content['system']['nshiftk'] = len(self.setting['kshift'])
+      self.content['system']['shiftk'] = self.setting['kshift']
+      nbnd = None
+      if 'ks_states' in self.setting and self.setting['ks_states']:
+        vs = int(round(molecule.getValenceElectrons() / 2.0))
+        nbnd = self.setting['ks_states'] + vs
+        if 'd_shell' in self.setting:
+          for a in molecule.type_list:
+            if a in self.setting['d_shell'] and qtk.n2ve(a) < 10:
+              nbnd += 5
+        self.content['system']['nband'] = nbnd
+      if molecule.charge != 0:
+        self.content['system']['charge='] = molecule.charge
+      if molecule.multiplicity != 1:
+        self.content['system']['nsppol'] = 2
+        self.content['system']['occopt'] = 7
+      if 'save_restart' not in self.setting \
+      or not self.setting['save_restart']:
+        self.content['system']['prtwf'] = 0
+      if 'wf_convergence' in self.setting:
+        self.content['system']['tolwfr'] = \
+        self.setting['wf_convergence']
+
+      ######################
+      # additional setting #
+      ######################
+      if 'abinit_setting' in self.setting:
+        self.content['additional'] = odict([])
+        for item in self.setting['abinit_setting']:
+          self.content['additional'][item] = ' '
+
+      def is_strnum(q):
+        if isinstance(q, Number) or type(q) is str:
+          return True
+        else:
+          return False
+
+
+      #################
+      # bandstructure #
+      #################
+      if 'band_scan' in self.setting:
+        bnds = self.setting['band_scan']
+        if len(bnds) != 2 \
+        or is_strnum(bnds[0]) \
+        or len(bnds[0]) != len(bnds[1]) - 1:
+          qtk.exit('band_scan format: [lst_div, lst_coord]')
+        bnd_content = odict([
+          ('iscf', -2),
+          ('getden', -1),
+          ('kptopt', -3),
+          ('tolwfr', self.setting['wf_convergence']),
+          ('enunit', 1),
+          ('ndivk', bnds[0]),
+          ('kptbounds', bnds[1]),
+        ])
+        if nbnd:
+          bnd_content['nband'] = nbnd
+        if 'save_restart' not in self.setting \
+        or not self.setting['save_restart']:
+          bnd_content['prtwf'] = 0
+        else:
+          bnd_content['prtwf'] = 1
+        if 'save_density' not in self.setting \
+        or not self.setting['save_density']:
+          bnd_content['prtden'] = 0
+        else:
+          bnd_content['prtden'] = 1
+  
+        # compute band structrue from scratch
+        if 'restart' not in self.content \
+        or len(self.content['restart']) == 0\
+        or 'getden' not in self.content['restart']:
+          self.content['system']['prtden'] = 1
+          if 'nband' in self.content['system']:
+            nbnd = self.content['system'].pop('nband')
+          if 'prtwf' in self.content['system']:
+            self.content['system'].pop('prtwf')
+          for key in self.content['system'].iterkeys():
+            if key[-1] != '1':
+              self.content['system'][key + '1'] = \
+              self.content['system'].pop(key)
+          for key in bnd_content.iterkeys():
+            self.content['system'][key + '2'] = bnd_content[key]
+
+        # compute band structure by loading wavefunction
+        else:
+          del self.content['dataset']['ndtset']
+          keep_lst = [
+            'nband',
+            'tolwfr',
+            'nstep',
+            'ecut',
+          ]
+          for key in self.content['system'].iterkeys():
+            if key not in keep_lst:
+              del self.content['system'][key]
+          for key in bnd_content.iterkeys():
+            if key not in self.content['restart'].keys():
+              self.content['system'][key] = bnd_content[key]
+        
+      ################
+      # cell section #
+      ################
+      self.content['cell'] = odict([
+        ('ecut', float(self.setting['cutoff']/2.)),
+        ('nstep', self.setting['scf_step']),
+      ])
+
+      #self.content['cell'] = odict()
+      if not molecule.symmetry:
+        self.content['cell']['acell'] = '3*1.889726124993'
+        if 'lattice' not in self.setting:
+          self.celldm2lattice()
+        lattice_vec = self.setting['lattice']
+        self.content['cell']['chkprim'] = 0
+      else:
+        self.content['cell']['acell'] = [1, 1, 1]
+        a0 = molecule.celldm[0] * 1.889726124993
+        if  molecule.symmetry.lower() == 'fcc':
+          lattice_vec = 0.5 * a0 * np.array([
+            [0, 1, 1],
+            [1, 0, 1],
+            [1, 1, 0],
+          ])
+        elif  molecule.symmetry.lower() == 'fcc':
+          lattice_vec = 0.5 * a0 * np.array([
+            [-1, 1, 1],
+            [ 1,-1, 1],
+            [ 1, 1,-1],
+          ])
+      self.content['cell']['rprim'] = lattice_vec
+
+
+      #################
+      # atoms section #
+      #################
+      znucl = []
+      for a in range(len(type_index)-1):
+        symb = type_list[type_index[a]]
+        znucl.append(int(qtk.n2Z(symb)))
+
+      self.content['atoms'] = odict([
+        ('natom', molecule.N),
+        ('ntypat', (len(type_index) - 1)),
+        ('typat', typat),
+        ('znucl', znucl),
+        ('xangst', molecule.R),
+      ])
+
+      #########################
+      # write content to file #
+      #########################
+      inp.write('# abinit input generated by qctoolkit\n')
+      for section_key in self.content.iterkeys():
+        if len(self.content[section_key]) > 0:
+          inp.write('\n# %s section\n' % section_key)
+        for key, value in self.content[section_key].iteritems():
+          if is_strnum(value):
+            inp.write('%s %s\n' % (key, str(value)))
+          else:
+            inp.write('%s' % key)
+            head = ''.join([' ' for _ in key])
+            if key in ['xangst', 'xcart', 'xred']:
+              inp.write('\n\n')
+              for vec in value:
+                inp.write('%s' % head)
+                for v in vec:
+                  inp.write(' %s' % str(v))
+                inp.write('\n')
+            elif is_strnum(value[0]):
+              for v in value:
+                inp.write(' %s' % str(v))
+              inp.write('\n')
+            else:
+              for v in value[0]:
+                inp.write(' %s' % str(v))
+              inp.write('\n')
+              for vec in value[1:]:
+                inp.write('%s' % head)
+                for v in vec:
+                  inp.write(' %s' % str(v))
+                inp.write('\n')
+
+      if 'restart_wavefunction_path' in self.setting:
+        rstwf_path = self.setting['restart_wavefunction_path']
+        if os.path.exists(rstwf_path):
+          wf_lst = sorted(
+            glob.glob(os.path.join(rstwf_path, '*o_*WFK'))
+          )
+          assert len(wf_lst) > 0
+          wf_src = os.path.abspath(wf_lst[-1])
+          pp_files.append([wf_src, name + 'i_WFK'])
+          
+      if 'restart_density_path' in self.setting:
+        rstdn_path = self.setting['restart_density_path']
+        if os.path.exists(rstdn_path):
+          dn_lst = sorted(
+            glob.glob(os.path.join(rstdn_path, '*o_*DEN'))
+          )
+          assert len(dn_lst) > 0
+          dn_src = os.path.abspath(dn_lst[-1])
+          pp_files.append([dn_src, name + 'i_DEN'])
+
+      inp.close(dependent_files=pp_files)
+
+      if hasattr(inp, 'final_name'):
+        self.setting['no_molecule'] = True
+        self.setting['root_dir'] = name
+        files = \
+          super(PlanewaveInput, self).write(name, **self.setting)
+        files.extension = 'files'
+        files.write(inp.final_name + '\n')
+        root = os.path.splitext(inp.final_name)[0]
+        files.write(root + '.out\n')
+        files.write(root + 'i\n')
+        files.write(root + 'o\n')
+        files.write(root + 'x\n')
+        for pp in pp_files:
+          files.write(pp[1] + '\n')
+        files.close(no_cleanup = True)
+
+        
+
+      return inp
+
+    setting = copy.deepcopy(self.setting)
+    setting.update(kwargs)
+    inp = writeInp(name, **setting)
+    return inp
 
   def run(self, name=None, **kwargs):
     self.setting.update(kwargs)
     return univ.runCode(self, PlanewaveInput, name, **self.setting)
-
-  def write(self, name=None, **kwargs):
-    self.setting.update(kwargs)
-    self.setting['no_molecule'] = False
-    inp, molecule = \
-      super(PlanewaveInput, self).write(name, **self.setting)
-
-    molecule.sort()
-    type_index = molecule.index
-    type_list = molecule.type_list
-
-    self.pp_path = qtk.setting.bigdft_pp
-    if 'pp_path' in self.setting:
-      self.pp_path = self.setting['pp_path']
-
-    if 'pp_theory' not in self.setting:
-      self.setting['pp_theory'] = self.setting['theory']
-
-    pp_files = []
-    inp.write('# abinit input generated by qctoolkit\n')
-
-    # restart section
-    if 'restart' in self.setting and self.setting['restart']:
-      inp.write('\n# restart, reading wavefunction from file\n')
-      inp.write('irdwfk 1\n')
-      inp.write('getwfk -1\n')
- 
-    # cell definition
-    inp.write('\n# cell definition\n')
-    # cell specified by Bohr
-    if not molecule.symmetry:
-      inp.write('# NOTE: cell defined by lattice vector, ')
-      inp.write('NOT supported by abinit spacegroup detector!\n')
-      inp.write('acell 3*1.889726124993\n')
-      if 'lattice' not in self.setting:
-        self.celldm2lattice()
-      lattice_vec = self.setting['lattice']
-      inp.write('chkprim 0\n')
-    elif molecule.symmetry.lower() == 'fcc':
-      inp.write("# fcc primitive cell\n")
-      a0 = molecule.celldm[0] * 1.889726124993
-      inp.write('acell 1 1 1\n')
-      lattice_vec = 0.5 * a0 * np.array([
-        [0, 1, 1],
-        [1, 0, 1],
-        [1, 1, 0],
-      ])
-    elif molecule.symmetry.lower() == 'bcc':
-      inp.write("# bcc primitive cell\n")
-      inp.write('acell 1 1 1\n')
-      a0 = molecule.celldm[0] * 1.889726124993
-      lattice_vec = 0.5 * a0 * np.array([
-        [-1, 1, 1],
-        [ 1,-1, 1],
-        [ 1, 1,-1],
-      ])
-    strList = ['rprim', '', '']
-    for i in range(3):
-      vec = lattice_vec[i]
-      inp.write('%5s % 11.6f % 11.6f % 11.6f\n' % (
-        strList[i], vec[0], vec[1], vec[2],
-      ))
-
-    # atom definition
-    inp.write("\n# atom definition\n")
-    inp.write('ntypat %d\n' % (len(type_index) - 1))
-    inp.write('znucl')
-    for a in range(len(type_index)-1):
-      symb = type_list[type_index[a]]
-      Z = qtk.n2Z(symb)
-      inp.write(' %d' % Z)
-    inp.write('\n')
-
-    # atom position
-    inp.write("\n# atom position\n")
-    inp.write("natom %d\n" % molecule.N)
-    inp.write('typat')
-    for a in range(len(type_index)-1):
-      start = type_index[a]
-      end = type_index[a+1]
-      for i in range(end - start):
-        inp.write(' %d' % (a+1))
-    inp.write('\nxangst\n\n')
-    for i in range(molecule.N):
-      inp.write('  ')
-      for j in range(3):
-        inp.write(' % 11.6f' % molecule.R[i][j])
-      inp.write('\n')
-
-      # construct pp files depandency
-      pp_file = 'psppar.' + molecule.type_list[i]
-      pp_list = set([pp[1] for pp in pp_files])
-      if pp_file not in pp_list:
-        pp_src = PPCheck(self.setting['theory'],
-                         self.setting['pp_theory'],
-                         self.pp_path,
-                         molecule.type_list[i])
-        pp_files.append([pp_src, pp_file])
-
-    inp.write('\n')
-
-    # system setting
-    inp.write("\n# system settings\n")
-    # cutoff in Hartree
-    inp.write('ecut %.2f\n' % float(self.setting['cutoff']/2.))
-    if 'kmesh' not in self.setting:
-      self.setting['kmesh'] = [1,1,1]
-    if self.setting['full_kmesh']:
-      inp.write('kptopt 3\n')
-    inp.write('ngkpt')
-    for k in self.setting['kmesh']:
-      inp.write(' %d' % k)
-    if 'kshift' not in self.setting:
-      inp.write('\nshiftk 0.0 0.0 0.0')
-    if 'ks_states' in self.setting and self.setting['ks_states']:
-      vs = int(round(molecule.getValenceElectrons() / 2.0))
-      nbnd = self.setting['ks_states'] + vs
-      if 'd_shell' in self.setting:
-        for a in molecule.type_list:
-          if a in self.setting['d_shell'] and qtk.n2ve(a) < 10:
-            nbnd += 5
-      inp.write('\nnband %d' % nbnd)
-    inp.write('\nnstep %d\n' % self.setting['scf_step']) 
-    if 'wf_convergence' in self.setting:
-      inp.write('toldfe %.2E\n' % self.setting['wf_convergence'])
-    if molecule.charge != 0:
-      inp.write('charge=%d\n' % molecule.charge)
-    if molecule.multiplicity != 1:
-      inp.write('nsppol 2 # for spin polarized\n')
-      inp.write('occopt 7 # for relaxed occupation\n')
-
-    if 'save_restart' in self.setting and self.setting['save_restart']:
-      pass
-    else:
-      inp.write('prtwf 0\n')
-
-    for item in self.content:
-      inp.write(item)
-
-    if 'abinit_setting' in self.setting:
-      inp.write("\n# additional settings\n")
-      for item in self.setting['abinit_setting']:
-        inp.write("%s\n" % item)
-        
-
-    inp.close(dependent_files=pp_files)
-
-    if hasattr(inp, 'final_name'):
-      self.setting['no_molecule'] = True
-      self.setting['root_dir'] = name
-      files = \
-        super(PlanewaveInput, self).write(name, **self.setting)
-      files.extension = 'files'
-      files.write(inp.final_name + '\n')
-      root = os.path.splitext(inp.final_name)[0]
-      files.write(root + '.out\n')
-      files.write(root + 'i\n')
-      files.write(root + 'o\n')
-      files.write(root + 'x\n')
-      for pp in pp_files:
-        files.write(pp[1] + '\n')
-      files.close(no_cleanup = True)
-
-
-    return inp
 
 class out(PlanewaveOutput):
   def __init__(self, qmout, **kwargs):
@@ -291,10 +437,16 @@ class out(PlanewaveOutput):
     eigFileList = glob.glob(eigStr)
     if len(eigFileList) != 0:
       if len(eigFileList) > 1:
-        qtk.warning("more than one o_EIG files found")
-      eigFile = open(eigFileList[0])
+        qtk.warning(
+          "more than one o_EIG files found" + \
+          "loading last file with name: %s" % eigFileList[-1]
+        )
+      eigFile = open(eigFileList[-1])
       eigData = eigFile.readlines()
       eigFile.close()
+      unitStr = filter(lambda x: 'Eigenvalues' in x, eigData)[0]
+      unitStr = unitStr.replace('(', '').replace(')', '')
+      unit = filter(None, unitStr.split(' '))[1]
       spinList = filter(lambda x: 'SPIN' in x, eigData)
       if len(spinList) != 0:
         spinFactor = 2
@@ -321,7 +473,7 @@ class out(PlanewaveOutput):
           else:
             e = len(eigData)
           eig_i = filter(None, ''.join(eigData[s:e]).split(' '))
-          band.append([qtk.convE(float(ew), 'Eh-eV')[0]
+          band.append([qtk.convE(float(ew), '%s-eV' % unit)[0]
                        for ew in eig_i])
   
         self.band = np.array(band)
