@@ -434,7 +434,7 @@ class out(PlanewaveOutput):
       self.molecule.R, self.celldm)
 
     eigStr = os.path.join(os.path.split(qmout)[0], '*_EIG')
-    eigFileList = glob.glob(eigStr)
+    eigFileList = sorted(glob.glob(eigStr))
     if len(eigFileList) != 0:
       if len(eigFileList) > 1:
         qtk.warning(
