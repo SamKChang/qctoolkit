@@ -3,15 +3,17 @@ import os, re, shutil, copy, glob
 from qctoolkit.QM.pseudo.pseudo import PP
 import universal as univ
 
-def Al1st(qminp, **setting):
+def Al1st(qminp, runjob=False, **setting):
   assert 'ref_dir' in setting
   assert os.path.exists(setting['ref_dir'])
   setting['ref_dir'] = os.path.abspath(setting['ref_dir'])
 
   if 'runjob' not in setting:
-    setting['runjob'] = True
+    setting['runjob'] = False
 
   qminp = copy.deepcopy(univ.toInp(qminp, **setting))
+  if hasattr(qminp.setting, 'save_restart'):
+    qminp.setting['save_restart'] = False
 
   name = qminp.molecule.name
   if 'out_dir' in setting:
@@ -34,15 +36,19 @@ def Al1st(qminp, **setting):
   elif qminp.setting['program'] == 'abinit':
     setting['restart'] = True
     setting['scf_step'] = 0
-    rstList = glob.glob(os.path.join(setting['ref_dir'], '*o_WFK'))
+    rstList = glob.glob(os.path.join(setting['ref_dir'], '*o_*WFK'))
     assert len(rstList) > 0
     rstSrc = rstList[-1]
-    rstTar = rstSrc.replace('o_WFK', 'i_WFK')
-    rstTar = os.path.split(rstTar)[-1]
     if 'dependent_file' in setting:
       setting['dependent_files'].append([rstSrc, name+'i_WFK'])
     else:
       setting['dependent_files'] = [[rstSrc, name+'i_WFK']]
+
+    denList = glob.glob(os.path.join(setting['ref_dir'], '*o_*DEN'))
+    if len(denList) > 0:
+      setting['restart_density'] = True
+      denSrc = denList[-1]
+      setting['dependent_files'].append([denSrc, name+'i_DEN'])
 
   elif qminp.setting['program'] == 'espresso':
     wfn = glob.glob(setting['ref_dir'] + '/*.wfc[0-9]*')

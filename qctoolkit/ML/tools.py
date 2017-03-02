@@ -15,6 +15,29 @@ if skl_found:
   from sklearn.linear_model import Ridge
   from sklearn.kernel_ridge import KernelRidge
 
+def l2_fit(X, Y):
+  """
+  Y = X.dot(beta) + epsilon
+  absorb constant epsilon in to X, rename beta and epsilon to w
+  Y = X.dot(w)
+  or
+  Yi = Xi.T * wi + w0 for all i
+  """
+  X = np.asarray(X)
+  ones = np.ones(X.shape[-1])
+  X = np.vstack([ones, X]).T
+  w = np.linalg.solve(np.dot(X.T, X), np.dot(X.T, Y))
+  return np.dot(X, w)
+
+def error_measure(y, y_hat):
+  y = np.asarray(y)
+  err = np.abs(y-y_hat)
+  err_mean = np.abs(y-y.mean())
+  R = 1 - err.mean() / err_mean.mean()
+  mse = np.sqrt(np.dot(err, err).mean())
+  mae = err.mean()
+  return R, mse, mae
+
 def coulomb_matrix(mol, n = -1, size = 0, 
                    sort = True, nuclear_charges = True):
   if size == 0:

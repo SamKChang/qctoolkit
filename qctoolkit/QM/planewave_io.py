@@ -279,7 +279,7 @@ class PlanewaveOutput(GenericQMOutput):
         try:
           kgrid, new_band = self._ase_grid(k_old, b_old, kmesh)
         except Exception as e:
-          qtk.exit('kpoint generation failed')
+          qtk.exit('kpoint generation failed: %s' % e)
     elif kmesh is None and kgrid is not None:
       new_band = self._kgrid_template(kgrid)
 
@@ -342,7 +342,7 @@ class PlanewaveOutput(GenericQMOutput):
 
 #
 #    if kgrid is None and kmesh is not None:
-#      new_kpoints, k_dup, ind_key = self._ase_kgrid(kmesh, k_old)
+#      new_kpoints, k_dup, ind_key = self._ase_grid(kmesh, k_old)
 #      new_band = []
 #      for k_new in new_kpoints:
 #        norm1 = np.linalg.norm(k_dup - k_new, axis=1)
@@ -404,7 +404,7 @@ class PlanewaveOutput(GenericQMOutput):
       new_band[key] = b
     return new_band
 
-  def _ase_kgrid(self, k_old, b_old, kmesh):
+  def _ase_grid(self, k_old, b_old, kmesh):
     if not ase_found:
       qtk.exit('ase not found')
     k = asekpt.monkhorst_pack(kmesh)
