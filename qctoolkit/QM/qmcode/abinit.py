@@ -148,7 +148,7 @@ class inp(PlanewaveInput):
         bnd_content = odict([
           ('iscf', -2),
           ('getden', -1),
-          ('kptopt', -3),
+          ('kptopt', -len(bnds[0])),
           ('tolwfr', self.setting['wf_convergence']),
           ('enunit', 1),
           ('ndivk', bnds[0]),
