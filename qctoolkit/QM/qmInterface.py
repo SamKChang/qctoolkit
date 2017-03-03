@@ -65,11 +65,11 @@ def QMOut(out=None, **kwargs):
       p_str = kwargs['program']
       if 'debug' in kwargs and kwargs['debug']:
         #return out_dict[p_str](out).inUnit(unit)
-        output = out_dict[p_str](out)
+        output = out_dict[p_str](out, **kwargs)
       else:
         try:
           #return out_dict[p_str](out)
-          output = out_dict[p_str](out)
+          output = out_dict[p_str](out, **kwargs)
         except Exception as e:
           qtk.warning("%s failed with message: %s" % (out, e))
           #qout = qtk.QMOut()

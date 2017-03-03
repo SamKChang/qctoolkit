@@ -385,6 +385,28 @@ class PlanewaveOutput(GenericQMOutput):
 #    self.band = new_band
 #
 
+  def DOS(self, sigma=0.2, E_list=None, raw=False):
+    dos_raw = []
+    for b in self.band.T:
+      dos_raw.extend(zip(b, self.kpoints[:,-1]))
+    dos_raw = np.array(dos_raw)
+
+    if raw:
+      return raw
+    else:
+      if not E_list:
+        E_min, E_max = min(dos_raw[:, 0]), max(dos_raw[:, 0])
+        p_max = E_max + 0.1 * (E_max - E_min)
+        p_min = E_min - 0.1 * (E_max - E_min)
+        E_list = np.linspace(p_min, p_max, 500)
+
+      y = np.zeros(len(E_list))
+      for entry in dos_raw:
+        E, w = entry
+        y = y + w * np.exp(-((E-E_list)/sigma)**2)\
+          / (sigma * np.sqrt(np.pi))
+      return np.array([E_list, y]).T
+
   def _kgrid_template(self, kgrid):
     new_kpoints = kgrid[:, :3]
     k_dup = self.kpoints[:, :3]

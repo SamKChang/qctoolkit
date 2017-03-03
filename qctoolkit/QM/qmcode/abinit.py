@@ -19,6 +19,7 @@ class inp(PlanewaveInput):
     self.setting.update(**kwargs)
     self.backup()
     self.content = odict()
+    self.content['datasets'] = odict([('ndtset', 1)])
 
   def write(self, name=None, **kwargs):
 
@@ -56,50 +57,32 @@ class inp(PlanewaveInput):
                            molecule.type_list[i])
           pp_files.append([pp_src, pp_file])
 
-      ###########
-      # dataset #
-      ###########
-      if 'band_scan' in self.setting:
-        self.content['dataset'] = odict()
-        self.content['dataset']['ndtset'] = 2
-        if molecule.symmetry and molecule.symmetry.lower() == 'fcc':
-          if 'kshift' not in self.setting:
-            self.setting['kshift'] = [
-              [0.5, 0.5, 0.5],
-              [0.5, 0.0, 0.0],
-              [0.0, 0.5, 0.0],
-              [0.0, 0.0, 0.5],
-            ]
+      ##################
+      # scf section #
+      ##################
+      self.content['scf'] = odict()
 
-      ###################
-      # restart section #
-      ###################
+      # restart check #
       if 'restart' in self.setting and self.setting['restart']:
-        self.content['restart'] = odict([
-          ('irdwfk', 1),
-          ('getwfk', -1),
-          #('iscf', -2), # for non-scf calculations
-        ])
+        self.content['scf']['irdwfk'] = 1
+        self.content['scf']['getwfk'] = -1
       if 'restart_density' in self.setting \
       and self.setting['restart_density']:
-        self.content['restart']['irdden'] = 1
-        self.content['restart']['getden'] = -1
-  
-      ##################
-      # system section #
-      ##################
+        self.content['scf']['irdden'] = 1
+        self.content['scf']['getden'] = -1
+
       if 'kmesh' not in self.setting:
         self.setting['kmesh'] = [1,1,1]
       if 'kshift' not in self.setting:
         self.setting['kshift'] = [0.0,0.0,0.0]
 
-      self.content['system'] = odict()
+      # kpoints check #
       if self.setting['full_kmesh']:
-        self.content['system']['kptopt'] = 3
-      self.content['system']['ngkpt'] = self.setting['kmesh']
+        self.content['scf']['kptopt'] = 3
+      self.content['scf']['ngkpt'] = self.setting['kmesh']
       if len(np.array(self.setting['kshift']).shape) > 1:
-        self.content['system']['nshiftk'] = len(self.setting['kshift'])
-      self.content['system']['shiftk'] = self.setting['kshift']
+        self.content['scf']['nshiftk'] = len(self.setting['kshift'])
+      self.content['scf']['shiftk'] = self.setting['kshift']
       nbnd = None
       if 'ks_states' in self.setting and self.setting['ks_states']:
         vs = int(round(molecule.getValenceElectrons() / 2.0))
@@ -108,20 +91,41 @@ class inp(PlanewaveInput):
           for a in molecule.type_list:
             if a in self.setting['d_shell'] and qtk.n2ve(a) < 10:
               nbnd += 5
-        self.content['system']['nband'] = nbnd
+        if 'band_scan' not in self.setting \
+        and 'dos_mesh' not in self.setting:
+          self.content['scf']['nband'] = nbnd
+
+      # system setup #
       if molecule.charge != 0:
-        self.content['system']['charge='] = molecule.charge
+        self.content['scf']['charge='] = molecule.charge
       if molecule.multiplicity != 1:
-        self.content['system']['nsppol'] = 2
-        self.content['system']['occopt'] = 7
+        self.content['scf']['nsppol'] = 2
+        self.content['scf']['occopt'] = 7
       if 'save_restart' not in self.setting \
       or not self.setting['save_restart']:
-        self.content['system']['prtwf'] = 0
+        self.content['scf']['prtwf'] = 0
       if 'dos' in self.setting and self.setting['dos']:
-        self.content['system']['prtdos'] = 1
+        self.content['scf']['prtdos'] = 1
+        self.content['scf']['occopt'] = 3
       if 'wf_convergence' in self.setting:
-        self.content['system']['tolwfr'] = \
+        self.content['scf']['tolwfr'] = \
         self.setting['wf_convergence']
+
+      # clean up for the case of restart
+      if 'restart' in self.setting and self.setting['restart']:
+        keep_lst = [
+          'nband',
+          'tolwfr',
+          'nstep',
+          'ecut',
+          'irdwfk',
+          'irdden',
+          'getwfk',
+          'getden',
+        ]
+        for key in self.content['scf'].iterkeys():
+          if key not in keep_lst or 'prt' not in key:
+            self.content['scf'].pop(key)
 
       ######################
       # additional setting #
@@ -137,22 +141,31 @@ class inp(PlanewaveInput):
         else:
           return False
 
-
       #################
       # bandstructure #
       #################
-      if 'band_scan' in self.setting:
+      if 'band_scan' in self.setting and self.setting['band_scan']:
+
+        if molecule.symmetry and molecule.symmetry.lower() == 'fcc':
+          if 'kshift' not in self.setting:
+            self.setting['kshift'] = [
+              [0.5, 0.5, 0.5],
+              [0.5, 0.0, 0.0],
+              [0.0, 0.5, 0.0],
+              [0.0, 0.0, 0.5],
+            ]
+
         bnds = self.setting['band_scan']
         if len(bnds) != 2 \
         or is_strnum(bnds[0]) \
         or len(bnds[0]) != len(bnds[1]) - 1:
           qtk.exit('band_scan format: [lst_div, lst_coord]')
+
         bnd_content = odict([
           ('iscf', -2),
           ('getden', -1),
           ('kptopt', -len(bnds[0])),
           ('tolwfr', self.setting['wf_convergence']),
-          ('enunit', 1),
           ('ndivk', bnds[0]),
           ('kptbounds', bnds[1]),
         ])
@@ -168,38 +181,39 @@ class inp(PlanewaveInput):
           bnd_content['prtden'] = 0
         else:
           bnd_content['prtden'] = 1
-  
-        # compute band structrue from scratch
-        if 'restart' not in self.content \
-        or len(self.content['restart']) == 0\
-        or 'getden' not in self.content['restart']:
-          self.content['system']['prtden'] = 1
-          if 'nband' in self.content['system']:
-            nbnd = self.content['system'].pop('nband')
-          if 'prtwf' in self.content['system']:
-            self.content['system'].pop('prtwf')
-          for key in self.content['system'].iterkeys():
-            if key[-1] != '1':
-              self.content['system'][key + '1'] = \
-              self.content['system'].pop(key)
-          for key in bnd_content.iterkeys():
-            self.content['system'][key + '2'] = bnd_content[key]
 
-        # compute band structure by loading wavefunction
+        self.content['band_scan'] = bnd_content
+
+      #####################
+      # density of states #
+      #####################
+      if 'dos_mesh' in self.setting and self.setting['dos_mesh']:
+        dos_content = odict([
+          ('iscf', -3),
+          ('getden', -1),
+          ('ngkpt', self.setting['dos_mesh']),
+          ('shiftk', [0.0, 0.0, 0.0]),
+          ('tolwfr', self.setting['wf_convergence']),
+          ('prtdos', 1),
+          ('occopt', 7),
+          ('prtwf', 0),
+        ])
+        if nbnd:
+          dos_content['nband'] = nbnd
+
+        if 'save_restart' not in self.setting \
+        or not self.setting['save_restart']:
+          dos_content['prtwf'] = 0
         else:
-          del self.content['dataset']['ndtset']
-          keep_lst = [
-            'nband',
-            'tolwfr',
-            'nstep',
-            'ecut',
-          ]
-          for key in self.content['system'].iterkeys():
-            if key not in keep_lst or 'prt' not in key:
-              del self.content['system'][key]
-          for key in bnd_content.iterkeys():
-            if key not in self.content['restart'].keys():
-              self.content['system'][key] = bnd_content[key]
+          dos_content['prtwf'] = 1
+        if 'save_density' not in self.setting \
+        or not self.setting['save_density']:
+          dos_content['prtden'] = 0
+        else:
+          dos_content['prtden'] = 1
+
+        self.content['dos'] = dos_content
+
         
       ################
       # cell section #
@@ -209,7 +223,6 @@ class inp(PlanewaveInput):
         ('nstep', self.setting['scf_step']),
       ])
 
-      #self.content['cell'] = odict()
       if not molecule.symmetry:
         self.content['cell']['acell'] = '3*1.889726124993'
         if 'lattice' not in self.setting:
@@ -253,17 +266,37 @@ class inp(PlanewaveInput):
       #########################
       # write content to file #
       #########################
+
+      datasets = 1
+      for key in ['band_scan', 'dos']:
+        if key in self.content:
+          datasets += 1
+
+      if self.setting['restart'] and datasets > 1:
+        datasets -= 1
+
+      self.content['datasets']['ndtset'] = datasets
+
       inp.write('# abinit input generated by qctoolkit\n')
+      ds_itr = 0
+      ds_str = ''
       for section_key in self.content.iterkeys():
         if len(self.content[section_key]) > 0:
           inp.write('\n# %s section\n' % section_key)
+        if section_key in ['scf', 'band_scan', 'dos'] and datasets > 1:
+          ds_itr += 1
+          ds_str = str(ds_itr)
         for key, value in self.content[section_key].iteritems():
+          if ds_str and section_key in ['scf', 'band_scan', 'dos']:
+            key = key + ds_str
           if is_strnum(value):
             inp.write('%s %s\n' % (key, str(value)))
           else:
             inp.write('%s' % key)
             head = ''.join([' ' for _ in key])
-            if key in ['xangst', 'xcart', 'xred']:
+            if 'xangst' in key\
+            or 'xcart' in key\
+            or 'xred' in key:
               inp.write('\n\n')
               for vec in value:
                 inp.write('%s' % head)
@@ -293,6 +326,15 @@ class inp(PlanewaveInput):
           assert len(wf_lst) > 0
           wf_src = os.path.abspath(wf_lst[-1])
           pp_files.append([wf_src, name + 'i_WFK'])
+        else:
+          qtk.warning('%s not found' % rstwf_path)
+
+      if 'restart_wavefunction_file' in self.setting:
+        rst_file = self.setting['restart_wavefunction_file']
+        if os.path.exists(rst_file):
+          pp_files.append([rst_file, name + 'i_WFK'])
+        else:
+          qtk.warning('%s not found' % rst_file)
           
       if 'restart_density_path' in self.setting:
         rstdn_path = self.setting['restart_density_path']
@@ -303,6 +345,16 @@ class inp(PlanewaveInput):
           assert len(dn_lst) > 0
           dn_src = os.path.abspath(dn_lst[-1])
           pp_files.append([dn_src, name + 'i_DEN'])
+        else:
+          qtk.warning('%s not found' % rstdn_path)
+
+      if 'restart_density_file' in self.setting:
+        rst_file = self.setting['restart_density_file']
+        if os.path.exists(rst_file):
+          pp_files.append([rst_file, name + 'i_DEN'])
+        else:
+          qtk.warning('%s not found' % rst_file)
+          
 
       inp.close(dependent_files=pp_files)
 
@@ -438,12 +490,16 @@ class out(PlanewaveOutput):
     eigStr = os.path.join(os.path.split(qmout)[0], '*_EIG')
     eigFileList = sorted(glob.glob(eigStr))
     if len(eigFileList) != 0:
+      if 'eig_index' in kwargs:
+        eig_i = kwargs['eig_index']
+      else:
+        eig_i = -1
       if len(eigFileList) > 1:
         qtk.warning(
-          "more than one o_EIG files found" + \
-          "loading last file with name: %s" % eigFileList[-1]
+          "more than one o_EIG files found " + \
+          "loading last file with name: %s" % eigFileList[eig_i]
         )
-      eigFile = open(eigFileList[-1])
+      eigFile = open(eigFileList[eig_i])
       eigData = eigFile.readlines()
       eigFile.close()
       unitStr = filter(lambda x: 'Eigenvalues' in x, eigData)[0]

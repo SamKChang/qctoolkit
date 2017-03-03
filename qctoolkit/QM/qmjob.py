@@ -249,6 +249,7 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
                 and 'psp' not in x\
                 and '_EIG' not in x\
                 and '_WFK' not in x\
+                and '_DOS' not in x\
                 and '_DEN' not in x, files
     )
     for f in tmp: os.remove(f)
