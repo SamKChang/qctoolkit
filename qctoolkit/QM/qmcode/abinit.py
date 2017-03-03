@@ -117,6 +117,8 @@ class inp(PlanewaveInput):
       if 'save_restart' not in self.setting \
       or not self.setting['save_restart']:
         self.content['system']['prtwf'] = 0
+      if 'dos' in self.setting and self.setting['dos']:
+        self.content['system']['prtdos'] = 1
       if 'wf_convergence' in self.setting:
         self.content['system']['tolwfr'] = \
         self.setting['wf_convergence']
@@ -193,7 +195,7 @@ class inp(PlanewaveInput):
             'ecut',
           ]
           for key in self.content['system'].iterkeys():
-            if key not in keep_lst:
+            if key not in keep_lst or 'prt' not in key:
               del self.content['system'][key]
           for key in bnd_content.iterkeys():
             if key not in self.content['restart'].keys():
