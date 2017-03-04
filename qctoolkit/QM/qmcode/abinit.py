@@ -181,8 +181,8 @@ class inp(PlanewaveInput):
 
         if 'restart' in self.setting and self.setting['restart']:
           bnd_content['irdden'] = 1
-          bnd_content['irdwfn'] = 1
-          bnd_content['getwfn'] = -1
+          bnd_content['irdwfk'] = 1
+          bnd_content['getwfk'] = -1
 
 
         self.content['band_scan'] = bnd_content
@@ -231,8 +231,8 @@ class inp(PlanewaveInput):
 
         if 'restart' in self.setting and self.setting['restart']:
           dos_content['irdden'] = 1
-          dos_content['irdwfn'] = 1
-          dos_content['getwfn'] = -1
+          dos_content['irdwfk'] = 1
+          dos_content['getwfk'] = -1
 
         self.content['dos'] = dos_content
 
