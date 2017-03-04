@@ -104,9 +104,6 @@ class inp(PlanewaveInput):
       if 'save_restart' not in self.setting \
       or not self.setting['save_restart']:
         self.content['scf']['prtwf'] = 0
-      if 'dos' in self.setting and self.setting['dos']:
-        self.content['scf']['prtdos'] = 1
-        self.content['scf']['occopt'] = 3
       if 'wf_convergence' in self.setting:
         self.content['scf']['tolwfr'] = \
         self.setting['wf_convergence']
@@ -194,10 +191,24 @@ class inp(PlanewaveInput):
           ('ngkpt', self.setting['dos_mesh']),
           ('shiftk', [0.0, 0.0, 0.0]),
           ('tolwfr', self.setting['wf_convergence']),
-          ('prtdos', 1),
-          ('occopt', 7),
           ('prtwf', 0),
         ])
+
+        if 'smearing' in self.setting:
+          smr = self.setting['smearing']
+          smr_dict = {
+            'fermi': 3,
+            'marzari': 4,
+            'marzari_monotonic': 5,
+            'paxton': 6,
+            'gaussian': 7,
+          }
+          if smr in smr_dict:
+            dos_content['occopt'] = smr_dict[smr]
+            dos_content['prtdos'] = 1
+          else:
+            qtk.warning("%s for occupation scheme not found" % smr)
+
         if nbnd:
           dos_content['nband'] = nbnd
 
