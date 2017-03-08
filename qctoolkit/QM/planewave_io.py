@@ -385,6 +385,18 @@ class PlanewaveOutput(GenericQMOutput):
 #    self.band = new_band
 #
 
+  def BZ_integrate(self, integrand):
+    results = []
+    integrand = np.asarray(integrand)
+    assert len(integrand) == len(self.kpoints)
+    w = np.asarray(self.kpoints[:, -1])
+    if len(integrand.T[0]) == len(self.kpoints):
+      for vec in integrand.T:
+        results.append(w.dot(vec))
+    else:
+      results = w.dot(integrand)
+    return results
+
   def DOS(self, sigma=0.2, E_list=None, raw=False):
     dos_raw = []
     for b in self.band.T:

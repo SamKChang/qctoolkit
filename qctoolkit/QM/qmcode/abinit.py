@@ -178,6 +178,8 @@ class inp(PlanewaveInput):
           bnd_content['prtden'] = 0
         else:
           bnd_content['prtden'] = 1
+        if 'dos_mesh' in self.setting:
+          bnd_content['prtden'] = 1
 
         if 'restart' in self.setting and self.setting['restart']:
           bnd_content['irdden'] = 1
