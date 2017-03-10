@@ -262,7 +262,7 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
 
     densities = sorted(glob.glob('*_DEN'))
     if len(densities) > 0:
-      #i = len(densities) - 1
+      i = len(densities) - 1
       exe = setting.abinit_cut3d_exe
       #den_inp = densities[i] + '.cov'
       den_inp = densities[-1] + '.cov'
