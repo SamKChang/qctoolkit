@@ -77,13 +77,18 @@ class inp(PlanewaveInput):
         self.setting['kshift'] = [0.0,0.0,0.0]
 
       # kpoints check #
-      if self.setting['full_kmesh']:
-        self.content['scf']['kptopt'] = 3
-      self.content['scf']['ngkpt'] = self.setting['kmesh']
-      if len(np.array(self.setting['kshift']).shape) > 1:
-        self.content['scf']['nshiftk'] = len(self.setting['kshift'])
-      self.content['scf']['shiftk'] = self.setting['kshift']
-      nbnd = None
+      if 'kpoints' in self.setting:
+        self.content['scf']['kptopt'] = 0
+        self.content['scf']['nkpt'] = len(self.setting['kpoints'])
+        self.content['scf']['kpt'] = self.setting['kpoints']
+      else:
+        if self.setting['full_kmesh']:
+          self.content['scf']['kptopt'] = 3
+        self.content['scf']['ngkpt'] = self.setting['kmesh']
+        if len(np.array(self.setting['kshift']).shape) > 1:
+          self.content['scf']['nshiftk'] = len(self.setting['kshift'])
+        self.content['scf']['shiftk'] = self.setting['kshift']
+        nbnd = None
       if 'ks_states' in self.setting and self.setting['ks_states']:
         vs = int(round(molecule.getValenceElectrons() / 2.0))
         nbnd = self.setting['ks_states'] + vs
@@ -109,7 +114,8 @@ class inp(PlanewaveInput):
         self.setting['wf_convergence']
 
       # clean up for the case of restart
-      if 'restart' in self.setting and self.setting['restart']:
+      if 'restart' in self.setting and self.setting['restart']\
+      and ('band_scan' in self.setting or 'dos_mesh' in self.setting):
         keep_lst = [
           'nband',
           'tolwfr',
@@ -121,7 +127,7 @@ class inp(PlanewaveInput):
           'getden',
         ]
         for key in self.content['scf'].iterkeys():
-          if key not in keep_lst or 'prt' not in key:
+          if key not in keep_lst and 'prt' not in key:
             self.content['scf'].pop(key)
 
       ######################
