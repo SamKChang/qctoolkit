@@ -119,7 +119,7 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
       os.copy(out, final_out)
 
     # clean up files
-    files = glob.glob('*')
+    files = sorted(glob.glob('*'))
     tmp = filter(\
       lambda x: '.out' not in x \
                 and '.inp' not in x\
@@ -132,11 +132,11 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
     )
     for f in tmp: os.remove(f)
     if not _save_restart:
-      rst_list = glob.glob("RESTART*")
+      rst_list = sorted(glob.glob("RESTART*"))
       for rfile in rst_list:
         os.remove(rfile)
 
-    densities = glob.glob('*DEN*')
+    densities = sorted(glob.glob('*DEN*'))
     for i in range(len(densities)):
       exe = setting.cpmd_cpmd2cube_exe
       log_name = densities[i] + '_%02d.log' % i
@@ -191,7 +191,7 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
     compute(exestr, qmoutput, _threads)
     qio_out = qio.QMOut(qmoutput, program='nwchem')
 
-    files = glob.glob('*.*')
+    files = sorted(glob.glob('*.*'))
     tmp = filter(\
       lambda x: '.out' not in x \
                 and '.inp' not in x\
@@ -199,7 +199,7 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
                 and '.movecs' not in x, files
     )
     for f in tmp: os.remove(f)
-    movecs = glob.glob('*.movecs')
+    movecs = sorted(glob.glob('*.movecs'))
     for f in movecs:
       exe = setting.nwchem_mov2asc_exe
       nb = qio_out.n_basis
@@ -240,7 +240,7 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
     compute(exestr, qmlog, _threads)
 
     # clean up files
-    files = glob.glob('*')
+    files = sorted(glob.glob('*'))
     tmp = filter(\
       lambda x: '.out' not in x \
                 and '.log' not in x\
@@ -254,17 +254,18 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
     )
     for f in tmp: os.remove(f)
     if not _save_restart:
-      for rst in glob.glob('*_WFK'):
+      for rst in sorted(glob.glob('*_WFK')):
         os.remove(rst)
     if not _save_density:
-      for den in glob.glob('*_DEN'):
+      for den in sorted(glob.glob('*_DEN')):
         os.remove(den)
 
-    densities = glob.glob('*_DEN')
+    densities = sorted(glob.glob('*_DEN'))
     if len(densities) > 0:
-      i = len(densities) - 1
+      #i = len(densities) - 1
       exe = setting.abinit_cut3d_exe
-      den_inp = densities[i] + '.cov'
+      #den_inp = densities[i] + '.cov'
+      den_inp = densities[-1] + '.cov'
       cube_file = inp + '.cube'
       den_inp_file = open(den_inp, 'wb')
       den_inp_file.write("%s\n1\n14\n%s" % (densities[i], cube_file))
@@ -294,14 +295,14 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
     compute(exestr, qmoutput, _threads)
     os.rename(qmlog, qmoutput)
 
-    chks = glob.glob('*.chk')
+    chks = sorted(glob.glob('*.chk'))
     for chk in chks:
       exe = setting.gaussian_formchk_exe
       exestr = "%s %s" % (exe, chk)
       run = sp.Popen(exestr, shell=True)
       run.wait()
     if _save_density:
-      fchk = glob.glob("*.fchk")[-1]
+      fchk = sorted(glob.glob("*.fchk"))[-1]
       q = qtk.CUBE(fchk)
 
     qio_out = qio.QMOut(qmoutput, program='gaussian')
@@ -322,8 +323,8 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
       compute(exestr, out, _threads)
     qio_out = qio.QMOut(out, program='espresso')
     if not _save_restart:
-      rst_list = glob.glob("*.wfc*")
-      rst_list.extend(glob.glob("*.restart_*"))
+      rst_list = sorted(glob.glob("*.wfc*"))
+      rst_list.extend(sorted(glob.glob("*.restart_*")))
     else:
       rst_list = []
     for r in rst_list:
