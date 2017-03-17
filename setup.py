@@ -19,6 +19,7 @@ required = [
   'cryptography',
   'pexpect',
   'beautifulsoup',
+  'sqlalchemy',
 ]
 
 # to enable openmp, use:
@@ -196,6 +197,7 @@ setup(name='qctoolkit',
     'qctoolkit.QM',
     'qctoolkit.QM.qmcode',
     'qctoolkit.QM.pseudo',
+    'qctoolkit.DB',
     'qctoolkit.utilities',
     'qctoolkit.projects',
     'qctoolkit.projects.Basel',
