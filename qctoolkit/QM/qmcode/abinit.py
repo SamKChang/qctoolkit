@@ -268,7 +268,7 @@ class inp(PlanewaveInput):
             [1, 0, 1],
             [1, 1, 0],
           ])
-        elif  molecule.symmetry.lower() == 'fcc':
+        elif  molecule.symmetry.lower() == 'bcc':
           lattice_vec = 0.5 * a0 * np.array([
             [-1, 1, 1],
             [ 1,-1, 1],
@@ -290,8 +290,16 @@ class inp(PlanewaveInput):
         ('ntypat', (len(type_index) - 1)),
         ('typat', typat),
         ('znucl', znucl),
-        ('xangst', molecule.R),
       ])
+      if hasattr(molecule, 'scale'):
+        if hasattr(molecule, 'R_scale'):
+          self.content['atoms']['xred'] = molecule.R_scale
+        else:
+          qtk.warning('R_scale not found but scale is set')
+          self.content['atoms']['xangs'] = molecule.R
+      else:
+        self.content['atoms']['xangs'] = molecule.R
+     
 
       #########################
       # write content to file #
