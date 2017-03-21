@@ -342,4 +342,6 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
 
   if 'cwd' in locals():
     os.chdir(cwd)
+
+  qio_out.path = inp
   return qio_out

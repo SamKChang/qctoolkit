@@ -8,6 +8,7 @@ import universal as univ
 from bigdft import PPCheck
 from collections import OrderedDict as odict
 from numbers import Number
+import subprocess as sp
 
 class inp(PlanewaveInput):
   """
@@ -293,7 +294,11 @@ class inp(PlanewaveInput):
       ])
       if hasattr(molecule, 'scale'):
         if hasattr(molecule, 'R_scale'):
-          self.content['atoms']['xred'] = molecule.R_scale
+          R_scale = molecule.R_scale.copy()
+          for i in range(3):
+            s = molecule.scale[i]
+            R_scale[:,i] = R_scale[:,i] / s
+          self.content['atoms']['xred'] = R_scale
         else:
           qtk.warning('R_scale not found but scale is set')
           self.content['atoms']['xangs'] = molecule.R
@@ -450,7 +455,16 @@ class out(PlanewaveOutput):
       EStr = EStrList[-1]
       detailInd = data.index(EStr)
       self.detail = data[detailInd-7:detailInd]
-  
+
+    GStr = filter(lambda x: 'G(1)' in x, data)[-1]
+    ind_g = len(data) - data[::-1].index(GStr) - 1
+    G_lattice = []
+    for i in range(3):
+      G_lattice.append(
+        np.fromstring(data[ind_g + i].split('=')[-1], sep=' ')
+      )
+    self.G_lattice = np.array(G_lattice)
+
     xangst = filter(lambda x: 'xangst' in x, data)[-1]
     angst_n = len(data) - data[::-1].index(xangst) - 1
     xcart = filter(lambda x: 'xcart' in x, data)[-1]
@@ -602,3 +616,93 @@ class out(PlanewaveOutput):
                     "extraction is not yet implemented")
     else:
       qtk.warning('no k-point information (o_EIG file) found')
+
+  def unfold(self, k_path, folds, epsilon = 1E-5, WFK=None, overwrite=False):
+
+    if not WFK:
+      path = self.path
+      if not path:
+        path = '.'
+      WFK_card = '%s/*_WFK' % path
+      WFK_list = sorted(glob.glob(WFK_card))
+      if len(WFK_list) > 0:
+        WFK = WFK_list[-1]
+      else:
+        qtk.exit('wavefunction file not found.')
+      
+    path, name = os.path.split(WFK)
+    if not path:
+      path = '.'
+    cwd = os.getcwd()
+    os.chdir(path)
+
+    f2b_list = sorted(glob.glob('*.f2b'))
+    if not f2b_list or overwrite:
+      exe = qtk.setting.abinit_f2b_exe
+      log_name = '%s_f2b.log' % self.name
+      log = open(log_name, 'w')
+      fold_str = [str(f) for f in folds]
+      cmd_str = "%s %s %s" % (exe, name, ':'.join(fold_str))
+      run = sp.Popen(cmd_str, shell=True, stdout=log)
+      run.wait()
+      log.close()
+      f2b_list = sorted(glob.glob('*.f2b'))
+
+    f2b = f2b_list[0]
+
+    k_path = np.asarray(k_path)
+
+    def coordTransform(V, G):
+      W = np.zeros(V.shape)
+      GT = G.T
+      for i in range(len(V)):
+          W[i,:] = GT[0,:]*V[i,0] + GT[1,:]*V[i,1] + GT[2,:]*V[i,2]
+      return W
+
+    def dp2l(X0,X1,X2):
+      eps = 0.001
+      denom = X2 - X1
+      denomabs = np.linalg.norm(denom)
+      if denomabs < eps:
+          print "X1 = X2"
+          return False
+      numer = np.cross( X0-X1 , X0-X2 )
+      numerabs = np.linalg.norm(numer)
+      return numerabs / denomabs
+
+    _data = np.loadtxt(f2b)
+    os.chdir(cwd)
+    KEIG = _data[:, :3]
+    EIG = _data[:, 3]
+    W = _data[:, 4]
+
+    L = []
+    ENE = []
+    WGHT = []
+    G = self.G_lattice.copy()
+
+    for i in range(3):
+      G[i,:] = G[i,:] * folds[i]
+
+    k_path = coordTransform(k_path, G)
+    KEIG = coordTransform(KEIG, G)
+
+    dl = 0
+    for ikp in range(len(k_path) - 1):
+      for j in range(len(EIG)):
+        dist = dp2l(KEIG[j,:], k_path[ikp, :], k_path[ikp+1, :])
+        B = k_path[ikp,:] - k_path[ikp+1, :]
+        dk = np.linalg.norm(B)
+        if dist < epsilon:
+          A = k_path[ikp, :] - KEIG[j,:]
+          x = np.dot(A, B) / dk
+          if x > 0 and x-dk < epsilon:
+            L.append(x+dl)
+            ENE.append(EIG[j])
+            WGHT.append(W[j])
+      dl = dl + dk
+    L = np.array(L)
+    ENE = np.array(ENE)
+    WGHT = np.array(WGHT)
+
+    return L, ENE, WGHT

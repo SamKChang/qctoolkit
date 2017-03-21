@@ -121,6 +121,7 @@ bigdft_pp_nlcc_url = 'http://bigdft.org/Wiki/index.php?title=New_Soft-Accurate_N
 bigdft_pp_url = 'https://sourceforge.net/p/cp2k/code/HEAD/tree/trunk/potentials/Goedecker/abinit/'
 abinit_exe = 'abinit'
 abinit_cut3d_exe = 'cut3d'
+abinit_f2b_exe = 'fold2Bloch'
 #bigdft_pp = '/home/samio/Works/PhD/packages/BigDFT/PP'
 gaussian_exe = 'g09'
 gaussian_cubegen_exe = 'cubegen'
