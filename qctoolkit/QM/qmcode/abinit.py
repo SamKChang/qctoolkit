@@ -64,11 +64,15 @@ class inp(PlanewaveInput):
       self.content['scf'] = odict()
 
       # restart check #
-      if 'restart' in self.setting and self.setting['restart']:
+      if 'restart' in self.setting and self.setting['restart']\
+      and 'band_scan' not in self.setting\
+      and 'dos_mesh' not in self.setting:
         self.content['scf']['irdwfk'] = 1
         self.content['scf']['getwfk'] = -1
       if 'restart_density' in self.setting \
-      and self.setting['restart_density']:
+      and self.setting['restart_density']\
+      and 'band_scan' not in self.setting\
+      and 'dos_mesh' not in self.setting:
         self.content['scf']['irdden'] = 1
         self.content['scf']['getden'] = -1
 
@@ -110,7 +114,9 @@ class inp(PlanewaveInput):
       if 'save_restart' not in self.setting \
       or not self.setting['save_restart']:
         self.content['scf']['prtwf'] = 0
-      if 'wf_convergence' in self.setting:
+      if 'wf_convergence' in self.setting\
+      and 'band_scan' not in self.setting\
+      and 'dos_mesh' not in self.setting:
         self.content['scf']['tolwfr'] = \
         self.setting['wf_convergence']
 
@@ -292,7 +298,7 @@ class inp(PlanewaveInput):
         ('typat', typat),
         ('znucl', znucl),
       ])
-      if hasattr(molecule, 'scale'):
+      if hasattr(molecule, 'scale') and molecule.scale:
         if hasattr(molecule, 'R_scale'):
           R_scale = molecule.R_scale.copy()
           for i in range(3):
@@ -301,9 +307,9 @@ class inp(PlanewaveInput):
           self.content['atoms']['xred'] = R_scale
         else:
           qtk.warning('R_scale not found but scale is set')
-          self.content['atoms']['xangs'] = molecule.R
+          self.content['atoms']['xangst'] = molecule.R
       else:
-        self.content['atoms']['xangs'] = molecule.R
+        self.content['atoms']['xangst'] = molecule.R
      
 
       #########################
@@ -617,7 +623,7 @@ class out(PlanewaveOutput):
     else:
       qtk.warning('no k-point information (o_EIG file) found')
 
-  def unfold(self, k_path, folds, epsilon = 1E-5, WFK=None, overwrite=False):
+  def unfold(self, k_path, folds, epsilon = 1E-5, WFK=None, overwrite=False, shift = None):
 
     if not WFK:
       path = self.path
@@ -673,7 +679,10 @@ class out(PlanewaveOutput):
     os.chdir(cwd)
     KEIG = _data[:, :3]
     EIG = np.array(_data[:, 3]) * qtk.convE(1, 'Ha-ev')[0]
-    EIG = EIG - np.max(self.band[:, self.fermi_index])
+    if not shift:
+      EIG = EIG - np.max(self.band[:, self.fermi_index])
+    else:
+      EIG = EIG - shift
     EIG = EIG.tolist()
     W = _data[:, 4]
 
