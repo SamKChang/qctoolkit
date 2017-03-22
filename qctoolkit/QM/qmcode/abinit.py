@@ -664,7 +664,6 @@ class out(PlanewaveOutput):
       denom = X2 - X1
       denomabs = np.linalg.norm(denom)
       if denomabs < eps:
-          print "X1 = X2"
           return False
       numer = np.cross( X0-X1 , X0-X2 )
       numerabs = np.linalg.norm(numer)
@@ -673,7 +672,9 @@ class out(PlanewaveOutput):
     _data = np.loadtxt(f2b)
     os.chdir(cwd)
     KEIG = _data[:, :3]
-    EIG = _data[:, 3]
+    EIG = np.array(_data[:, 3]) * qtk.convE(1, 'Ha-ev')[0]
+    EIG = EIG - np.max(self.band[:, self.fermi_index])
+    EIG = EIG.tolist()
     W = _data[:, 4]
 
     L = []
@@ -689,7 +690,9 @@ class out(PlanewaveOutput):
 
     dl = 0
     for ikp in range(len(k_path) - 1):
+      itr = 0
       for j in range(len(EIG)):
+        itr += 1
         dist = dp2l(KEIG[j,:], k_path[ikp, :], k_path[ikp+1, :])
         B = k_path[ikp,:] - k_path[ikp+1, :]
         dk = np.linalg.norm(B)
