@@ -268,7 +268,7 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
       den_inp = densities[-1] + '.cov'
       cube_file = inp + '.cube'
       den_inp_file = open(den_inp, 'wb')
-      den_inp_file.write("%s\n1\n14\n%s" % (densities[i], cube_file))
+      den_inp_file.write("%s\n14\n%s\n0" % (densities[i], cube_file))
       den_inp_file.close()
       log_name = densities[i] + '.log'
       log = open(log_name, 'w')
