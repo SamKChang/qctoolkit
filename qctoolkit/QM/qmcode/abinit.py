@@ -118,9 +118,8 @@ class inp(PlanewaveInput):
         and 'dos_mesh' not in self.setting):
           self.content['scf']['prtwf'] = 0
       if 'wf_convergence' in self.setting:
-        if 'restart' in self.setting and self.setting['restart']\
-        and ('band_scan' not in self.setting\
-        and 'dos_mesh' not in self.setting):
+        if 'band_scan' not in self.setting\
+        and 'dos_mesh' not in self.setting:
           self.content['scf']['tolwfr'] = \
           self.setting['wf_convergence']
 

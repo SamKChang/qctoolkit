@@ -2,7 +2,7 @@ from setuptools import setup
 from distutils.core import Extension
 import os
 
-version = '0.0.13'
+version = '0.0.14'
 
 required = [
   'cython',
