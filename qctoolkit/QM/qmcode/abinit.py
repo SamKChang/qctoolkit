@@ -113,10 +113,16 @@ class inp(PlanewaveInput):
         self.content['scf']['occopt'] = 7
       if 'save_restart' not in self.setting \
       or not self.setting['save_restart']:
-        self.content['scf']['prtwf'] = 0
+        if 'restart' in self.setting and self.setting['restart']\
+        and ('band_scan' not in self.setting\
+        and 'dos_mesh' not in self.setting):
+          self.content['scf']['prtwf'] = 0
       if 'wf_convergence' in self.setting:
-        self.content['scf']['tolwfr'] = \
-        self.setting['wf_convergence']
+        if 'restart' in self.setting and self.setting['restart']\
+        and ('band_scan' not in self.setting\
+        and 'dos_mesh' not in self.setting):
+          self.content['scf']['tolwfr'] = \
+          self.setting['wf_convergence']
 
       # clean up for the case of restart
       if 'restart' in self.setting and self.setting['restart']\
@@ -206,12 +212,15 @@ class inp(PlanewaveInput):
       if 'dos_mesh' in self.setting and self.setting['dos_mesh']:
         dos_content = odict([
           ('iscf', -3),
-          ('getden', -1),
           ('ngkpt', self.setting['dos_mesh']),
           ('shiftk', [0.0, 0.0, 0.0]),
           ('tolwfr', self.setting['wf_convergence']),
           ('prtwf', 0),
         ])
+        if 'band_scan' in self.setting:
+          dos_content['getden'] = -2
+        else:
+          dos_content['getden'] = -1
 
         if 'smearing' in self.setting:
           smr = self.setting['smearing']
