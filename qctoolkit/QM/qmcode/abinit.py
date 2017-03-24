@@ -529,17 +529,19 @@ class out(PlanewaveOutput):
       r1p = re.compile(r'^[ a-z]{17} +[ 0-9.E+-]+$')
       r2p = re.compile(r'^ +[a-z]+ +.*$')
       report = filter(r2p.match, filter(r1p.match, data))
-      occ_pattern = filter(lambda x: ' occ ' in x, report)[-1]
-      occ_pattern_ind = len(report) - report[::-1].index(occ_pattern)
-      occ_pattern_end = report[occ_pattern_ind]
-      occ_ind_start = len(data) - data[::-1].index(occ_pattern) - 1
-      occ_ind_end = len(data) - data[::-1].index(occ_pattern_end) - 1
-      for i in range(occ_ind_start, occ_ind_end):
-        for occ in filter(None, data[i].split(' ')):
-          try:
-            self.occupation.append(float(occ))
-          except Exception as err:
-            pass
+      occ_ptn_lst = filter(lambda x: ' occ ' in x, report)
+      if len(occ_ptn_lst) > 0:
+        occ_pattern = occ_ptn_lst[-1]
+        occ_pattern_ind = len(report) - report[::-1].index(occ_pattern)
+        occ_pattern_end = report[occ_pattern_ind]
+        occ_ind_start = len(data) - data[::-1].index(occ_pattern) - 1
+        occ_ind_end = len(data) - data[::-1].index(occ_pattern_end) - 1
+        for i in range(occ_ind_start, occ_ind_end):
+          for occ in filter(None, data[i].split(' ')):
+            try:
+              self.occupation.append(float(occ))
+            except Exception as err:
+              pass
     except Exception as err:
       qtk.warning("error when extracting occupation number with" +\
         " error message: %s" % str(err))
