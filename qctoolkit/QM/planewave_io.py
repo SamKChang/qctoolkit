@@ -385,6 +385,20 @@ class PlanewaveOutput(GenericQMOutput):
 #    self.band = new_band
 #
 
+  def plot_band_unfold(self, *args, **kwargs):
+    plt.figure()
+    L, E, W = self.unfold(*args, **kwargs)
+    inds = []
+    w_list = np.arange(0,1.1,0.2)
+    for i in range(len(w_list) - 1):
+        inds.append((W>=w_list[i]) * (W<w_list[i+1]))
+
+    for i in range(len(inds)):
+        ind = inds[i]
+        plt.plot(L[ind], E[ind], ls='', marker='o', markersize=1.5*i + 1)
+    plt.xlim([min(L), max(L)])
+    return L, E, W
+
   def BZ_integrate(self, integrand):
     results = []
     integrand = np.asarray(integrand)
