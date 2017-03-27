@@ -9,6 +9,7 @@ from bigdft import PPCheck
 from collections import OrderedDict as odict
 from numbers import Number
 import subprocess as sp
+from pandas import read_csv
 
 class inp(PlanewaveInput):
   """
@@ -619,8 +620,9 @@ class out(PlanewaveOutput):
           qtk.warning("occupation number not available... " + \
             "try to use molecule object with closed shell assumption"
           )
-          N_state = self.molecule.getValenceElectrons() / 2
+          N_state = self.molecule.getValenceElectrons() / 2 - 1
 
+        print N_state
         vb = max(self.band[:, N_state])
         cb = min(self.band[:, N_state + 1])
         vb_pos = np.argmax(self.band[:, N_state])
@@ -673,24 +675,21 @@ class out(PlanewaveOutput):
 
     k_path = np.asarray(k_path)
 
-    def coordTransform(V, G):
-      W = np.zeros(V.shape)
-      GT = G.T
-      for i in range(len(V)):
-          W[i,:] = GT[0,:]*V[i,0] + GT[1,:]*V[i,1] + GT[2,:]*V[i,2]
-      return W
-
-    def dp2l(X0,X1,X2):
-      eps = 0.001
-      denom = X2 - X1
+    def dp2l_vec(X0_list, p0, p1):
+      eps = epsilon
+      denom = p1 - p0
       denomabs = np.linalg.norm(denom)
       if denomabs < eps:
           return False
-      numer = np.cross( X0-X1 , X0-X2 )
-      numerabs = np.linalg.norm(numer)
-      return numerabs / denomabs
+      numer = np.cross(
+        X0_list - p0[np.newaxis,:], X0_list - p1[np.newaxis,:]
+      )
+      return np.linalg.norm(numer, axis=1) / denomabs
+      
+    _data = read_csv(
+      f2b, delim_whitespace=True, dtype='float64', header=None
+    ).values
 
-    _data = np.loadtxt(f2b)
     os.chdir(cwd)
     KEIG = _data[:, :3]
     EIG = np.array(_data[:, 3]) * qtk.convE(1, 'Ha-ev')[0]
@@ -709,27 +708,28 @@ class out(PlanewaveOutput):
     for i in range(3):
       G[i,:] = G[i,:] * folds[i]
 
-    k_path = coordTransform(k_path, G)
-    KEIG = coordTransform(KEIG, G)
+    k_path = k_path.dot(G)
+    KEIG = KEIG.dot(G)
 
+    itr_test = 0
     dl = 0
     for ikp in range(len(k_path) - 1):
       itr = 0
-      for j in range(len(EIG)):
-        itr += 1
-        dist = dp2l(KEIG[j,:], k_path[ikp, :], k_path[ikp+1, :])
-        B = k_path[ikp,:] - k_path[ikp+1, :]
-        dk = np.linalg.norm(B)
-        if dist < epsilon:
-          A = k_path[ikp, :] - KEIG[j,:]
-          x = np.dot(A, B) / dk
-          if x > 0 and x-dk < epsilon:
-            L.append(x+dl)
-            ENE.append(EIG[j])
-            WGHT.append(W[j])
+      p0 = k_path[ikp,:]
+      p1 = k_path[ikp+1,:]
+      B = p0 - p1
+      dk = np.linalg.norm(B)
+      dist_vec = dp2l_vec(KEIG, p0, p1)
+      ind1 = (dist_vec < epsilon)
+      A_vec = (p0[np.newaxis,:] - KEIG)[ind1]
+      x_vec = A_vec.dot(B.T) / dk
+      ind2 = (x_vec > 0) * ((x_vec - dk) < epsilon)
+      L.extend((x_vec[ind2] + dl).tolist())
+      ENE.extend(np.asarray(EIG)[ind1][ind2].tolist())
+      WGHT.extend(np.asarray(W)[ind1][ind2].tolist())
       dl = dl + dk
-    L = np.array(L)
-    ENE = np.array(ENE)
-    WGHT = np.array(WGHT)
+    L = np.array(L, dtype='float64')
+    ENE = np.array(ENE, dtype='float64')
+    WGHT = np.array(WGHT, dtype='float64')
 
     return L, ENE, WGHT
