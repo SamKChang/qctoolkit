@@ -614,16 +614,23 @@ class out(PlanewaveOutput):
           mask = np.in1d(diff, pos)
           if len(ind[mask]) > 0:
             N_state = ind[mask][0]
-            vb = max(self.band[:, N_state])
-            cb = min(self.band[:, N_state + 1])
-            vb_pos = np.argmax(self.band[:, N_state])
-            cb_pos = np.argmin(self.band[:, N_state + 1])
-            self.Eg = cb - vb
-            if vb_pos == cb_pos:
-              self.Eg_direct = True
-            else:
-              self.Eg_direct = False
-            self.fermi_index = N_state
+
+        else:
+          qtk.warning("occupation number not available... " + \
+            "try to use molecule object with closed shell assumption"
+          )
+          N_state = self.molecule.getValenceElectrons() / 2
+
+        vb = max(self.band[:, N_state])
+        cb = min(self.band[:, N_state + 1])
+        vb_pos = np.argmax(self.band[:, N_state])
+        cb_pos = np.argmin(self.band[:, N_state + 1])
+        self.Eg = cb - vb
+        if vb_pos == cb_pos:
+          self.Eg_direct = True
+        else:
+          self.Eg_direct = False
+        self.fermi_index = N_state
   
       else:
         qtk.warning("spin polarized band data " +\
