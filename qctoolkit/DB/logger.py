@@ -5,6 +5,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import or_
 from datetime import datetime as dt
+import datetime
 import os
 
 Base = declarative_base()
@@ -13,12 +14,25 @@ class Entry(Base):
   __tablename__ = 'entries'
 
   id = q.Column(q.Integer, primary_key=True)
-  datetime = q.Column(q.DateTime, nullable=False)
-  content = q.Column(q.Text, nullable=False)
+  date = q.Column(q.DateTime, nullable=False)
+  content = q.Column(q.Text)
   comment = q.Column(q.Text)
+  data = q.Column(q.Float)
 
   def __repr__(self):
-    return "%s %s %s" % (self.datetime, self.content, self.comment)
+    if type(self.data) is float:
+      return "%s %s %f %s" % (
+        self.date.strftime("%Y%m%d-%H:%M:%S"), 
+        self.content, 
+        self.data,
+        self.comment
+      )
+    else:
+      return "%s %s Null %s" % (
+        self.date.strftime("%Y%m%d-%H:%M:%S"), 
+        self.content, 
+        self.comment
+      )
 
 class Logger(object):
   def __init__(self, path=':memory:', db_str = None, **kwargs):
@@ -35,12 +49,19 @@ class Logger(object):
     Base.metadata.create_all(self.engine)
     self.session = self.get_session(new=True)
 
-  def push(self, content, comment=None):
-    now = dt.now()
-    if comment:
-      entry = Entry(datetime=now, content=content, comment=comment)
+  def __repr__(self):
+    entries = self.list()
+    if len(entries) < 5:
+      return '%s\n%s' % (self.name, str(entries))
     else:
-      entry = Entry(datetime=now, content=content)
+      return '%s\n%s' % (self.name, str(entries[:5]))
+
+  def push(self, content=None, data=None, comment=None, date=None):
+    if date is None:
+      date = dt.now()
+    entry = Entry(
+      date=date, content=content, comment=comment, data=data
+    )
 
     self.session.add(entry)
     try:
@@ -48,25 +69,51 @@ class Logger(object):
     except Exception as err:
       qtk.warning('can not commit, error: %s' % err)
 
-  def list(self, filter_flag=''):
-    filter_flag = r'%' + filter_flag + r'%'
-    out = self.session.query(Entry).filter(
-      or_(Entry.content.like(filter_flag), 
-          Entry.comment.like(filter_flag)
-      )
-    ).all()
-    return out
+  def list(self, 
+    content=None, data=None, comment=None, date=None,
+    match = True, epsilon=0.0, dt = datetime.timedelta(0)):
 
-  def match(self, flag):
-    out = self.session.query(Entry).filter(
-      or_(Entry.content == flag,
-          Entry.comment == flag)
-    ).all()
-    return out
+    if content:
+      content_flag = r'%' + content + r'%'
+    else:
+      content_flag = r'%%'
+    if comment:
+      comment_flag = r'%' + comment + r'%'
+    else:
+      comment_flag = r'%%'
+
+    out = self.all(get_list = False)
+
+    if date is not None:
+      out = out.filter(
+        Entry.date <= date + dt,
+        Entry.date >= date - dt,
+      )
+    if data is not None:
+      out = out.filter(
+        Entry.data <= data + epsilon,
+        Entry.data >= data - epsilon,
+      )
+    if content is not None:
+      if match:
+        out = out.filter(Entry.content == content)
+      else:
+        out = out.filter(Entry.content.like(content_flag))
+    if comment is not None:
+      if match:
+        out = out.filter(Entry.comment == comment)
+      else:
+        out = out.filter(Entry.comment.like(comment_flag))
+    return out.all()
+
+  def all(self, get_list = True):
+    if get_list:
+      return self.session.query(Entry).all()
+    else:
+      return self.session.query(Entry)
 
   def commit(self):
     self.session.commit()
-
 
   def get_session(self, new=False):
     if not new:
@@ -74,4 +121,3 @@ class Logger(object):
     else:
       session = sessionmaker(bind=self.engine)
       return session()
-
