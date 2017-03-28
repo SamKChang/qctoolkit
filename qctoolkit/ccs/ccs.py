@@ -117,13 +117,14 @@ class CCS(object):
     if dtype == 'index':
       for ind in _data:
         if re.match(re.compile(".*:.*"), ind):
-          if re.match(re.compile("^[^0-9]*:"), ind):
-            ind = re.sub("^[^0-9]*:", "0:", ind)
-          if re.match(re.compile(":[^0-9]"), ind):
-            ind = re.sub(":[^0-9]*", ":-1", ind)
-          ind = map(int, ind.split(":"))
-          for i in range(ind[0], ind[1]+1):
-            _out_list.append(i)
+          mystr = ind
+          ind = slice(
+            *map(
+              lambda x: int(x.strip()) if x.strip() else None,
+              mystr.split(':')
+            )
+          )
+          _out_list.extend(range(ind.stop)[ind])
         else:
           _out_list.append(int(ind))
     elif dtype == 'range':
