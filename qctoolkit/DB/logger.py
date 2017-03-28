@@ -71,7 +71,8 @@ class Logger(object):
 
   def list(self, 
     content=None, data=None, comment=None, date=None,
-    match = True, epsilon=0.0, dt = datetime.timedelta(0)):
+    match = True, epsilon=0.0, dt = datetime.timedelta(0),
+    order=False, limit=False, get_list=True):
 
     if content:
       content_flag = r'%' + content + r'%'
@@ -89,22 +90,37 @@ class Logger(object):
         Entry.date <= date + dt,
         Entry.date >= date - dt,
       )
+
     if data is not None:
       out = out.filter(
         Entry.data <= data + epsilon,
         Entry.data >= data - epsilon,
       )
+
     if content is not None:
       if match:
         out = out.filter(Entry.content == content)
       else:
         out = out.filter(Entry.content.like(content_flag))
+
     if comment is not None:
       if match:
         out = out.filter(Entry.comment == comment)
       else:
         out = out.filter(Entry.comment.like(comment_flag))
-    return out.all()
+
+    if order == 'ascend':
+      out = out.order_by(Entry.data)
+    elif order == 'descend':
+      out = out.order_by(Entry.data.desc())
+
+    if limit:
+      out = out.limit(limit)
+
+    if get_list:
+      return out.all()
+    else:
+      return out
 
   def all(self, get_list = True):
     if get_list:
