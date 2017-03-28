@@ -377,6 +377,7 @@ class GenericQMOutput(object):
         self.path = qtk.getPath(output)
       _file = qtk.fileStrip(output)
       self.stem, self.ext = os.path.splitext(_file)
+      self.path = os.path.abspath(self.path)
 
   def __repr__(self):
     return str(self.Et)
