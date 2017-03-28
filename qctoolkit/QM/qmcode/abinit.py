@@ -624,7 +624,6 @@ class out(PlanewaveOutput):
           )
           N_state = self.molecule.getValenceElectrons() / 2 - 1
 
-        print N_state
         vb = max(self.band[:, N_state])
         cb = min(self.band[:, N_state + 1])
         vb_pos = np.argmax(self.band[:, N_state])
@@ -695,6 +694,9 @@ class out(PlanewaveOutput):
     os.chdir(cwd)
     KEIG = _data[:, :3]
     EIG = np.array(_data[:, 3]) * qtk.convE(1, 'Ha-ev')[0]
+    if not hasattr(self, 'fermi_index'):
+      self.fermi_index = self.molecule.getValenceElectrons() / 2 - 1
+    
     if not shift:
       EIG = EIG - np.max(self.band[:, self.fermi_index])
     else:
