@@ -5,6 +5,9 @@ fileList.txt
 **.swp
 **.swo
 **.pyc
+**.so
+**_back.*
+qctoolkit/data/PP/
 qctoolkit/test/
 qctoolkit/.test-old/
 branchUpdate.sh
