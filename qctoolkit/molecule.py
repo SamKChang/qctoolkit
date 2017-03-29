@@ -394,6 +394,9 @@ class Molecule(object):
     nve = sum(ve(self.type_list)) - self.charge
     return nve
 
+  def get_ve(self):
+    return self.getValenceElectrons()
+
   # tested
   def setChargeMultiplicity(self, c, m, **kwargs):
     if type(c) == int or type(c) == float:

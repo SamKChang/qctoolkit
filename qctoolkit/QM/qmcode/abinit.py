@@ -645,8 +645,6 @@ class out(PlanewaveOutput):
 
     if not WFK:
       path = self.path
-      if not path:
-        path = '.'
       WFK_card = '%s/*_WFK' % path
       WFK_list = sorted(glob.glob(WFK_card))
       if len(WFK_list) > 0:
@@ -655,8 +653,6 @@ class out(PlanewaveOutput):
         qtk.exit('wavefunction file not found.')
       
     path, name = os.path.split(WFK)
-    if not path:
-      path = '.'
     cwd = os.getcwd()
     os.chdir(path)
 
