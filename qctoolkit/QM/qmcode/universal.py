@@ -1,5 +1,5 @@
 import qctoolkit as qtk
-import os, re
+import os, re, glob
 
 def runCode(self, parrent, name, **kwargs):
   worker, name = \
@@ -18,6 +18,16 @@ def runCode(self, parrent, name, **kwargs):
     return worker.start(inp, new_name)
 
   if not os.path.exists(name):
+    return run()
+  elif 'rename_if_exist' in self.setting\
+  and self.setting['rename_if_exist']:
+    n_name = len(glob.glob("%s_[0-9]" % name)) + 1
+    new_name = name + '_%d' % n_name
+    while os.path.exists(new_name):
+      n_name = n_name + 1
+      new_name = name + '_%d' % n_name
+    kwargs['root_dir'] = new_name
+    qtk.warning("folder %s exists, running under %s" % (name, new_name))
     return run()
   elif self.setting['overwrite']:
     qtk.warning("Overwrite existing folder %s" % name)

@@ -172,7 +172,7 @@ class QMWorker(object):
     self.qmcode = qmcode
     self.setting = kwargs
 
-  def start(self, InpClass, new_name=None):
+  def start(self, InpClass, new_name=None, root_dir=None):
     self.inp = InpClass
     if not new_name:
       self.name = self.inp.final_name

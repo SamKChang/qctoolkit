@@ -239,6 +239,27 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
     qmoutput = inp + '.out'
     compute(exestr, qmlog, _threads)
 
+    # unfold bandstructure
+    if 'unfold' in kwargs and kwargs['unfold']:
+      folds = kwargs['unfold']
+      exe = setting.abinit_f2b_exe
+      wfk_list = sorted(glob.glob("*_WFK"))
+      if len(wfk_list) > 0:
+        wfk = wfk_list[-1]
+        wfk_root = wfk.replace('_WFK', '')
+        log_name = '%s_f2b.log' % wfk_root
+        log = open(log_name, 'w')
+        fold_str = [str(f) for f in folds]
+        cmd_str = "%s %s %s" % (exe, wfk, ':'.join(fold_str))
+        run = sp.Popen(cmd_str, shell=True, stdout=log)
+        run.wait()
+        log.close()
+      else:
+        qtk.warning('unfolding but no wavefunction file found...')
+
+      if 'unfold_cleanup' in kwargs and kwargs['unfold_cleanup']:
+        os.remove(wfk_list[-1])
+
     # clean up files
     files = sorted(glob.glob('*'))
     tmp = filter(\
@@ -277,23 +298,6 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
                stdout=log)
       run.wait()
       log.close()
-
-    if 'unfold' in kwargs and kwargs['unfold']:
-      folds = kwargs['unfold']
-      exe = setting.abinit_f2b_exe
-      wfk_list = sorted(glob.glob("*_WFK"))
-      if len(wfk_list) > 0:
-        wfk = wfk_list[-1]
-        wfk_root = wfk.replace('_WFK', '')
-        log_name = '%s_f2b.log' % wfk_root
-        log = open(log_name, 'w')
-        fold_str = [str(f) for f in folds]
-        cmd_str = "%s %s %s" % (exe, wfk, ':'.join(fold_str))
-        run = sp.Popen(cmd_str, shell=True, stdout=log)
-        run.wait()
-        log.close()
-      else:
-        qtk.warning('unfolding but no wavefunction file found...')
 
     qio_out = qtk.QMOut(qmoutput, program='abinit')
 
