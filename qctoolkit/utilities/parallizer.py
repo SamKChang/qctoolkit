@@ -58,6 +58,7 @@ def qmRunJob(inp, name):
 
 def parallelize(target_function, 
                 input_list, 
+                n_output = 1,
                 **kwargs):
   """
   target_function is implemented in a general way
@@ -175,4 +176,11 @@ def parallelize(target_function,
     for data_out in output_stack: 
       # if output is list of class, in-line iteration doesn't work
       output.append(data_out[0])
-  return flatten(output)
+  out = list(qtk.flatten(output))
+  if n_output == 1:
+    return out
+  else:
+    out_list = []
+    for i in range(n_output):
+      out_list.append(out[i::n_output])
+    return tuple(out_list)
