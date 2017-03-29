@@ -1,5 +1,6 @@
 import qctoolkit as qtk
 import numpy as np
+import os
 
 class Temperature(object):
   """
@@ -40,82 +41,47 @@ class Temperature(object):
 class Optimizer(object):
   """
   general object for optimization
-  penalty_funciton: function to be minimized to 0
+  target_function: function to be minimized to 0
   input_generator: function to generate new input
   """
   def __init__(self, 
-               penalty_function, 
-               penalty_input,
+               target_function, 
+               target_input,
                input_generator,
+               cutoff=1E-5,
+               power=1,
+               threads=1,
+               target=0,
+               converge_length=20,
+               distributed=False,
+               log='optimization.db',
+               new_run=True,
                **kwargs):
 
     ################################
     # setting default setup values #
     ################################
-    if 'cutoff' in kwargs:
-      self.cutoff = kwargs['cutoff']
-    else:
-      self.cutoff = 1E-5
-
-    if 'max_step' in kwargs:
-      self.max_step = kwargs['max_step']
-    else:
-      self.max_step = 1000
-
-    # set abs(penalty)**power
-    # if power==0, no modification is applied
-    if 'power' in kwargs:
-      self.power = kwargs['power']
-    else:
-      self.power = 1
-
-    if 'log_file' in kwargs:
-      self.log = kwargs['log_file']
-    else:
-      self.log = 'optimization.log'
-
-    if 'average_length' in kwargs:
-      self.avg_len = kwargs['average_length']
-    else:
-      self.avg_len = 100
-
-    if 'dump' in kwargs:
-      self.dump_len = kwargs['dump']
-    else:
-      self.dump_len = 30
-
-    if 'parallel' in kwargs:
-      self.parallel = kwargs['parallel']
-    else:
-      self.parallel = 1
-
-    if 'target' in kwargs:
-      self.target = kwargs['target']
-    else:
-      self.target = 0
-
-    if 'converge_length' in kwargs:
-      self.converge_length = kwargs['converge_length']
-    else:
-      self.converge_length = 20
-    
+    self.cutoff = cutoff
+    self.power = power
+    if os.path.exists(log):
+      if new_run:
+        os.remove(log)
+    self.log = qtk.Logger(log)
+    self.threads = threads
+    self.target = target
+    self.converge_length = converge_length
     self.conv_itr = 0
-    self.log_step = 1
-
-
+    self.distributed=distributed
     ##### end of default values setup #####
 
-    # open logfile, close when converged
-    self.logfile = open(self.log, 'w', 0)
-    self.logfile.flush()
     # result lists
     self.result = []
     self.penalty = []
     self.coord = []
     self.step = 0
     # parsing variables
-    self.penalty_function = penalty_function
-    self.penalty_input = penalty_input
+    self.target_function = target_function
+    self.target_input = target_input
     self.input_generator = input_generator
 
   ################################################
@@ -130,19 +96,8 @@ class Optimizer(object):
   # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   # flush penalty/coord list to log file
   def write_log(self):
-    if self.step % self.log_step ==0:
-      line = [self.result[-1], self.penalty[-1], self.coord[-1]]
-      print >> self.logfile, "% 10.6E %s" % (line[0], line[2])
-      self.logfile.flush()
-
-  def dump(self):
-    size = self.dump_len
-    output = list(zip(self.penalty[:size], self.coord[:size]))
-    self.penalty = self.penalty[size:]
-    self.coord = self.coord[size:]
-    for line in output:
-      print >> self.logfile, "% 10.6E %s" % (line[0], line[1])
-      self.logfile.flush()
+    content = str(self.coord[-1]) + ', ' + str(self.result[-1])
+    self.log.push(content, self.penalty[-1])
 
   # !!!!!!!!!!!!!!!!!!!!!!!!!!
   # update penalty/coord lists
@@ -155,24 +110,21 @@ class Optimizer(object):
                "result:%.4E penalty:%.4E coord%s itr:%d"\
                % (result, penalty, coord, self.step))
     self.write_log()
-    if self.step > 0 \
-     and self.step % self.dump_len ==0\
-     and len(self.coord) > 3*self.dump_len:
-      self.dump()
 
   # !!!!!!!!!!!!!!!!!!!!!!!!!!
   # convergence/max_step check
   def converged(self):
     # first step is set to NOT converge
-    if len(self.penalty)>1:
+    penalty = [q.data for q in self.log.list()]
+    if len(penalty)>1:
       # if get to target
-      if self.penalty[-1] < self.cutoff:
-        self.logfile.close()
+      if penalty[-1] < self.cutoff:
+        #self.logfile.close()
         return True
       # if stuck at best solution
-      elif self.penalty[-1] == self.penalty[-2]:
+      elif penalty[-1] == penalty[-2]:
         if self.conv_itr > self.converge_length:
-          self.logfile.close()
+          #self.logfile.close()
           return True
         else:
           self.conv_itr = self.conv_itr + 1
@@ -181,37 +133,29 @@ class Optimizer(object):
       elif self.step >= self.max_step:
         qtk.report("Optimizer", "max_step reached stopping",
                    color='red')
-        self.logfile.close()
+        #self.logfile.close()
         return True
       else: 
         self.conv_itr = 0
         return False
     else: return False
 
-    # average over length...
-#    size = self.avg_len
-#    length = min(len(self.penalty), size)
-#    if length > 1:
-#      if sum(self.penalty[-length:])/float(length) < self.cutoff\
-#      or self.step >= self.max_step:
-#        if self.step >= self.max_step:
-#          qtk.report("Optimizer", "not max_step reached stop",
-#                     color='red')
-#        self.logfile.close()
-#        return True
-#    else: return False
-
   # !!!!!!!!!!!!!!!!!!!!!!
   # evaluate penalty value
-  def evaluate(self, new_coord, penalty_input):
-    if type(penalty_input[-1]) == dict:
-      evl_args = penalty_input[:-1]
-      evl_kwgs = penalty_input[-1]
-      out = self.penalty_function(\
+  def evaluate(self, new_coord, target_input):
+    if type(target_input[-1]) == dict:
+      evl_args = target_input[:-1]
+      evl_kwgs = target_input[-1]
+      out = self.target_function(\
               new_coord, *evl_args, **evl_kwgs)
     else:
-      out = self.penalty_function(new_coord, *evl_args)
-    return abs(out - self.target)**self.power, out
+      out = self.target_function(new_coord, *evl_args)
+    if type(out) is tuple or type(out) is list:
+      out_info = out[1:]
+      out = out[0]
+    else:
+      out_info = out
+    return abs(out - self.target)**self.power, str(out_info)
 
   # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   # generate input for penalty function by input_generator

@@ -8,14 +8,14 @@ import multiprocessing as mp
 class MonteCarlo(opt.Optimizer, opt.Temperature):
   """
   penalty: function to optimize to 0
-  penalty_input: list of all input arguments of penalty function
+  target_input: list of all input arguments of penalty function
                  exept coordinate, which will be randomly sampled
                  and put as the 'FIRST' argument of the 
                  penalty function
   inpgen: input generator, for MonteCarlo, it takes no input
   """
-  def __init__(self, penalty, penalty_input, inpgen, **kwargs):
-    opt.Optimizer.__init__(self, penalty, penalty_input, 
+  def __init__(self, penalty, target_input, inpgen, **kwargs):
+    opt.Optimizer.__init__(self, penalty, target_input, 
                            inpgen, **kwargs)
     if 'T' in kwargs:
       _T = kwargs['T']
@@ -58,7 +58,7 @@ class MonteCarlo(opt.Optimizer, opt.Temperature):
       new_coord = args[0]
     else:
       new_coord = self.getInput()
-    penalty, out = self.evaluate(new_coord, self.penalty_input)
+    penalty, out = self.evaluate(new_coord, self.target_input)
     if len(self.coord) > 0:
       # accept if penalty < current_penalty
       # otherwise go through MonteCarlo cycle

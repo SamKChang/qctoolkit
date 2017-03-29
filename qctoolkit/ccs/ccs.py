@@ -254,7 +254,7 @@ class CCS(object):
   def _mutate(self, mutation):
     for m in xrange(len(mutation)):
       for i in xrange(len(mutation[m])):
-        index = self.mutation_list[m][i] - 1
+        index = self.mutation_list[m][i]
         #target = self.mutation_target[m][mutation[m][i]]
         target = mutation[m][i]
         self.new_structure.Z[index] = target
