@@ -141,10 +141,13 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
       exe = setting.cpmd_cpmd2cube_exe
       log_name = densities[i] + '_%02d.log' % i
       log = open(log_name, 'w')
-      run = sp.Popen("%s -fullmesh %s" % (exe, densities[i]), 
-               shell=True,
-               stdout=log)
-      run.wait()
+      try:
+        run = sp.Popen("%s -fullmesh %s" % (exe, densities[i]), 
+                 shell=True,
+                 stdout=log)
+        run.wait()
+      except Exception as err:
+        qtk.warning('%s failed with error: %s' % (exe, err))
       log.close()
   
     if os.path.exists(out):
@@ -205,9 +208,12 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
       nb = qio_out.n_basis
       out = re.sub('\.movecs','.modat',f)
       exestr = "%s %d %s %s" % (exe, nb, f, out)
-      run = sp.Popen(exestr, shell=True)
-      run.wait()
-      qio_out.getMO(out)
+      try:
+        run = sp.Popen(exestr, shell=True)
+        run.wait()
+        qio_out.getMO(out)
+      except Exception as err:
+        qtk.warning('%s failed with error: %s' % (exe, err))
       if not _save_restart:
         os.remove(f)
 
@@ -251,8 +257,11 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
         log = open(log_name, 'w')
         fold_str = [str(f) for f in folds]
         cmd_str = "%s %s %s" % (exe, wfk, ':'.join(fold_str))
-        run = sp.Popen(cmd_str, shell=True, stdout=log)
-        run.wait()
+        try:
+          run = sp.Popen(cmd_str, shell=True, stdout=log)
+          run.wait()
+        except Exception as err:
+          qtk.warning('%s failed with error: %s' % (exe, err))
         log.close()
       else:
         qtk.warning('unfolding but no wavefunction file found...')
@@ -293,10 +302,13 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
       den_inp_file.close()
       log_name = densities[i] + '.log'
       log = open(log_name, 'w')
-      run = sp.Popen("%s < %s" % (exe, den_inp), 
-               shell=True,
-               stdout=log)
-      run.wait()
+      try:
+        run = sp.Popen("%s < %s" % (exe, den_inp), 
+                 shell=True,
+                 stdout=log)
+        run.wait()
+      except Exception as err:
+        qtk.warning('%s failed with error: %s' % (exe, err))
       log.close()
 
     qio_out = qtk.QMOut(qmoutput, program='abinit')
