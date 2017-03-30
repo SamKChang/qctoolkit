@@ -55,6 +55,7 @@ class GeneticOptimizer(opt.Optimizer):
   def run(self):
     while not self.converged():
       pop = self.get_pop()
+      qtk.progress("Optimizer", "GE iteration with %d new points" % len(pop))
       fit, info = self.fitness(pop)
       if type(fit) is list:
         for i in range(len(fit)):
