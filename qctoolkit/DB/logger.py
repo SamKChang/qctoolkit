@@ -63,7 +63,7 @@ class Logger(object):
       date=date, content=content, comment=comment, data=data
     )
 
-    qtk.progress("DB", "adding entry")
+    qtk.progress("DB", "adding entry", content, data, comment)
     self.session.add(entry)
     try:
       qtk.progress("DB", "attempt to commit...")
