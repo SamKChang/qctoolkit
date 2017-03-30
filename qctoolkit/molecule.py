@@ -488,8 +488,12 @@ class Molecule(object):
         assert v.shape == (3,)
 
     if u is None:
-      U = self.principalAxes()[1]
+      U = self.principalAxes(order='descent')[1]
       self.R = np.dot(self.R, U)
+      u = U[2]
+      n1 = np.linalg.norm(u)
+      n2 = np.linalg.norm(v)
+      angle = np.arccos(np.dot(u, v)/(n1*n2))
     else:      
       if np.linalg.norm(u[1]) - u[1] > 1E-8 or u[0] > 0:
         u = np.array(u)
@@ -500,8 +504,8 @@ class Molecule(object):
         u = np.array([0, 0, 1])
         angle = np.pi
 
-      #if angle > 0:
-      axis = np.cross(u, v)
+    axis = np.cross(u, v)
+    if np.linalg.norm(axis) > 1E-8:
       axis = axis / np.linalg.norm(axis)
       self.rotate(angle, axis)
 
@@ -590,7 +594,7 @@ class Molecule(object):
     return np.sum(weighted, axis=0)/float(sum(mass_list))
 
   # tested
-  def principalAxes(self, **kwargs):
+  def principalAxes(self, order='ascent', **kwargs):
     weight = [qtk.n2m(elem) for elem in self.type_list]
     center = self.getCenterOfMass()
     self.center(center)
@@ -608,8 +612,10 @@ class Molecule(object):
         inertia[j,i] = inertia[i,j]
     I, U = np.linalg.eigh(inertia)
     self.shift(center)
-    #return sorted(I,reverse=True), U[I.argsort()[::-1]]
-    return I, U
+    if order == 'ascent':
+      return I, U
+    else:
+      return sorted(I,reverse=True), U[I.argsort()[::-1]]
 
   # tested
   def addAtoms(self, element, coord):

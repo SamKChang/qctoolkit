@@ -22,7 +22,7 @@ class GeneticOptimizer(opt.Optimizer):
 
   def get_pop(self):
     size = self.pop_size
-    old_list_db = self.log.list(order='ascend')[:size]
+    old_list_db = self.log.list(order='ascent')[:size]
     old_list = [eval(q.content) for q in old_list_db]
     pop_list = []
     for i in range(self.threads):

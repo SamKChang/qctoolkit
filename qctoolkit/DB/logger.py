@@ -112,9 +112,9 @@ class Logger(object):
       else:
         out = out.filter(Entry.comment.like(comment_flag))
 
-    if order == 'ascend':
+    if order == 'ascent':
       out = out.order_by(Entry.data)
-    elif order == 'descend':
+    elif order == 'descent':
       out = out.order_by(Entry.data.desc())
 
     if limit:
