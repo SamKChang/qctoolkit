@@ -53,6 +53,7 @@ class Optimizer(object):
                threads=1,
                target=0,
                converge_length=20,
+               max_step=1000,
                distributed=False,
                log='optimization.db',
                new_run=True,
@@ -70,6 +71,7 @@ class Optimizer(object):
     self.threads = threads
     self.target = target
     self.converge_length = converge_length
+    self.max_step = max_step
     self.conv_itr = 0
     self.distributed=distributed
     ##### end of default values setup #####
