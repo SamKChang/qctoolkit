@@ -34,6 +34,7 @@ def progress(title, *texts):
     print msg,
     for info in texts:
       print info,
+    print ""
   sys.stdout.flush()
 
 def done(*texts):

@@ -63,9 +63,12 @@ class Logger(object):
       date=date, content=content, comment=comment, data=data
     )
 
+    qtk.progress("DB", "adding entry")
     self.session.add(entry)
     try:
+      qtk.progress("DB", "attempt to commit...")
       self.session.commit()
+      qtk.progress("DB", "done")
     except Exception as err:
       qtk.warning('can not commit, error: %s' % err)
 
