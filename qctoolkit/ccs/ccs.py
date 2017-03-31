@@ -265,6 +265,31 @@ class CCS(object):
     pass
   ##### END OF STRUCTURE GENERATION #####
 
+  #########################################
+  # EXTRACT CCS COORDINATE FROM STRUCTURE #
+  #########################################
+  def get_coord(self, mol):
+    qtk.warning("temporary implementation for special cases of cubic AlGaAs")
+    coord = self.random()[1]
+    mut_list = coord['mutation'][0]
+    ref_list = self.mutation_list[0]
+    scale = np.asarray(self.structure.scale)
+    for ind_i in range(len(ref_list)):
+      i = ref_list[ind_i]
+      base_R = self.structure.R_scale[i]
+      for ind_j in range(len(ref_list)):
+        j = ref_list[ind_j]
+        diff = np.linalg.norm(base_R - mol.R_scale[j] * scale)
+        print diff
+        if diff < 1E-5:
+          print 'yo'
+          mut_list[ind_j] = mol.Z[j]
+    print mut_list
+    print coord
+    return coord
+    
+  ##### END OF CCS COORDINATE EXTRACTION #####
+
   ################################################
   # GENERATOR TO CONSTRUCT NEXT STRUCTURE IN CCS #
   ################################################
