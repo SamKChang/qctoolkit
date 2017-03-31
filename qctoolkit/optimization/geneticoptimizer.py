@@ -29,7 +29,7 @@ class GeneticOptimizer(opt.Optimizer):
     else:
       order = 'ascent'
       qtk.warning("mode %s not reconized, set to minimize" % self.mode)
-    old_list_db = self.log.list(order=order)[:size]
+    old_list_db = self.log.list(order=order, has_data=True)[:size]
     old_list = [eval(q.content) for q in old_list_db]
     pop_list = []
     #for i in range(self.threads):

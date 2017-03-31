@@ -75,7 +75,9 @@ class Logger(object):
   def list(self, 
     content=None, data=None, comment=None, date=None,
     exact = True, epsilon=0.0, dt = datetime.timedelta(0),
-    order=False, limit=False, get_list=True):
+    order=False, limit=False, get_list=True,
+    has_data=False, has_content=False, has_comment=False,
+  ):
 
     if content:
       content_flag = r'%' + str(content) + r'%'
@@ -119,6 +121,15 @@ class Logger(object):
 
     if limit:
       out = out.limit(limit)
+
+    if has_data:
+      out = out.filter(Entry.data != None)
+
+    if has_content:
+      out = out.filter(Entry.content != None)
+
+    if has_comment:
+      out = out.filter(Entry.comment != None)
 
     if get_list:
       return out.all()
