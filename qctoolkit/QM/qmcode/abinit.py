@@ -643,21 +643,21 @@ class out(PlanewaveOutput):
 
   def unfold(self, k_path, folds, epsilon = 1E-5, WFK=None, overwrite=False, shift = None):
 
-    if not WFK:
-      path = self.path
-      WFK_card = '%s/*_WFK' % path
-      WFK_list = sorted(glob.glob(WFK_card))
-      if len(WFK_list) > 0:
-        WFK = WFK_list[-1]
-      else:
-        qtk.exit('wavefunction file not found.')
-      
-    path, name = os.path.split(WFK)
+    path = self.path
     cwd = os.getcwd()
     os.chdir(path)
 
     f2b_list = sorted(glob.glob('*.f2b'))
     if not f2b_list or overwrite:
+
+      if not WFK:
+        WFK_card = '%s/*_WFK' % path
+        WFK_list = sorted(glob.glob(WFK_card))
+        if len(WFK_list) > 0:
+          WFK = WFK_list[-1]
+        else:
+          qtk.exit('wavefunction file not found.')
+      
       exe = qtk.setting.abinit_f2b_exe
       log_name = '%s_f2b.log' % self.name
       log = open(log_name, 'w')

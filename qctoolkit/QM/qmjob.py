@@ -281,7 +281,7 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
         fold_str = [str(f) for f in folds]
         cmd_str = "%s unfold_WFK %s" % (exe, ':'.join(fold_str))
         sys_run(cmd_str, log_name)
-        qtk.progress("QMRun", "Done, remove unfold_WFK" % wfk)
+        qtk.progress("QMRun", "Done, remove unfold_WFK")
         os.remove('unfold_WFK')
         #try:
         #  qtk.progress("QMRun", cmd_str)
@@ -302,6 +302,7 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
     files = sorted(glob.glob('*'))
     tmp = filter(\
       lambda x: '.out' not in x \
+                and '.f2b' not in x\
                 and '.log' not in x\
                 and '.inp' not in x\
                 and '.files' not in x\
