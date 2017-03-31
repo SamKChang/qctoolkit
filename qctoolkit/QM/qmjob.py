@@ -294,7 +294,9 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
         qtk.warning('unfolding but no wavefunction file found...')
 
       if 'unfold_cleanup' in kwargs and kwargs['unfold_cleanup']:
-        os.remove(wfk_list[-1])
+        qtk.progress("QMRun", "deleting all WFK files")
+        for wfk in sorted(glob.glob.("*_WFK")):
+          os.remove(wfk)
 
     # clean up files
     files = sorted(glob.glob('*'))
