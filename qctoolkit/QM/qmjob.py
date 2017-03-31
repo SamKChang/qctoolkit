@@ -252,11 +252,13 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
       wfk_list = sorted(glob.glob("*_WFK"))
       if len(wfk_list) > 0:
         wfk = wfk_list[-1]
+        qtk.progress("QMRun", "linking wfk file %s to unfold_WFK" % wfk)
+        os.link(wfk, 'unfold_WFK')
         wfk_root = wfk.replace('_WFK', '')
         log_name = '%s_f2b.log' % wfk_root
         log = open(log_name, 'w')
         fold_str = [str(f) for f in folds]
-        cmd_str = "%s %s %s" % (exe, wfk, ':'.join(fold_str))
+        cmd_str = "%s unfold_WFK %s" % (exe, ':'.join(fold_str))
         try:
           qtk.progress("QMRun", cmd_str)
           run = sp.Popen(cmd_str, shell=True, stdout=log)
