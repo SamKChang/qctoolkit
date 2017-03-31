@@ -89,6 +89,25 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
     outfile.close()
   ########## END OF SYSTEM CALL ##########
 
+  #################################
+  # SYSTEM CALL for post analysis #
+  #################################
+  def sys_run(cmd_str, log_file=None):
+    if log_file:
+      log = open(log_file, 'w')
+    try:
+      qtk.progress("QMRun", cmd_str)
+      if log_file:
+        run = sp.Popen(cmd_str, shell=True, stdout=log)
+      else:
+        run = sp.Popen(cmd_str, shell=True)
+      run.wait()
+    except Exception as err:
+      qtk.warning('%s failed with error: %s' % (cmd_str, err))
+    if log_file:
+      log.close()
+  ########## END OF SYSTEM CALL ##########
+
   #######################
   # CPMD IMPLEMENTATION #
   #######################
@@ -139,16 +158,18 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
     densities = sorted(glob.glob('*DEN*'))
     for i in range(len(densities)):
       exe = setting.cpmd_cpmd2cube_exe
+      cmd = "%s -fullmesh %s" % (exe, densities[i])
       log_name = densities[i] + '_%02d.log' % i
-      log = open(log_name, 'w')
-      try:
-        run = sp.Popen("%s -fullmesh %s" % (exe, densities[i]), 
-                 shell=True,
-                 stdout=log)
-        run.wait()
-      except Exception as err:
-        qtk.warning('%s failed with error: %s' % (exe, err))
-      log.close()
+      sys_run(cmd, log_name)
+      #log = open(log_name, 'w')
+      #try:
+      #  run = sp.Popen("%s -fullmesh %s" % (exe, densities[i]), 
+      #           shell=True,
+      #           stdout=log)
+      #  run.wait()
+      #except Exception as err:
+      #  qtk.warning('%s failed with error: %s' % (exe, err))
+      #log.close()
   
     if os.path.exists(out):
       qio_out = qio.QMOut(out, program='cpmd')
@@ -208,12 +229,13 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
       nb = qio_out.n_basis
       out = re.sub('\.movecs','.modat',f)
       exestr = "%s %d %s %s" % (exe, nb, f, out)
-      try:
-        run = sp.Popen(exestr, shell=True)
-        run.wait()
-        qio_out.getMO(out)
-      except Exception as err:
-        qtk.warning('%s failed with error: %s' % (exe, err))
+      sys_run(exestr)
+      #try:
+      #  run = sp.Popen(exestr, shell=True)
+      #  run.wait()
+      #  qio_out.getMO(out)
+      #except Exception as err:
+      #  qtk.warning('%s failed with error: %s' % (exe, err))
       if not _save_restart:
         os.remove(f)
 
@@ -256,16 +278,18 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
         os.link(wfk, 'unfold_WFK')
         wfk_root = wfk.replace('_WFK', '')
         log_name = '%s_f2b.log' % wfk_root
-        log = open(log_name, 'w')
         fold_str = [str(f) for f in folds]
         cmd_str = "%s unfold_WFK %s" % (exe, ':'.join(fold_str))
-        try:
-          qtk.progress("QMRun", cmd_str)
-          run = sp.Popen(cmd_str, shell=True, stdout=log)
-          run.wait()
-        except Exception as err:
-          qtk.warning('%s failed with error: %s' % (exe, err))
-        log.close()
+        sys_run(cmd_str, log_name)
+        qtk.progress("QMRun", "Done, remove unfold_WFK" % wfk)
+        os.remove('unfold_WFK')
+        #try:
+        #  qtk.progress("QMRun", cmd_str)
+        #  run = sp.Popen(cmd_str, shell=True, stdout=log)
+        #  run.wait()
+        #except Exception as err:
+        #  qtk.warning('%s failed with error: %s' % (exe, err))
+        #log.close()
       else:
         qtk.warning('unfolding but no wavefunction file found...')
 
@@ -304,15 +328,17 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
       den_inp_file.write("%s\n14\n%s\n0" % (densities[i], cube_file))
       den_inp_file.close()
       log_name = densities[i] + '.log'
-      log = open(log_name, 'w')
-      try:
-        run = sp.Popen("%s < %s" % (exe, den_inp), 
-                 shell=True,
-                 stdout=log)
-        run.wait()
-      except Exception as err:
-        qtk.warning('%s failed with error: %s' % (exe, err))
-      log.close()
+      cmd = "%s < %s" % (exe, den_inp)
+      sys_run(cmd, log_name)
+      #log = open(log_name, 'w')
+      #try:
+      #  run = sp.Popen("%s < %s" % (exe, den_inp), 
+      #           shell=True,
+      #           stdout=log)
+      #  run.wait()
+      #except Exception as err:
+      #  qtk.warning('%s failed with error: %s' % (exe, err))
+      #log.close()
 
     qio_out = qtk.QMOut(qmoutput, program='abinit')
 
@@ -335,8 +361,9 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
     for chk in chks:
       exe = setting.gaussian_formchk_exe
       exestr = "%s %s" % (exe, chk)
-      run = sp.Popen(exestr, shell=True)
-      run.wait()
+      sys_run(exestr)
+      #run = sp.Popen(exestr, shell=True)
+      #run.wait()
     if _save_density:
       fchk = sorted(glob.glob("*.fchk"))[-1]
       q = qtk.CUBE(fchk)
