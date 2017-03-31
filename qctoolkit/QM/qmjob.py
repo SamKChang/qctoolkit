@@ -258,6 +258,7 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
         fold_str = [str(f) for f in folds]
         cmd_str = "%s %s %s" % (exe, wfk, ':'.join(fold_str))
         try:
+          qtk.progress("QMRun", cmd_str)
           run = sp.Popen(cmd_str, shell=True, stdout=log)
           run.wait()
         except Exception as err:
