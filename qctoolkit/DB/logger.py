@@ -78,11 +78,11 @@ class Logger(object):
     order=False, limit=False, get_list=True):
 
     if content:
-      content_flag = r'%' + content + r'%'
+      content_flag = r'%' + str(content) + r'%'
     else:
       content_flag = r'%%'
     if comment:
-      comment_flag = r'%' + comment + r'%'
+      comment_flag = r'%' + str(comment) + r'%'
     else:
       comment_flag = r'%%'
 
