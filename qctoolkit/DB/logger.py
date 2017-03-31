@@ -74,7 +74,7 @@ class Logger(object):
 
   def list(self, 
     content=None, data=None, comment=None, date=None,
-    match = True, epsilon=0.0, dt = datetime.timedelta(0),
+    exact = True, epsilon=0.0, dt = datetime.timedelta(0),
     order=False, limit=False, get_list=True):
 
     if content:
@@ -101,13 +101,13 @@ class Logger(object):
       )
 
     if content is not None:
-      if match:
+      if exact:
         out = out.filter(Entry.content == content)
       else:
         out = out.filter(Entry.content.like(content_flag))
 
     if comment is not None:
-      if match:
+      if exact:
         out = out.filter(Entry.comment == comment)
       else:
         out = out.filter(Entry.comment.like(comment_flag))
