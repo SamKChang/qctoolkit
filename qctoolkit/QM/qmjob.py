@@ -295,7 +295,7 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
 
       if 'unfold_cleanup' in kwargs and kwargs['unfold_cleanup']:
         qtk.progress("QMRun", "deleting all WFK files")
-        for wfk in sorted(glob.glob.("*_WFK")):
+        for wfk in sorted(glob.glob("*_WFK")):
           os.remove(wfk)
 
     # clean up files
