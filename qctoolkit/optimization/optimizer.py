@@ -49,11 +49,11 @@ class Optimizer(object):
                target_input,
                input_generator,
                cutoff=1E-5,
-               power=1,
                threads=1,
                target=0,
                converge_length=20,
                max_step=1000,
+               mode='minimize',
                distributed=False,
                log='optimization.db',
                new_run=True,
@@ -63,10 +63,10 @@ class Optimizer(object):
     # setting default setup values #
     ################################
     self.cutoff = cutoff
-    self.power = power
     if os.path.exists(log):
       if new_run:
         os.remove(log)
+    self.mode = mode
     self.log = qtk.Logger(log)
     self.threads = threads
     self.target = target
@@ -157,7 +157,7 @@ class Optimizer(object):
       out = out[0]
     else:
       out_info = out
-    return abs(out - self.target)**self.power, str(out_info)
+    return out, str(out_info)
 
   # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   # generate input for penalty function by input_generator
