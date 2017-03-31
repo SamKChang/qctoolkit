@@ -51,7 +51,6 @@ class Optimizer(object):
                cutoff=1E-5,
                threads=1,
                target=0,
-               converge_length=20,
                max_step=1000,
                mode='minimize',
                distributed=False,
@@ -70,7 +69,6 @@ class Optimizer(object):
     self.log = qtk.Logger(log)
     self.threads = threads
     self.target = target
-    self.converge_length = converge_length
     self.max_step = max_step
     self.conv_itr = 0
     self.distributed=distributed
@@ -95,6 +93,38 @@ class Optimizer(object):
   def run(self):
     raise NotImplementedError("Please Implement run method")
 
+  def repeated(self, inp):
+    q = self.log.list(str(inp))
+    if len(q) == 0:
+      return False
+    else:
+      return True
+
+  def register(self, inp_list):
+    for inp in inp_list:
+      self.log.push(str(inp), data=None, comment='processing (%s)' \
+        % os.uname()[1]
+      )
+
+  def update(self, inp_list, out_list, info_list):
+    print len(inp_list), len(out_list), len(info_list)
+    print inp_list, out_list
+    for i in range(len(inp_list)):
+      content = str(inp_list[i])
+      comment = str(info_list[i])
+      data = out_list[i]
+      q = self.log.list(content)
+      if len(q) == 0:
+        qtk.warning("no entry found with %s" % content)
+        self.log.push(content, data, comment)
+      else:
+        if len(q) > 1:
+          qtk.warning("found multiple entry with %s" % content)
+        entry = q[-1]
+        entry.data = out_list[i]
+        entry.comment = info_list[i]
+        self.log.commit()
+
   # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   # flush penalty/coord list to log file
   def write_log(self):
@@ -116,31 +146,31 @@ class Optimizer(object):
   # !!!!!!!!!!!!!!!!!!!!!!!!!!
   # convergence/max_step check
   def converged(self):
-    # first step is set to NOT converge
-    penalty = [q.data for q in self.log.list()]
-    if len(penalty)>1:
-      # if get to target
-      if penalty[-1] < self.cutoff:
-        #self.logfile.close()
-        return True
-      # if stuck at best solution
-      elif penalty[-1] == penalty[-2]:
-        if self.conv_itr > self.converge_length:
-          #self.logfile.close()
-          return True
-        else:
-          self.conv_itr = self.conv_itr + 1
-          return False
-      # if reach max step
-      elif self.step >= self.max_step:
-        qtk.report("Optimizer", "max_step reached stopping",
-                   color='red')
-        #self.logfile.close()
-        return True
-      else: 
-        self.conv_itr = 0
-        return False
-    else: return False
+    return False
+    ## first step is set to NOT converge
+    #penalty = [q.data for q in self.log.list()]
+    #if len(penalty)>1:
+    #  # if get to target
+    #  if penalty[-1] < self.cutoff:
+    #    #self.logfile.close()
+    #    return True
+    #  # if stuck at best solution
+    #  elif penalty[-1] == penalty[-2]:
+    #    if self.conv_itr > self.converge_length:
+    #      return True
+    #    else:
+    #      self.conv_itr = self.conv_itr + 1
+    #      return False
+    #  # if reach max step
+    #  elif self.step >= self.max_step:
+    #    qtk.report("Optimizer", "max_step reached stopping",
+    #               color='red')
+    #    #self.logfile.close()
+    #    return True
+    #  else: 
+    #    self.conv_itr = 0
+    #    return False
+    #else: return False
 
   # !!!!!!!!!!!!!!!!!!!!!!
   # evaluate penalty value
@@ -152,6 +182,7 @@ class Optimizer(object):
               new_coord, *evl_args, **evl_kwgs)
     else:
       out = self.target_function(new_coord, *evl_args)
+    print out
     if type(out) is tuple or type(out) is list:
       out_info = out[1:]
       out = out[0]
