@@ -641,7 +641,7 @@ class out(PlanewaveOutput):
     else:
       qtk.warning('no k-point information (o_EIG file) found')
 
-  def unfold(self, k_path, folds, epsilon = 1E-5, WFK=None, overwrite=False, shift = None):
+  def unfold(self, k_path, folds, epsilon = 1E-5, WFK=None, overwrite=False, shift = None, **kwargs):
 
     path = self.path
     cwd = os.getcwd()
@@ -662,7 +662,7 @@ class out(PlanewaveOutput):
       log_name = '%s_f2b.log' % self.name
       log = open(log_name, 'w')
       fold_str = [str(f) for f in folds]
-      cmd_str = "%s %s %s" % (exe, name, ':'.join(fold_str))
+      cmd_str = "%s %s %s" % (exe, WFK, ':'.join(fold_str))
       run = sp.Popen(cmd_str, shell=True, stdout=log)
       run.wait()
       log.close()

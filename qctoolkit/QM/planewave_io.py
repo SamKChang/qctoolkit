@@ -386,17 +386,29 @@ class PlanewaveOutput(GenericQMOutput):
 #
 
   def plot_band_unfold(self, *args, **kwargs):
-    plt.figure()
+    if 'ax' not in kwargs:
+      fig, ax = plt.subplots(1,1)
+    else:
+      ax = kwargs.pop('ax')
     L, E, W = self.unfold(*args, **kwargs)
     inds = []
     w_list = np.arange(0,1.1,0.2)
     for i in range(len(w_list) - 1):
-        inds.append((W>=w_list[i]) * (W<w_list[i+1]))
+      inds.append((W>=w_list[i]) * (W<w_list[i+1]))
 
+    if 'zero_weight_color' not in kwargs:
+      zc = 'k'
+    else:
+      zc = kwargs['zero_weight_color']
     for i in range(len(inds)):
-        ind = inds[i]
-        plt.plot(L[ind], E[ind], ls='', marker='o', markersize=1.5*i + 1)
-    plt.xlim([min(L), max(L)])
+      ind = inds[i]
+      if i == 0:
+        ax.plot(L[ind], E[ind], ls='',
+                marker='o', markersize=1.5*i + 1,
+                mec = zc)
+      else:
+        ax.plot(L[ind], E[ind], ls='', marker='o', markersize=1.5*i + 1)
+    ax.set_xlim([min(L), max(L)])
     return L, E, W
 
   def BZ_integrate(self, integrand):
@@ -409,7 +421,7 @@ class PlanewaveOutput(GenericQMOutput):
         results.append(w.dot(vec))
     else:
       results = w.dot(integrand)
-    return results
+    return np.asarray(results)
 
   def DOS(self, sigma=0.2, E_list=None, raw=False):
     dos_raw = []

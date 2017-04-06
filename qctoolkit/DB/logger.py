@@ -75,8 +75,8 @@ class Logger(object):
   def list(self, 
     content=None, data=None, comment=None, date=None,
     exact = True, epsilon=0.0, dt = datetime.timedelta(0),
-    order=False, limit=False, get_list=True,
-    has_data=False, has_content=False, has_comment=False,
+    order=False, get_list=True,
+    has_data=None, has_content=None, has_comment=None,
   ):
 
     if content:
@@ -119,17 +119,23 @@ class Logger(object):
     elif order == 'descent':
       out = out.order_by(Entry.data.desc())
 
-    if limit:
-      out = out.limit(limit)
+    if has_data is not None:
+      if has_data:
+        out = out.filter(Entry.data != None)
+      else:
+        out = out.filter(Entry.data == None)
 
-    if has_data:
-      out = out.filter(Entry.data != None)
+    if has_content is not None:
+      if has_content:
+        out = out.filter(Entry.content != None)
+      else:
+        out = out.filter(Entry.content == None)
 
-    if has_content:
-      out = out.filter(Entry.content != None)
-
-    if has_comment:
-      out = out.filter(Entry.comment != None)
+    if has_content is not None:
+      if has_comment:
+        out = out.filter(Entry.comment != None)
+      else:
+        out = out.filter(Entry.comment == None)
 
     if get_list:
       return out.all()
