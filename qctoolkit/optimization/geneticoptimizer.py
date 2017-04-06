@@ -22,17 +22,27 @@ class GeneticOptimizer(opt.Optimizer):
 
   def get_pop(self):
     size = self.pop_size
-    old_list_db = self.log.list(order='ascend')[:size]
+    if self.mode == 'minimize':
+      order = 'ascent'
+    elif self.mode == 'maximize':
+      order = 'descent'
+    else:
+      order = 'ascent'
+      qtk.warning("mode %s not reconized, set to minimize" % self.mode)
+    old_list_db = self.log.list(order=order, has_data=True)[:size]
     old_list = [eval(q.content) for q in old_list_db]
     pop_list = []
-    for i in range(self.threads):
+    #for i in range(self.threads):
+    while len(pop_list) < self.threads:
       if len(old_list) > 2:
         parent1, parent2 = random.sample(old_list, 2)
-        pop_list.append(self.mating_function(\
-          parent1, parent2, self.mutation_rate\
-        ))
+        pop = self.mating_function(parent1, parent2, self.mutation_rate)
+        if not self.repeated(pop):
+          pop_list.append(pop)
       else:
-        pop_list.append(self.getInput())
+        pop = self.getInput()
+        if not self.repeated(pop):
+          pop_list.append(pop)
     return pop_list
 
   def fitness(self, pop_list):
@@ -55,11 +65,13 @@ class GeneticOptimizer(opt.Optimizer):
   def run(self):
     while not self.converged():
       pop = self.get_pop()
+      qtk.progress("Optimizer", "GE iteration with %d new points" % len(pop))
+      self.register(pop)
       fit, info = self.fitness(pop)
+      print pop
+      print fit
+      print info
       if type(fit) is list:
-        for i in range(len(fit)):
-          content = str(pop[i])
-          self.log.push(content, fit[i], info[i])
+        self.update(pop, fit, info)
       else:
-        content = str(pop)
-        self.log.push(content, fit, info)
+        self.update(pop, [fit], [info])

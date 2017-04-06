@@ -641,28 +641,28 @@ class out(PlanewaveOutput):
     else:
       qtk.warning('no k-point information (o_EIG file) found')
 
-  def unfold(self, k_path, folds, epsilon = 1E-5, WFK=None, overwrite=False, shift = None):
+  def unfold(self, k_path, folds, epsilon = 1E-5, WFK=None, overwrite=False, shift = None, **kwargs):
 
-    if not WFK:
-      path = self.path
-      WFK_card = '%s/*_WFK' % path
-      WFK_list = sorted(glob.glob(WFK_card))
-      if len(WFK_list) > 0:
-        WFK = WFK_list[-1]
-      else:
-        qtk.exit('wavefunction file not found.')
-      
-    path, name = os.path.split(WFK)
+    path = self.path
     cwd = os.getcwd()
     os.chdir(path)
 
     f2b_list = sorted(glob.glob('*.f2b'))
     if not f2b_list or overwrite:
+
+      if not WFK:
+        WFK_card = '%s/*_WFK' % path
+        WFK_list = sorted(glob.glob(WFK_card))
+        if len(WFK_list) > 0:
+          WFK = WFK_list[-1]
+        else:
+          qtk.exit('wavefunction file not found.')
+      
       exe = qtk.setting.abinit_f2b_exe
       log_name = '%s_f2b.log' % self.name
       log = open(log_name, 'w')
       fold_str = [str(f) for f in folds]
-      cmd_str = "%s %s %s" % (exe, name, ':'.join(fold_str))
+      cmd_str = "%s %s %s" % (exe, WFK, ':'.join(fold_str))
       run = sp.Popen(cmd_str, shell=True, stdout=log)
       run.wait()
       log.close()

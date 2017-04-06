@@ -63,23 +63,28 @@ class Logger(object):
       date=date, content=content, comment=comment, data=data
     )
 
+    qtk.progress("DB", "adding entry", content, data, comment)
     self.session.add(entry)
     try:
+      qtk.progress("DB", "attempt to commit...")
       self.session.commit()
+      qtk.progress("DB", "done")
     except Exception as err:
       qtk.warning('can not commit, error: %s' % err)
 
   def list(self, 
     content=None, data=None, comment=None, date=None,
-    match = True, epsilon=0.0, dt = datetime.timedelta(0),
-    order=False, limit=False, get_list=True):
+    exact = True, epsilon=0.0, dt = datetime.timedelta(0),
+    order=False, get_list=True,
+    has_data=None, has_content=None, has_comment=None,
+  ):
 
     if content:
-      content_flag = r'%' + content + r'%'
+      content_flag = r'%' + str(content) + r'%'
     else:
       content_flag = r'%%'
     if comment:
-      comment_flag = r'%' + comment + r'%'
+      comment_flag = r'%' + str(comment) + r'%'
     else:
       comment_flag = r'%%'
 
@@ -98,24 +103,39 @@ class Logger(object):
       )
 
     if content is not None:
-      if match:
+      if exact:
         out = out.filter(Entry.content == content)
       else:
         out = out.filter(Entry.content.like(content_flag))
 
     if comment is not None:
-      if match:
+      if exact:
         out = out.filter(Entry.comment == comment)
       else:
         out = out.filter(Entry.comment.like(comment_flag))
 
-    if order == 'ascend':
+    if order == 'ascent':
       out = out.order_by(Entry.data)
-    elif order == 'descend':
+    elif order == 'descent':
       out = out.order_by(Entry.data.desc())
 
-    if limit:
-      out = out.limit(limit)
+    if has_data is not None:
+      if has_data:
+        out = out.filter(Entry.data != None)
+      else:
+        out = out.filter(Entry.data == None)
+
+    if has_content is not None:
+      if has_content:
+        out = out.filter(Entry.content != None)
+      else:
+        out = out.filter(Entry.content == None)
+
+    if has_content is not None:
+      if has_comment:
+        out = out.filter(Entry.comment != None)
+      else:
+        out = out.filter(Entry.comment == None)
 
     if get_list:
       return out.all()
