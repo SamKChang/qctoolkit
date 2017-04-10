@@ -252,10 +252,11 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
       exe = setting.bigdft_exe
     env = os.environ.copy()
     inp = os.path.splitext(inp)[0]
-    exestr = "%s" % (exe)
+    exestr = "%s %s" % (exe, inp)
     qmoutput = inp + '.out'
+    qmlog = 'log-%s.yaml' % inp
     compute(exestr, qmoutput, _threads, env=env)
-    qio_out = qio.QMOut('log.yaml', program='bigdft')
+    qio_out = qio.QMOut(qmlog, program='bigdft')
 
   #########################
   # Abinit IMPLEMENTATION #

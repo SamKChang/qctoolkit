@@ -15,6 +15,7 @@ def PPCheck(xc, pp_theory, pp_path, element):
     'lda': 'pade',
     'pbe0': 'pbe',
     'pbesol': 'pbe',
+    'hse06': 'pbe',
   }
 
   name = '%s_%s_%s' % (element, xc, pp_theory)
@@ -80,7 +81,7 @@ class inp(WaveletInput):
     self.setting['yaml'] = True
     self.setting['root_dir'] = name
     inp, molecule = \
-      super(WaveletInput, self).write('input', **self.setting)
+      super(WaveletInput, self).write(name, **self.setting)
 
     dep_files = []
 
@@ -149,7 +150,7 @@ class inp(WaveletInput):
     if 'ks_states' in self.setting and self.setting['ks_states']:
       nv = int(self.setting['ks_states'])
       dft['norbv'] = nv
-      dft['nplot'] = nv
+      dft['nvirt'] = nv
     if self.setting['save_density']:
       dft['output_denspot'] = 21
     if self.setting['restart']:
@@ -159,6 +160,11 @@ class inp(WaveletInput):
       dft['ncharge'] = self.molecule.charge
     if self.molecule.multiplicity > 1:
       dft['nspin'] = 2
+
+    kpt = {}
+    if 'kmesh' in self.setting:
+      kpt['method'] = 'MPgrid'
+      kpt['ngkpt'] = str(self.setting['kmesh'])
 
     posinp = {
                'units': 'angstroem',
@@ -194,6 +200,8 @@ class inp(WaveletInput):
     data = {}
     data['dft'] = dft
     data['posinp'] = posinp
+    if kpt:
+      data['kpt'] = kpt
     dep_files.extend(pp_files)
 
     content = reformat(yaml.dump(data, default_flow_style=False))
