@@ -78,8 +78,9 @@ class inp(WaveletInput):
   def write(self, name=None, **kwargs):
     self.setting.update(kwargs)
     self.setting['yaml'] = True
+    self.setting['root_dir'] = name
     inp, molecule = \
-      super(WaveletInput, self).write(name, **self.setting)
+      super(WaveletInput, self).write('input', **self.setting)
 
     dep_files = []
 
@@ -206,31 +207,14 @@ class out(WaveletOutput):
   def __init__(self, qmout, **kwargs):
     WaveletOutput.__init__(self, qmout, **kwargs)
     self.info = ''
-    if qmout:
-      self.getEt(qmout)
 
-  def getEt(self, name):
-    self.ino = os.path.splitext(name)[0]
-    qmout = open(name)
-    data = qmout.readlines()
-    tmp = filter(lambda x: 'Energies' in x,  data)
-    ind = data.index(tmp[-1])
-    string = data[ind] + data[ind + 1]
-    string = re.sub('\n', '', string)
-    string = re.sub('.*{', '', string)
-    string = re.sub('}.*', '', string)
-    string = re.sub(' *', '', string)
-    tmp = filter(None, string.split(','))
-    self.scf_step = len(tmp)
-    Ecomp = {}
-    for entry in tmp:
-      name, value = entry.split(':')
-      Ecomp[name] = value
-    self.detail = Ecomp
+    try:
+      with open(qmout, 'r') as raw_yml:
+        self.detail = yaml.load(raw_yml)
+    except Exception as err:
+      qtk.warning("error when loading yaml file: %s" % err)
 
-    pattern = re.compile('^.*iter:.*EKS.*$')
-    tmp = filter(pattern.match, data)
-    Et = [float(re.match('.*EKS:(.*), gnrm.*', 
-                         entry)\
-                        .groups(0)[0]) for entry in tmp]
-    self.Et = Et[-1]
+    if 'Last Iteration' in self.detail.keys():
+      self.Et = self.detail['Last Iteration']['EKS']
+    else:
+      qtk.warning("Entry Last Iteration not found")

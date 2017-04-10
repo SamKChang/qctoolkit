@@ -82,7 +82,10 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
     else:
       cmd = exestr
     ut.progress('QMInp.run', 'running job with command: %s\n' % cmd)
-    run = sp.Popen(cmd, shell=True, stdout=outfile)
+    if 'env' in kwargs:
+      run = sp.Popen(cmd, shell=True, stdout=outfile, env=kwargs['env'])
+    else:
+      run = sp.Popen(cmd, shell=True, stdout=outfile)
     # wait each mpijob to finish before lauching another
     # otherwise all mpijobs will be launched simutaniously
     run.wait()
@@ -247,11 +250,12 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
       exe = kwargs['exe']
     else:
       exe = setting.bigdft_exe
+    env = os.environ.copy()
     inp = os.path.splitext(inp)[0]
-    exestr = "%s %s" % (exe, inp)
+    exestr = "%s" % (exe)
     qmoutput = inp + '.out'
-    compute(exestr, qmoutput, _threads)
-    qio_out = qio.QMOut(qmoutput, program='bigdft')
+    compute(exestr, qmoutput, _threads, env=env)
+    qio_out = qio.QMOut('log.yaml', program='bigdft')
 
   #########################
   # Abinit IMPLEMENTATION #
