@@ -291,6 +291,7 @@ class inp(PlanewaveInput):
             [ 1, 1,-1],
           ])
       self.content['cell']['rprim'] = lattice_vec
+      #self.content['cell']['rprim'] = self.setting['lattice']
 
 
       #################

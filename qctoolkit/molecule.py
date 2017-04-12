@@ -905,6 +905,42 @@ class Molecule(object):
           (prop, exc))
       except:
         setattr(self, prop, False)
+
+    # convert celldm acoording to proper symmetry is still not working 
+    # universally due to abinit and vasp k-point sampling 
+    # require explicity reciprocal coordinate
+    #if hasattr(self, 'symmetry') and self.symmetry in ['bcc', 'fcc']:
+    #  new_dm = copy.deepcopy(self.celldm)
+    #  if np.linalg.norm(np.array(new_dm[3:])) < 1E-5:
+    #    lattice_cube = np.array(new_dm[:3]) * np.eye(3)
+    #    if self.symmetry == 'fcc':
+    #      vec1 = (lattice_cube[1] + lattice_cube[2])/2
+    #      vec2 = (lattice_cube[0] + lattice_cube[2])/2
+    #      vec3 = (lattice_cube[0] + lattice_cube[1])/2
+    #    elif self.symmetry == 'bcc':
+    #      vec1 = (-lattice_cube[0] + lattice_cube[1] + lattice_cube[2])/2
+    #      vec2 = ( lattice_cube[0] - lattice_cube[1] + lattice_cube[2])/2
+    #      vec3 = ( lattice_cube[0] + lattice_cube[1] - lattice_cube[2])/2
+    #    nv1 = vec1 / np.linalg.norm(vec1)
+    #    nv2 = vec2 / np.linalg.norm(vec2)
+    #    nv3 = vec3 / np.linalg.norm(vec3)
+    #    new_dm = [
+    #      np.linalg.norm(vec1),
+    #      np.linalg.norm(vec2),
+    #      np.linalg.norm(vec3),
+    #      np.dot(nv2, nv3),
+    #      np.dot(nv1, nv3),
+    #      np.dot(nv1, nv2),
+    #    ]
+    #    qtk.warning(
+    #      "symmetry is %s but celldm is set to cubic, reset from %s to %s"\
+    #      % (self.symmetry, str(self.celldm), str(new_dm))
+    #    )
+    #    self.celldm = new_dm
+     
+        
+        
+      
     
     if not self.charge:
       self.charge = 0

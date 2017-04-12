@@ -200,9 +200,25 @@ class inp(PlanewaveInput):
     poscar.write(self.setting['info'] + '\n')
     poscar.write("1.0\n")
     self.celldm2lattice()
+    if molecule.symmetry:
+      if molecule.symmetry == 'fcc':
+        lattice = 0.5 * molecule.celldm[0] * np.array([
+          [0, 1, 1],
+          [1, 0, 1],
+          [1, 1, 0],
+        ])
+      elif molecule.symmetry == 'bcc':
+        lattice = 0.5 * molecule.celldm[0] * np.array([
+          [-1,  1,  1],
+          [ 1, -1,  1],
+          [ 1,  1, -1],
+        ])
+    else:
+      lattice = np.array(molecule.celldm[:3]) * np.eye(3)
     for i in range(3):
       for j in range(3):
-        poscar.write(" %7.4f" % self.setting['lattice'][i,j])
+        #poscar.write(" %7.4f" % self.setting['lattice'][i,j])
+        poscar.write(" %7.4f" % lattice[i,j])
       poscar.write(" ! lattic vector a(%d)\n" %i)
     for n in n_list:
       poscar.write(str(n) + ' ')

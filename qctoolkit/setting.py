@@ -94,7 +94,7 @@ libxc_dict = {
 _setting = os.path.realpath(__file__)
 _root = os.path.split(_setting)[0]
 # VASP setting
-vasp_pp = '/home/samio/Works/PhD/packages/VASP/PP'
+vasp_pp = '/home/samio/src/science/vasp/PP'
 vasp_exe = 'vasp'
 # CPMD setting
 cpmd_exe = 'cpmd.x'
