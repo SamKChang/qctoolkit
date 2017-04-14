@@ -118,13 +118,16 @@ class inp(PlanewaveInput):
         and ('band_scan' not in self.setting\
         and 'dos_mesh' not in self.setting):
           self.content['scf']['prtwf'] = 0
-      if 'wf_convergence' in self.setting:
-        if 'band_scan' in self.setting\
-        or 'dos_mesh' in self.setting:
-          if 'restart' not in self.setting\
-          or not self.setting['restart']:
-            self.content['scf']['tolwfr'] = \
-            self.setting['wf_convergence']
+      #if 'wf_convergence' in self.setting:
+      if 'band_scan' in self.setting\
+      or 'dos_mesh' in self.setting:
+        if 'restart' not in self.setting\
+        or not self.setting['restart']:
+          self.content['scf']['tolwfr'] = \
+          self.setting['wf_convergence']
+      else:
+        self.content['scf']['tolwfr'] = \
+        self.setting['wf_convergence']
 
       # clean up for the case of restart
       if 'restart' in self.setting and self.setting['restart']\
@@ -269,30 +272,12 @@ class inp(PlanewaveInput):
         ('nstep', self.setting['scf_step']),
       ])
 
+      
+      self.content['cell']['acell'] = '3*1.889726124993'
+      self.celldm2lattice()
       if not molecule.symmetry:
-        self.content['cell']['acell'] = '3*1.889726124993'
-        if 'lattice' not in self.setting:
-          self.celldm2lattice()
-        lattice_vec = self.setting['lattice']
         self.content['cell']['chkprim'] = 0
-      else:
-        self.content['cell']['acell'] = [1, 1, 1]
-        a0 = molecule.celldm[0] * 1.889726124993
-        if  molecule.symmetry.lower() == 'fcc':
-          lattice_vec = 0.5 * a0 * np.array([
-            [0, 1, 1],
-            [1, 0, 1],
-            [1, 1, 0],
-          ])
-        elif  molecule.symmetry.lower() == 'bcc':
-          lattice_vec = 0.5 * a0 * np.array([
-            [-1, 1, 1],
-            [ 1,-1, 1],
-            [ 1, 1,-1],
-          ])
-      self.content['cell']['rprim'] = lattice_vec
-      #self.content['cell']['rprim'] = self.setting['lattice']
-
+      self.content['cell']['rprim'] = self.setting['lattice']
 
       #################
       # atoms section #

@@ -180,18 +180,33 @@ class inp(PlanewaveInput):
     # !!!!!!!!!!!!!!!!
     # write to KPOINTS
     qtk.report("vasp.inp", "writing", "KPOINTS")
-    if 'kmesh' not in self.setting:
+    if 'kmesh' not in self.setting and 'band_scan' not in self.setting:
       kpoints.write("Gamma-point only\n")
       kpoints.write(" 1       ! one k-point\n")
       kpoints.write("rec      ! in units of reciprocal vector\n")
       kpoints.write(" 0 0 0 1 ! coordinates and weight\n")
-    else:
+    elif 'kmesh' in self.setting and 'band_scan' not in self.setting:
       k1, k2, k3 = self.setting['kmesh']
       kpoints.write("Automatic mesh\n")
       kpoints.write(" 0       ! number of k-points = 0")
       kpoints.write(" ->automatic generation scheme\n")
       kpoints.write("Gamma    ! generate a Gamma centered grid\n")
       kpoints.write(" %d %d %d   ! number of k grids\n" % (k1, k2, k3))
+    elif 'kmesh' in self.setting and 'band_scan' in self.setting:
+      bnds = self.setting['band_scan']
+      if len(bnds[0]) != len(bnds[1]) - 1:
+        qtk.exit('band_scan format: [lst_div, lst_coord]')
+      lst_div, lst_coord = self.setting['band_scan']
+      kpt_weight_list = self.MPMesh(self.setting['kmesh'], return_count=True)
+      kpt_scan_list = self.bandScanMesh(lst_div, lst_coord)
+      kpts = np.vstack([kpt_weight_list, kpt_scan_list])
+      kpoints.write("Explicit k-points list\n")
+      kpoints.write(" %d\n" % len(kpts))
+      kpoints.write("Reciprocal lattice\n")
+      for kpt in kpts:
+        for k_ind in range(3):
+          kpoints.write(" % 7.4f" % kpt[k_ind])
+        kpoints.write("%8.4f\n" % kpt[3])
     kpoints.close(no_cleanup=True)
 
     # !!!!!!!!!!!!!!!
@@ -200,25 +215,9 @@ class inp(PlanewaveInput):
     poscar.write(self.setting['info'] + '\n')
     poscar.write("1.0\n")
     self.celldm2lattice()
-    if molecule.symmetry:
-      if molecule.symmetry == 'fcc':
-        lattice = 0.5 * molecule.celldm[0] * np.array([
-          [0, 1, 1],
-          [1, 0, 1],
-          [1, 1, 0],
-        ])
-      elif molecule.symmetry == 'bcc':
-        lattice = 0.5 * molecule.celldm[0] * np.array([
-          [-1,  1,  1],
-          [ 1, -1,  1],
-          [ 1,  1, -1],
-        ])
-    else:
-      lattice = np.array(molecule.celldm[:3]) * np.eye(3)
     for i in range(3):
       for j in range(3):
-        #poscar.write(" %7.4f" % self.setting['lattice'][i,j])
-        poscar.write(" %7.4f" % lattice[i,j])
+        poscar.write(" %7.4f" % self.setting['lattice'][i,j])
       poscar.write(" ! lattic vector a(%d)\n" %i)
     for n in n_list:
       poscar.write(str(n) + ' ')
@@ -267,10 +266,19 @@ class out(PlanewaveOutput):
         kpoints = []
         band = []
         occ = []
-  
-        for i in range(len(self.xml[2][1])):
-          k_str = self.xml[2][1][i].text
-          weight = float(self.xml[2][2][i].text)
+ 
+        ktag = self.xml[2]
+        if ktag.tag != 'kpoints':
+          qtk.exit("vasp xml structure for kpoints unexpected")
+        if ktag[0].tag == 'generation':
+          k_ind = 1
+        elif ktag[0].tag == 'varray':
+          k_ind = 0
+        else:
+          qtk.exit("vasp xml for kpointss has unexpected tag: %s" % ktag[0].tag)
+        for i in range(len(ktag[k_ind])):
+          k_str = ktag[k_ind][i].text
+          weight = float(ktag[k_ind + 1][i].text)
           band_k = []
           occ_k = []
           bk_xml = self.xml[-2][-3][0][5][0][i]
@@ -303,17 +311,24 @@ class out(PlanewaveOutput):
             self.Eg_direct = True
           else:
             self.Eg_direct = False
+
+        ind = np.arange(len(self.kpoints))[self.kpoints[:,-1]==0]
+        if len(ind > 0):
+          ind_w = np.arange(len(self.kpoints))[self.kpoints[:,-1]!=0]
+          self.band_weighted = self.band[ind_w]
+          self.kpoints_weighted = self.kpoints[ind_w]
+          self.band = self.band[ind]
+          self.kpoints = self.kpoints[ind]
   
         # DOS data
         dos = []
         self.E_fermi = float(self.xml[-2][-1][0].text) 
-        print self.E_fermi
         for dos_xml in self.xml[-2][-1][1][0][5][0]:
           dos_lst = filter(None, dos_xml.text.split(' '))
           dos_E = [float(d) for d in dos_lst]
           dos.append(dos_E)
         self.dos = np.array(dos)
 
-      except:
-        qtk.warning("error when accessing kpoint data for %s"\
-                    % self.name)
+      except Exception as err:
+        qtk.warning("error when accessing kpoint data for %s with err: %s"\
+                    % (self.name, err))

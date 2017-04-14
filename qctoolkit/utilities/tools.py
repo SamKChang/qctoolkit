@@ -131,13 +131,30 @@ def lattice2celldm(lattice):
     celldm.append(round(np.dot(vj, vk), 8))
   return celldm
 
-def celldm2lattice(celldm, **kwargs):
-  scale = [1.0 for i in range(3)]
+def celldm2lattice(celldm, mode = None, **kwargs):
+  scale = [1,1,1]
   if 'scale' in kwargs:
     scale = kwargs['scale']
   celldm = unscaledCelldm(celldm, scale)
-  fm = fractionalMatrix(celldm)
-  return np.dot(fm, np.eye(3)).T
+  if mode is None:
+    fm = fractionalMatrix(celldm)
+    return np.dot(fm, np.eye(3)).T
+  elif mode is 'cube_to_fcc':
+    a = np.array([celldm[0], 0, 0])
+    b = np.array([0, celldm[1], 0])
+    c = np.array([0, 0, celldm[2]])
+    v0 = 0.5 * b + 0.5 * c
+    v1 = 0.5 * a + 0.5 * c
+    v2 = 0.5 * a + 0.5 * b
+    return np.vstack([v0, v1, v2])
+  elif mode is 'cube_to_bcc':
+    a = np.array([celldm[0], 0, 0])
+    b = np.array([0, celldm[1], 0])
+    c = np.array([0, 0, celldm[2]])
+    v0 = -0.5 * a + 0.5 * b + 0.5 * c
+    v1 =  0.5 * a - 0.5 * b + 0.5 * c
+    v2 =  0.5 * a + 0.5 * b - 0.5 * c
+    return np.vstack([v0, v1, v2])
 
 def fractional2xyz(R_scale, lattice_celldm):
   scale = [ceil(i) for i in np.max(R_scale,axis=0)]

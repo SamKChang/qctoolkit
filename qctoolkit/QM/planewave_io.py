@@ -76,16 +76,57 @@ class PlanewaveInput(GenericQMInput):
 
     return inp, molecule
 
-  def celldm2lattice(self):
+  def celldm2lattice(self, **kwargs):
     cd = self.setting['celldm']
-    if 'scale' in self.setting:
-      sc = self.setting['scale']
-    else:
-      sc = [1.0 for i in range(3)]
-    self.setting['lattice'] = qtk.celldm2lattice(cd, scale=sc)
+    if 'mode' not in kwargs:
+      if hasattr(self.molecule, 'symmetry'):
+        if self.molecule.symmetry == 'fcc':
+          kwargs['mode'] = 'cube_to_fcc'
+        if self.molecule.symmetry == 'bcc':
+          kwargs['mode'] = 'cube_to_bcc'
+    self.setting['lattice'] = qtk.celldm2lattice(cd, **kwargs)
+    return self.setting['lattice']
 
   def cornerMargin(self, *args, **kwargs):
     pass
+
+  def bandScanMesh(self, lst_div, lst_coord):
+    if len(lst_div) != len(lst_coord) - 1:
+      qtk.exit("band_scan point division and number of points not matched")
+    kpoints = []
+    for k in range(len(lst_div)):
+      n_div = lst_div[k]
+      start_kpt = lst_coord[k]
+      end_kpt = lst_coord[k+1]
+      kpt = np.round(np.array([
+        np.linspace(start_kpt[0], end_kpt[0], n_div+1)[:-1],
+        np.linspace(start_kpt[1], end_kpt[1], n_div+1)[:-1],
+        np.linspace(start_kpt[2], end_kpt[2], n_div+1)[:-1],
+        np.linspace(0, 0, n_div+1)[:-1]
+      ]).T, decimals=4).tolist()
+      kpoints.extend(kpt)
+    last_kpt = copy.deepcopy(lst_coord[-1])
+    last_kpt.append(0.0)
+    kpoints.append(last_kpt)
+    return np.asarray(kpoints)
+
+  def MPMesh(self, mesh, shift = [0,0,0], return_count = False):
+
+    lattice = self.celldm2lattice()
+    cell = (lattice, self.molecule.R_scale, self.molecule.Z)
+    mapping, grid = spglib.get_ir_reciprocal_mesh(mesh, cell, is_shift=shift)
+
+    unique, counts = np.unique(mapping, return_counts=True)
+    weights = counts.astype(float) / counts.sum()
+
+    kpts = grid[np.unique(mapping)] / np.array(mesh, dtype=float)
+
+    if return_count:
+      kpts = np.hstack([kpts, np.atleast_2d(counts).T])
+    else:
+      kpts = np.hstack([kpts, np.atleast_2d(weights).T])
+
+    return kpts
 
 class PlanewaveOutput(GenericQMOutput):
   def __init__(self, output=None, **kwargs):
@@ -425,8 +466,14 @@ class PlanewaveOutput(GenericQMOutput):
 
   def DOS(self, sigma=0.2, E_list=None, raw=False):
     dos_raw = []
-    for b in self.band.T:
-      dos_raw.extend(zip(b, self.kpoints[:,-1]))
+    if hasattr(self, 'band_weighted'):
+      band = self.band_weighted
+      kpoints = self.kpoints_weighted
+    else:
+      band = self.band
+      kpoints = self.kpoints
+    for b in band.T:
+      dos_raw.extend(zip(b, kpoints[:,-1]))
     dos_raw = np.array(dos_raw)
 
     if raw:
