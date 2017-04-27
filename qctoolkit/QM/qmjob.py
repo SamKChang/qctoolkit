@@ -276,7 +276,7 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
     if 'unfold' in kwargs and kwargs['unfold']:
       folds = kwargs['unfold']
       exe = setting.abinit_f2b_exe
-      wfk_list = sorted(glob.glob("*_WFK"))
+      wfk_list = sorted(glob.glob("*o_[DS0-9]*WFK"))
       if len(wfk_list) > 0:
         wfk = wfk_list[-1]
         qtk.progress("QMRun", "linking wfk file %s to unfold_WFK" % wfk)
