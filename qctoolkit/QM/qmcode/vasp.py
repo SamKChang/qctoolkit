@@ -107,6 +107,15 @@ class inp(PlanewaveInput):
     else:
       self.pp_path = self.setting['pp_path']
 
+    if hasattr(molecule, 'R_scale'):
+      R_mode = 'scaled'
+      mol_R = molecule.R_scale.copy()
+      for i in range(3):
+        s = molecule.scale[i]
+        mol_R[:,i] = mol_R[:,i] / s
+    else:
+      R_mode = 'cartesian'
+      mol_R = molecule.R.copy()
     for atom_type in xrange(0,len(type_index)-1):
       type_n = type_index[atom_type+1] - type_index[atom_type]
       # check special PP folder
@@ -118,7 +127,7 @@ class inp(PlanewaveInput):
       getNlist(type_n)
       for I in\
         xrange(type_index[atom_type],type_index[atom_type+1]):
-        getRlist(molecule.R[I][:])
+        getRlist(mol_R[I][:])
 
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # write to INCAR and generate POTCAR
@@ -222,7 +231,10 @@ class inp(PlanewaveInput):
     for n in n_list:
       poscar.write(str(n) + ' ')
     poscar.write("! number of atoms in order of POTCAR\n")
-    poscar.write("cart ! cartesian coordinates\n")
+    if R_mode == 'cartesian':
+      poscar.write("cart ! cartesian coordinates\n")
+    else:
+      poscar.write("direct ! fractional coordinates\n")
     for R in R_list:
       for X in R:
         poscar.write(" %7.4f" % X)
