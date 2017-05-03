@@ -6,6 +6,33 @@ import yaml
 import pickle
 import hashlib
 
+def primitiveCell(symmetry):
+  if symmetry == 'fcc':
+    return 0.5 * np.array([
+      [0, 1, 1],
+      [1, 0, 1],
+      [1, 1, 0],
+    ])
+  elif symmetry == 'bcc':
+    return 0.5 * np.array([
+      [-1,  1,  1],
+      [ 1, -1,  1],
+      [ 1,  1, -1],
+    ])
+  else:
+    qtk.warning('symmetry %s not found' % symmetry)
+    return np.ones(3)
+
+def scale2cart(cell_vec, R_scale):
+
+  assert len(cell_vec) == 3
+  assert len(cell_vec[0]) == 3
+
+  R_cart = []
+  for R_s in np.asarray(R_scale):
+    R_cart.append(np.sum(R_s * np.asarray(cell_vec), axis=0).tolist())
+  return np.asarray(R_cart)
+
 def md5sum(fname):
   def hash_bytestr_iter(bytesiter, hasher, ashexstr=True):
       for block in bytesiter:

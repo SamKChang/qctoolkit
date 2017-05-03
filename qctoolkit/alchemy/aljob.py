@@ -3,10 +3,11 @@ import os, re, shutil, copy, glob
 from qctoolkit.QM.pseudo.pseudo import PP
 import universal as univ
 
-def Al1st(qminp, runjob=False, **setting):
-  assert 'ref_dir' in setting
-  assert os.path.exists(setting['ref_dir'])
-  setting['ref_dir'] = os.path.abspath(setting['ref_dir'])
+def Al1st(qminp, runjob=False, ref_dir='restart_path', **setting):
+  assert os.path.exists(ref_dir)
+  if 'ref_dir' in setting:
+    ref_dir = setting['ref_dir']
+  setting['ref_dir'] = os.path.abspath(ref_dir)
 
   if 'runjob' not in setting:
     setting['runjob'] = False
@@ -36,7 +37,7 @@ def Al1st(qminp, runjob=False, **setting):
   elif qminp.setting['program'] == 'abinit':
     setting['restart'] = True
     setting['scf_step'] = 0
-    rstList = glob.glob(os.path.join(setting['ref_dir'], '*o_*WFK'))
+    rstList = sorted(glob.glob(os.path.join(setting['ref_dir'], '*o_*WFK')))
     assert len(rstList) > 0
     rstSrc = rstList[-1]
     if 'dependent_file' in setting:
@@ -44,7 +45,7 @@ def Al1st(qminp, runjob=False, **setting):
     else:
       setting['dependent_files'] = [[rstSrc, name+'i_WFK']]
 
-    denList = glob.glob(os.path.join(setting['ref_dir'], '*o_*DEN'))
+    denList = sorted(glob.glob(os.path.join(setting['ref_dir'], '*o_*DEN')))
     if len(denList) > 0:
       setting['restart_density'] = True
       denSrc = denList[-1]
@@ -71,7 +72,7 @@ def Al1st(qminp, runjob=False, **setting):
   elif qminp.setting['program'] == 'vasp':
     setting['restart'] = True
     setting['scf_step'] = 1
-    wfn_list = glob.glob(setting['ref_dir'] + '/WAVECAR')
+    wfn_list = sorted(glob.glob(setting['ref_dir'] + '/WAVECAR'))
     assert len(wfn_list) == 1
     wfn = wfn_list[0]
     if 'dependent_files' in setting:
