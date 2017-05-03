@@ -9,6 +9,7 @@ from networkx.algorithms.components.connected\
 import periodictable as pt
 import collections
 from math import ceil, floor
+from MD.dlist_2_cv import dlist_2_cv as dl2
 
 class Molecule(object):
   """
@@ -772,7 +773,7 @@ class Molecule(object):
     else:
       self.R = self.R * ratio
 
-  def extend(self, ratio):
+  def extend(self, ratio, normalize=False):
 
     def take(data, mask):
       return list(data[i] for i in range(len(mask)) if mask[i])
@@ -815,6 +816,9 @@ class Molecule(object):
         self.string = [str(s) for s in new_str]
       self.celldm[i] = self.celldm[i] * ratio[i]
       self.scale =  [ceil(i) for i in np.max(self.R_scale, axis = 0)]
+    if normalize:
+      for i in range(3):
+        self.R_scale[:,i] = self.R_scale[:,i] / ratio[i]
 
   def copy(self):
     return copy.deepcopy(self)
@@ -854,6 +858,60 @@ class Molecule(object):
     else:
       order = 'xyz'
     self.sort(order)
+
+  def gr(self, type1=None, type2=None, normalize=None, **kwargs):
+    if 'dr' not in kwargs:
+      kwargs['dr'] = 0.005
+    def distance_list(list1, list2):
+      assert hasattr(self, 'R_scale')
+      traj = self.R_scale.copy()
+      size_t = 1
+      size_n = self.N
+      size = self.N * 3
+      flatTraj = list(traj.reshape([size]))
+      if hasattr(self, 'symmetry') and self.symmetry:
+        cell = self.celldm[0] * qtk.primitiveCell(self.symmetry)
+      else:
+        cell = np.diag(self.celldm[:3])
+
+      cell = cell.reshape(9).tolist()
+
+      return dl2(flatTraj, size_t, size_n, list1, list2,
+                 cell, kwargs['dr'])
+
+    def get_index(inp_type):
+      if inp_type:
+        if type(inp_type) is str:
+          Z = qtk.n2Z(inp_type)
+        else:
+          try:
+            Z = int(inp_type)
+          except Exception as err:
+            qtk.exit("type not reconized with error:%s" % err)
+        return np.arange(self.N)[np.asarray(self.Z) == Z]
+
+    # note the normalization factor for C output
+    # effectively: g = g / (len(list1) + len(list2)) ** 2
+    if type2 is not None and type1 is not None:
+      list1 = get_index(type1)
+      list2 = get_index(type2)
+    elif type2 is None and type1 is not None:
+      list1 = list2 = get_index(type1)
+    else:
+      list1 = np.arange(self.N)
+      list2 = np.arange(self.N)
+
+    r, g = distance_list(list1, list2)
+    if not normalize:
+      g_out, r_out = g, r
+    elif normalize == 'tail':
+      g_out, r_out = g / g[g>0][-1], r
+    elif normalize == 'head':
+      g_out, r_out = g / g[g>0][0], r
+    elif normalize == 'full':
+      g_out, r_out = g / g[g>0][0], r / r[g>0][0]
+
+    return r_out, g_out
 
   # tested
   # general interface to dertermine file type

@@ -133,6 +133,9 @@ static PyObject* dlist_1(PyObject* self, PyObject* args){
     g[i] /= V*nt*rho*len1;
   }
 
+  // SEGMENTATION FAULT! 
+  //  PyArray_SimpleNewFromData NOT WORK
+  //  check out readcube.c to properly return numpy array
   mat_dim[0] = size;
   np_g = PyArray_SimpleNewFromData(1, mat_dim, NPY_DOUBLE, g);
   np_r = PyArray_SimpleNewFromData(1, mat_dim, NPY_DOUBLE, r);
