@@ -192,17 +192,15 @@ class Molecule(object):
     os.remove(tmp_file)
 
   # tested
-  def stoichiometry(self, **kwargs):
+  def stoichiometry(self, output='string', **kwargs):
     elements = collections.Counter(sorted(self.Z))
     data = zip(elements.keys(), elements.values())
     data.sort(key=lambda tup: tup[0])
-    if 'output' not in kwargs:
-      kwargs['output'] = 'string'
-    if kwargs['output'] == 'dictionary' or kwargs['output'] == 'count':
+    if output == 'dictionary' or output == 'count':
       out = {}
       for element in data:
         out[qtk.Z2n(element[0])] = element[1]
-    elif kwargs['output'] == 'string':
+    elif output == 'string':
       out = ''
       for element in data:
         out = out + qtk.Z2n(element[0]) + str(element[1])
