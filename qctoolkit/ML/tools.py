@@ -34,9 +34,9 @@ def error_measure(y, y_hat):
   err = np.abs(y-y_hat)
   err_mean = np.abs(y-y.mean())
   R = 1 - err.mean() / err_mean.mean()
-  mse = np.sqrt(np.dot(err, err).mean())
+  rmse = np.sqrt((err ** 2).mean())
   mae = err.mean()
-  return R, mse, mae
+  return R, rmse, mae
 
 def coulomb_matrix(mol, n = -1, size = 0, 
                    sort = True, nuclear_charges = True):
