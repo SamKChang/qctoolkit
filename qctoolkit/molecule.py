@@ -1080,7 +1080,7 @@ class Molecule(object):
     elif kwargs['format'] == 'pdb':
       self.write_pdb(*args, **kwargs)
     elif kwargs['format'] == 'ascii':
-      self.write_ascii(*args, **kwargs)
+      return self.write_ascii(*args, **kwargs)
     #elif kwargs['format'] == 'cyl':
     #  self.write_cyl(*args, **kwargs)
     else:
@@ -1173,21 +1173,41 @@ class Molecule(object):
 
   def write_ascii(self, name = None, **kwargs):
     assert len(self.celldm) == 6
-    cdm = self.celldm
-    gamma = np.arccos(cdm[5])
-    ax = cdm[0]
-    bx = cdm[1] * cdm[5]
-    by = cdm[1] * np.sin(gamma)
-    cx = cdm[2] * cdm[4]
-    cy = cdm[2] * cdm[3] * np.sin(gamma)
-    cz = np.sqrt(cdm[2]**2 - cy**2 - cx**2)
+
+    if self.symmetry:
+      cdm = qtk.lattice2celldm(
+        self.celldm[0] * qtk.primitiveCell(self.symmetry)
+      )
+      cell_vec = qtk.celldm2lattice(cdm)
+      ax = cell_vec[0][0]
+      bx = cell_vec[1][0]
+      by = cell_vec[1][1]
+      cx = cell_vec[2][0]
+      cy = cell_vec[2][1]
+      cz = cell_vec[2][2]
+      cvc = qtk.celldm2lattice(cdm)
+      R = qtk.scale2cart(cvc, self.R_scale)
+      return_R = True
+    else:
+      cdm = self.celldm
+      gamma = np.arccos(cdm[5])
+      ax = cdm[0]
+      bx = cdm[1] * cdm[5]
+      by = cdm[1] * np.sin(gamma)
+      cx = cdm[2] * cdm[4]
+      cy = cdm[2] * cdm[3] * np.sin(gamma)
+      cz = np.sqrt(cdm[2]**2 - cy**2 - cx**2)
+      R = self.R
+      return_R = False
 
     out = sys.stdout if not name else open(name,"w")
     out.write("%d\n" % self.N)
     out.write("% 9.6f % 9.6f % 9.6f\n" % (ax, bx, by))
     out.write("% 9.6f % 9.6f % 9.6f\n" % (cx, cy, cz))
     for I in xrange(0, self.N):
-      out.write(" ".join("% 8.4f" % i for i in self.R[I][:]))
+      out.write(" ".join("% 8.4f" % i for i in R[I][:]))
       out.write(" %-2s " % self.type_list[I])
       out.write("\n")
     out.close()
+    if return_R:
+      return R

@@ -30,7 +30,9 @@ def scale2cart(cell_vec, R_scale):
 
   R_cart = []
   for R_s in np.asarray(R_scale):
-    R_cart.append(np.sum(R_s * np.asarray(cell_vec), axis=0).tolist())
+    R_cart.append(
+      np.sum(R_s[:, np.newaxis] * np.asarray(cell_vec), axis=0).tolist()
+    )
   return np.asarray(R_cart)
 
 def md5sum(fname):
