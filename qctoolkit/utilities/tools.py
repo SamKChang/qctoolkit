@@ -304,3 +304,17 @@ def listShape(input_list):
       return len(input_list)
     else:
       return [listShape(sublist) for sublist in input_list]
+
+def stack(*args, **kwargs):
+
+  max_shape = args[0].shape
+  for A in args[1:]:
+    max_shape = np.maximum(max_shape, A.shape)
+
+  def padded(C, shape):
+    new = np.zeros(shape)
+    insert = [slice(C.shape[dim]) for dim in range(C.ndim)]
+    new[insert] = C
+    return new
+
+  return np.stack([padded(A, max_shape) for A in args], **kwargs)

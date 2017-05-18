@@ -253,7 +253,33 @@ def krrScore(data,
   else:
     return np.squeeze(-np.array(all_scores))
 
-def pack(data_list, **kwargs):
+def pack(data_array, flatten=False, **kwargs):
+  list_shape = qtk.listShape(data_array)
+  if type(list_shape) is int:
+    return pack_list(data_array, **kwargs)
+  else:
+    out_shape = np.array(list_shape).shape
+    out_array_dict = np.empty(out_shape, dtype=object)
+    
+    ind_list = []
+    for ind in np.ndindex(np.array(list_shape).shape):
+      ind_list.append(ind)
+      data_list = np.array(data_array)[ind]
+      out_array_dict[ind] = pack_list(data_list, **kwargs)
+    
+    if flatten:
+      out_dict = {}
+      keys = out_array_dict[ind].keys()
+      for k in keys:
+        out_dict[k] = np.concatenate(
+          qtk.stack(*[out_array_dict[ind][k] for ind in ind_list])
+        )
+      return out_dict
+    else:
+      return out_array_dict
+
+def pack_list(data_list, **kwargs):
+
   if isinstance(data_list[0], qtk.Molecule):
     typ = 'molecule'
     Z = [m.Z for m in data_list]
@@ -263,7 +289,7 @@ def pack(data_list, **kwargs):
     Z = [o.molecule.Z for o in data_list if hasattr(o, 'molecule')]
     max_N = max(map(len, Z))
   else:
-    qtk.warning("not supported datatype")
+    qtk.exit("not supported datatype")
 
   if 'output' not in kwargs:
     kwargs['output'] = 'dictionary'
