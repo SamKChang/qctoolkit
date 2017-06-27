@@ -107,7 +107,7 @@ class inp(PlanewaveInput):
     else:
       self.pp_path = self.setting['pp_path']
 
-    if hasattr(molecule, 'R_scale'):
+    if hasattr(molecule, 'R_scale') and molecule.scale:
       R_mode = 'scaled'
       mol_R = molecule.R_scale.copy()
       for i in range(3):
@@ -184,6 +184,10 @@ class inp(PlanewaveInput):
       incar.write("LSCALAPACK = .FALSE.\n")
     elif not self.setting['scalapack']:
       incar.write("LSCALAPACK = .FALSE.\n")
+
+    if 'vasp_additional_setting' in self.setting:
+      for added in self.setting['vasp_additional_setting']:
+        incar.write(added + '\n')
     incar.close()
 
     # !!!!!!!!!!!!!!!!
