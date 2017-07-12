@@ -313,15 +313,18 @@ class Molecule(object):
               )
             )
           except Exception as _e:
-            self.write_xyz()
-            qtk.exit(
+            qtk.warning(
               "error while processing bond" +\
               str(bond_keys) + "with error message %s" % str(_e))
+            bond_type_ind = -1
           bond_type = bond_keys[bond_type_ind]
           self.bonds[itr]['name'] = bond_type
-          bond_energy = \
-            bond_table[bond_keys[bond_type_ind]][1] * \
-            qtk.convE(1, 'kj-kcal')[0]
+          try:
+            bond_energy = \
+              bond_table[bond_keys[bond_type_ind]][1] * \
+              qtk.convE(1, 'kj-kcal')[0]
+          except:
+            bond_energy = np.nan
           self.bonds[itr]['energy'] = bond_energy
           if np.isnan(bond_energy):
             qtk.warning("Non-tabliated covalent bond %s" % bond_type)
@@ -771,7 +774,57 @@ class Molecule(object):
     else:
       self.R = self.R * ratio
 
-  def extend(self, ratio, normalize=False):
+  def extend_scale(self, ratio):
+    assert len(ratio) == 3
+    assert len(self.R_scale) == self.N
+
+    # type_list
+    # Z
+    # string
+
+    new = self.copy()
+    new.type_list = np.array(new.type_list)
+    new.Z = np.array(new.Z)
+    new.string = np.array(new.string)
+
+    type_new = [new.type_list]
+    Z_new = [new.Z]
+    string_new = [new.string]
+    for i in range(3):
+      r = ratio[i]
+      if r > 1:
+        base = new.R_scale.copy()
+        b_type = new.type_list.copy()
+        b_Z = new.Z.copy()
+        b_string = new.string.copy()
+        
+        new.celldm[i] = new.celldm[i] * r
+        N = len(new.R_scale)
+        step = np.zeros([N * (r - 1), 3])
+        R_scale_new = np.zeros([N * (r - 1), 3])
+        for j in range(1, r):
+          step[(j - 1) * N:j * N, i] = j
+          R_scale_new[(j - 1) * N:j * N, :] = base
+          type_new.append(b_type)
+          Z_new.append(b_Z)
+          string_new.append(b_string)
+        R_scale_new = R_scale_new + step
+        new.R_scale = np.vstack([
+          new.R_scale,
+          R_scale_new,
+        ])
+        new.type_list = np.concatenate(type_new)
+        new.Z = np.concatenate(Z_new)
+        new.string = np.concatenate(string_new)
+    new.N = len(new.R_scale)
+    lattice = qtk.celldm2lattice(new.celldm)
+    for i in range(3):
+      new.R_scale[:,i] = new.R_scale[:,i] / ratio[i]
+    new.R = qtk.scale2cart(lattice, new.R_scale)
+    return new
+
+  # need to be rewritten for arbitrary cell, where!!!
+  def extend(self, ratio, normalize=False, construct_R=True):
 
     def take(data, mask):
       return list(data[i] for i in range(len(mask)) if mask[i])
@@ -817,6 +870,10 @@ class Molecule(object):
     if normalize:
       for i in range(3):
         self.R_scale[:,i] = self.R_scale[:,i] / ratio[i]
+
+    if construct_R:
+      lattice = qtk.celldm2lattice(self.celldm)
+      self.R = qtk.scale2cart(lattice, self.R_scale)
 
   def copy(self):
     return copy.deepcopy(self)
@@ -920,6 +977,8 @@ class Molecule(object):
         self.read_xyz(name, **kwargs)
       elif re.match('\.ascii', extension):
         self.read_ascii(name, **kwargs)
+      elif re.match('\.cif', extension):
+        self.read_cif(name, **kwargs)
       else:
         qtk.exit("suffix " + extension + " is not reconized")
 
@@ -1068,6 +1127,42 @@ class Molecule(object):
     celldm = getParameters(content)
     self.setCelldm(celldm)
 
+  def read_cif(self, name, **kwargs):
+    xyz = open(name, 'r')
+    content = xyz.readlines()
+    xyz.close()
+
+    l_list = filter(lambda x: '_cell_length_' in x, content)
+    a_list = filter(lambda x: '_cell_angle_' in x, content)
+    l = [float(filter(None, l_str.split(' '))[1]) for l_str in l_list]
+    a = [float(filter(None, a_str.split(' '))[1]) for a_str in a_list]
+    a = np.cos(np.array(a) * (np.pi / 180.))
+
+    fx, fy, fz = map(len, [
+      filter(lambda x: '_atom_site_fract_x' in x, content),
+      filter(lambda x: '_atom_site_fract_y' in x, content),
+      filter(lambda x: '_atom_site_fract_z' in x, content),
+    ])
+
+    if (fx, fy, fz) != (1, 1, 1):
+      qtk.exit("Failed! Only fractional coordingates are implemented")
+
+    r_flag = filter(lambda x: '_atom_site_occupancy' in x, content)
+    r_ind = content.index(r_flag[0]) + 1
+    atoms = np.array(
+      [filter(None, r_str.split(' ')) for r_str in content[r_ind:]]
+    )
+
+    self.periodic = True
+    self.celldm = np.concatenate([l, a])
+    self.R_scale = atoms[:, 3:6].astype(float)
+    self.R = qtk.fractional2xyz(self.R_scale, self.celldm)
+    self.type_list = atoms[:, 0].tolist()
+    self.Z = np.array(map(qtk.n2Z, atoms[:, 0]))
+    self.N = len(self.Z)
+    self.string = ['' for _ in range(self.N)]
+    self.name = name
+
   # tested
   def write(self, *args, **kwargs):
     if len(args) > 0:
@@ -1101,7 +1196,10 @@ class Molecule(object):
 
     if 'fractional' in kwargs and kwargs['fractional']:
       if self.celldm and self.scale:
-        out.write(str(self.N)+"\n\n")
+        if 'comment' in kwargs:
+          out.write(str(self.N)+"\n" + str(kwargs['comment']) + "\n")
+        else:
+          out.write(str(self.N)+"\n\n")
         for I in xrange(0, self.N):
           out.write("%-2s " % self.type_list[I])
           out.write(" ".join("% 8.4f" % i \
@@ -1116,7 +1214,10 @@ class Molecule(object):
         qtk.warning('celldm or scale not set, print cartician')
         self.write(name, **kwargs)
     else:
-      out.write(str(self.N)+"\n\n")
+      if 'comment' in kwargs:
+        out.write(str(self.N)+"\n" + str(kwargs['comment']) + "\n")
+      else:
+        out.write(str(self.N)+"\n\n")
       for I in xrange(0, self.N):
         out.write("%-2s " % self.type_list[I])
         out.write(" ".join("% 8.4f" % i for i in self.R[I][:]))
@@ -1190,15 +1291,19 @@ class Molecule(object):
       return_R = True
     else:
       cdm = self.celldm
-      gamma = np.arccos(cdm[5])
-      ax = cdm[0]
-      bx = cdm[1] * cdm[5]
-      by = cdm[1] * np.sin(gamma)
-      cx = cdm[2] * cdm[4]
-      cy = cdm[2] * cdm[3] * np.sin(gamma)
-      cz = np.sqrt(cdm[2]**2 - cy**2 - cx**2)
+      cell_vec = qtk.celldm2lattice(cdm)
+      ax = cell_vec[0][0]
+      bx = cell_vec[1][0]
+      by = cell_vec[1][1]
+      cx = cell_vec[2][0]
+      cy = cell_vec[2][1]
+      cz = cell_vec[2][2]
+      cvc = qtk.celldm2lattice(cdm)
+      R = qtk.scale2cart(cvc, self.R_scale)
       R = self.R
       return_R = False
+      if 'get_R' in kwargs and kwargs['get_R']:
+        return_R = True
 
     out = sys.stdout if not name else open(name,"w")
     out.write("%d\n" % self.N)

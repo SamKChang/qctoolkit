@@ -38,4 +38,5 @@ bond_table = {
   'F-F': [1.43, 159.],
   'F-S': [1.58, 327.],
   # more to be added...
+  'unknown': [np.nan, np.nan],
 }

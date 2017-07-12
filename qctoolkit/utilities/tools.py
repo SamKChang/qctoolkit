@@ -187,6 +187,8 @@ def celldm2lattice(celldm, mode = None, **kwargs):
 
 def fractional2xyz(R_scale, lattice_celldm):
   scale = [ceil(i) for i in np.max(R_scale,axis=0)]
+  for i in range(len(scale)):
+    if scale[i] == 0: scale[i] = 1
   dim = np.array(lattice_celldm).shape
   if len(dim) == 2:
     assert dim == (3, 3)

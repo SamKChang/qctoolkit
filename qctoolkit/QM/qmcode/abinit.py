@@ -298,7 +298,7 @@ class inp(PlanewaveInput):
           R_scale = molecule.R_scale.copy()
           for i in range(3):
             s = molecule.scale[i]
-            R_scale[:,i] = R_scale[:,i] / s
+            if s > 0: R_scale[:,i] = R_scale[:,i] / s
           self.content['atoms']['xred'] = R_scale
         else:
           qtk.warning('R_scale not found but scale is set')

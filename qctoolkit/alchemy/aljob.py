@@ -4,7 +4,7 @@ from qctoolkit.QM.pseudo.pseudo import PP
 import universal as univ
 
 def Al1st(qminp, runjob=False, ref_dir='restart_path', **setting):
-  assert os.path.exists(ref_dir)
+  #assert os.path.exists(ref_dir)
   if 'ref_dir' in setting:
     ref_dir = setting['ref_dir']
   setting['ref_dir'] = os.path.abspath(ref_dir)

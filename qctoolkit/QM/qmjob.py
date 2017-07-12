@@ -55,9 +55,11 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
   else:
     _save_density = False
 
-  if 'chdir' in kwargs and kwargs['chdir']:
+  if 'chdir' in kwargs and kwargs['chdir']\
+  or 'run_dir' in kwargs and kwargs['run_dir']:
+    dest_dir = os.path.splitext(inp)[0]
     cwd = os.getcwd()
-    os.chdir(inp)
+    os.chdir(dest_dir)
 
   ###########################################
   # SYSTEM CALL SUBPROCESS: Running mpi job #
