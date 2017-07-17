@@ -110,6 +110,7 @@ class Molecule(object):
     self.string = []
     self.segments = []
     self.periodic = False
+    self.isolated = False
     self.scale = False
     self.celldm = False
     self.symmetry = False
@@ -999,7 +1000,7 @@ class Molecule(object):
     xyz.close()
     content = [line.replace('\t', ' ') for line in content]
 
-    prop_list = ['charge', 'celldm', 'scale', 'symmetry']
+    prop_list = ['charge', 'celldm', 'scale', 'symmetry', 'isolated']
     for prop in prop_list:
       try:
         prop_str = filter(lambda x: prop in x, content)[0]
@@ -1010,7 +1011,7 @@ class Molecule(object):
           try:
             setattr(self, prop, float(prop_data[0]))
           except Exception as exc:
-            if prop == 'symmetry':
+            if prop == 'symmetry' or prop == 'isolated':
               setattr(self, prop, prop_data[0].strip())
         elif len(prop_data) > 1:
           setattr(self, prop, [float(_) for _ in prop_data])
@@ -1082,8 +1083,9 @@ class Molecule(object):
       if angle_sum == 0:
         self.box = self.celldm[:3]
 
-      self.R_scale = copy.deepcopy(self.R)
-      self.R = qtk.fractional2xyz(self.R_scale, self.celldm)
+      if not self.isolated:
+        self.R_scale = copy.deepcopy(self.R)
+        self.R = qtk.fractional2xyz(self.R_scale, self.celldm)
 
   def read_ascii(self, name, **kwargs):
     def getParameters(content):
