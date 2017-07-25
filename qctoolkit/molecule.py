@@ -235,7 +235,7 @@ class Molecule(object):
       self.name = self.stoichiometry()
 
     if unit is 'bohr':
-      self.R = self.R * 0.529177249
+      self.R = self.R *  0.52917721092
 
     return self
 
