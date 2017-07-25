@@ -98,10 +98,20 @@ static PyObject* dlist_2_cv(PyObject* self, PyObject* args){
     cell[i] = PyFloat_AsDouble(item);
   }
   Py_DECREF(cell_py);
+
+
+  /*
+     construct liagonal length 
+     cell: x1 y1 z1
+           x2 y2 z2
+           x3 y3 z3
+     diag: (x1+x2+x3, y1+y2+y3, z1+z2+z3)
+  */
+
   cell_diag = 0.0;
-  for(i=0;i<3;i++){
+  for(i=0;i<3;i++){ // loop for x,y,z
     diag_comp = 0.0;
-    for(j=0;j<3;j++) diag_comp += cell[i + j*3];
+    for(j=0;j<3;j++) diag_comp += cell[i + j*3]; // loop for 1,2,3
     cell_diag += pow(diag_comp, 2);
   }
   cell_diag = pow(cell_diag, 0.5);
@@ -153,7 +163,7 @@ static PyObject* dlist_2_cv(PyObject* self, PyObject* args){
     itr = 0;
     for(i=0;i<len1-1;i++){
       I = atom_list1[i]*3 + t*N*3;
-      for(j=i+1;j<len2;j++){
+      for(j=0;j<len2;j++){
         J = atom_list2[j]*3 + t*N*3;
         Rij_t = 0.0;
         for(k=0;k<3;k++){
@@ -162,7 +172,7 @@ static PyObject* dlist_2_cv(PyObject* self, PyObject* args){
           Rij_t += pow(dij, 2);
         }
         Rij_t = sqrt(Rij_t);
-        if(Rij_t < 0.5*cell_diag){
+        if((Rij_t < 0.5*cell_diag)&&(Rij_t > 0.00001)){
           g[(int)(Rij_t/dr)] += 2.0;
         }
         itr++;

@@ -86,11 +86,9 @@ class GenericMDOutput(object):
       flatTraj = list(traj.reshape([size]))
       cell = list(np.diag(self.cell))
       if list1 == list2:
-        return dl1(flatTraj, size_t, size_n, list1, list2, 
-                   cell, kwargs['dr'])
+        return dl1(flatTraj, size_t, size_n, list1, list2, cell, kwargs['dr'])
       else:
-        return dl2(flatTraj, size_t, size_n, list1, list2, 
-                   cell, kwargs['dr'])
+        return dl2(flatTraj, size_t, size_n, list1, list2, cell, kwargs['dr'])
         
     # the case for two atom types specifed
     if type2:

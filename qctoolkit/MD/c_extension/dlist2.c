@@ -110,7 +110,7 @@ static PyObject* dlist_2(PyObject* self, PyObject* args){
     itr = 0;
     for(i=0;i<len1-1;i++){
       I = atom_list1[i]*3 + t*N*3;
-      for(j=i+1;j<len2;j++){
+      for(j=0;j<len2;j++){
         J = atom_list2[j]*3 + t*N*3;
         Rij_t = 0.0;
         for(k=0;k<3;k++){
@@ -119,7 +119,7 @@ static PyObject* dlist_2(PyObject* self, PyObject* args){
           Rij_t += pow(dij, 2);
         }
         Rij_t = sqrt(Rij_t);
-        if(Rij_t < 0.5*cell_min){
+        if((Rij_t < 0.5*cell_min)||(Rij_t > 0.00001)){
           g[(int)(Rij_t/dr)] += 2.0;
         }
         itr++;
