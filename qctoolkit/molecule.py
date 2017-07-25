@@ -207,7 +207,7 @@ class Molecule(object):
         out = out + qtk.Z2n(element[0]) + str(element[1])
     return out
 
-  def build(self, moleculeData=None, name=None, **kwargs):
+  def build(self, moleculeData=None, name=None, unit='angstrom', **kwargs):
     if moleculeData is not None:
       if type(moleculeData) is list:
         moleculeData = np.array(moleculeData)
@@ -233,6 +233,10 @@ class Molecule(object):
       self.type_list = [qtk.Z2n(z) for z in self.Z]
       self.string = ['' for i in range(self.N)]
       self.name = self.stoichiometry()
+
+    if unit is 'bohr':
+      self.R = self.R * 0.529177249
+
     return self
 
   # tested
@@ -925,15 +929,11 @@ class Molecule(object):
       size_n = self.N
       size = self.N * 3
       flatTraj = list(traj.reshape([size]))
-      if hasattr(self, 'symmetry') and self.symmetry:
-        cell = self.celldm[0] * qtk.primitiveCell(self.symmetry)
-      else:
-        cell = np.diag(self.celldm[:3])
+      cell = qtk.celldm2lattice(self.celldm)
 
       cell = cell.reshape(9).tolist()
 
-      return dl2(flatTraj, size_t, size_n, list1, list2,
-                 cell, kwargs['dr'])
+      return dl2(flatTraj, size_t, size_n, list1, list2, cell, kwargs['dr'])
 
     def get_index(inp_type):
       if inp_type:

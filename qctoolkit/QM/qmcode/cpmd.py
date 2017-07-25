@@ -290,7 +290,7 @@ class out(PlanewaveOutput):
         self.molecule.N = self.molecule.N + 1
       else:
         R_more = False
-    self.molecule.build(ZR)
+    self.molecule.build(ZR, unit='bohr')
       
       
     Et_scf = float(filter(None, scf_str[-1].split(' '))[3])
