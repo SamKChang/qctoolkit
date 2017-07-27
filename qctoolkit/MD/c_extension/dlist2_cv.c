@@ -108,6 +108,7 @@ static PyObject* dlist_2_cv(PyObject* self, PyObject* args){
      diag: (x1+x2+x3, y1+y2+y3, z1+z2+z3)
   */
 
+  //periodic image reconstruction is not necessary for crystals
   cell_diag = 0.0;
   for(i=0;i<3;i++){ // loop for x,y,z
     diag_comp = 0.0;
@@ -115,16 +116,13 @@ static PyObject* dlist_2_cv(PyObject* self, PyObject* args){
     cell_diag += pow(diag_comp, 2);
   }
   cell_diag = pow(cell_diag, 0.5);
-  //for(i=0;i<3;i++){
-  //  if(cell[i]<cell_diag) cell_diag = cell[i];
-  //  rho /= cell[i];
-  //}
   /***** end of input data construction *****/
 
   /*********************
   * construct output g *
   *********************/
-  size = (int)(0.5*cell_diag/dr) + 1;
+  //size = (int)(0.5*cell_diag/dr) + 1;
+  size = (int)(cell_diag/dr) + 1;
   mat_dim[0] = size;
   np_g = (PyArrayObject*) PyArray_FromDims(1, mat_dim, NPY_DOUBLE);
   np_r = (PyArrayObject*) PyArray_FromDims(1, mat_dim, NPY_DOUBLE);
@@ -154,14 +152,13 @@ static PyObject* dlist_2_cv(PyObject* self, PyObject* args){
           -cell[1] * (cell[3] * cell[8] - cell[6] * cell[5])
           +cell[2] * (cell[3] * cell[7] - cell[6] * cell[4]);
   // calculate density
-  //rho = (len1 + len2) / V_cell;
 
-#pragma omp parallel private(itr,i,j,t,I,J,Rij_t,dij) shared(g)
+#pragma omp parallel private(itr,t,i,j,k,I,J,Rij_t,dij) shared(g, data)
 {
   #pragma omp for schedule(dynamic)
   for(t=0;t<nt;t++){
     itr = 0;
-    for(i=0;i<len1-1;i++){
+    for(i=0;i<len1;i++){
       I = atom_list1[i]*3 + t*N*3;
       for(j=0;j<len2;j++){
         J = atom_list2[j]*3 + t*N*3;
@@ -172,19 +169,22 @@ static PyObject* dlist_2_cv(PyObject* self, PyObject* args){
           Rij_t += pow(dij, 2);
         }
         Rij_t = sqrt(Rij_t);
-        if((Rij_t < 0.5*cell_diag)&&(Rij_t > 0.00001)){
-          g[(int)(Rij_t/dr)] += 2.0;
+        //printf("I=%d J=%d i=%d j=%d, Rij=%f\n", I, J, i, j, Rij_t);
+        //if((Rij_t < 0.5*cell_diag)&&(Rij_t > 0.00001)){
+        if(Rij_t > 0.00001){
+          g[(int)(Rij_t/dr)] += 1.0;
         }
         itr++;
       }
     }
   }
 }
-  for(i=0;i<size;i++){
-    V = 4*PI*(pow((i+1)*dr,3) - pow(i*dr,3))/3.0;
-    //g[i] /= V*nt*rho*(len1 + len2);
-    g[i] /= V*nt;
-  }
+  //// devide by radial shell volumn
+  //for(i=0;i<size;i++){
+  //  V = 4*PI*(pow((i+1)*dr,3) - pow(i*dr,3))/3.0;
+  //  //g[i] /= V*nt*rho*(len1 + len2);
+  //  g[i+1] /= V*nt;
+  //}
   return Py_BuildValue("OO", np_r, np_g);
 }
 

@@ -919,7 +919,7 @@ class Molecule(object):
       order = 'xyz'
     self.sort(order)
 
-  def gr(self, type1=None, type2=None, normalize=None, **kwargs):
+  def gr(self, type1=None, type2=None, normalize=None, radial_normalization=True, **kwargs):
     if 'dr' not in kwargs:
       kwargs['dr'] = 0.005
     def distance_list(list1, list2):
@@ -958,6 +958,8 @@ class Molecule(object):
       list2 = np.arange(self.N)
 
     r, g = distance_list(list1, list2)
+    if radial_normalization:
+      g[1:] = g[1:] / (4 * np.pi * np.diff(r**3) / 3.)
     if not normalize:
       g_out, r_out = g, r
     elif normalize == 'tail':
