@@ -53,10 +53,18 @@ class PlanewaveInput(GenericQMInput):
     univ.getCelldm(self) 
 
   def write(self, name=None, **kwargs):
-    if self.setting['periodic']:
-      self.celldm2lattice()
+    #if self.setting['periodic']:
+    self.celldm2lattice()
     inp, molecule = \
       GenericQMInput.write(self, name, **self.setting)
+
+    if 'isolated' in self.setting and self.setting['isolated']\
+    or 'periodic' in self.setting and not self.setting['periodic']:
+      if 'center_molecule' in self.setting and self.setting['center_molecule']:
+        cm = molecule.getCenterOfMass()
+        molecule.center(cm)
+        print np.array(self.molecule.celldm)
+        molecule.shift(self.setting['lattice'].sum(0) / 2)
 
     if 'pp_list' in self.setting:
       pp_list = self.setting['pp_list']
