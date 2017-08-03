@@ -296,7 +296,7 @@ class GenericQMInput(object):
             "and %d valence electrons " % ve +\
             "\n(with charge %3.1f) " % float(mol.charge) +\
             "are not compatible"
-      qtk.exit(msg)
+      qtk.warning(msg)
 
   def run(self, qmcode, name=None, **kwargs):
     if not name:
