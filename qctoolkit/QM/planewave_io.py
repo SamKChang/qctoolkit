@@ -63,7 +63,6 @@ class PlanewaveInput(GenericQMInput):
       if 'center_molecule' in self.setting and self.setting['center_molecule']:
         cm = molecule.getCenterOfMass()
         molecule.center(cm)
-        print np.array(self.molecule.celldm)
         molecule.shift(self.setting['lattice'].sum(0) / 2)
 
     if 'pp_list' in self.setting:
