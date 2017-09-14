@@ -1,6 +1,7 @@
 #include <Python.h>
 #include <numpy/arrayobject.h>
 #include <omp.h>
+#include <math.h>
 #define PI 3.14159265358979323846
 
 //////////////////////////////////////////////
@@ -42,9 +43,9 @@ static PyObject* dlist_2_cv(PyObject* self, PyObject* args){
   PyObject *np_r;
   double *g, *r;
   int mat_dim[1];
-  int i, j, k, t, itr;
+  int i, j, k, s, t, itr;
   int I, J;
-  int size;
+  uint64_t size;
   double Rij_t, dij, V;
 
   /*  parse numpy array and two integers as argument */
@@ -122,7 +123,8 @@ static PyObject* dlist_2_cv(PyObject* self, PyObject* args){
   * construct output g *
   *********************/
   //size = (int)(0.5*cell_diag/dr) + 1;
-  size = (int)(cell_diag/dr) + 1;
+  //size = (int)(cell_diag/dr) + 1;
+  size = ceil(cell_diag/dr);
   mat_dim[0] = size;
   np_g = (PyArrayObject*) PyArray_FromDims(1, mat_dim, NPY_DOUBLE);
   np_r = (PyArrayObject*) PyArray_FromDims(1, mat_dim, NPY_DOUBLE);
@@ -133,6 +135,8 @@ static PyObject* dlist_2_cv(PyObject* self, PyObject* args){
     r[i] = dr * (i+0.5);
     g[i] = 0;
   }
+
+  printf("initialize done\n");
 
   // construct real coordinates from fractional coordinates
   for(t=0;t<nt;t++){
@@ -153,6 +157,8 @@ static PyObject* dlist_2_cv(PyObject* self, PyObject* args){
           +cell[2] * (cell[3] * cell[7] - cell[6] * cell[4]);
   // calculate density
 
+  printf("coordinate constructure done\n");
+
 #pragma omp parallel private(itr,t,i,j,k,I,J,Rij_t,dij) shared(g, data)
 {
   #pragma omp for schedule(dynamic)
@@ -170,15 +176,19 @@ static PyObject* dlist_2_cv(PyObject* self, PyObject* args){
         }
         Rij_t = sqrt(Rij_t);
         //printf("I=%d J=%d i=%d j=%d, Rij=%f\n", I, J, i, j, Rij_t);
-        //if((Rij_t < 0.5*cell_diag)&&(Rij_t > 0.00001)){
-        if(Rij_t > 0.00001){
-          g[(int)(Rij_t/dr)] += 1.0;
+        if((Rij_t < cell_diag)&&(Rij_t > 0.00001)){
+        //if(Rij_t > 0.00001){
+          s = floor(Rij_t/dr);
+          //if(s >= size) printf("yo, s=%d, size=%d\n", s, size);
+          //g[(int)(Rij_t/dr)] += 1.0;
+          g[s] += 1.0;
         }
         itr++;
       }
     }
   }
 }
+  printf("g(r) calculation done\n");
   //// devide by radial shell volumn
   //for(i=0;i<size;i++){
   //  V = 4*PI*(pow((i+1)*dr,3) - pow(i*dr,3))/3.0;

@@ -117,28 +117,34 @@ class Molecule(object):
     self.grid = False
     self.name = ''
 
-    if len(args) == 1:
-      mol = args[0]
-      self.read(mol, **kwargs)
-    elif len(args) == 2:
-      N = len(args[0])
-      dim1 = np.array(args[0]).shape
-      dim2 = np.array(args[1]).shape
-      if dim1 == (N,) and dim2 == (N, 3):
-        atoms = args[0]
-        coord = np.array(args[1])
-      elif dim1 == (N, 3) and dim2 == (N,):
-        atoms = args[1]
-        coord = np.array(args[0])
-      else:
-        qtk.exit('not supported declaration of molecule object.')
-      self.addAtoms(atoms, coord)
-     
+    if 'molecule_data' not in kwargs:
+      if len(args) == 1:
+        mol = args[0]
+        self.read(mol, **kwargs)
+      elif len(args) == 2:
+        N = len(args[0])
+        dim1 = np.array(args[0]).shape
+        dim2 = np.array(args[1]).shape
+        if dim1 == (N,) and dim2 == (N, 3):
+          atoms = args[0]
+          coord = np.array(args[1])
+        elif dim1 == (N, 3) and dim2 == (N,):
+          atoms = args[1]
+          coord = np.array(args[0])
+        else:
+          qtk.exit('not supported declaration of molecule object.')
+        self.addAtoms(atoms, coord)
+       
 
-    attr_list = dir(self)
-    for string, value in kwargs.iteritems():
-      if string in attr_list:
-        setattr(self, string, kwargs[string])
+      attr_list = dir(self)
+      for string, value in kwargs.iteritems():
+        if string in attr_list:
+          setattr(self, string, kwargs[string])
+
+    else:
+      for string, value in kwargs['molecule_data'].iteritems():
+        setattr(self, string, value)
+
 
     if self.N > 0:
       self.ve = self.getValenceElectrons()
@@ -884,7 +890,7 @@ class Molecule(object):
     return copy.deepcopy(self)
 
   # tested by qminp
-  def sort(self, order = 'Zxyz'):
+  def sort(self, order = 'Zxyz', inplace=True):
     odict = {'x':0, 'y':1, 'z':2}
     tmp = []
     for o in order:
@@ -895,11 +901,15 @@ class Molecule(object):
       else:
         qtk.exit("sorting order '%c' not valid" % o)
     ind = np.lexsort(tmp)
+    if not inplace:
+      self = self.copy()
     self.R = self.R[ind]
     if list(self.R_scale[0]):
       self.R_scale = self.R_scale[ind]
     self.Z = list(np.array(self.Z)[ind])
     self.type_list = list(np.array(self.type_list)[ind])
+    if len(self.string) == 0:
+      self.string = ['' for _ in range(self.N)]
     self.string = list(np.array(self.string)[ind])
 
     if order == 'Zxyz':
@@ -912,12 +922,14 @@ class Molecule(object):
           self.index.append(i)
       self.index.append(self.N)
     
+    return self
+
   def sort_coord(self, **kwargs):
     if 'order' in kwargs:
       order = kwargs['order']
     else:
       order = 'xyz'
-    self.sort(order)
+    self.sort(order, **kwargs)
 
   def gr(self, type1=None, type2=None, normalize=None, radial_normalization=True, **kwargs):
     if 'dr' not in kwargs:
@@ -1055,10 +1067,6 @@ class Molecule(object):
     #      % (self.symmetry, str(self.celldm), str(new_dm))
     #    )
     #    self.celldm = new_dm
-     
-        
-        
-      
     
     if not self.charge:
       self.charge = 0
@@ -1068,6 +1076,11 @@ class Molecule(object):
        assert len(self.celldm) == 6
 
     self.N = int(content[0])
+    prop_list = content[1]
+    try:
+        self.prop_list = np.array(prop_list.split(' ')).astype(float)
+    except:
+        self.prop_list = prop_list
     coord_list = content[2 : self.N + 2]
     coord = [filter(None,[a for a in entry.split(' ')]) 
              for entry in coord_list]

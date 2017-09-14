@@ -6,6 +6,48 @@ import yaml
 import pickle
 import hashlib
 
+def Molecules(file_name, **kwargs):
+  """read nested xyz file and return molecule list"""
+  xyz = open(file_name, 'r')
+  content = xyz.readlines()
+  content = [line.replace('\t', ' ') for line in content]
+  xyz.close()
+
+  itr = 0
+  more_data = True
+  mols = []
+
+  while more_data:
+    try:
+      N = int(content[itr])
+      prop_list = content[itr + 1]
+      try:
+          prop_list = np.array(prop_list.split(' ')).astype(float)
+      except Exception as err:
+          qtk.warning(str(err))
+          prop_list = prop_list
+      coord_list = content[itr + 2 : itr + N + 2]
+      coord = [filter(None,[a for a in entry.split(' ')])
+               for entry in coord_list]
+      type_list = list(np.array(coord)[:,0])
+      type_list = [str(elem) for elem in type_list]
+      Z = np.array([qtk.n2Z(elem) for elem in type_list])
+      R = np.array(coord)[:,1:4].astype(float)
+      mol_data = {}
+      for var in ['N', 'type_list', 'Z', 'R']:
+        mol_data[str(var)] = eval(var)
+      itr += N + 2
+      mols.append(qtk.Molecule(molecule_data = mol_data))
+    except Exception as err:
+      qtk.progress(
+        "Molecules", 
+        "%d molecules have been loaded with message %s." % (len(mols), str(err))
+      )
+      more_data = False
+      
+
+  return mols
+
 def primitiveCell(symmetry):
   if symmetry == 'fcc':
     return 0.5 * np.array([
