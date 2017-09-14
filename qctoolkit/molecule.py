@@ -147,7 +147,7 @@ class Molecule(object):
 
 
     if self.N > 0:
-      self.ve = self.getValenceElectrons()
+      self.ve = self.getValenceElectrons
       self.ne = sum(self.Z)
 
   def __repr__(self):
