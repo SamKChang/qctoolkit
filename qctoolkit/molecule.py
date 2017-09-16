@@ -145,10 +145,8 @@ class Molecule(object):
       for string, value in kwargs['molecule_data'].iteritems():
         setattr(self, string, value)
 
-
-    if self.N > 0:
-      self.ve = self.getValenceElectrons
-      self.ne = sum(self.Z)
+    self.ve = self.getValenceElectrons
+    self.ne = self.getTotalElectrons
 
   def __repr__(self):
     if self.name: return self.name
@@ -405,7 +403,11 @@ class Molecule(object):
   def getValenceElectrons(self):
     ve = np.vectorize(qtk.n2ve)
     nve = sum(ve(self.type_list)) - self.charge
-    return nve
+    return int(nve)
+
+  def getTotalElectrons(self):
+    ne = sum(self.Z) - self.charge
+    return int(ne)
 
   def get_ve(self):
     return self.getValenceElectrons()

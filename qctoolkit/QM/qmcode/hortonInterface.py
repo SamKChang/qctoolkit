@@ -73,7 +73,15 @@ class inp(GaussianBasisInput):
       ]
     ham = REffHam(terms, external)
 
-    occ_model = AufbauOccModel(self.ve() / 2)
+    occ_model = AufbauOccModel(
+      int((sum(self.molecule.Z) - self.molecule.charge)/ 2.)
+    )
+
+    occ = np.zeros(olp.shape[0])
+    N = int(sum(self.molecule.Z) - self.molecule.charge)
+    occ[:N/2] = 1
+    C = copy.deepcopy(exp_alpha.coeffs.__array__())
+    dm = (C * occ).dot(C.T)
 
     self.ht_mol = mol
     self.ht_grid = grid
@@ -94,6 +102,9 @@ class inp(GaussianBasisInput):
     self.na = na.__array__()
     self.er = er.__array__()
     self.mov = exp_alpha.coeffs.__array__()
+    self.initial_mov = C
+    self.initial_dm = dm
+    self.occ = occ
     #self.dm = dm_alpha.__array__()
 
   def run(self, name=None, **kwargs):
@@ -108,6 +119,11 @@ class inp(GaussianBasisInput):
     
   def write(self, name=None, **kwargs):
     pass
+
+  def dm(self):
+    C = self.mov
+    occ = self.occ
+    return (C * occ).dot(C.T)
 
 class out(GaussianBasisOutput):
   def __init__(self):
