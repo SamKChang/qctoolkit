@@ -18,13 +18,16 @@ import periodictable as pt
 
 class inp(GaussianBasisInput):
   """
-  nwchem input class. 
+  horton input class. 
   """
   __doc__ = GaussianBasisInput.__doc__ + __doc__
   def __init__(self, molecule, **kwargs):
 
     if 'theory' not in kwargs:
       kwargs['theory'] = 'hf'
+
+    if 'save_c_type' not in kwargs:
+      kwargs['save_c_type'] = True
 
     if not found:
       qtk.exit("horton module not found.")
@@ -83,19 +86,23 @@ class inp(GaussianBasisInput):
     C = copy.deepcopy(exp_alpha.coeffs.__array__())
     dm = (C * occ).dot(C.T)
 
-    self.ht_mol = mol
-    self.ht_grid = grid
-    self.ht_external = external
-    self.ht_obasis = obasis
-    self.ht_occ_model = occ_model
-    self.ht_olp = olp
-    self.ht_kin = kin
-    self.ht_na = na
-    self.ht_er = er
-    self.ht_exp_alpha = exp_alpha
-    self.ht_terms = terms
-    #self.ht_dm_alpha = dm_alpha
-    self.ht_ham = ham
+    if self.setting['save_c_type']:
+      self.ht_mol = mol
+      self.ht_grid = grid
+      self.ht_external = external
+      self.ht_obasis = obasis
+      self.ht_occ_model = occ_model
+      self.ht_olp = olp
+      self.ht_kin = kin
+      self.ht_na = na
+      self.ht_er = er
+      self.ht_exp_alpha = exp_alpha
+      self.ht_terms = terms
+      #self.ht_dm_alpha = dm_alpha
+      self.ht_ham = ham
+    else:
+      self.grid_points = grid.points
+      self.grid_weights = grid.weights
 
     self.olp = olp.__array__()
     self.kin = kin.__array__()
@@ -105,10 +112,11 @@ class inp(GaussianBasisInput):
     self.initial_mov = C
     self.initial_dm = dm
     self.occ = occ
+    self.v_ext = self.na
     #self.dm = dm_alpha.__array__()
 
   def run(self, name=None, **kwargs):
-    scf_solver = PlainSCFSolver(self.setting['wf_convergence'])
+    scf_solver = PlainSCFSolver(threshold=self.setting['wf_convergence'], maxiter=self.setting['scf_step'])
     #scf_solver = CDIISSCFSolver(1e-6)
     scf_solver(
       self.ht_ham, 
@@ -116,14 +124,70 @@ class inp(GaussianBasisInput):
       self.ht_occ_model, 
       self.ht_exp_alpha
     )
+
+    self.ht_solver = scf_solver
+
+    try:
+      self.Et = self.ht_ham.cache['energy']
+      self.mov = self.ht_exp_alpha.coeffs.__array__()
+      self.mo_vectors = self.mov
+    except Exception as err:
+      qtk.warning('SCF did not converged: %s' % err)
+      self.Et = np.nan
     
   def write(self, name=None, **kwargs):
     pass
 
-  def dm(self):
-    C = self.mov
+  def dm(self, C=None):
+    if C is None: C = self.mov
     occ = self.occ
     return (C * occ).dot(C.T)
+
+  def get_rho_cube(self, margin=3, resolution=0.1, dm=None):
+
+    if dm is None: dm = self.dm()
+
+    x_min, y_min, z_min = self.molecule.R.min(axis=0) - margin
+    x_max, y_max, z_max = self.molecule.R.max(axis=0) + margin
+
+    X, Y, Z = np.meshgrid(
+      np.arange(x_min, x_max, resolution),
+      np.arange(y_min, y_max, resolution),
+      np.arange(z_min, z_max, resolution),
+      indexing='ij'
+    )
+
+    cube_grid = np.array(zip(X.ravel(), Y.ravel(), Z.ravel()))
+    cube_data_list = self.ht_obasis.compute_grid_density_dm(dm, cube_grid)
+    cube_data = cube_data_list.reshape(X.shape)
+
+    grid = np.array([
+      [self.molecule.N, x_min, y_min, z_min],
+      [X.shape[0], resolution, 0, 0],
+      [X.shape[1], 0, resolution, 0],
+      [X.shape[2], 0, 0, resolution],
+    ])
+
+    q = qtk.CUBE()
+    q.build(self.molecule, grid, cube_data)
+
+    return q
+
+  def delete_ht_types(self):
+    for attr in dir(self):
+      if attr.startswith('ht_'):
+        delattr(self, attr)
+
+  def delete_matrices(self):
+    del_list = ['initial_dm', 'initial_mov', 'olp', 'kin', 'na', 'v_ext', 'er']
+    for attr in del_list:
+      delattr(self, str(attr))
+
+  def matrices(self):
+    try:
+      return self.initial_dm, self.initial_mov, self.olp, self.kin, self.v_ext, self.er
+    except:
+      qtk.warning("matrices not found")
 
 class out(GaussianBasisOutput):
   def __init__(self):

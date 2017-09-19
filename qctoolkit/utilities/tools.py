@@ -5,6 +5,7 @@ import qctoolkit as qtk
 import yaml
 import pickle
 import hashlib
+import copy
 
 def Molecules(file_name, **kwargs):
   """read nested xyz file and return molecule list"""
@@ -105,12 +106,91 @@ def flatten(container):
       yield i
 
 def pdump(obj, name):
-  with open(name, 'wb') as pfile:
-    pickle.dump(obj, pfile)
+  try:
+    with open(name, 'wb') as pfile:
+      pickle.dump(obj, pfile)
+  except TypeError:
+    qtk.warning('possible issues with ctypes extensions')
+    obj = copy.deepcopy(obj)
+    structure = qtk.get_nested_structure(obj)
+
+
+def get_nested_structure(obj):
+  nested = True
+  structure = []
+  ind_list = []
+  cursor = obj
+
+  def get_structure(cursor, structure):
+    if type(cursor) is list:
+      if len(cursor) > 0:
+        if type(cursor[0]) is list:
+          for c in cursor:
+            structure.append([])
+            get_structure(c, structure[-1])
+        else:
+          structure.append(len(cursor))
+      else:
+        structure.append(0)
+
+  if type(cursor) is list:
+    get_structure(cursor, structure)
+
+  return structure
+
+def getitem_nested(obj, *ind):
+  if type(ind) is list: ind
+  out = obj
+  for i in ind:
+    out = out[i]
+  return out
+
+#def get_nested_ind(structure):
+#  nested = True
+#  ind = []
+#  
+#  while nested:
+#    if type(structure) is list: 
+#      if len(structure) > 0:
+#        if type(structure[0]) is int:
+#          for s in structure:
+#            ind.append(range(s))
+#    else:
+    
+    
+
+def get_nested_ind(structure):
+  ind = [[]]
+  
+  def get_list(cursor, ind):
+    if type(cursor) is list:
+      if len(cursor) > 0:
+        if type(cursor[0]) is list:
+          print cursor
+          for i in range(len(cursor)):
+            c = cursor[i]
+            print ind[-1]
+            ind[-1].append(i)
+            get_list(c, ind)
+        else:
+          ind.append([])
+
+  cursor = structure
+  if type(cursor) is list:
+    get_list(cursor, ind)
+
+  return ind
+  
 
 def pload(name):
   with open(name, 'rb') as pfile:
     return pickle.load(pfile)
+
+def save(*args, **kwargs):
+  return pdump(*args, **kwargs)
+
+def load(*args, **kwargs):
+  return pload(*args, **kwargs)
 
 def CoulombMatrix(molecule, dim=None):
   mol = toMolecule(molecule)
