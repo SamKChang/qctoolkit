@@ -106,12 +106,19 @@ class inp(GaussianBasisInput):
 
     self.olp = olp.__array__()
     self.kin = kin.__array__()
+    self.nn = external['nn']
+    try:
+      d, U = np.linalg.eigh(self.olp)
+      self.X = U.dot(np.diag(np.sqrt(1/d)).dot(U.T))
+    except Exception as err:
+      qtk.warning(err)
     self.na = na.__array__()
     self.er = er.__array__()
     self.mov = exp_alpha.coeffs.__array__()
     self.initial_mov = C
     self.initial_dm = dm
     self.occ = occ
+    self.occupation = 2*occ
     self.v_ext = self.na
     #self.dm = dm_alpha.__array__()
 
@@ -131,9 +138,24 @@ class inp(GaussianBasisInput):
       self.Et = self.ht_ham.cache['energy']
       self.mov = self.ht_exp_alpha.coeffs.__array__()
       self.mo_vectors = self.mov
+      self.mo_eigenvalues = self.ht_exp_alpha.energies
+
     except Exception as err:
       qtk.warning('SCF did not converged: %s' % err)
       self.Et = np.nan
+    self.mol = self.molecule
+
+    out = qtk.QM.gaussianbasis_io.GaussianBasisOutput()
+
+    for attr in dir(out):
+      if not hasattr(self, attr):
+        setattr(self, attr, getattr(out, attr))
+
+    for attr in dir(self):
+      if not attr.startswith('_'):
+        setattr(out, attr, getattr(self, attr))
+
+    return out
     
   def write(self, name=None, **kwargs):
     pass
@@ -142,6 +164,33 @@ class inp(GaussianBasisInput):
     if C is None: C = self.mov
     occ = self.occ
     return (C * occ).dot(C.T)
+
+  def getRho(self, dm=None):
+
+    if dm is None: dm = self.dm()
+
+    out = 2*self.ht_obasis.compute_grid_density_dm(
+      dm, self.ht_grid.points
+    )
+    return out
+
+  def Fock_matrix(self, C=None, orthogonalize=False):
+    dm = self.dm(C)
+
+    J_kernel = np.tensordot(dm, self.er, axes=([0,1], [0,2]))
+    X_kernel = np.tensordot(dm, self.er, axes=([0,1], [0,1]))
+
+    h1 = (self.kin + self.v_ext)
+    G = J_kernel * 2. - X_kernel
+    F = h1 + G
+
+    if orthogonalize:
+      F = self.X.T.dot(F.dot(self.X))
+
+    return F
+
+  def Hamiltonian(self, C=None):
+    dm = self.dm(C)
 
   def get_rho_cube(self, margin=3, resolution=0.1, dm=None):
 
@@ -158,7 +207,7 @@ class inp(GaussianBasisInput):
     )
 
     cube_grid = np.array(zip(X.ravel(), Y.ravel(), Z.ravel()))
-    cube_data_list = self.ht_obasis.compute_grid_density_dm(dm, cube_grid)
+    cube_data_list = 2*self.ht_obasis.compute_grid_density_dm(dm, cube_grid)
     cube_data = cube_data_list.reshape(X.shape)
 
     grid = np.array([
@@ -177,6 +226,8 @@ class inp(GaussianBasisInput):
     for attr in dir(self):
       if attr.startswith('ht_'):
         delattr(self, attr)
+    if type(self.setting['basis_set']) is not str:
+      self.setting['basis_set'] = self.setting['basis_set'].filename
 
   def delete_matrices(self):
     del_list = ['initial_dm', 'initial_mov', 'olp', 'kin', 'na', 'v_ext', 'er']
