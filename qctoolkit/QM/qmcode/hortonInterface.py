@@ -165,6 +165,24 @@ class inp(GaussianBasisInput):
     occ = self.occ
     return (C * occ).dot(C.T)
 
+  def getPsi(self, C=None, psi_list=None):
+    if C is None: C = self.mov
+
+    mov_back = self.ht_exp_alpha.coeffs.__array__()
+    self.ht_exp_alpha._coeffs = C
+
+    exp = self.ht_exp_alpha
+    pts = self.ht_grid.points
+    if psi_list is None:
+      psi_list = np.array(range(len(self.occ)))
+    psi_list = np.array(psi_list)
+
+    psi = self.ht_obasis.compute_grid_orbitals_exp(exp, pts, psi_list)
+    
+    self.ht_exp_alpha._coeffs = mov_back
+
+    return psi
+
   def getRho(self, dm=None):
 
     if dm is None: dm = self.dm()
@@ -175,6 +193,10 @@ class inp(GaussianBasisInput):
     return out
 
   def Fock_matrix(self, C=None, orthogonalize=False):
+
+    if C is None:
+      C = self.mov
+
     dm = self.dm(C)
 
     J_kernel = np.tensordot(dm, self.er, axes=([0,1], [0,2]))
@@ -185,7 +207,7 @@ class inp(GaussianBasisInput):
     F = h1 + G
 
     if orthogonalize:
-      F = self.X.T.dot(F.dot(self.X))
+      F = C.T.dot(F).dot(C)
 
     return F
 

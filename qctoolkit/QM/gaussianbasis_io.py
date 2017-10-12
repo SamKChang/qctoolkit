@@ -222,14 +222,17 @@ class GaussianBasisOutput(GenericQMOutput):
       
     return self._dphi
 
-  def getPsi(self, cartesian=True, resolution='fine', new=False, **kwargs):
+  def getPsi(self, mo_vectors=None, cartesian=True, resolution='fine', new=False, **kwargs):
     if 'gridpoints' in kwargs:
       new = True
     if new or not hasattr(self, '_psi'):
       self.getPhi(cartesian, resolution, new, **kwargs)
-      if not hasattr(self, 'mo_vectors'):
-        qtk.exit('mo_vectors not found')
-      mo = self.mo_vectors
+      if mo_vectors is None:
+        if not hasattr(self, 'mo_vectors'):
+          qtk.exit('mo_vectors not found')
+        mo = self.mo_vectors
+      else:
+        mo = mo_vectors
       if hasattr(self, 'program'):
         if self.program == 'gaussian':
           mo = self.mo_g09_nwchem()
@@ -241,20 +244,24 @@ class GaussianBasisOutput(GenericQMOutput):
       new = True
     if new or not hasattr(self, '_dpsi'):
       self.getDPhi(cartesian, resolution, new, **kwargs)
-      if not hasattr(self, 'mo_vectors'):
-        qtk.exit('mo_vectors not found')
-      mo = self.mo_vectors
+      if 'mo_vectors' not in kwargs:
+        if not hasattr(self, 'mo_vectors'):
+          qtk.exit('mo_vectors not found')
+        mo = self.mo_vectors
+      else:
+        mo = kwargs['mo_vectors']
       if hasattr(self, 'program'):
         if self.program == 'gaussian':
           mo = self.mo_g09_nwchem()
       self._dpsi = np.dot(mo, np.swapaxes(self._dphi, 0, 1))
     return self._dpsi
 
-  def getRho(self, cartesian=True, resolution='fine', new=False, occupation=None, **kwargs):
+  def getRho(self, mo_vectors=None, cartesian=True, resolution='fine', 
+             new=False, occupation=None, **kwargs):
     if 'gridpoints' in kwargs:
       new = True
     if new or not hasattr(self, '_rho'):
-      self.getPsi(cartesian, resolution, new, **kwargs)
+      self.getPsi(mo_vectors, cartesian, resolution, new, **kwargs)
       if not hasattr(self, 'occupation'):
         qtk.exit("occupation number not found")
       occ = np.array(self.occupation)
@@ -410,12 +417,30 @@ class GaussianBasisOutput(GenericQMOutput):
     coulomb = self.e_coulomb(gridpoints, **kwargs)
     return kin + ext + x + c + coulomb
 
-  def getDipole(self, cartesian=True, resolution='fine', unit='debye', 
-                component='full'):
+  def getDipole(self, mo_vectors=None, cartesian=True, resolution='fine', 
+                unit='debye', component='full', new=False):
     if not hasattr(self, 'molecule'):
       qtk.exit('molecule structure not found')
-    if not hasattr(self, '_rho'):
-      self.getRho(cartesian, resolution)
+    if mo_vectors is None:
+      if not hasattr(self, '_rho'):
+        try:
+          rho = self.getRho(mo_vectors, cartesian, resolution, new=True)
+        except:
+          rho = self.getRho()
+    else:
+      try:
+        print 'yo'
+        print mo_vectors
+        rho = self.getRho(mo_vectors, cartesian, resolution, new=True)
+      except:
+        rho = self.getRho()
+
+    try:
+      grid = self.grid
+    except:
+      grid = self.ht_grid
+
+
     pQ = np.array(
       [sum(self.molecule.Z * self.molecule.R[:,i]) for i in range(3)]
     )
@@ -423,7 +448,7 @@ class GaussianBasisOutput(GenericQMOutput):
 
     if component in ['full', 'ele']:
       pq = np.array(
-        [self.grid.integrate(self._rho * self.grid.points[:,i]) 
+        [grid.integrate(rho * grid.points[:,i]) 
          for i in range(3)]
       )
 
