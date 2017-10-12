@@ -1,0 +1,4 @@
+functional evaluation example: xc_gga_exc
+first order derivative: xc_gga_vxc
+second order derivative: xc_gga_fxc
+thrid order derivative: xc_ggz_kxc

@@ -1,15 +1,10 @@
-// C routine to calculate ESP for a point
-
 #include <Python.h>
 #include <numpy/arrayobject.h>
 #include <xc.h>
 
-/////////////////////////////////////////
-// main function for writing CUBE file //
-/////////////////////////////////////////
-// or what ever computation need to be done
-// only minor changes should be necessary
-// to interface other type of calculation
+////////////////////////////////////////////////////////////////
+// main function interfacing LibXC functional evaluation: exc //
+////////////////////////////////////////////////////////////////
 static void libxc_c(double *rho, double *sigma, double *out, 
                     int N, int xcID){
   xc_func_type func;
