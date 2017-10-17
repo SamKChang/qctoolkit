@@ -258,6 +258,7 @@ class CUBE(object):
     self.molecule = molecule
     self.grid = grid
     self.data = data
+    self.name = molecule.name
 
     def vec(i):
       return self.grid[i,1:]
@@ -507,8 +508,11 @@ class CUBE(object):
         title = plkwargs.pop('title')
       else:
         title = None
-      fig = plt.figure(name)
-      ax = fig.add_subplot(111)
+
+      if 'ax' not in kwargs:
+        fig = plt.figure(name)
+        ax = fig.add_subplot(111)
+
       CS = plt.contour(X, Y, Z, levels, *plargs, **plkwargs)
       CB = plt.colorbar(CS, shrink=0.8, extend='both')
       if title is not None:
@@ -544,7 +548,12 @@ class CUBE(object):
 
     ut.report('CUBE', 'axis:%d, slice:%f' % (axis, loc))
     ut.report("CUBE", "slice coordinate: %f" % loc_coord)
-    return [X, Y, Z]
+
+    if 'ax' not in kwargs:
+      return [X, Y, Z]
+    else:
+      return [X, Y, Z], ax
+      
 
   def shift(self, vector):
     vectorb = np.array(vector) / 0.529177249

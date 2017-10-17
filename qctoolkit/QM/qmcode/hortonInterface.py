@@ -211,12 +211,7 @@ class inp(GaussianBasisInput):
 
     return F
 
-  def Hamiltonian(self, C=None):
-    dm = self.dm(C)
-
-  def get_rho_cube(self, margin=3, resolution=0.1, dm=None):
-
-    if dm is None: dm = self.dm()
+  def _cube_data(self, margin, resolution):
 
     x_min, y_min, z_min = self.molecule.R.min(axis=0) - margin
     x_max, y_max, z_max = self.molecule.R.max(axis=0) + margin
@@ -229,8 +224,6 @@ class inp(GaussianBasisInput):
     )
 
     cube_grid = np.array(zip(X.ravel(), Y.ravel(), Z.ravel()))
-    cube_data_list = 2*self.ht_obasis.compute_grid_density_dm(dm, cube_grid)
-    cube_data = cube_data_list.reshape(X.shape)
 
     grid = np.array([
       [self.molecule.N, x_min, y_min, z_min],
@@ -238,6 +231,17 @@ class inp(GaussianBasisInput):
       [X.shape[1], 0, resolution, 0],
       [X.shape[2], 0, 0, resolution],
     ])
+
+    return cube_grid, grid, X.shape
+
+  def getRhoCube(self, margin=3, resolution=0.1, dm=None):
+
+    if dm is None: dm = self.dm()
+
+    cube_grid, grid, shape = self._cube_data(margin, resolution)
+
+    cube_data_list = 2*self.ht_obasis.compute_grid_density_dm(dm, cube_grid)
+    cube_data = cube_data_list.reshape(shape)
 
     q = qtk.CUBE()
     q.build(self.molecule, grid, cube_data)
