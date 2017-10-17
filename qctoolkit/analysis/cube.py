@@ -512,14 +512,21 @@ class CUBE(object):
       if 'ax' not in kwargs:
         fig = plt.figure(name)
         ax = fig.add_subplot(111)
+      else:
+        ax = kwargs['ax']
+        fig = kwargs['fig']
+      colorbar = True
+      if 'colorbar' in kwargs:
+        colorbar = kwargs['colorbar']
 
-      CS = plt.contour(X, Y, Z, levels, *plargs, **plkwargs)
-      CB = plt.colorbar(CS, shrink=0.8, extend='both')
-      if title is not None:
-        plt.title(title)
-      plt.xlabel(_label[0] + r" [$\rm \AA$]", fontsize=15)
-      plt.ylabel(_label[1] + r" [$\rm \AA$]", fontsize=15)
-      plt.axes().set_aspect('equal')
+      CS = ax.contour(X, Y, Z, levels, *plargs, **plkwargs)
+      if colorbar:
+        CB = fig.colorbar(CS, ax=ax, shrink=0.8, extend='both')
+      #if title is not None:
+      #  plt.title(title)
+      ax.set_xlabel(_label[0] + r" [$\rm \AA$]", fontsize=15)
+      ax.set_ylabel(_label[1] + r" [$\rm \AA$]", fontsize=15)
+      ax.set_aspect('equal')
   
       x_list = []
       y_list = []
@@ -540,11 +547,11 @@ class CUBE(object):
       for i in range(self.molecule.N):
         plotElement(i)
   
-      plt.plot(x_list, y_list, ls='', marker='o', color='k')
+      ax.plot(x_list, y_list, ls='', marker='o', color='k')
       x_min, x_max = _range[0]
       y_min, y_max = _range[1]
-      plt.xlim(_range[0])
-      plt.ylim(_range[1])
+      ax.set_xlim(_range[0])
+      ax.set_ylim(_range[1])
 
     ut.report('CUBE', 'axis:%d, slice:%f' % (axis, loc))
     ut.report("CUBE", "slice coordinate: %f" % loc_coord)
