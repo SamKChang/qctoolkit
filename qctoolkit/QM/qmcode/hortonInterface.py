@@ -1,4 +1,5 @@
 import qctoolkit as qtk
+import itertools
 import pkgutil
 eggs_loader = pkgutil.find_loader('horton')
 found = eggs_loader is not None
@@ -105,7 +106,9 @@ class inp(GaussianBasisInput):
       self.grid_weights = grid.weights
 
     self.olp = olp.__array__()
+    self.S = self.olp
     self.kin = kin.__array__()
+    self.T = self.kin
     self.nn = external['nn']
     try:
       d, U = np.linalg.eigh(self.olp)
@@ -114,6 +117,7 @@ class inp(GaussianBasisInput):
       qtk.warning(err)
     self.na = na.__array__()
     self.er = er.__array__()
+    self.U = self.er
     self.mov = exp_alpha.coeffs.__array__()
     self.initial_mov = C
     self.initial_dm = dm
@@ -165,51 +169,6 @@ class inp(GaussianBasisInput):
     occ = self.occ
     return (C * occ).dot(C.T)
 
-  def getPsi(self, C=None, psi_list=None, margin=None, resolution=None, cube=False, get_shape=False):
-    if C is None: C = self.mov
-
-    mov_back = self.ht_exp_alpha.coeffs.__array__()
-    self.ht_exp_alpha._coeffs = C
-
-    exp = self.ht_exp_alpha
-    if cube:
-      if margin is None: margin = 3
-      if resolution is None: resolution = 0.1
-    if (margin is None and resolution is None) and not cube:
-      pts = self.ht_grid.points
-    else:
-      pts, cube_grid, shape = self.cube_grid(margin, resolution)
-    if psi_list is None:
-      psi_list = np.array(range(len(self.occ)))
-    psi_list = np.array(psi_list)
-
-    psi = self.ht_obasis.compute_grid_orbitals_exp(exp, pts, psi_list)
-    
-    self.ht_exp_alpha._coeffs = mov_back
-
-    if not get_shape:
-      return psi
-    else:
-      return psi, shape, cube_grid
-
-  def getPsiCube(self, n, C=None, margin=3, resolution=0.1):
-    psi, shape, grid = self.getPsi(C, [n], margin, resolution, get_shape=True)
-    psi = psi.reshape(shape)
-
-    q = qtk.CUBE()
-    q.build(self.molecule, grid, psi)
-
-    return q
-
-  def getRho(self, dm=None):
-
-    if dm is None: dm = self.dm()
-
-    out = 2*self.ht_obasis.compute_grid_density_dm(
-      dm, self.ht_grid.points
-    )
-    return out
-
   def Fock_matrix(self, C=None, orthogonalize=False):
 
     if C is None:
@@ -256,6 +215,52 @@ class inp(GaussianBasisInput):
 
     return cube_grid, grid, X.shape
 
+  def getPsi(self, C=None, psi_list=None, margin=None, 
+             resolution=None, cube=False, get_shape=False):
+    if C is None: C = self.mov
+
+    mov_back = self.ht_exp_alpha.coeffs.__array__()
+    self.ht_exp_alpha._coeffs = C
+
+    exp = self.ht_exp_alpha
+    if cube:
+      if margin is None: margin = 3
+      if resolution is None: resolution = 0.1
+    if (margin is None and resolution is None) and not cube:
+      pts = self.ht_grid.points
+    else:
+      pts, cube_grid, shape = self.cube_grid(margin, resolution)
+    if psi_list is None:
+      psi_list = np.array(range(len(self.occ)))
+    psi_list = np.array(psi_list)
+
+    psi = self.ht_obasis.compute_grid_orbitals_exp(exp, pts, psi_list)
+    
+    self.ht_exp_alpha._coeffs = mov_back
+
+    if not get_shape:
+      return psi
+    else:
+      return psi, cube_grid, shape
+
+  def getPsiCube(self, n, C=None, margin=3, resolution=0.1):
+    psi, grid, shape = self.getPsi(C, [n], margin, resolution, get_shape=True)
+    psi = psi.reshape(shape)
+
+    q = qtk.CUBE()
+    q.build(self.molecule, grid, psi)
+
+    return q
+
+  def getRho(self, dm=None):
+
+    if dm is None: dm = self.dm()
+
+    out = 2*self.ht_obasis.compute_grid_density_dm(
+      dm, self.ht_grid.points
+    )
+    return out
+
   def getRhoCube(self, margin=3, resolution=0.1, dm=None):
 
     if dm is None: dm = self.dm()
@@ -269,6 +274,91 @@ class inp(GaussianBasisInput):
     q.build(self.molecule, grid, cube_data)
 
     return q
+
+  def Minv_matrix(self, Coulomb=True, xc=True):
+
+    eps = self.mo_eigenvalues
+    N_occ = int(self.occ.sum())
+    i_list = range(N_occ)
+    a_list = range(N_occ, self.olp.shape[0])
+    ia_list = list(itertools.product(i_list, a_list))
+
+    if Coulomb or xc:
+      C = self.mov
+      U = self.U
+      Umo = np.tensordot(C, U, axes=[[0],[0]])
+      Umo = np.tensordot(C, Umo, axes=[[0],[1]])
+      Umo = np.tensordot(C, Umo, axes=[[0],[2]])
+      Umo = np.tensordot(C, Umo, axes=[[0],[3]])
+    
+    M = np.zeros([len(ia_list), len(ia_list)])
+    for s in range(len(ia_list)):
+        i, a = ia_list[s]
+        de = eps[a] - eps[i]
+        M[s, s] += de
+
+        if Coulomb or xc:
+          for t in range(len(ia_list)):
+              j, b = ia_list[t]
+
+              if Coulomb:
+                M[s, t] += Umo[i,a,j,b]
+
+              if xc:
+                pass
+
+    return np.linalg.inv(M), ia_list
+            
+  def getdRho(self, v_ao, margin=None, resolution=None, 
+              cube=False, get_shape=False, Coulomb=True, xc=True):
+
+    C = self.mov
+
+    v_mo = np.tensordot(C, v_ao, axes=[[0],[0]])
+    v_mo = np.tensordot(C, v_mo, axes=[[0],[1]])
+
+    M_inv, ia_list = self.Minv_matrix(Coulomb, xc)
+
+    if cube:
+      psi, grid, shape = self.getPsi(C=self.mov, margin=margin, 
+          resolution=resolution, cube=cube, get_shape=True)
+    else:
+      psi = self.getPsi(C=self.mov, margin=margin, 
+          resolution=resolution, cube=cube)
+    drho = np.zeros(psi[:,0].shape)
+    for s in range(len(ia_list)):
+        i, a = ia_list[s]
+        for t in range(len(ia_list)):
+            j, b = ia_list[t]
+            drho += M_inv[s, t] * v_mo[j, b] * psi[:, i] * psi[:, a]
+
+    if cube:
+      drho = drho.reshape(shape)
+      q = qtk.CUBE()
+      q.build(self.molecule, grid, drho)
+      return q
+    else:
+      return drho
+
+  def d1E(self, v_ao):
+    return np.trace(self.dm().dot(v_ao))
+
+  def d2E(self, v_ao, Coulomb=True, xc=True):
+    C = self.mov
+
+    v_mo = np.tensordot(C, v_ao, axes=[[0],[0]])
+    v_mo = np.tensordot(C, v_mo, axes=[[0],[1]])
+
+    M_inv, ia_list = self.Minv_matrix(Coulomb, xc)
+
+    dE = 0
+    for s in range(len(ia_list)):
+        i, a = ia_list[s]
+        for t in range(len(ia_list)):
+            j, b = ia_list[t]
+            dE += M_inv[s, t] * v_mo[j, b] * v_mo[i, a]
+
+    return d2E
 
   def delete_ht_types(self):
     for attr in dir(self):
