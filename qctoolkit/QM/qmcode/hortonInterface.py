@@ -165,14 +165,20 @@ class inp(GaussianBasisInput):
     occ = self.occ
     return (C * occ).dot(C.T)
 
-  def getPsi(self, C=None, psi_list=None):
+  def getPsi(self, C=None, psi_list=None, margin=None, resolution=None, cube=False, get_shape=False):
     if C is None: C = self.mov
 
     mov_back = self.ht_exp_alpha.coeffs.__array__()
     self.ht_exp_alpha._coeffs = C
 
     exp = self.ht_exp_alpha
-    pts = self.ht_grid.points
+    if cube:
+      if margin is None: margin = 3
+      if resolution is None: resolution = 0.1
+    if (margin is None and resolution is None) and not cube:
+      pts = self.ht_grid.points
+    else:
+      pts, cube_grid, shape = self.cube_grid(margin, resolution)
     if psi_list is None:
       psi_list = np.array(range(len(self.occ)))
     psi_list = np.array(psi_list)
@@ -181,7 +187,19 @@ class inp(GaussianBasisInput):
     
     self.ht_exp_alpha._coeffs = mov_back
 
-    return psi
+    if not get_shape:
+      return psi
+    else:
+      return psi, shape, cube_grid
+
+  def getPsiCube(self, n, C=None, margin=3, resolution=0.1):
+    psi, shape, grid = self.getPsi(C, [n], margin, resolution, get_shape=True)
+    psi = psi.reshape(shape)
+
+    q = qtk.CUBE()
+    q.build(self.molecule, grid, psi)
+
+    return q
 
   def getRho(self, dm=None):
 
@@ -211,7 +229,11 @@ class inp(GaussianBasisInput):
 
     return F
 
-  def _cube_data(self, margin, resolution):
+  def cube_grid(self, margin=3, resolution=0.1):
+    if margin is None:
+      margin = 3
+    if resolution is None:
+      resolution = 0.1
 
     x_min, y_min, z_min = self.molecule.R.min(axis=0) - margin
     x_max, y_max, z_max = self.molecule.R.max(axis=0) + margin
@@ -238,7 +260,7 @@ class inp(GaussianBasisInput):
 
     if dm is None: dm = self.dm()
 
-    cube_grid, grid, shape = self._cube_data(margin, resolution)
+    cube_grid, grid, shape = self.cube_grid(margin, resolution)
 
     cube_data_list = 2*self.ht_obasis.compute_grid_density_dm(dm, cube_grid)
     cube_data = cube_data_list.reshape(shape)
