@@ -1084,8 +1084,10 @@ class Molecule(object):
     except:
         self.prop_list = prop_list
     coord_list = content[2 : self.N + 2]
-    coord = [filter(None,[a for a in entry.split(' ')]) 
+    coord = [filter(None,[a for a in entry.replace("\n", '').split(' ')]) 
              for entry in coord_list]
+    print coord
+    print len(coord)
     type_list = list(np.array(coord)[:,0])
     self.type_list = [str(elem) for elem in type_list]
     self.Z = [qtk.n2Z(elem) for elem in self.type_list]
