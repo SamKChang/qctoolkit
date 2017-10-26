@@ -427,6 +427,8 @@ class GaussianBasisOutput(GenericQMOutput):
           rho = self.getRho(mo_vectors, cartesian, resolution, new=True)
         except:
           rho = self.getRho()
+      else:
+        rho = self._rho
     else:
       try:
         print 'yo'
