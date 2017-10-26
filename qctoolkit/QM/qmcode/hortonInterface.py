@@ -16,6 +16,19 @@ import os, sys, copy, shutil, re
 import numpy as np
 import qctoolkit.QM.qmjob as qmjob
 import periodictable as pt
+import qctoolkit.QM.ofdft.libxc_interface as xc_io
+
+inpPath = os.path.realpath(__file__)
+inpPath = os.path.split(inpPath)[0]
+xcPath = os.path.join(inpPath, '../ofdft/libxc_fxc.so')
+xc_found = os.path.exists(xcPath)
+if xc_found:
+  from qctoolkit.QM.ofdft.libxc_exc import libxc_exc
+  from qctoolkit.QM.ofdft.libxc_vxc import libxc_vxc
+  from qctoolkit.QM.ofdft.libxc_fxc import libxc_fxc
+  pass
+else:
+  pass
 
 class inp(GaussianBasisInput):
   """
@@ -58,28 +71,43 @@ class inp(GaussianBasisInput):
 
     external = {'nn': compute_nucnuc(mol.coordinates, 
                                      mol.pseudo_numbers)}
+    terms = [
+       RTwoIndexTerm(kin, 'kin'),
+       RTwoIndexTerm(na, 'ne'),
+       RDirectTerm(er, 'hartree'),
+    ]
     if self.setting['theory'] == 'hf':
-      terms = [
-          RTwoIndexTerm(kin, 'kin'),
-          RDirectTerm(er, 'hartree'),
-          RExchangeTerm(er, 'x_hf'),
-          RTwoIndexTerm(na, 'ne'),
+      terms.append(RExchangeTerm(er, 'x_hf'))
+    elif self.setting['theory'] == 'pbe':
+      libxc_terms = [
+        RLibXCGGA('x_pbe'),
+        RLibXCGGA('c_pbe'),
       ]
-    else:
-      #libxc_term = RLibXCHybridGGA('xc_%s' % self.setting['theory'])
-      libxc_term = RLibXCHybridGGA('xc_pbeh')
-      terms = [
-          RTwoIndexTerm(kin, 'kin'),
-          RGridGroup(obasis, grid, [libxc_term]),
-          RExchangeTerm(er, 'x_hf', libxc_term.get_exx_fraction()),
-          RExchangeTerm(er, 'x_hf'),
-          RTwoIndexTerm(na, 'ne'),
+      terms.append(RGridGroup(obasis, grid, libxc_terms))
+    elif self.setting['theory'] == 'blyp':
+      libxc_terms = [
+        RLibXCGGA('x_b88'),
+        RLibXCGGA('c_lyp'),
       ]
+      terms.append(RGridGroup(obasis, grid, libxc_terms))
+    elif self.setting['theory'] == 'pbe0':
+      hyb_term = RLibXCHybridGGA('xc_pbeh')
+      terms.append(RGridGroup(obasis, grid, [hyb_term]))
+      terms.append(RExchangeTerm(er, 'x_hf', hyb_term.get_exx_fraction()))
+    elif self.setting['theory'] == 'b3lyp':
+      hyb_term = RLibXCHybridGGA('xc_b3lyp')
+      terms.append(RGridGroup(obasis, grid, [hyb_term]))
+      terms.append(RExchangeTerm(er, 'x_hf', hyb_term.get_exx_fraction()))
+    elif self.setting['theory'] == 'hse06':
+      hyb_term = RLibXCHybridGGA('xc_hse06')
+      terms.append(RGridGroup(obasis, grid, [hyb_term]))
+      terms.append(RExchangeTerm(er, 'x_hf', hyb_term.get_exx_fraction()))
     ham = REffHam(terms, external)
 
     occ_model = AufbauOccModel(
       int((sum(self.molecule.Z) - self.molecule.charge)/ 2.)
     )
+    occ_model.assign(orb_alpha)
 
     occ = np.zeros(olp.shape[0])
     N = int(sum(self.molecule.Z) - self.molecule.charge)
@@ -90,6 +118,7 @@ class inp(GaussianBasisInput):
     if self.setting['save_c_type']:
       self.ht_mol = mol
       self.ht_grid = grid
+      self.grid = grid
       self.ht_external = external
       self.ht_obasis = obasis
       self.ht_occ_model = occ_model
@@ -98,8 +127,8 @@ class inp(GaussianBasisInput):
       self.ht_na = na
       self.ht_er = er
       self.ht_exp_alpha = exp_alpha
+      self.ht_dm_alpha = exp_alpha.to_dm()
       self.ht_terms = terms
-      #self.ht_dm_alpha = dm_alpha
       self.ht_ham = ham
     else:
       self.grid_points = grid.points
@@ -127,14 +156,28 @@ class inp(GaussianBasisInput):
     #self.dm = dm_alpha.__array__()
 
   def run(self, name=None, **kwargs):
-    scf_solver = PlainSCFSolver(threshold=self.setting['wf_convergence'], maxiter=self.setting['scf_step'])
-    #scf_solver = CDIISSCFSolver(1e-6)
-    scf_solver(
-      self.ht_ham, 
-      self.ht_olp, 
-      self.ht_occ_model, 
-      self.ht_exp_alpha
+
+    if self.setting['theory'] in ['hf']:
+      optimizer = PlainSCFSolver
+      opt_arg = [
+        self.ht_ham, self.ht_olp, self.ht_occ_model, self.ht_exp_alpha
+      ]
+    elif self.setting['theory'] in ['pbe', 'blyp']:
+      optimizer = CDIISSCFSolver
+      opt_arg = [
+        self.ht_ham, self.ht_olp, self.ht_occ_model, self.ht_dm_alpha
+      ]
+    elif self.setting['theory'] in ['pbe0', 'b3lyp', 'hse06']:
+      optimizer = EDIIS2SCFSolver
+      opt_arg = [
+        self.ht_ham, self.ht_olp, self.ht_occ_model, self.ht_dm_alpha
+      ]
+
+    scf_solver = optimizer(
+      threshold=self.setting['wf_convergence'], 
+      maxiter=self.setting['scf_step']
     )
+    scf_solver(*opt_arg)
 
     self.ht_solver = scf_solver
 
@@ -260,6 +303,30 @@ class inp(GaussianBasisInput):
       dm, self.ht_grid.points
     )
     return out
+
+  def getDRho(self, dm=None):
+
+    if dm is None: dm = self.dm()
+
+    out = 2*self.ht_obasis.compute_grid_gradient_dm(
+      dm, self.ht_grid.points
+    )
+    return out
+
+  def getSigma(self, dm=None):
+    drho = self.getDRho(dm)
+    return (drho**2).sum(axis=1)
+
+  def fxc(self, dm=None, xcFlag=None):
+
+    #xc_id = xc_io.get_xcid(xcFlag)
+    xc_id = xc_io.get_xcid("XC_GGA_X_PBE")
+
+    rho = self.getRho(dm)
+    sigma = self.getSigma(dm)
+    coords = self.ht_grid.points
+    
+    return libxc_fxc(rho, sigma, len(coords), xc_id)
 
   def getRhoCube(self, margin=3, resolution=0.1, dm=None):
 
