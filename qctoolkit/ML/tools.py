@@ -38,20 +38,42 @@ def error_measure(y, y_hat):
   mae = err.mean()
   return R, rmse, mae
 
-def coulomb_matrix(mol, n = -1, size = 0, 
-                   sort = True, nuclear_charges = True):
-  if size == 0:
+def coulomb_matrix(mol, n = -1, size = None, periodic_image=False,
+                   sort = True, nuclear_charges = True, diagonal_power=2.4):
+  if size is None:
     size = mol.N
   if size < mol.N:
     qtk.exit("matrix size too small")
+
+  img_list = []
+  if periodic_image:
+    N = mol.N
+    mol_ext = mol.copy()
+    mol_ext.extend([3,3,3], normalize=True)
+    mol = mol.copy()
+    mol.R = mol_ext.R[13*N:14*N]
+    for itr in range(27):
+      img_list.append(mol_ext.R[itr*N:(itr+1)*N])
+
   positions = mol.R
+
   if nuclear_charges:
     charges = np.array(mol.Z)
   else:
     charges = np.ones(mol.N)
-  differences = positions[:, np.newaxis, :] \
-              - positions[np.newaxis, :, :]
-  distances = np.sqrt((differences ** 2).sum(axis=-1))
+  if img_list:
+    diff_list = []
+    for img in img_list:
+      diff = positions[:, np.newaxis, :] - img[np.newaxis, :, :]
+      diff_list.append(diff)
+    diff_list = np.stack(diff_list)
+    diff_list = np.sqrt((diff_list ** 2).sum(axis=-1))
+    
+    distances = diff_list.min(axis=0)
+  else:
+    differences = positions[:, np.newaxis, :] \
+                - positions[np.newaxis, :, :]
+    distances = np.sqrt((differences ** 2).sum(axis=-1))
   distances[distances == 0] = np.nan # replace 0 for division
   if n != 0:
     invR = (distances ** n)
@@ -61,10 +83,13 @@ def coulomb_matrix(mol, n = -1, size = 0,
   diag_mask = (invR == 0).astype(int)
   charge_mask_Zij = charges[:, np.newaxis] \
                   * charges[np.newaxis, :]
-  charge_mask_2p4 = 0.5 * ((charges[:, np.newaxis] \
-                            * charges[np.newaxis, :]) \
-                            * diag_mask) ** 1.2
-  cm = invR * charge_mask_Zij + charge_mask_2p4
+  if diagonal_power or diagonal_power==0:
+    charge_mask_2p4 = 0.5 * ((charges[:, np.newaxis] \
+                              * charges[np.newaxis, :]) \
+                              * diag_mask) ** (diagonal_power / 2.)
+    cm = invR * charge_mask_Zij + charge_mask_2p4
+  else:
+    cm = invR * charge_mask_Zij
   if sort:
     ind = np.argsort(cm.sum(axis=-1))
     cm = cm[:, ind][ind]
