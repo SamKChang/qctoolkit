@@ -17,6 +17,7 @@ import numpy as np
 import qctoolkit.QM.qmjob as qmjob
 import periodictable as pt
 import qctoolkit.QM.ofdft.libxc_interface as xc_io
+import qctoolkit.QM.ofdft.libxc_dict as xc_info
 
 inpPath = os.path.realpath(__file__)
 inpPath = os.path.split(inpPath)[0]
@@ -47,6 +48,10 @@ class inp(GaussianBasisInput):
       qtk.exit("horton module not found.")
     if 'wf_convergence' not in kwargs:
       kwargs['wf_convergence'] = 1e-06
+
+    if 'cholesky' not in kwargs:
+      kwargs['cholesky'] = True
+
     GaussianBasisInput.__init__(self, molecule, **kwargs)
     self.setting.update(kwargs)
     self.backup()
@@ -62,7 +67,10 @@ class inp(GaussianBasisInput):
     olp = obasis.compute_overlap()
     kin = obasis.compute_kinetic()
     na = obasis.compute_nuclear_attraction(mol.coordinates, mol.pseudo_numbers)
-    er = obasis.compute_electron_repulsion()
+    if self.setting['cholesky']:
+      er = obasis.compute_electron_repulsion_cholesky()
+    else:
+      er = obasis.compute_electron_repulsion()
 
     exp_alpha = orb_alpha = Orbitals(obasis.nbasis)
     
@@ -71,6 +79,12 @@ class inp(GaussianBasisInput):
 
     external = {'nn': compute_nucnuc(mol.coordinates, 
                                      mol.pseudo_numbers)}
+    theory = self.setting['theory']
+    if theory in xc_info.xc_map:
+      self.xc = xc_info.xc_map[theory]
+    else:
+      self.xc = None
+
     terms = [
        RTwoIndexTerm(kin, 'kin'),
        RTwoIndexTerm(na, 'ne'),
@@ -100,6 +114,16 @@ class inp(GaussianBasisInput):
       terms.append(RExchangeTerm(er, 'x_hf', hyb_term.get_exx_fraction()))
     elif self.setting['theory'] == 'hse06':
       hyb_term = RLibXCHybridGGA('xc_hse06')
+      terms.append(RGridGroup(obasis, grid, [hyb_term]))
+      terms.append(RExchangeTerm(er, 'x_hf', hyb_term.get_exx_fraction()))
+    elif self.setting['theory'] == 'tpss':
+      libxc_terms = [
+        RLibXCMGGA('x_tpss'),
+        RLibXCMGGA('c_tpss'),
+      ]
+      terms.append(RGridGroup(obasis, grid, libxc_terms))
+    elif self.setting['theory'] == 'm05':
+      hyb_term = RLibXCHybridMGGA('xc_m05')
       terms.append(RGridGroup(obasis, grid, [hyb_term]))
       terms.append(RExchangeTerm(er, 'x_hf', hyb_term.get_exx_fraction()))
     ham = REffHam(terms, external)
@@ -157,17 +181,19 @@ class inp(GaussianBasisInput):
 
   def run(self, name=None, **kwargs):
 
+    self.setting.update(kwargs)
+
     if self.setting['theory'] in ['hf']:
       optimizer = PlainSCFSolver
       opt_arg = [
         self.ht_ham, self.ht_olp, self.ht_occ_model, self.ht_exp_alpha
       ]
-    elif self.setting['theory'] in ['pbe', 'blyp']:
+    elif self.setting['theory'] in ['pbe', 'blyp', 'tpss']:
       optimizer = CDIISSCFSolver
       opt_arg = [
         self.ht_ham, self.ht_olp, self.ht_occ_model, self.ht_dm_alpha
       ]
-    elif self.setting['theory'] in ['pbe0', 'b3lyp', 'hse06']:
+    elif self.setting['theory'] in ['pbe0', 'b3lyp', 'hse06', 'm05']:
       optimizer = EDIIS2SCFSolver
       opt_arg = [
         self.ht_ham, self.ht_olp, self.ht_occ_model, self.ht_dm_alpha
@@ -178,6 +204,15 @@ class inp(GaussianBasisInput):
       maxiter=self.setting['scf_step']
     )
     scf_solver(*opt_arg)
+
+    if self.setting['theory'] is not 'hf':
+      fock_alpha = np.zeros(self.ht_olp.shape)
+      self.ht_ham.reset(self.ht_dm_alpha)
+      self.ht_ham.compute_energy()
+      self.ht_ham.compute_fock(fock_alpha)
+      self.ht_exp_alpha.from_fock_and_dm(
+        fock_alpha, self.ht_dm_alpha, self.ht_olp
+      )
 
     self.ht_solver = scf_solver
 
@@ -317,16 +352,61 @@ class inp(GaussianBasisInput):
     drho = self.getDRho(dm)
     return (drho**2).sum(axis=1)
 
-  def fxc(self, dm=None, xcFlag=None):
+  def _xc_call(self, xc_func, dm, xcFlags, sumup):
 
+    if xcFlags is None:
+      xcFlags = self.xc
     #xc_id = xc_io.get_xcid(xcFlag)
-    xc_id = xc_io.get_xcid("XC_GGA_X_PBE")
 
-    rho = self.getRho(dm)
-    sigma = self.getSigma(dm)
-    coords = self.ht_grid.points
+    if xcFlags:
+      outs = []
+      for xcFlag, scale in xcFlags.iteritems():
+  
+        xc_id = xc_io.get_xcid(xcFlag)
     
-    return libxc_fxc(rho, sigma, len(coords), xc_id)
+        rho = self.getRho(dm)
+        sigma = self.getSigma(dm)
+        coords = self.ht_grid.points
+  
+        out = np.stack(xc_func(rho, sigma, len(coords), xc_id))
+        if not sumup:
+          scale = 1.
+        outs.append(scale * out)
+        
+      if sumup:
+        return np.stack(outs).sum(axis=0)
+      else:
+        return np.stack(outs)
+
+  def fxc(self, dm=None, xcFlags=None, sumup=True):
+    return self._xc_call(libxc_fxc, dm, xcFlags, sumup)
+
+#    if xcFlags is None:
+#      xcFlags = self.xc
+#    #xc_id = xc_io.get_xcid(xcFlag)
+#
+#    if xcFlags:
+#      outs = []
+#      for xcFlag, scale in xcFlags.iteritems():
+#  
+#        xc_id = xc_io.get_xcid(xcFlag)
+#    
+#        rho = self.getRho(dm)
+#        sigma = self.getSigma(dm)
+#        coords = self.ht_grid.points
+#  
+#        out = np.stack(libxc_fxc(rho, sigma, len(coords), xc_id))
+#        if not sumup:
+#          scale = 1.
+#        outs.append(scale * out)
+#        
+#      if sumup:
+#        return np.stack(outs).sum(axis=0)
+#      else:
+#        return np.stack(outs)
+
+  def exc(self, dm=None, xcFlags=None, sumup=True):
+    return self._xc_call(libxc_exc, dm, xcFlags, sumup)
 
   def getRhoCube(self, margin=3, resolution=0.1, dm=None):
 
