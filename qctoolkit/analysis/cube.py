@@ -350,6 +350,16 @@ class CUBE(object):
     else:
       return np.sum(np.ravel(abs(self.data))) * self.dV
 
+  def getDipole(self, unit='debye', component='full'):
+    # do dipolemoment integral
+
+    pQ = np.array(
+      [sum(self.molecule.Z * self.molecule.R[:,i]) for i in range(3)]
+    )
+    pQ = pQ * 1.8897259885789
+
+    
+
   def isCubic(self):
     grid_vector = self.grid[1:,1:]
     diff = np.linalg.norm(grid_vector, axis=1)\
@@ -411,7 +421,7 @@ class CUBE(object):
           plt.legend([kwargs['legend']])
       return xout, yout
 
-  def filter(self, cutoff=0.001):
+  def filter(self, cutoff=0.001, *args, **kwargs):
     m = np.max(self.data)
     out = copy.deepcopy(self)
     out.data[np.abs(self.data) < m*cutoff] = 0
@@ -436,7 +446,10 @@ class CUBE(object):
     else:
       levels = kwargs['levels']
     if 'filter' in kwargs:
-      self = self.filter(kwargs['filter'])
+      if type(kwargs['filter']) is bool:
+        self = self.filter()
+      else:
+        self = self.filter(kwargs['filter'])
     if 'slice' not in kwargs:
       loc = None
     else:
@@ -522,8 +535,8 @@ class CUBE(object):
       CS = ax.contour(X, Y, Z, levels, *plargs, **plkwargs)
       if colorbar:
         CB = fig.colorbar(CS, ax=ax, shrink=0.8, extend='both')
-      #if title is not None:
-      #  plt.title(title)
+      if title is not None:
+        ax.set_title(title)
       ax.set_xlabel(_label[0] + r" [$\rm \AA$]", fontsize=15)
       ax.set_ylabel(_label[1] + r" [$\rm \AA$]", fontsize=15)
       ax.set_aspect('equal')
