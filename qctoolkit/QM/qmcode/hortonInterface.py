@@ -6,6 +6,7 @@ found = eggs_loader is not None
 if found:
   try:
     from horton import *
+    import horton as ht
   except:
     pass
 else:
@@ -31,12 +32,39 @@ if xc_found:
 else:
   pass
 
+def is_gga(inp):
+  if inp.setting['theory'] in ['pbe', 'blyp']:
+    return True
+  else:
+    return False
+
+def is_hgga(inp):
+  if inp.setting['theory'] in ['pbe0', 'b3lyp', 'hse06']:
+    return True
+  else:
+    return False
+
+def is_mgga(inp):
+  if inp.setting['theory'] in ['tpss']:
+    return True
+  else:
+    return False
+  
+def is_mhgga(inp):
+  if inp.setting['theory'] in ['m05']:
+    return True
+  else:
+    return False
+  
+
 class inp(GaussianBasisInput):
   """
   horton input class. 
   """
   __doc__ = GaussianBasisInput.__doc__ + __doc__
   def __init__(self, molecule, **kwargs):
+
+    inp.ht = ht
 
     if 'theory' not in kwargs:
       kwargs['theory'] = 'hf'
@@ -188,12 +216,12 @@ class inp(GaussianBasisInput):
       opt_arg = [
         self.ht_ham, self.ht_olp, self.ht_occ_model, self.ht_exp_alpha
       ]
-    elif self.setting['theory'] in ['pbe', 'blyp', 'tpss']:
+    elif is_gga(self) or is_mgga(self):
       optimizer = CDIISSCFSolver
       opt_arg = [
         self.ht_ham, self.ht_olp, self.ht_occ_model, self.ht_dm_alpha
       ]
-    elif self.setting['theory'] in ['pbe0', 'b3lyp', 'hse06', 'm05']:
+    elif is_hgga(self) or is_mhgga(self):
       optimizer = EDIIS2SCFSolver
       opt_arg = [
         self.ht_ham, self.ht_olp, self.ht_occ_model, self.ht_dm_alpha
@@ -241,6 +269,30 @@ class inp(GaussianBasisInput):
     
   def write(self, name=None, **kwargs):
     pass
+
+  def e_kin(self, C=None):
+    dm = self.dm(C=C)
+    return 2 * np.trace(dm.dot(self.T))
+
+  def e_xc(self, C=None):
+    dm = self.dm(C=C)
+    exc = self.exc(dm)
+    rho = self.getRho(dm)
+    return self.ht_grid.integrate(rho * exc)
+
+  def e_coulomb(self, C=None):
+    return self.ht_ham.cache['energy_hartree']
+
+  #def e_coulomb(self, C=None):
+  #  dm = self.dm(C=C)
+  #  J_kernel = np.tensordot(dm, self.U, axes=([0,1], [0,2]))
+  #  return 2 * np.trace(dm.dot(J_kernel))
+
+  #def e_xx(self, C=None):
+  #  dm = self.dm(C=C)
+  #  J_kernel = np.tensordot(dm, self.U, axes=([0,1], [0,1]))
+  #  return -np.trace(dm.dot(J_kernel))
+    
 
   def dm(self, C=None):
     if C is None: C = self.mov
@@ -294,7 +346,7 @@ class inp(GaussianBasisInput):
     return cube_grid, grid, X.shape
 
   def getPsi(self, C=None, psi_list=None, margin=None, 
-             resolution=None, cube=False, get_shape=False):
+             resolution=None, cube=False, get_shape=False, dr=[0,0,0]):
     if C is None: C = self.mov
 
     mov_back = self.ht_exp_alpha.coeffs.__array__()
@@ -305,7 +357,9 @@ class inp(GaussianBasisInput):
       if margin is None: margin = 3
       if resolution is None: resolution = 0.1
     if (margin is None and resolution is None) and not cube:
-      pts = self.ht_grid.points
+      dr = np.array(dr)
+      assert dr.shape == (3,)
+      pts = self.ht_grid.points + dr
     else:
       pts, cube_grid, shape = self.cube_grid(margin, resolution)
     if psi_list is None:
@@ -321,38 +375,58 @@ class inp(GaussianBasisInput):
     else:
       return psi, cube_grid, shape
 
-  def getPsiCube(self, n, C=None, margin=3, resolution=0.1):
-    psi, grid, shape = self.getPsi(C, [n], margin, resolution, get_shape=True)
-    psi = psi.reshape(shape)
+  def getPhi(self):
+    C = self.X.dot(np.eye(self.olp.shape[0]))
+    return self.getPsi(C=C)
 
-    q = qtk.CUBE()
-    q.build(self.molecule, grid, psi)
+  def getDPsi(self, C=None, psi_list=None, dr=[0,0,0]):
+    if C is None: C = self.mov
+    mov_back = self.ht_exp_alpha.coeffs.__array__()
+    self.ht_exp_alpha._coeffs = C
 
-    return q
+    exp = self.ht_exp_alpha
 
-  def getRho(self, dm=None):
+    dr = np.array(dr)
+    assert dr.shape == (3,)
+    pts = self.ht_grid.points + dr
+
+    if psi_list is None:
+      psi_list = np.array(range(len(self.occ)))
+    psi_list = np.array(psi_list)
+
+    psi = self.ht_obasis.compute_grid_orb_gradient_exp(exp, pts, psi_list)
+
+    self.ht_exp_alpha._coeffs = mov_back
+
+    return psi
+
+  def getRho(self, dm=None, dr=[0,0,0]):
 
     if dm is None: dm = self.dm()
+    dr = np.array(dr)
+    assert dr.shape == (3,)
 
     out = 2*self.ht_obasis.compute_grid_density_dm(
-      dm, self.ht_grid.points
+      dm, self.ht_grid.points + dr
     )
     return out
 
-  def getDRho(self, dm=None):
+  def getDRho(self, dm=None, dr=[0,0,0]):
 
     if dm is None: dm = self.dm()
+    dr = np.array(dr)
+    assert dr.shape == (3,)
 
     out = 2*self.ht_obasis.compute_grid_gradient_dm(
-      dm, self.ht_grid.points
+      dm, self.ht_grid.points + dr
     )
     return out
 
-  def getSigma(self, dm=None):
-    drho = self.getDRho(dm)
+  def getSigma(self, dm=None, dr=[0,0,0]):
+    drho = self.getDRho(dm, dr=dr)
     return (drho**2).sum(axis=1)
 
-  def _xc_call(self, xc_func, dm, xcFlags, sumup):
+  def _xc_call(self, xc_func, dm, xcFlags, sumup, dr):
 
     if xcFlags is None:
       xcFlags = self.xc
@@ -364,8 +438,8 @@ class inp(GaussianBasisInput):
   
         xc_id = xc_io.get_xcid(xcFlag)
     
-        rho = self.getRho(dm)
-        sigma = self.getSigma(dm)
+        rho = self.getRho(dm, dr=dr)
+        sigma = self.getSigma(dm, dr=dr)
         coords = self.ht_grid.points
   
         out = np.stack(xc_func(rho, sigma, len(coords), xc_id))
@@ -378,35 +452,72 @@ class inp(GaussianBasisInput):
       else:
         return np.stack(outs)
 
-  def fxc(self, dm=None, xcFlags=None, sumup=True):
-    return self._xc_call(libxc_fxc, dm, xcFlags, sumup)
+  def exc(self, dm=None, xcFlags=None, sumup=True, dr=[0,0,0]):
+    return self._xc_call(libxc_exc, dm, xcFlags, sumup, dr)
 
-#    if xcFlags is None:
-#      xcFlags = self.xc
-#    #xc_id = xc_io.get_xcid(xcFlag)
-#
-#    if xcFlags:
-#      outs = []
-#      for xcFlag, scale in xcFlags.iteritems():
-#  
-#        xc_id = xc_io.get_xcid(xcFlag)
-#    
-#        rho = self.getRho(dm)
-#        sigma = self.getSigma(dm)
-#        coords = self.ht_grid.points
-#  
-#        out = np.stack(libxc_fxc(rho, sigma, len(coords), xc_id))
-#        if not sumup:
-#          scale = 1.
-#        outs.append(scale * out)
-#        
-#      if sumup:
-#        return np.stack(outs).sum(axis=0)
-#      else:
-#        return np.stack(outs)
+  def vxc_raw(self, dm=None, xcFlags=None, sumup=True, dr=[0,0,0]):
+    return self._xc_call(libxc_vxc, dm, xcFlags, sumup, dr)
 
-  def exc(self, dm=None, xcFlags=None, sumup=True):
-    return self._xc_call(libxc_exc, dm, xcFlags, sumup)
+  def vxc(self, dm=None, xcFlags=None, sumup=True, dr=[0,0,0]):
+    out = self._xc_call(libxc_vxc, dm, xcFlags, sumup, dr)
+    if is_gga(self) or is_hgga(self):
+      vrho, vsigma = out[0], out[1]
+      vsigma_grad = self.gradFD(self.vxc_raw)[:, 1, :]
+      rho_grad = self.gradFD(self.getRho)
+      rho_div = self.divFD(self.getRho)
+
+      # functional derivative of GGA
+      return vrho - 2 * (rho_div * vsigma + (rho_grad * vsigma_grad).sum(axis=0))
+
+  def fxc(self, dm=None, xcFlags=None, sumup=True, dr=[0,0,0]):
+    return self._xc_call(libxc_fxc, dm, xcFlags, sumup, dr)
+
+  def getPsiCube(self, n, C=None, margin=3, resolution=0.1):
+    psi, grid, shape = self.getPsi(C, [n], margin, resolution, get_shape=True)
+    psi = psi.reshape(shape)
+
+    q = qtk.CUBE()
+    q.build(self.molecule, grid, psi)
+
+    return q
+
+  def AOMatrix_grid(self, val_grid):
+    phis = self.getPhi()
+    out = np.zeros(self.olp.shape)
+    for i in range(len(out)):
+      for j in range(len(out)):
+        out[i, j] = self.ht_grid.integrate(phis[:, i] * val_grid * phis[:, j])
+    return out
+  def gradFD(self, func, func_kwargs={}, eps=1e-4):
+    dx_p = func(dr=[ eps, 0, 0], **func_kwargs)
+    dx_n = func(dr=[-eps, 0, 0], **func_kwargs)
+    dy_p = func(dr=[ 0, eps, 0], **func_kwargs)
+    dy_n = func(dr=[ 0,-eps, 0], **func_kwargs)
+    dz_p = func(dr=[ 0, 0, eps], **func_kwargs)
+    dz_n = func(dr=[ 0, 0,-eps], **func_kwargs)
+
+    grad_x = (dx_p - dx_n) / (2 * eps)
+    grad_y = (dy_p - dy_n) / (2 * eps)
+    grad_z = (dz_p - dz_n) / (2 * eps)
+
+    out = np.stack([grad_x, grad_y, grad_z])
+
+    return out
+
+  def divFD(self, func, func_kwargs={}, eps=1e-4):
+    dx_p = func(dr=[ eps, 0, 0], **func_kwargs)
+    dx_n = func(dr=[-eps, 0, 0], **func_kwargs)
+    dy_p = func(dr=[ 0, eps, 0], **func_kwargs)
+    dy_n = func(dr=[ 0,-eps, 0], **func_kwargs)
+    dz_p = func(dr=[ 0, 0, eps], **func_kwargs)
+    dz_n = func(dr=[ 0, 0,-eps], **func_kwargs)
+    fr0 =  func(**func_kwargs)
+
+    grad2_x = (dx_p - 2 * fr0 + dx_n) / eps ** 2
+    grad2_y = (dy_p - 2 * fr0 + dy_n) / eps ** 2
+    grad2_z = (dz_p - 2 * fr0 + dz_n) / eps ** 2
+
+    return grad2_x + grad2_y + grad2_z
 
   def getRhoCube(self, margin=3, resolution=0.1, dm=None):
 
@@ -415,6 +526,24 @@ class inp(GaussianBasisInput):
     cube_grid, grid, shape = self.cube_grid(margin, resolution)
 
     cube_data_list = 2*self.ht_obasis.compute_grid_density_dm(dm, cube_grid)
+    cube_data = cube_data_list.reshape(shape)
+
+    q = qtk.CUBE()
+    q.build(self.molecule, grid, cube_data)
+
+    return q
+
+  def getSigmaCube(self, margin=3, resolution=0.1, dm=None):
+
+    if dm is None: dm = self.dm()
+
+
+    cube_grid, grid, shape = self.cube_grid(margin, resolution)
+
+    cube_data_list = 2*self.ht_obasis.compute_grid_gradient_dm(
+      dm, cube_grid
+    )
+    cube_data_list = (cube_data_list ** 2).sum(axis=1)
     cube_data = cube_data_list.reshape(shape)
 
     q = qtk.CUBE()
@@ -458,6 +587,7 @@ class inp(GaussianBasisInput):
             
   def getdRho(self, v_ao, margin=None, resolution=None, 
               cube=False, get_shape=False, Coulomb=True, xc=True):
+    """get density response with perturbation v_ao expressed in AO basis"""
 
     C = self.mov
 

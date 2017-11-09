@@ -1,3 +1,11 @@
+xc_map = {
+  "pbe": {"XC_GGA_X_PBE": 1., "XC_GGA_C_PBE": 1.},
+  "pbe0": {"XC_HYB_GGA_XC_PBEH": 1.},
+  "blyp": {"XC_GGA_X_B88": 1., "XC_GGA_C_LYP": 1.},
+  "b3lyp": {"XC_HYB_GGA_XC_B3LYP": 1.},
+  "hse06": {"XC_HYB_GGA_XC_HSE06": 1.}
+}
+
 # modifed from xc_funcs.h of version 3.0.0
 xc_dict = {
   "XC_LDA_X":                         1  , # Exchange                                                              
