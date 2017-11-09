@@ -266,21 +266,21 @@ class CUBE(object):
     self.dV = np.dot(vec(1), np.cross(vec(2), vec(3)))
     self.V = self.dV*self.grid[1,0]*self.grid[2,0]*self.grid[3,0]
 
-  def interpolate(self, **kwargs):
+  def linepoints(self, cube, i):
+    return np.linspace(cube.grid[0, i+1],
+                       cube.grid[i+1,0]*cube.grid[i+1,i+1],
+                       cube.grid[i+1,0])
 
-    def linepoints(cube, i):
-      return np.linspace(cube.grid[0, i+1],
-                         cube.grid[i+1,0]*cube.grid[i+1,i+1],
-                         cube.grid[i+1,0])
+  def interpolate(self, **kwargs):
 
     if 'method' in kwargs:
       method = kwargs['method']
     else:
       method = 'linear'
 
-    xs = linepoints(self, 0)
-    ys = linepoints(self, 1)
-    zs = linepoints(self, 2)
+    xs = self.linepoints(self, 0)
+    ys = self.linepoints(self, 1)
+    zs = self.linepoints(self, 2)
     interp = RGI((xs, ys, zs), self.data, method = method, 
                  bounds_error=False, fill_value=0)
     self.interp = interp
@@ -290,9 +290,9 @@ class CUBE(object):
     # maybe reimplemented via scipy.interpolate.rbf
     self = copy.deepcopy(self)
 
-    xo = linepoints(other, 0)
-    yo = linepoints(other, 1)
-    zo = linepoints(other, 2)
+    xo = self.linepoints(other, 0)
+    yo = self.linepoints(other, 1)
+    zo = self.linepoints(other, 2)
     X, Y, Z = np.meshgrid(xo, yo, zo, indexing='ij')
     points = np.vstack([X.ravel(), Y.ravel(), Z.ravel()]).T
 
@@ -357,6 +357,16 @@ class CUBE(object):
       [sum(self.molecule.Z * self.molecule.R[:,i]) for i in range(3)]
     )
     pQ = pQ * 1.8897259885789
+
+    xo = self.linepoints(self, 0)
+    yo = self.linepoints(self, 1)
+    zo = self.linepoints(self, 2)
+    X, Y, Z = np.meshgrid(xo, yo, zo, indexing='ij')
+    points = np.vstack([X.ravel(), Y.ravel(), Z.ravel()]).T
+
+    pq = np.sum(np.ravel(self.data)[:, np.newaxis] * points, axis=0) * self.dV
+
+    return pQ, pq
 
     
 
@@ -579,27 +589,6 @@ class CUBE(object):
     vectorb = np.array(vector) / 0.529177249
     self.grid[0][1:] = self.grid[0][1:] + vectorb
     self.molecule.shift(np.array(vector))
-
-  def getDipole(self, Z_flag='no_core', component='full'):
-    if Z_flag == 'no_core':
-      Z = [qtk.ve_list[qtk.Z2n(z)] for z in self.molecule.Z]
-    else:
-      Z = self.molecule.Z
-    if abs(self.integrate() - sum(Z)) > 0.2:
-      qtk.setting.quiet = False
-      qtk.warning("net charge is not zero! check Z_flag='all'")
-    pQ = np.array([sum(Z * self.molecule.R[:,i]) 
-      for i in range(3)]) * 1.8897259885789
-    qtk.setting.quiet = True
-    mg = self.meshgrid()
-    qtk.setting.quite = False
-    pq = [(self.data * mg[i]).sum()*self.dV for i in range(3)]
-    if component == 'full':
-      return pQ - pq
-    elif component == 'nuc':
-      return pQ
-    elif component == 'ele':
-      return pq
 
   def range_1D(self):
     qrange =  [self.grid[i,i] * (self.grid[i,0]-1) + self.grid[0,i]
