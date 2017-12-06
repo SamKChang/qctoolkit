@@ -472,9 +472,9 @@ class Molecule(object):
   def stretch(self, targets, direction_indices, distance):
     if type(targets) is not list:
       targets = [targets]
-    direction = [self.R[index] for index in direction_indices]
+    direction = np.array([self.R[index] for index in direction_indices])
     vector = direction[1] - direction[0]
-    vector = distance * vector/np.linalg.norm(vector) + direction[0]
+    vector = distance * vector/np.linalg.norm(vector)
     template = np.zeros([self.N,1])
     template[targets] = 1
     ref = copy.deepcopy(self.R)
