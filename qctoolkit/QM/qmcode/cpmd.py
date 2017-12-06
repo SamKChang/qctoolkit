@@ -114,6 +114,13 @@ class inp(PlanewaveInput):
         inp.write(' MAXITER\n  %d\n' % setting['scf_step'])
       if 'restart' in setting and setting['restart']:
         inp.write(' RESTART WAVEFUNCTION\n')
+      if 'restart_wavefunction_file' in setting:
+        if os.path.exists(setting['restart_wavefunction_file']):
+          inp.dependent_files.append(
+            [setting['restart_wavefunction_file'], 'RESTART']
+          )
+        else:
+          qtk.warning('%s not found' % setting['restart_wavefunction_file'])
       if 'fix_molecule' in setting\
        and setting['fix_molecule']:
         inp.write(' CENTER MOLECULE OFF\n')
