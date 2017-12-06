@@ -132,12 +132,13 @@ def QMRun(inp, program=setting.qmcode, **kwargs):
       out = os.path.splitext(job)[0] + '.out'
       exestr = "%s %s" % (exe, job)
       compute(exestr, out, _threads)
-      rst_list = sorted(glob.glob('RESTART.*'))
-      if rst_list:
-        rst_n = rst_list[-1]
-        if os.path.exists('RESTART'):
-          os.remove('RESTART')
-        os.link(rst_n, 'RESTART')
+      if(len(inp_list) > 1):
+        rst_list = sorted(glob.glob('RESTART.*'))
+        if rst_list:
+          rst_n = rst_list[-1]
+          if os.path.exists('RESTART'):
+            os.remove('RESTART')
+          os.link(rst_n, 'RESTART')
     final_out = re.sub(r'_[0-9][0-9].out$', '.out', out)
     if final_out != out:
       os.copy(out, final_out)
