@@ -4,6 +4,8 @@ import os
 
 version = '0.0.15'
 
+libxc = True
+
 required = [
   'cython',
   'numpy',
@@ -159,27 +161,35 @@ c_module = [Extension(name = "qctoolkit.ML.kernel_matrix",
             ),
            ]
 
-cfg = open('setup.cfg')
-xc_path_lst = filter(lambda x: 'libxc' in x, cfg)
-if len(xc_path_lst) > 0:
-  xc_path = xc_path_lst[0]
-  xc_path = xc_path.split('=')[-1]
-  xc_path = xc_path.split(':')[0]
-  if os.path.exists(xc_path):
-    c_module.append(
-      Extension(name = "qctoolkit.QM.ofdft.libxc_exc", 
-        sources = ['qctoolkit/QM/ofdft/c_extension/libxc_exc.c'],
-        extra_compile_args=['-fPIC', '-lm'],
-        extra_link_args=['-lxc'],
-      )
+#cfg = open('setup.cfg')
+#xc_path_lst = filter(lambda x: 'libxc' in x, cfg)
+#if len(xc_path_lst) > 0:
+if libxc:
+  #xc_path = xc_path_lst[0]
+  #xc_path = xc_path.split('=')[-1]
+  #xc_path = xc_path.split(':')[0]
+  #if os.path.exists(xc_path):
+  c_module.append(
+    Extension(name = "qctoolkit.QM.ofdft.libxc_exc", 
+      sources = ['qctoolkit/QM/ofdft/c_extension/libxc_exc.c'],
+      extra_compile_args=['-fPIC', '-lm'],
+      extra_link_args=['-lxc'],
     )
-    c_module.append(
-      Extension(name = "qctoolkit.QM.ofdft.libxc_vxc", 
-        sources = ['qctoolkit/QM/ofdft/c_extension/libxc_vxc.c'],
-        extra_compile_args=['-fPIC', '-lm'],
-        extra_link_args=['-lxc'],
-      )
+  )
+  c_module.append(
+    Extension(name = "qctoolkit.QM.ofdft.libxc_vxc", 
+      sources = ['qctoolkit/QM/ofdft/c_extension/libxc_vxc.c'],
+      extra_compile_args=['-fPIC', '-lm'],
+      extra_link_args=['-lxc'],
     )
+  )
+  c_module.append(
+    Extension(name = "qctoolkit.QM.ofdft.libxc_fxc", 
+      sources = ['qctoolkit/QM/ofdft/c_extension/libxc_fxc.c'],
+      extra_compile_args=['-fPIC', '-lm'],
+      extra_link_args=['-lxc'],
+    )
+  )
 
 data_inc=[]
 for root, sub_dir, files in os.walk('qctoolkit/data/unittest'):
