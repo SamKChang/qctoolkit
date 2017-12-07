@@ -503,26 +503,27 @@ class Molecule(object):
         assert v.shape == (3,)
 
     if u is None:
-      U = self.principalAxes(order='descent')[1]
-      self.R = np.dot(self.R, U)
-      u = U[2]
+      self._alignAxis()
+    else:      
+      u = np.array(u)
       n1 = np.linalg.norm(u)
       n2 = np.linalg.norm(v)
       angle = np.arccos(np.dot(u, v)/(n1*n2))
-    else:      
-      if np.linalg.norm(u[1]) - u[1] > 1E-8 or u[0] > 0:
-        u = np.array(u)
-        n1 = np.linalg.norm(u)
-        n2 = np.linalg.norm(v)
-        angle = np.arccos(np.dot(u, v)/(n1*n2))
-      else:
-        u = np.array([0, 0, 1])
-        angle = np.pi
 
-    axis = np.cross(u, v)
-    if np.linalg.norm(axis) > 1E-8:
-      axis = axis / np.linalg.norm(axis)
-      self.rotate(angle, axis)
+      axis = np.cross(u, v)
+      if np.linalg.norm(axis) > 1E-8:
+        axis = axis / np.linalg.norm(axis)
+        self.rotate(angle, axis)
+
+  def _alignAxis(self):
+    self.center()
+    V, U = self.principalAxes()
+    if U[0, 0] > 0:
+      self.align(U[:,0])
+    else:
+      self.align(-U[:,0])
+    V, U = self.principalAxes()
+    self.align(U[:,1], axis=np.array([0,1,0]))
 
   def alignSVD(self, mol, ref_list=None, tar_list=None):
     if type(mol) is str:
