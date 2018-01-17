@@ -162,6 +162,8 @@ class CCS(object):
         self.element_count.update(\
           {constraint['element']:\
            self.str2data(constraint['count'])})
+      elif constraint['type'] == 'Z_sum':
+          self.ztotal = constraint['Z_sum']
 
     if param.has_key('span'):
       for span in param['span'].itervalues():
@@ -170,6 +172,7 @@ class CCS(object):
       for replace in param['replace'].itervalues():
         pass # not yet implemented
     if param.has_key('constraint'):
+      self.constraint = True
       for constraint in param['constraint'].itervalues():
         read_constraint(constraint)
 
@@ -347,11 +350,12 @@ class CCS(object):
   def onManifold(self,structure):
     on_manifold = True
     if self.constraint:
-#      if self.ztotal:
-#        if self.ztotal == sum(structure.Z):
-#          on_manifold = on_manifold*True
-#        else:
-#          on_manifold = on_manifold*False
+      # NOTE add ztotal back, not sure the consiquence
+      if self.ztotal > 0:
+        if self.ztotal == sum(structure.Z):
+          on_manifold = on_manifold*True
+        else:
+          on_manifold = on_manifold*False
 #      if self.vtotal:
 #        if self.vtotal == structure.getValenceElectrons():
 #          on_manifold = on_manifold*True
