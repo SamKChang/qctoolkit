@@ -175,7 +175,7 @@ class Molecule(object):
     for i in range(self.N):
       for j in range(i+1, self.N):
         Rij = np.linalg.norm(self.R[i] - self.R[j]) * 1.8897261245650618
-        out -= self.Z[i] * self.Z[j] / Rij
+        out += self.Z[i] * self.Z[j] / Rij
     return out
 
   def view(self, name=None):
