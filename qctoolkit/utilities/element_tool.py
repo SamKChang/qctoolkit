@@ -80,7 +80,10 @@ def Z2n(Z):
     return 'ATOM_%d' % Z
     qtk.warning('Z2n: atomic number not defined, return HETATM')
   else:
-    qtk.exit("Z2n: atomic number " + str(Z) + " is not defined")
+    msg = "Z2n: atomic number " + str(Z) + " is not defined."
+    msg += " attempt to give rounded Z"
+    qtk.warning("Z2n: atomic number " + str(Z) + " is not defined")
+    return np.round(Z)
     #return Z
   
 def n2Z(Zn):
