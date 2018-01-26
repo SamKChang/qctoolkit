@@ -14,12 +14,13 @@ class inp(GaussianBasisInput):
     self.backup()
     if 'gaussian_setting' not in self.setting:
       gaussian_setting = [
+        'Scf(xqc,maxcycle=%d)' % self.setting['scf_step'],
         '6d 10f',
         'nosymm',
-        'Scf(maxcycle=1000,verytight)',
         'int(grid=ultrafine)',
         'IOp(2/12=3)', # allow atoms to be too near
-        'force',
+        'force', # print force, not single point anymore
+        'ExtraLinks=L608', # print energy components
       ]
       self.setting['gaussian_setting'] = gaussian_setting
 
@@ -112,15 +113,30 @@ class inp(GaussianBasisInput):
         and 'Density=Current' not in self.setting['gaussian_setting']:
           self.setting['gaussian_setting'].append('Density=Current')
        
-    if 'nuclear_charges' in self.setting:
-      gaussian_setting.append('Charge')
+    if 'nuclear_charges' in self.setting\
+    and type(self.setting['nuclear_charges']) is not bool:
+      if self.molecule.charge == 0:
+        # massage can only deal with nutral systems
+        gaussian_setting.append('massage')
+        gaussian_setting.append('Guess=Indo')
+      else:
+        # charge will get nuclear repulsion to infinity and failed to converge
+        gaussian_setting.append('Charge')
+        # total energy will be infinity, need to print electronic energy
+        if 'ExtraLinks=L608' not in gaussian_setting:
+          gaussian_setting.append('ExtraLinks=L608')
+        # force calculation not supported
+        if 'force' in gaussian_setting:
+          ind = gaussian_setting.index('force') 
+          gaussian_setting.pop(ind)
     if 'vdw' in self.setting:
       if self.setting['vdw'] == 'd3':
         gaussian_setting.append('EmpiricalDispersion=GD3')
       elif self.setting['vdw'] == 'd2':
         gaussian_setting.append('EmpiricalDispersion=GD2')
     if 'print_energy' in self.setting and self.setting['print_energy']:
-      gaussian_setting.append('ExtraLinks=L608')
+      if 'ExtraLinks=L608' not in gaussian_setting:
+        gaussian_setting.append('ExtraLinks=L608')
     if 'mode' in self.setting and self.setting['mode'] == 'geopt':
       gaussian_setting.append('Opt')
     if type(basis) is str:
@@ -139,19 +155,46 @@ class inp(GaussianBasisInput):
                  molecule.R[i, 1],
                  molecule.R[i, 2]))
 
+    # discard the approach of adding point charge to atom
+    # this approach is less reliable
     if 'nuclear_charges' in self.setting:
       new_Z = self.setting['nuclear_charges']
     else:
-      new_Z = []
-    if new_Z:
+      new_Z = False
+    if type(new_Z) is not bool:
       inp.write('\n')
+
+      if type(new_Z[0]) is list or type(new_Z[0]) is np.ndarray:
+        pass
+      else:
+        assert len(new_Z) == self.molecule.N
+        new_Z = np.vstack([np.arange(len(new_Z)), new_Z]).T
+    
       for chg_list in new_Z:
         for i in range(molecule.N):
           if chg_list[0] == i:
-            Ri = molecule.R[i]
-            charge = chg_list[1]
-            inp.write('% 8.4f % 8.4f % 8.4f  % .3f\n' %\
-                      (Ri[0], Ri[1], Ri[2], charge))
+            chg_flag_list = filter(
+              lambda x: 'charge' in x.lower(), 
+              gaussian_setting
+            )
+            if len(chg_flag_list) > 0:
+              Ri = molecule.R[i]
+              charge = chg_list[1] - molecule.Z[i]
+              inp.write('% 8.4f % 8.4f % 8.4f  % .3f\n' %\
+                        (Ri[0], Ri[1], Ri[2], charge))
+            else:
+              inp.write("%2d Nuc % .3f\n" % (i+1, chg_list[1]))
+    #if 'nuclear_charges' in self.setting:
+    #  inp.write('\n')
+    #  nc = self.setting['nuclear_charges']
+    #  if type(nc) is dict:
+    #    for i, Z in nc.iteritems():
+    #      inp.write('%d Nuc %.4f\n' % (int(i) + 1, float(Z)))
+    #  elif type(nc) is list or type(nc) is np.ndarray:
+    #    assert len(nc) == self.molecule.N
+    #    for i, Z in enumerate(nc):
+    #      inp.write('%d Nuc %.4f\n' % (int(i) + 1, float(Z)))
+     
 
     if type(basis) is dict:
       inp.write('\n')
@@ -165,6 +208,38 @@ class inp(GaussianBasisInput):
           for ec in b[1:]:
             inp.write("  %16.8f  %16.8f\n" % (ec[0], ec[1]))
         inp.write('****\n')
+    elif type(basis) is list and type(basis[0]) is str:
+      # clean up ending new lines
+      for ind_f in range(len(basis)):
+        ind_b = len(basis)-1-ind_f
+        if basis[ind_b] == '\n':
+          basis.pop(ind_b)
+      # clean up heading text, note: no '****' in the begining
+      ind_start = 0
+      qtk.setting.quiet = True
+      for basis_line in basis:
+        symbs = filter(None, basis_line.split(' '))
+        if len(symbs) > 0:
+          if qtk.n2Z(symbs[0]) == 0:
+            ind_start += 1
+          else:
+            break
+        else:
+          ind_start += 1
+      qtk.setting.quiet = False
+      inp.write('\n')
+      Z_float = np.asarray(self.molecule.Z).astype('float')
+      for b_data in basis[ind_start:]:
+        symbs = filter(None, b_data.rstrip().split(' '))
+        # check atom line, two columns with first column with less than 3 words
+        if len(symbs) == 2 and len(symbs[0]) < 3:
+          ZI = qtk.n2Z(symbs[0]) if len(symbs) > 0 else 0
+          if ZI > 0 and ZI in Z_float:
+            skip = False
+          else:
+            skip = True
+        if not skip:
+          inp.write(b_data)
     inp.write('\n\n')
     inp.close()
 
@@ -188,7 +263,7 @@ class out(GaussianBasisOutput):
       try:
         rmsd = filter(pattern.match, final_list)[0]
       except Exception as e:
-        qtk.exit("something wrong when accessing final energy" +\
+        qtk.warning("something wrong when accessing final energy" +\
           " with error message: %s" % str(e))
         
       ind = final_list.index(rmsd) - 1
