@@ -6,10 +6,11 @@ from compiler.ast import flatten
 import numpy as np
 import sys, os
 import shutil
+import subprocess as sp
 
-def qmWriteAll(inp_list, root, **kwargs):
+def qmWriteAll(inp_list, root, overwrite=False, compress=False):
   if os.path.exists(root):
-    if 'overwrite' in kwargs and kwargs['overwrite']:
+    if overwrite:
       qtk.warning("overwrite existing folder %s" % root)
       shutil.rmtree(root)
       os.makedirs(root)
@@ -23,6 +24,13 @@ def qmWriteAll(inp_list, root, **kwargs):
   for inp in inp_list:
     inp.write(inp.molecule.name)
   os.chdir(cwd)
+  if compress:
+    cmd = 'tar -zcf %s %s' % (root + '.tar.gz', root)
+    run = sp.Popen(cmd, shell=True, stdin=sp.PIPE)
+    run.stdin.flush()
+    run.communicate()
+    run.wait()
+    qtk.report("qmWriteAll", "compression completed")
 
 def qmRunAll(inp_list, root=None,**kwargs):
   if 'block_size' not in kwargs:
