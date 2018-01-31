@@ -84,16 +84,9 @@ class inp(GaussianBasisInput):
 
     gaussian_setting = self.setting['gaussian_setting']
 
-    chk_flag = False
-    save_list = [
-      'save_density',
-      'ks_states',
-      'save_wf',
-      'save_restart',
-    ]
-    for s in save_list:
-      if s in self.setting and self.setting[s]:
-        chk_flag = True
+    chk_flag = True
+    if 'save_chk' in self.setting and not self.setting['save_chk']:
+      chk_flag = False
 
     if 'threads' in self.setting:
       inp.write('%%nproc=%d\n' % self.setting['threads'])
