@@ -7,6 +7,18 @@ import qctoolkit.QM.qmjob as qmjob
 import periodictable as pt
 import universal as univ
 
+import pkgutil
+eggs_loader = pkgutil.find_loader('horton')
+found = eggs_loader is not None
+if found:
+  try:
+    import horton as ht
+  except:
+    pass
+else:
+  pass
+
+
 class inp(GaussianBasisInput):
   def __init__(self, molecule, **kwargs):
     GaussianBasisInput.__init__(self, molecule, **kwargs)
@@ -361,6 +373,7 @@ class out(GaussianBasisOutput):
       if read_fchk:
         fchk = os.path.join(self.path, self.stem) + ".fchk"
         if os.path.exists(fchk):
+          self.fchk = fchk
           if 'debug' in kwargs and kwargs['debug']: 
             self.getMO(fchk)
           else:
@@ -508,3 +521,9 @@ class out(GaussianBasisOutput):
         tmp = tmp + 1
         self.basis.append(bfn)
     self.basisFormat()
+
+  def as_horton(self, fchk=None, **kwargs):
+    if fchk is None:
+      fchk = self.fchk
+    return qtk.QMInp(ht.IOData.from_file(fchk), program='horton', **kwargs)
+    

@@ -208,7 +208,8 @@ class Molecule(object):
     elif output == 'string':
       out = ''
       for element in data:
-        out = out + qtk.Z2n(element[0]) + str(element[1])
+        num = str(element[1]) if element[1] > 1 else ''
+        out = out + qtk.Z2n(element[0]) + num
     return out
 
   def build(self, moleculeData=None, name=None, unit='angstrom', **kwargs):

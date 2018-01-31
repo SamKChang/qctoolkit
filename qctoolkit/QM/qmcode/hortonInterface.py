@@ -64,38 +64,45 @@ class inp(GaussianBasisInput):
   __doc__ = GaussianBasisInput.__doc__ + __doc__
   def __init__(self, molecule, **kwargs):
 
-    inp.ht = ht
-
-    if 'theory' not in kwargs:
-      kwargs['theory'] = 'hf'
-
     if 'save_c_type' not in kwargs:
       kwargs['save_c_type'] = True
 
-    if not found:
-      qtk.exit("horton module not found.")
-    if 'wf_convergence' not in kwargs:
-      kwargs['wf_convergence'] = 1e-06
+  
+    if type(molecule) is not io.iodata.IOData:
+      if 'theory' not in kwargs:
+        kwargs['theory'] = 'hf'
+  
+      if not found:
+        qtk.exit("horton module not found.")
+      if 'wf_convergence' not in kwargs:
+        kwargs['wf_convergence'] = 1e-06
+      if 'cholesky' not in kwargs:
+        kwargs['cholesky'] = True
 
-    if 'cholesky' not in kwargs:
-      kwargs['cholesky'] = True
+  
+      GaussianBasisInput.__init__(self, molecule, **kwargs)
+      self.setting.update(kwargs)
+      self.backup()
+  
+      coord = molecule.R * qtk.setting.a2b
+      inp.ht = ht
+      mol = IOData(coordinates=coord, numbers=molecule.Z)
+      obasis = get_gobasis(mol.coordinates, mol.numbers,
+                           self.setting['basis_set'])
+    else:
+      if 'cholesky' not in kwargs:
+        kwargs['cholesky'] = False
+      GaussianBasisInput.__init__(self, molecule, **kwargs)
+      mol = molecule
+      obasis = self.ht_mol.obasis
 
-    GaussianBasisInput.__init__(self, molecule, **kwargs)
-    self.setting.update(kwargs)
-    self.backup()
-
-    coord = molecule.R * qtk.setting.a2b
-
-    mol = IOData(coordinates=coord, numbers=molecule.Z)
-    obasis = get_gobasis(mol.coordinates, mol.numbers,
-                         self.setting['basis_set'])
     grid = BeckeMolGrid(mol.coordinates, mol.numbers, 
                         mol.pseudo_numbers)
 
     olp = obasis.compute_overlap()
     kin = obasis.compute_kinetic()
     na = obasis.compute_nuclear_attraction(mol.coordinates, mol.pseudo_numbers)
-    if self.setting['cholesky']:
+    if 'cholesk' in self.setting and self.setting['cholesky']:
       er = obasis.compute_electron_repulsion_cholesky()
     else:
       er = obasis.compute_electron_repulsion()
@@ -167,7 +174,7 @@ class inp(GaussianBasisInput):
     C = copy.deepcopy(exp_alpha.coeffs.__array__())
     dm = (C * occ).dot(C.T)
 
-    if self.setting['save_c_type']:
+    if 'save_c_type' in self.setting and self.setting['save_c_type']:
       self.ht_mol = mol
       self.ht_grid = grid
       self.grid = grid
@@ -616,6 +623,17 @@ class inp(GaussianBasisInput):
       return q
     else:
       return drho
+
+  def dV_mol(self, mol):
+    try:
+      coord = np.ascontiguousarray(
+        mol.R * qtk.setting.a2b,
+        dtype=np.float64)
+      Z = np.ascontiguousarray(mol.Z, dtype=np.float64)
+      return self.ht_mol.obasis.compute_nuclear_attraction(coord, Z)
+    except Exception as err:
+      raise err
+      qtk.warning("perturbed AO construction failed with err: %s." % str(err))
 
   def d1E(self, v_ao):
     return np.trace(self.dm().dot(v_ao))
