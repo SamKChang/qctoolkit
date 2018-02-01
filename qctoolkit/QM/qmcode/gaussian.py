@@ -117,13 +117,15 @@ class inp(GaussianBasisInput):
         if theory.lower() in density_dict\
         and 'Density=Current' not in self.setting['gaussian_setting']:
           self.setting['gaussian_setting'].append('Density=Current')
+
        
     if 'nuclear_charges' in self.setting\
     and type(self.setting['nuclear_charges']) is not bool:
       if self.molecule.charge == 0:
         # massage can only deal with nutral systems
         gaussian_setting.append('massage')
-        gaussian_setting.append('Guess=Indo')
+        if 'guess' not in self.setting:
+          self.setting['guess'] = 'Indo'
       else:
         # charge will get nuclear repulsion to infinity and failed to converge
         gaussian_setting.append('Charge')
@@ -134,6 +136,11 @@ class inp(GaussianBasisInput):
         if 'force' in gaussian_setting:
           ind = gaussian_setting.index('force') 
           gaussian_setting.pop(ind)
+
+    if 'guess' in self.setting and self.setting['guess']:
+      guess = str(self.setting['guess'])
+      self.setting['gaussian_setting'].append('Guess=%s' % guess)
+
     if 'vdw' in self.setting:
       if self.setting['vdw'] == 'd3':
         gaussian_setting.append('EmpiricalDispersion=GD3')
@@ -160,46 +167,6 @@ class inp(GaussianBasisInput):
                  molecule.R[i, 1],
                  molecule.R[i, 2]))
 
-    # discard the approach of adding point charge to atom
-    # this approach is less reliable
-    if 'nuclear_charges' in self.setting:
-      new_Z = self.setting['nuclear_charges']
-    else:
-      new_Z = False
-    if type(new_Z) is not bool:
-      inp.write('\n')
-
-      if type(new_Z[0]) is list or type(new_Z[0]) is np.ndarray:
-        pass
-      else:
-        assert len(new_Z) == self.molecule.N
-        new_Z = np.vstack([np.arange(len(new_Z)), new_Z]).T
-    
-      for chg_list in new_Z:
-        for i in range(molecule.N):
-          if chg_list[0] == i:
-            chg_flag_list = filter(
-              lambda x: 'charge' in x.lower(), 
-              gaussian_setting
-            )
-            if len(chg_flag_list) > 0:
-              Ri = molecule.R[i]
-              charge = chg_list[1] - molecule.Z[i]
-              inp.write('% 8.4f % 8.4f % 8.4f  % .3f\n' %\
-                        (Ri[0], Ri[1], Ri[2], charge))
-            else:
-              inp.write("%2d Nuc % .3f\n" % (i+1, chg_list[1]))
-    #if 'nuclear_charges' in self.setting:
-    #  inp.write('\n')
-    #  nc = self.setting['nuclear_charges']
-    #  if type(nc) is dict:
-    #    for i, Z in nc.iteritems():
-    #      inp.write('%d Nuc %.4f\n' % (int(i) + 1, float(Z)))
-    #  elif type(nc) is list or type(nc) is np.ndarray:
-    #    assert len(nc) == self.molecule.N
-    #    for i, Z in enumerate(nc):
-    #      inp.write('%d Nuc %.4f\n' % (int(i) + 1, float(Z)))
-     
 
     if type(basis) is dict:
       inp.write('\n')
@@ -245,6 +212,47 @@ class inp(GaussianBasisInput):
             skip = True
         if not skip:
           inp.write(b_data)
+
+    # discard the approach of adding point charge to atom
+    # this approach is less reliable
+    if 'nuclear_charges' in self.setting:
+      new_Z = self.setting['nuclear_charges']
+    else:
+      new_Z = False
+    if type(new_Z) is not bool:
+      inp.write('\n')
+
+      if type(new_Z[0]) is list or type(new_Z[0]) is np.ndarray:
+        pass
+      else:
+        assert len(new_Z) == self.molecule.N
+        new_Z = np.vstack([np.arange(len(new_Z)), new_Z]).T
+    
+      for chg_list in new_Z:
+        for i in range(molecule.N):
+          if chg_list[0] == i:
+            chg_flag_list = filter(
+              lambda x: 'charge' in x.lower(), 
+              gaussian_setting
+            )
+            if len(chg_flag_list) > 0:
+              Ri = molecule.R[i]
+              charge = chg_list[1] - molecule.Z[i]
+              inp.write('% 8.4f % 8.4f % 8.4f  % .3f\n' %\
+                        (Ri[0], Ri[1], Ri[2], charge))
+            else:
+              inp.write("%2d Nuc % .3f\n" % (i+1, chg_list[1]))
+    #if 'nuclear_charges' in self.setting:
+    #  inp.write('\n')
+    #  nc = self.setting['nuclear_charges']
+    #  if type(nc) is dict:
+    #    for i, Z in nc.iteritems():
+    #      inp.write('%d Nuc %.4f\n' % (int(i) + 1, float(Z)))
+    #  elif type(nc) is list or type(nc) is np.ndarray:
+    #    assert len(nc) == self.molecule.N
+    #    for i, Z in enumerate(nc):
+    #      inp.write('%d Nuc %.4f\n' % (int(i) + 1, float(Z)))
+     
     inp.write('\n\n')
     inp.close()
 
@@ -522,8 +530,9 @@ class out(GaussianBasisOutput):
         self.basis.append(bfn)
     self.basisFormat()
 
-  def as_horton(self, fchk=None, **kwargs):
+  def as_horton(self, fchk=None, reinitialize=True, **kwargs):
     if fchk is None:
       fchk = self.fchk
+    kwargs['reinitialize'] = reinitialize
     return qtk.QMInp(ht.IOData.from_file(fchk), program='horton', **kwargs)
     

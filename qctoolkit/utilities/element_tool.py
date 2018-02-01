@@ -71,20 +71,16 @@ def n2ve(Zn):
     qtk.exit("n2ve: element type " + Zn + " is not defined")
 
 def Z2n(Z):
-  if type_list.has_key(Z):
-    return type_list[Z]
-  elif type(Z) is float:
-    return 'ATOM_%4.2f' % Z
-    qtk.warning('Z2n: atomic number not defined, return HETATM')
-  elif type(Z) is int:
-    return 'ATOM_%d' % Z
-    qtk.warning('Z2n: atomic number not defined, return HETATM')
-  else:
+  try: 
+    Z = np.round(Z).astype(int)
+    if type_list.has_key(Z):
+      return type_list[Z]
+    else:
+      return 'X'
+  except Exception as err:
     msg = "Z2n: atomic number " + str(Z) + " is not defined."
-    msg += " attempt to give rounded Z"
-    qtk.warning("Z2n: atomic number " + str(Z) + " is not defined")
-    return np.round(Z)
-    #return Z
+    qtk.warning(msg)
+    return str(Z)
   
 def n2Z(Zn):
   match = [m for m in z_list.iterkeys() if m in Zn]

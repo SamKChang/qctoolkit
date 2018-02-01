@@ -66,8 +66,11 @@ class inp(GaussianBasisInput):
 
     if 'save_c_type' not in kwargs:
       kwargs['save_c_type'] = True
+    if 'becke_grid' not in kwargs:
+      kwargs['becke_grid'] = 'fine'
+    init_flag = True
 
-  
+    converged = False
     if type(molecule) is not io.iodata.IOData:
       if 'theory' not in kwargs:
         kwargs['theory'] = 'hf'
@@ -90,14 +93,27 @@ class inp(GaussianBasisInput):
       obasis = get_gobasis(mol.coordinates, mol.numbers,
                            self.setting['basis_set'])
     else:
+      converged = True
       if 'cholesky' not in kwargs:
         kwargs['cholesky'] = False
+      if 'reinitialize' in kwargs and kwargs['reinitialize']:
+        init_flag = True
+      else:
+        init_flag = False
+
       GaussianBasisInput.__init__(self, molecule, **kwargs)
       mol = molecule
       obasis = self.ht_mol.obasis
 
-    grid = BeckeMolGrid(mol.coordinates, mol.numbers, 
-                        mol.pseudo_numbers)
+
+    try:
+      grid = BeckeMolGrid(mol.coordinates, mol.numbers, 
+                          mol.pseudo_numbers, self.setting['becke_grid'])
+    except Exception as err:
+      qtk.warning('becke grid failed with err: %s' % str(err) + \
+                  ' attempt to round integer nuclear charges')
+      grid = BeckeMolGrid(mol.coordinates, mol.numbers, 
+                          np.array(mol.numbers), self.setting['becke_grid'])
 
     olp = obasis.compute_overlap()
     kin = obasis.compute_kinetic()
@@ -107,88 +123,101 @@ class inp(GaussianBasisInput):
     else:
       er = obasis.compute_electron_repulsion()
 
-    exp_alpha = orb_alpha = Orbitals(obasis.nbasis)
-    
-    # Initial guess
-    guess_core_hamiltonian(olp, kin + na, exp_alpha)
-
-    external = {'nn': compute_nucnuc(mol.coordinates, 
-                                     mol.pseudo_numbers)}
-    theory = self.setting['theory']
-    if theory in xc_info.xc_map:
-      self.xc = xc_info.xc_map[theory]
-    else:
-      self.xc = None
-
-    terms = [
-       RTwoIndexTerm(kin, 'kin'),
-       RTwoIndexTerm(na, 'ne'),
-       RDirectTerm(er, 'hartree'),
-    ]
-    if self.setting['theory'] == 'hf':
-      terms.append(RExchangeTerm(er, 'x_hf'))
-    elif self.setting['theory'] == 'pbe':
-      libxc_terms = [
-        RLibXCGGA('x_pbe'),
-        RLibXCGGA('c_pbe'),
-      ]
-      terms.append(RGridGroup(obasis, grid, libxc_terms))
-    elif self.setting['theory'] == 'blyp':
-      libxc_terms = [
-        RLibXCGGA('x_b88'),
-        RLibXCGGA('c_lyp'),
-      ]
-      terms.append(RGridGroup(obasis, grid, libxc_terms))
-    elif self.setting['theory'] == 'pbe0':
-      hyb_term = RLibXCHybridGGA('xc_pbeh')
-      terms.append(RGridGroup(obasis, grid, [hyb_term]))
-      terms.append(RExchangeTerm(er, 'x_hf', hyb_term.get_exx_fraction()))
-    elif self.setting['theory'] == 'b3lyp':
-      hyb_term = RLibXCHybridGGA('xc_b3lyp')
-      terms.append(RGridGroup(obasis, grid, [hyb_term]))
-      terms.append(RExchangeTerm(er, 'x_hf', hyb_term.get_exx_fraction()))
-    elif self.setting['theory'] == 'hse06':
-      hyb_term = RLibXCHybridGGA('xc_hse06')
-      terms.append(RGridGroup(obasis, grid, [hyb_term]))
-      terms.append(RExchangeTerm(er, 'x_hf', hyb_term.get_exx_fraction()))
-    elif self.setting['theory'] == 'tpss':
-      libxc_terms = [
-        RLibXCMGGA('x_tpss'),
-        RLibXCMGGA('c_tpss'),
-      ]
-      terms.append(RGridGroup(obasis, grid, libxc_terms))
-    elif self.setting['theory'] == 'm05':
-      hyb_term = RLibXCHybridMGGA('xc_m05')
-      terms.append(RGridGroup(obasis, grid, [hyb_term]))
-      terms.append(RExchangeTerm(er, 'x_hf', hyb_term.get_exx_fraction()))
-    ham = REffHam(terms, external)
-
-    occ_model = AufbauOccModel(
-      int((sum(self.molecule.Z) - self.molecule.charge)/ 2.)
-    )
-    occ_model.assign(orb_alpha)
-
     occ = np.zeros(olp.shape[0])
     N = int(sum(self.molecule.Z) - self.molecule.charge)
     occ[:N/2] = 1
+    if not converged or init_flag:
+      if converged:
+        exp_alpha = orb_alpha = self.ht_mol.orb_alpha
+      else:
+        exp_alpha = orb_alpha = Orbitals(obasis.nbasis)
+        # Initial guess
+        guess_core_hamiltonian(olp, kin + na, exp_alpha)
+  
+      external = {'nn': compute_nucnuc(mol.coordinates, 
+                                       mol.pseudo_numbers)}
+      theory = self.setting['theory']
+      if theory in xc_info.xc_map:
+        self.xc = xc_info.xc_map[theory]
+      else:
+        self.xc = None
+  
+      terms = [
+         RTwoIndexTerm(kin, 'kin'),
+         RTwoIndexTerm(na, 'ne'),
+         RDirectTerm(er, 'hartree'),
+      ]
+      if self.setting['theory'] == 'hf':
+        terms.append(RExchangeTerm(er, 'x_hf'))
+      elif self.setting['theory'] == 'pbe':
+        libxc_terms = [
+          RLibXCGGA('x_pbe'),
+          RLibXCGGA('c_pbe'),
+        ]
+        terms.append(RGridGroup(obasis, grid, libxc_terms))
+      elif self.setting['theory'] == 'blyp':
+        libxc_terms = [
+          RLibXCGGA('x_b88'),
+          RLibXCGGA('c_lyp'),
+        ]
+        terms.append(RGridGroup(obasis, grid, libxc_terms))
+      elif self.setting['theory'] == 'pbe0':
+        hyb_term = RLibXCHybridGGA('xc_pbeh')
+        terms.append(RGridGroup(obasis, grid, [hyb_term]))
+        terms.append(RExchangeTerm(er, 'x_hf', hyb_term.get_exx_fraction()))
+      elif self.setting['theory'] == 'b3lyp':
+        hyb_term = RLibXCHybridGGA('xc_b3lyp')
+        terms.append(RGridGroup(obasis, grid, [hyb_term]))
+        terms.append(RExchangeTerm(er, 'x_hf', hyb_term.get_exx_fraction()))
+      elif self.setting['theory'] == 'hse06':
+        hyb_term = RLibXCHybridGGA('xc_hse06')
+        terms.append(RGridGroup(obasis, grid, [hyb_term]))
+        terms.append(RExchangeTerm(er, 'x_hf', hyb_term.get_exx_fraction()))
+      elif self.setting['theory'] == 'tpss':
+        libxc_terms = [
+          RLibXCMGGA('x_tpss'),
+          RLibXCMGGA('c_tpss'),
+        ]
+        terms.append(RGridGroup(obasis, grid, libxc_terms))
+      elif self.setting['theory'] == 'm05':
+        hyb_term = RLibXCHybridMGGA('xc_m05')
+        terms.append(RGridGroup(obasis, grid, [hyb_term]))
+        terms.append(RExchangeTerm(er, 'x_hf', hyb_term.get_exx_fraction()))
+      ham = REffHam(terms, external)
+  
+      occ_model = AufbauOccModel(
+        int((sum(self.molecule.Z) - self.molecule.charge)/ 2.)
+      )
+      if not converged:
+        occ_model.assign(orb_alpha)
+  
+    else:
+      exp_alpha = self.ht_mol.orb_alpha
+      self.Et = self.ht_mol.energy
+      self.dipole = self.ht_mol.dipole_moment
+      qd = np.zeros((3,3))
+      hqd = self.ht_mol.quadrupole_moment
+      qd[np.triu_indices(3, 0)] = hqd
+      self.quadrupole = qd
+      
+      self.ht_mol.quadrupole_moment
     C = copy.deepcopy(exp_alpha.coeffs.__array__())
     dm = (C * occ).dot(C.T)
-
+   
     if 'save_c_type' in self.setting and self.setting['save_c_type']:
       self.ht_mol = mol
       self.ht_grid = grid
       self.grid = grid
-      self.ht_external = external
       self.ht_obasis = obasis
-      self.ht_occ_model = occ_model
       self.ht_olp = olp
-      self.ht_kin = kin
-      self.ht_na = na
-      self.ht_er = er
-      self.ht_exp_alpha = exp_alpha
-      self.ht_dm_alpha = exp_alpha.to_dm()
-      self.ht_terms = terms
-      self.ht_ham = ham
+      if init_flag:
+        self.ht_external = external
+        self.ht_exp_alpha = exp_alpha
+        self.ht_dm_alpha = exp_alpha.to_dm()
+        self.ht_terms = terms
+        self.ht_ham = ham
+        self.ht_occ_model = occ_model
+        
     else:
       self.grid_points = grid.points
       self.grid_weights = grid.weights
@@ -197,7 +226,10 @@ class inp(GaussianBasisInput):
     self.S = self.olp
     self.kin = kin.__array__()
     self.T = self.kin
-    self.nn = external['nn']
+    if not converged:
+      self.nn = external['nn']
+    else:
+      self.nn = self.molecule.nuclear_repulsion()
     try:
       d, U = np.linalg.eigh(self.olp)
       self.X = U.dot(np.diag(np.sqrt(1/d)).dot(U.T))
@@ -213,6 +245,18 @@ class inp(GaussianBasisInput):
     self.occupation = 2*occ
     self.v_ext = self.na
     #self.dm = dm_alpha.__array__()
+
+  def __repr__(self):
+    try:
+      return str(self.Et)
+    except:
+      return self.molecule.name + ': horton'
+
+  def initialize(self):
+    self.ht_exp_alpha = Orbitals(self.ht_obasis.nbasis)
+    guess_core_hamiltonian(self.olp, self.kin + self.na, self.ht_exp_alpha)
+    self.ht_occ_model.assign(self.ht_exp_alpha)
+    self.ht_dm_alpha = self.ht_exp_alpha.to_dm()
 
   def run(self, name=None, **kwargs):
 
@@ -281,6 +325,14 @@ class inp(GaussianBasisInput):
     dm = self.dm(C=C)
     return 2 * np.trace(dm.dot(self.T))
 
+  def e_ext(self, C=None):
+    dm = self.dm(C=C)
+    return 2 * np.trace(dm.dot(self.v_ext))
+
+  def e_ao(self, ao, C=None):
+    dm = self.dm(C=C)
+    return 2 * np.trace(dm.dot(ao))
+
   def e_xc(self, C=None):
     dm = self.dm(C=C)
     exc = self.exc(dm)
@@ -290,16 +342,17 @@ class inp(GaussianBasisInput):
   def e_coulomb(self, C=None):
     return self.ht_ham.cache['energy_hartree']
 
-  #def e_coulomb(self, C=None):
-  #  dm = self.dm(C=C)
-  #  J_kernel = np.tensordot(dm, self.U, axes=([0,1], [0,2]))
-  #  return 2 * np.trace(dm.dot(J_kernel))
+  def e_coulomb(self, C=None):
+    if len(self.U.shape) == 4:
+      dm = self.dm(C=C)
+      J_kernel = np.tensordot(dm, self.U, axes=([0,1], [0,2]))
+      return 2 * np.trace(dm.dot(J_kernel))
 
-  #def e_xx(self, C=None):
-  #  dm = self.dm(C=C)
-  #  J_kernel = np.tensordot(dm, self.U, axes=([0,1], [0,1]))
-  #  return -np.trace(dm.dot(J_kernel))
-    
+  def e_xx(self, C=None):
+    if len(self.U.shape) == 4:
+      dm = self.dm(C=C)
+      J_kernel = np.tensordot(dm, self.U, axes=([0,1], [0,1]))
+      return -np.trace(dm.dot(J_kernel))
 
   def dm(self, C=None):
     if C is None: C = self.mov
@@ -632,11 +685,16 @@ class inp(GaussianBasisInput):
       Z = np.ascontiguousarray(mol.Z, dtype=np.float64)
       return self.ht_mol.obasis.compute_nuclear_attraction(coord, Z)
     except Exception as err:
-      raise err
       qtk.warning("perturbed AO construction failed with err: %s." % str(err))
 
+  def dV_ao_ZRCoords(self, ZR):
+    ZR = np.asarray(ZR)
+    Z = np.ascontiguousarray(ZR[:, 0], dtype=np.float64)
+    coord = np.ascontiguousarray(ZR[:, 1:], dtype=np.float64) * qtk.setting.a2b
+    return self.ht_obasis.compute_nuclear_attraction(coord, Z)
+
   def d1E(self, v_ao):
-    return np.trace(self.dm().dot(v_ao))
+    return 2 * np.trace(self.dm().dot(v_ao))
 
   def d2E(self, v_ao, Coulomb=True, xc=True):
     C = self.mov
@@ -653,7 +711,7 @@ class inp(GaussianBasisInput):
             j, b = ia_list[t]
             dE += M_inv[s, t] * v_mo[j, b] * v_mo[i, a]
 
-    return d2E
+    return dE
 
   def delete_ht_types(self):
     for attr in dir(self):
