@@ -201,17 +201,28 @@ class inp(GaussianBasisInput):
       qtk.setting.quiet = False
       inp.write('\n')
       Z_float = np.asarray(self.molecule.Z).astype('float')
+      Z_basis = []
       for b_data in basis[ind_start:]:
         symbs = filter(None, b_data.rstrip().split(' '))
         # check atom line, two columns with first column with less than 3 words
         if len(symbs) == 2 and len(symbs[0]) < 3:
           ZI = qtk.n2Z(symbs[0]) if len(symbs) > 0 else 0
           if ZI > 0 and ZI in Z_float:
+            Z_basis.append(ZI)
             skip = False
           else:
             skip = True
         if not skip:
           inp.write(b_data)
+
+      Z_basis = np.asarray(Z_basis).astype('float')
+      Z_shared = set(Z_basis) & set(Z_float)
+      if not len(Z_shared) == len(set(Z_basis)) == len(set(Z_float)):
+        Z_missing = []
+        for z in Z_float:
+          if len(np.ones(len(Z_basis))[Z_basis == z]) == 0:
+            Z_missing.append(qtk.Z2n(z))
+        qtk.warning("Basis function missing for elements: %s" % str(Z_missing))
 
     # discard the approach of adding point charge to atom
     # this approach is less reliable
@@ -534,5 +545,9 @@ class out(GaussianBasisOutput):
     if fchk is None:
       fchk = self.fchk
     kwargs['reinitialize'] = reinitialize
-    return qtk.QMInp(ht.IOData.from_file(fchk), program='horton', **kwargs)
+    hto = qtk.QMInp(ht.IOData.from_file(fchk), program='horton', **kwargs)
+    name = os.path.splitext(self.name)[0]
+    hto.name = name
+    hto.molecule.name = name
+    return hto
     
