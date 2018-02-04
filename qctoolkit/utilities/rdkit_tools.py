@@ -6,6 +6,7 @@ import pkgutil
 if pkgutil.find_loader('pyscf') is not None:
   from rdkit import Chem
   from rdkit.Chem import AllChem, rdMolTransforms, rdMolDescriptors
+  from rdkit.Chem.Draw import rdMolDraw2D
   import rdkit.Chem.rdForceFieldHelpers as rcr
   from rdkit.Geometry.rdGeometry import Point3D
 
