@@ -893,6 +893,17 @@ class Molecule(object):
   def copy(self):
     return copy.deepcopy(self)
 
+  def element_count(self, elements=None, no_H=True):
+    sto_dict = self.stoichiometry(output='dictionary')
+
+    if elements is None:
+      elements = sto_dict.keys()
+
+    if no_H:
+      elements = [_ for _ in elements if 'H' not in _]
+
+    return np.sum([sto_dict[e] for e in elements])
+
   # tested by qminp
   def sort(self, order = 'Zxyz', inplace=True):
     odict = {'x':0, 'y':1, 'z':2}
