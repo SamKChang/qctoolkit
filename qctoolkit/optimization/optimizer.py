@@ -107,8 +107,6 @@ class Optimizer(object):
       )
 
   def update(self, inp_list, out_list, info_list):
-    print len(inp_list), len(out_list), len(info_list)
-    print inp_list, out_list
     for i in range(len(inp_list)):
       content = str(inp_list[i])
       comment = str(info_list[i])
@@ -182,7 +180,7 @@ class Optimizer(object):
               new_coord, *evl_args, **evl_kwgs)
     else:
       out = self.target_function(new_coord, *evl_args)
-    print out
+    qtk.report('evaluate', 'current result %s' % str(out))
     if type(out) is tuple or type(out) is list:
       out_info = out[1:]
       out = out[0]

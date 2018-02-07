@@ -22,7 +22,6 @@ def mc(target_function, ccs_coord, ccs_span, inp_list, **kwargs):
     itr += 1
     if itr > 100:
       itr = 30
-      print list(zip(E_list,coord_list))
       E_list = E_list[-30:]
       coord_list = coord_list[-30:]
 
