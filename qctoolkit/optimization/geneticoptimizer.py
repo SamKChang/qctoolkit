@@ -69,9 +69,6 @@ class GeneticOptimizer(opt.Optimizer):
       qtk.progress("Optimizer", "GE iteration with %d new points" % len(pop))
       self.register(pop)
       fit, info = self.fitness(pop)
-      print pop
-      print fit
-      print info
       step += 1
       if type(fit) is list:
         self.update(pop, fit, info)
