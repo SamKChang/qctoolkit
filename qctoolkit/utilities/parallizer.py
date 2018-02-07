@@ -7,6 +7,7 @@ import numpy as np
 import sys, os
 import shutil
 import subprocess as sp
+import pickle
 
 def qmWriteAll(inp_list, root, overwrite=False, compress=False):
   if os.path.exists(root):
@@ -67,6 +68,7 @@ def qmRunJob(inp, name):
 def parallelize(target_function, 
                 input_list, 
                 n_output = 1,
+                threads = None,
                 **kwargs):
   """
   target_function is implemented in a general way
@@ -91,9 +93,7 @@ def parallelize(target_function,
     out_list = parallelize(f, input_list, block_size=10)
   """
 
-  if 'threads' in kwargs:
-    threads = kwargs['threads']
-  else:
+  if threads is None:
     threads = setting.cpu_count
   if 'block_size' in kwargs:
     block_size = kwargs['block_size']
@@ -103,10 +103,18 @@ def parallelize(target_function,
     else:
       block_size = 1
 
+  try:
+    with open('_pickle_test.pkl', 'w') as _p:
+      pickle.dump(input_list[0], _p)
+    os.remove('_pickle_test.pkl')
+  except Exception as err:
+    qtk.warning("pickling failed, subprocess only works if pickle is possible")
+    qtk.exit(str(err))
+
   #############################################
   # runing target function of a single thread #
   #############################################
-  def run_jobs(q_in, q_out):
+  def run_jobs(q_in, q_out=None):
     for inps in iter(q_in.get, None):
       ind = inps[-1]    # index of job
       inps = inps[:-1]  # actual input sequence
@@ -119,10 +127,12 @@ def parallelize(target_function,
             out.append(target_function(*args, **kwargs))
           else:
             out.append(target_function(*args))
-        q_out.put([out, ind]) # output result with index
+        if q_out:
+          q_out.put([out, ind]) # output result with index
       except: 
         qtk.warning('job failed!')
-        q_out.put([np.nan, ind])
+        if q_out:
+          q_out.put([np.nan, ind])
   ###### end of single thread definition ######
 
   # devide input_list into chunks according to block_size
@@ -140,7 +150,10 @@ def parallelize(target_function,
   # start process with empty queue
   jobs = []
   for thread in range(threads):
-    p =  mp.Process(target=run_jobs, args=(qinp, qout))
+    if n_output > 0:
+      p =  mp.Process(target=run_jobs, args=(qinp, qout))
+    else:
+      p =  mp.Process(target=run_jobs, args=(qinp,))
     p.start()
     jobs.append(p)
 
@@ -157,7 +170,8 @@ def parallelize(target_function,
   for i in range(len(input_block)):
     # collect output from each subprocess
     try:
-      output_stack.append(qout.get())
+      if n_output > 0:
+        output_stack.append(qout.get())
     # check keyboard interrupt and terminate subprocess
     except KeyboardInterrupt:
       qtk.warning('jobs terminated by keyboard interrupt')
@@ -171,11 +185,15 @@ def parallelize(target_function,
   for thread in jobs:
     thread.join()
 
+  print 'yo'
   # clean up queues
   while not qinp.empty():
     qinp.get()
-  while not qout.empty():
-    qout.get()
+  print '1'
+  if n_output > 0:
+    while not qout.empty():
+      qout.get()
+  print '2'
 
   if len(output_stack)>0:
     # sort/restructure output according to input order
@@ -187,8 +205,10 @@ def parallelize(target_function,
   out = list(qtk.flatten(output))
   if n_output == 1:
     return out
-  else:
+  elif n_output > 1:
     out_list = []
     for i in range(n_output):
       out_list.append(out[i::n_output])
     return tuple(out_list)
+  else:
+    return 0
