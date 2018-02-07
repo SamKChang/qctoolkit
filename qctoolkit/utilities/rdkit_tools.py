@@ -4,10 +4,13 @@ import os
 import pkgutil
 
 if pkgutil.find_loader('rdkit') is not None:
-  from rdkit import Chem
-  from rdkit.Chem import AllChem, rdMolTransforms, rdMolDescriptors
+  from rdkit import Chem, rdBase
+  from rdkit.Chem import AllChem, rdMolTransforms, rdMolDescriptors, Draw
   import rdkit.Chem.rdForceFieldHelpers as rcr
   from rdkit.Geometry.rdGeometry import Point3D
+
+if pkgutil.find_loader('py3Dmol') is not None:
+  import py3Dmol
 
 def mol2rdk(mol, **kwargs):
   if 'removeHs' not in kwargs:
@@ -37,7 +40,7 @@ def rdk2mol(rdmol):
   mol.build(ZR)
   return mol
 
-def geopt(mol, forcefield='uff', max_iter=500, **kwargs):
+def geopt(mol, forcefield='uff', max_iter=2000, **kwargs):
 
   if type(mol) is not Chem.rdchem.Mol:
     rdmol = mol2rdk(mol)
@@ -115,3 +118,20 @@ def mol2svg(mol,
   drawer.FinishDrawing()
   svg = drawer.GetDrawingText()
   return svg.replace('svg:','')
+
+def show3D(mol, size=(400,400), background_color='0xeeeeee', confId=-1):
+  rdm = mol2rdk(mol)
+  Chem.AssignAtomChiralTagsFromStructure(rdm)
+  AllChem.EmbedMolecule(
+    rdm,
+    useExpTorsionAnglePrefs=True,
+    useBasicKnowledge=True
+  )
+  mb = Chem.MolToMolBlock(rdm,confId=confId)
+  p = py3Dmol.view(width=size[0],height=size[1])
+  p.removeAllModels()
+  p.addModel(mb,'sdf')
+  p.setStyle({'stick':{}})
+  p.setBackgroundColor(background_color)
+  p.zoomTo()
+  return p.show()
