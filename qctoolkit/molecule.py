@@ -170,6 +170,9 @@ class Molecule(object):
   def copy(self):
     return copy.deepcopy(self)
 
+  def geopt(self, forcefield='uff', max_iter=2000):
+    return qtk.rdk.geopt(self, forcefield, max_iter)
+
   def nuclear_repulsion(self):
     out = 0.
     for i in range(self.N):
@@ -177,24 +180,6 @@ class Molecule(object):
         Rij = np.linalg.norm(self.R[i] - self.R[j]) * 1.8897261245650618
         out += self.Z[i] * self.Z[j] / Rij
     return out
-
-  def view(self, name=None):
-    tmp = copy.deepcopy(self)
-    if qtk.imported('pymol'):
-      qtk.report("Molecule", "initializing pymol...", color=None)
-      import pymol
-      pymol.finish_launching()
-    else:
-      pymol.cmd.reinitialize()
-      sleep(0.5)
-    if name:
-      tmp_file = name + "_tmp_" + str(Molecule.mol_id) + '.xyz'
-    else:
-      tmp_file = 'pymol_tmp_' + str(Molecule.mol_id) + '.xyz'
-    Molecule.mol_id = Molecule.mol_id + 1
-    tmp.write_xyz(tmp_file)
-    pymol.cmd.load(tmp_file)
-    os.remove(tmp_file)
 
   # tested
   def stoichiometry(self, output='string', **kwargs):
