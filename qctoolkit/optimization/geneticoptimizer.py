@@ -62,9 +62,14 @@ class GeneticOptimizer(opt.Optimizer):
       )
       return out
 
-  def run(self):
+  def run(self, report_step=100):
     step = 0
+    qtk.setting.quiet = True
     while not self.converged() and step < self.max_step:
+      if report_step:
+        if step % report_step == 0:
+          qtk.setting.quiet = False
+          qtk.progress('GA', '%d steps' % step)
       pop = self.get_pop()
       qtk.progress("Optimizer", "GE iteration with %d new points" % len(pop))
       self.register(pop)
@@ -74,3 +79,4 @@ class GeneticOptimizer(opt.Optimizer):
         self.update(pop, fit, info)
       else:
         self.update(pop, [fit], [info])
+      qtk.setting.quiet = True
