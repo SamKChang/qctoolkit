@@ -3,7 +3,7 @@ import qctoolkit as qtk
 import os
 import pkgutil
 
-if pkgutil.find_loader('pyscf') is not None:
+if pkgutil.find_loader('rdkit') is not None:
   from rdkit import Chem
   from rdkit.Chem import AllChem, rdMolTransforms, rdMolDescriptors
   import rdkit.Chem.rdForceFieldHelpers as rcr
