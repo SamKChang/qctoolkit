@@ -161,7 +161,7 @@ class CCS(object):
       if constraint['type'] == 'element_count':
         self.element_count.update(\
           {constraint['element']:\
-           self.str2data(constraint['count'])})
+           self.str2data(str(constraint['count']))})
       elif constraint['type'] == 'Z_sum':
           self.ztotal = constraint['Z_sum']
 
@@ -368,7 +368,7 @@ class CCS(object):
   ###########################################
   # GENERATE A RANDOM POINT ON CCS MANIFOLD #
   ###########################################
-  def random(self, **kwargs):
+  def random(self, max_attemp=10000, **kwargs):
 
     def map2list(index, nested_list):
       new_list = flatten(nested_list)
@@ -389,12 +389,12 @@ class CCS(object):
         _targ = copy.deepcopy(self.mutation_target)
 
 
-      # algorithm for element_count constraint
-      # 1. construct mapping from flattened to nested mutation list
-      # 2. select all candidate indices for constrainted element
-      # 3. remove constrained element from target lists
-      # 4. random choice of candidate for constrained mutation
-      # 5. loop through all other indices without constrained elem
+        # algorithm for element_count constraint
+        # 1. construct mapping from flattened to nested mutation list
+        # 2. select all candidate indices for constrained element
+        # 3. remove constrained element from target lists
+        # 4. random choice of candidate for constrained mutation
+        # 5. loop through all other indices without constrained elem
 
         # single constraint implementation
         if self.element_count:
@@ -465,13 +465,17 @@ class CCS(object):
 
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!
     # loop until a point is found
-    while True:
+    #for _ in range(max_attemp):
+    for _ in range(max_attemp):
       mut_vec = None
-      while mut_vec is None:
+      for _ in range(max_attemp):
+      #while mut_vec is None:
         try:
           mut_vec = random_coord(self,'mutation')
         except:
           pass
+        if mut_vec is not None:
+          break
       str_vec = random_coord(self,'stretching')
       rot_vec = random_coord(self,'rotation')
       query = {}
@@ -480,6 +484,9 @@ class CCS(object):
       if str_vec:
         query.update({'stretching':str_vec})
 
+      if not query:
+        msg = "no structure found within the constraints, return base molecule"
+        qtk.warning(msg)
       new_structure = self.generate(**query)
       if self.onManifold(new_structure):
         break
