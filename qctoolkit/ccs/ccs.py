@@ -12,6 +12,8 @@ import yaml
 class CCS(object):
   def __init__(self, xyz_file, parameter_file, **kwargs):
     self.structure = qtk.toMolecule(xyz_file)
+    self.molecule = self.structure
+    self.parameter_file = parameter_file
     # mutation related variables
     self.mutation_list = []
     self.mutation_target = []
@@ -52,29 +54,42 @@ class CCS(object):
       lenList = [len(MList[0]) for i in range(len(MList))]
 
     if not qtk.setting.quiet:
-      report_itr = False
+      self.report()
+
+  def report(self):
+
+    MList = self.mutation_list
+    _flatten = [item for sublist in MList for item in sublist]
+    vlen = np.vectorize(len)
+    try:
+      lenList = vlen(MList)
+    except TypeError:
+      lenList = [len(MList[0]) for i in range(len(MList))]
+
       if self.mutation_list:
-        report_itr += True
         qtk.report('', "===== CCS REPORT =====", color=None)
-        qtk.report("generating molecule", xyz_file)
-        qtk.report("ccs parameter file", parameter_file)
+        qtk.report("generating molecule", self.molecule)
+        qtk.report("ccs parameter file", self.parameter_file)
         qtk.report("mutation indices", self.mutation_list)
         qtk.report("target atomic numbers", self.mutation_target)
         qtk.report("length of mutation vector",
                len(_flatten), "<=>", lenList)
-        #print ""
       if self.stretching_list:
         qtk.report("stretching indices", self.stretching_list)
         qtk.report("stretching range", self.stretching_range)
         qtk.report("stretching direction indices",
                self.stretching_direction)
-        #print ""
       if self.rotation_list:
         qtk.report("rotation indices", self.rotation_list)
         qtk.report("rotation center", self.rotation_center)
         qtk.report("rotation axis", self.rotation_axis)
         qtk.report("rotation range", self.rotation_range)
-        #print ""
+      if self.constraint:
+        if self.ztotal:
+          qtk.report("Z_sum", self.ztotal)
+        if self.element_count:
+          qtk.report("element_count", self.element_count)
+ 
       qtk.status("ccs coordinate", self.coor)
       qtk.report('', "========= END ========", color=None)
 
@@ -283,12 +298,8 @@ class CCS(object):
       for ind_j in range(len(ref_list)):
         j = ref_list[ind_j]
         diff = np.linalg.norm(base_R - mol.R_scale[j] * scale)
-        print diff
         if diff < 1E-5:
-          print 'yo'
           mut_list[ind_j] = mol.Z[j]
-    print mut_list
-    print coord
     return coord
     
   ##### END OF CCS COORDINATE EXTRACTION #####
@@ -751,3 +762,5 @@ class CCS(object):
               pass
     param.close()
 
+  def __repr__(self):
+    return self.molecule.name + ' with ' + self.parameter_file
