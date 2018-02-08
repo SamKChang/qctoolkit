@@ -72,6 +72,17 @@ def geopt(mol, forcefield='uff', max_iter=2000, **kwargs):
   ff(rdmol, maxIters=max_iter)
   return rdk2mol(rdmol)
 
+def forcefield_energy(mol, forcefield='uff'):
+  rdm = mol2rdk(mol)
+  if forcefield == 'mmff94':
+      mp = AllChem.MMFFGetMoleculeProperties(rdm)
+      hdl = AllChem.MMFFGetMoleculeForceField(
+        rdm, mp, ignoreInterfragInteractions=False)
+  elif forcefield == 'uff':
+      hdl = AllChem.UFFGetMoleculeForceField(
+        rdm, ignoreInterfragInteractions=False)
+  return hdl.CalcEnergy()
+
 def mol2svg(mol,
             figSize=(200,200),
             kekulize=False, 
