@@ -554,7 +554,11 @@ class Molecule(object):
       
 
   def _alignAxis(self, opts=None):
+    center = self.getCenterOfMass()
     self.center()
+    if opts is not None:
+      if type(opts) is not list:
+        opts = [{'center': center}]
     V, U = self.principalAxes()
     if U[0, 0] > 0:
       opts = self.align(U[:,0], opts=opts)
@@ -562,7 +566,6 @@ class Molecule(object):
       opts = self.align(-U[:,0], opts=opts)
     V, U = self.principalAxes()
     opts = self.align(U[:,1], axis=np.array([0,1,0]), opts=opts)
-    print opts
     return opts
 
   def alignSVD(self, mol, ref_list=None, tar_list=None):
@@ -628,11 +631,14 @@ class Molecule(object):
 
   def inverse_align(self, opts):
     for opt in opts[::-1]:
-      axis = opt['axis']
-      angle = opt['angle']
-      center = opt['center']
-      self.rotate(-angle, axis)
-      self.shift(center)
+      if 'axis' in opt:
+        axis = opt['axis']
+        angle = opt['angle']
+        if abs(angle) > 1E-3:
+          self.rotate(-angle, axis)
+      if 'center' in opt:
+        center = opt['center']
+        self.shift(center)
 
   def rotate(self, angle, u):
     R_tmp = copy.deepcopy(self.R)
