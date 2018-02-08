@@ -3,7 +3,7 @@ from psutil import virtual_memory
 import os
 import copy
 
-__version__ = '0.0.13'
+__version__ = '0.0.16'
 quiet = False
 debug = False
 no_warning = False
