@@ -8,14 +8,18 @@ import numpy as np
 import universal as univ
 import yaml
 import urllib2
+import ssl
 
 def PPCheck(xc, pp_theory, pp_path, element):
 
   theory_dict = {
     'lda': 'pade',
+    'ldaxc': 'pade',
     'pbe0': 'pbe',
+    'pbexc': 'pbe',
     'pbesol': 'pbe',
     'hse06': 'pbe',
+    'b3lyp': 'blyp',
   }
 
   name = '%s_%s_%s' % (element, xc, pp_theory)
@@ -37,8 +41,8 @@ def PPCheck(xc, pp_theory, pp_path, element):
         pp_end = page.index(pp_se[1])
         page = page[pp_start:pp_end]
         page[0] = page[0].split('>')[-1]
-      except:
-        qtk.warning('something wrong with url:%s' % url)
+      except Exception as err:
+        qtk.warning('something wrong with url:%s and error:%s' % (url, str(err)))
       pp = ''.join(page)
     else:
       url = qtk.setting.bigdft_pp_nlcc_url
@@ -89,6 +93,7 @@ class inp(WaveletInput):
 
     dft_list = {
                  'lda': 1,
+                 'ldaxc': -020,
                  'pbe': 11,
                  'pbexc': -101130,
                  'pbesol': -116133,
