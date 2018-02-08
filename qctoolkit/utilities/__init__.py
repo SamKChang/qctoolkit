@@ -5,3 +5,4 @@ from processing_str import *
 from tools import *
 from submit import *
 import rdkit_tools as rdk
+import ipy_tools
