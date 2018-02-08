@@ -51,7 +51,10 @@ def rdk2mol(rdmol):
   mol.build(ZR)
   return mol
 
-def geopt(mol, forcefield='uff', max_iter=2000, **kwargs):
+def geopt(mol, forcefield='uff', max_iter=2000, align=False, **kwargs):
+
+  mol = mol.copy()
+  opts = mol.align(opts=True)
 
   if type(mol) is not Chem.rdchem.Mol:
     rdmol = mol2rdk(mol)
@@ -70,7 +73,10 @@ def geopt(mol, forcefield='uff', max_iter=2000, **kwargs):
     useExpTorsionAnglePrefs=True,
     useBasicKnowledge=True)
   ff(rdmol, maxIters=max_iter)
-  return rdk2mol(rdmol)
+  opt_mol = rdk2mol(rdmol)
+  if align:
+    opt_mol.inverse_align(opts)
+  return opt_mol
 
 def forcefield_energy(mol, forcefield='uff'):
   rdm = mol2rdk(mol)
