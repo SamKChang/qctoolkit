@@ -495,6 +495,8 @@ class Molecule(object):
 
     other.alignAtoms(B2, C2, A2)
     other.rotate(np.pi, [0,0,1])
+    if angle != 0:
+      other.rotate(angle, [-1,0,0])
     other.center(other.R[C2])
     other.removeAtoms(C2)
 
