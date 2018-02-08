@@ -4,19 +4,19 @@ import numpy as np
 qtk.setting.no_warning = True
 qtk.setting.quiet = True
 
-pw_list = ['cpmd', 'vasp']
-g_list = ['nwchem']
+pw_list = ['cpmd', 'vasp', 'abinit', 'espresso', 'cp2k']
+g_list = ['nwchem', 'gaussian']
 wl_list = ['bigdft']
 modes = ['single_point', 'geopt']
 pw_theory = ['pbe', 'blyp', 'lda']
 g_theory = ['pbe', 'pbe0', 'blyp', 'b3lyp', 'bp91', 'bp86', 'pw91',
             'rhf', 'rohf', 'uhf', 
-            'mp2', 'ccsd', 'ccsdt',
+            'mp2', 'ccsd', 'ccsd(t)',
            ]
 wl_theory = ['pbe', 'pbe0', 'pbesol']
 tce = [
         'mp2', 'mp3', 'mp4',
-        'ccsd', 'ccsdt', 'lccsd',
+        'ccsd', 'ccsdt', 'ccsd(t)', 'lccsd',
         'cisd', 'cisdt',
       ]
 
@@ -66,7 +66,7 @@ def test_h2_pbe_allcode():
       code = codes[i]
       name = tmp_str + code
       inp = qtk.QMInp(mol, program=code)
-      out = inp.run(name, threads = 2)
+      out = inp.run(name, threads=2, scf_step=1)
   else:
     gn = '\033[92m'
     ec = '\033[0m'
