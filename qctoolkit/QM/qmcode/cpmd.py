@@ -11,6 +11,7 @@ import universal as univ
 import sys
 from urlparse import urlparse
 from BeautifulSoup import BeautifulSoup
+import ssl
 #reload(sys)
 #sys.setdefaultencoding('utf8')
 
@@ -447,7 +448,8 @@ def PPCheck(xc, element, pp_file_str, **kwargs):
         root_list = filter(None, qtk.setting.cpmd_dcacp_url.split('/'))
         root = '//'.join(root_list[:2])
         url = qtk.setting.cpmd_dcacp_url
-        html = ''.join(urllib2.urlopen(url).readlines())
+        gcontext = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+        html = ''.join(urllib2.urlopen(url, context=gcontext).readlines())
         pp_links = BeautifulSoup(html).body.findAll(
           'a', attrs={'class': 'table'}
         )
@@ -457,10 +459,12 @@ def PPCheck(xc, element, pp_file_str, **kwargs):
           pp_flag = r'/MT/'
         pp_path = filter(lambda x: xc.upper() in x and pp_flag in x, 
           [l['href'] for l in pp_links if l.text == element.title()])
-        pp_content = urllib2.urlopen(root + pp_path[0]).readlines()
+        ppurl = root + pp_path[0]
+        pp_content = urllib2.urlopen(pprul, context=gcontext).readlines()
 
       elif pp_file:
-        pp_content = urllib2.urlopen(pp_file).readlines()
+        gcontext = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+        pp_content = urllib2.urloen(pp_file, context=gcontext).readlines()
         pattern = re.compile(r'^.*</*pre>.*$')
         pp_se = filter(pattern.match, pp_content)
         pp_start = pp_content.index(pp_se[0])

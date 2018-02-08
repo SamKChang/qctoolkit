@@ -15,6 +15,7 @@ from cpmd import alchemyPP
 from cpmd import PPName
 from cpmd import PPCheck as PPCheck_cpmd
 import subprocess as sp
+import ssl
 #from cpmd import PPCheck as cpCheck
 #from cpmd import mutatePP
 
@@ -363,7 +364,8 @@ def PPCheck(xc, element, pp_file_str, **kwargs):
     qtk.status("PPCheck", pp_file_str)
     url = os.path.join(qtk.setting.espresso_pp_url, pp_file_str)
     try:
-      pp_content = urllib2.urlopen(url).read()
+      gcontext = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+      pp_content = urllib2.urlopen(url, context=gcontext).read()
       qtk.report('', 'pp file %s not found in %s. ' \
                  % (pp_file_str, qtk.setting.espresso_pp) + \
                  'but found in espresso page, download now...')
