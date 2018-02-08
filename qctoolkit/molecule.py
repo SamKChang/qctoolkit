@@ -173,6 +173,9 @@ class Molecule(object):
   def geopt(self, forcefield='uff', max_iter=2000):
     return qtk.rdk.geopt(self, forcefield, max_iter)
 
+  def forcefield_E(self, forcefield='uff'):
+    return qtk.rdk.forcefield_energy(self, forcefield)
+
   def view2D(self, figSize=(200,200), index=True, 
              atom_label=False,remove_H=False, **kwargs):
     setting = {
