@@ -53,7 +53,7 @@ class inp(GaussianBasisInput):
     }
     tce = {
       'mp2', 'mp3', 'mp4', 
-      'ccsd', 'ccsdt', 'lccsd',
+      'ccsd', 'ccsdt', 'ccsd(t)', 'lccsd',
       'cisd', 'cisdt',
     }
     if self.setting['theory'] in dft:
