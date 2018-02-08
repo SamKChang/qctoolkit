@@ -28,7 +28,9 @@ purpose chemistry tool kit.
 
 ## Installation on Ubuntu 32/64 systems
 * __To install__: ```cd /path/to/qctoolkit && python setup.py install --user```, ```python setup.py develop``` 
-or install by pip using ```pip install qctoolkit --user```. 
+or install by pip using ```pip install qctoolkit --user```.
+* Because qctoolkit depends on it self, first execution of ```import qctoolkit``` will due to the absence of the pyc files. It should work once the pyc files are created.
+
 * __Install on Amazon Ec2__: It is tested and working on amazon Ec2 ubuntu instances. For a fresh install, all dependencies must be installed as described above.
 However, it might be necessary to create temperary swap if the memory run out:
 ```
