@@ -173,6 +173,23 @@ class Molecule(object):
   def geopt(self, forcefield='uff', max_iter=2000):
     return qtk.rdk.geopt(self, forcefield, max_iter)
 
+  def view2D(self, figSize=(200,200), index=True, 
+             atom_label=False,remove_H=False, **kwargs):
+    setting = {
+      'figSize': figSize,
+      'index': index, 
+      'atom_label': atom_label,
+      'remove_H': remove_H,
+    }
+    kwargs.update(setting)
+    disp = qtk.utilities.ipy_tools.display
+    SVG = qtk.utilities.ipy_tools.SVG
+    svg = qtk.rdk.mol2svg(self, **kwargs)
+    return disp(SVG(svg))
+
+  def view3D(self, **kwargs):
+    return qtk.rdk.show3D(self)
+
   def nuclear_repulsion(self):
     out = 0.
     for i in range(self.N):
@@ -468,8 +485,30 @@ class Molecule(object):
     shift = np.kron(vector, template)
     self.R += shift
 
+  def join(self, A1, B1, C1, other, C2, B2, A2, geopt=True, angle=0):
+    """connecing B1--B2 along B1-C1 and B2-C2 direction"""
+    self = self.copy()
+    other = other.copy()
+
+    opts = self.alignAtoms(B1, C1, A1, opts=True)
+    self.removeAtoms(C1)
+
+    other.alignAtoms(B2, C2, A2)
+    other.rotate(np.pi, [0,0,1])
+    other.center(other.R[C2])
+    other.removeAtoms(C2)
+
+    out = self + other
+    out.inverse_align(opts)
+    if geopt:
+      out.geopt()
+
+    return out
+    
+
   # tested
-  def align(self, u=None, **kwargs):
+  def align(self, u=None, opts=None, **kwargs):
+    center = np.array([0,0,0])
     if 'no_center' in kwargs and kwargs['no_center']:
       center = self.getCenterOfMass()
       self.center(center)
@@ -489,7 +528,7 @@ class Molecule(object):
         assert v.shape == (3,)
 
     if u is None:
-      self._alignAxis()
+      return self._alignAxis(opts=opts)
     else:      
       u = np.array(u)
       n1 = np.linalg.norm(u)
@@ -501,15 +540,25 @@ class Molecule(object):
         axis = axis / np.linalg.norm(axis)
         self.rotate(angle, axis)
 
-  def _alignAxis(self):
+      opt = {'center': center, 'axis': axis, 'angle': angle}
+      if opts is not None:
+        if type(opts) is not list:
+          opts = []
+        opts.append(opt)
+        return opts
+      
+
+  def _alignAxis(self, opts=None):
     self.center()
     V, U = self.principalAxes()
     if U[0, 0] > 0:
-      self.align(U[:,0])
+      opts = self.align(U[:,0], opts=opts)
     else:
-      self.align(-U[:,0])
+      opts = self.align(-U[:,0], opts=opts)
     V, U = self.principalAxes()
-    self.align(U[:,1], axis=np.array([0,1,0]))
+    opts = self.align(U[:,1], axis=np.array([0,1,0]), opts=opts)
+    print opts
+    return opts
 
   def alignSVD(self, mol, ref_list=None, tar_list=None):
     if type(mol) is str:
@@ -544,26 +593,41 @@ class Molecule(object):
       np.kron(center_b, np.ones((na, 1))
     )
 
-  def alignAtoms(self, ind1, ind2, ind3):
+  def alignAtoms(self, ind1, ind2, ind3, opts=None):
+    """ind1: center
+       ind2: x axis
+       ind3: xy plan
+    """
+    _opts = []
+    center = self.R[ind1]
     self.center(self.R[ind1])
     vec = self.R[ind2] - self.R[ind1]
-    self.align(vec)
+    opts = self.align(vec, opts=opts)
     self.center(self.R[ind1])
 
-    if abs(self.R[ind3][1]) > 0:
-      tangent = self.R[ind3][2]/self.R[ind3][1]
-    else:
-      if self.R[ind3][2] > 0:
-        tangent = np.inf
-      else:
-        tangent = -np.inf
-
-    angle = np.arctan(tangent)
+    angle = np.arctan2(self.R[ind3][2], self.R[ind3][1])
     self.rotate(-angle, [1,0,0])
     self.center(self.R[ind1])
+    opt = {'center': center, 'axis': [1,0,0], 'angle': -angle}
+    _opts.append(opt)
     if self.R[ind3][1] < 0:
       self.rotate(np.pi, [1, 0, 0])
+      opt = {'center': [0,0,0], 'axis': [1,0,0], 'angle': np.pi}
+      _opts.append(opt)
       
+    if opts is not None:
+      if type(opts) is not list:
+        opts = []
+      opts.extend(_opts)
+      return opts
+
+  def inverse_align(self, opts):
+    for opt in opts[::-1]:
+      axis = opt['axis']
+      angle = opt['angle']
+      center = opt['center']
+      self.rotate(-angle, axis)
+      self.shift(center)
 
   def rotate(self, angle, u):
     R_tmp = copy.deepcopy(self.R)
@@ -1006,7 +1070,11 @@ class Molecule(object):
         else: 
           self.charge = kwargs['charge_saturation']
     else:
-      qtk.exit("file: '" + name + "' not found")
+      try:
+        mol = qtk.rdk.smiles2mol(name)
+        self.__dict__.update(mol.__dict__)
+      except Exception as err:
+        qtk.exit("input string not file or smiles, failed with: %s" % str(err))
 
   def read_xyz(self, name, **kwargs):
     xyz = open(name, 'r')
