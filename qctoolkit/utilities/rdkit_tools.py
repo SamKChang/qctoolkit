@@ -5,13 +5,23 @@ import pkgutil
 
 if pkgutil.find_loader('rdkit') is not None:
   from rdkit import Chem, rdBase
-  from rdkit.Chem import AllChem, rdMolTransforms, rdMolDescriptors, Draw
+  from rdkit.Chem import AllChem, rdMolTransforms, rdMolDescriptors, Draw, rdDepictor
   from rdkit.Chem.Draw import rdMolDraw2D
   import rdkit.Chem.rdForceFieldHelpers as rcr
   from rdkit.Geometry.rdGeometry import Point3D
 
 if pkgutil.find_loader('py3Dmol') is not None:
   import py3Dmol
+
+def smiles2mol(smiles):
+  rdm = Chem.AddHs(Chem.MolFromSmiles(smiles))
+  Chem.AssignAtomChiralTagsFromStructure(rdm)
+  AllChem.EmbedMolecule(
+    rdm,
+    useExpTorsionAnglePrefs=True,
+    useBasicKnowledge=True
+  )
+  return rdk2mol(rdm)
 
 def mol2rdk(mol, **kwargs):
   if 'removeHs' not in kwargs:
@@ -22,10 +32,10 @@ def mol2rdk(mol, **kwargs):
       os.system("obabel -ixyz -opdb .tmp.xyz > .tmp.pdb")
     except Exception as err:
       qtk.exit("obabel failed with error: " + str(err))
-    mol = Chem.MolFromPDBFile('.tmp.pdb', **kwargs)
+    rdm = Chem.MolFromPDBFile('.tmp.pdb', **kwargs)
     os.remove('.tmp.xyz')
     os.remove('.tmp.pdb')
-  return mol
+  return rdm
 
 def rdk2mol(rdmol):
   conf = rdmol.GetConformer()
@@ -63,18 +73,19 @@ def geopt(mol, forcefield='uff', max_iter=2000, **kwargs):
   return rdk2mol(rdmol)
 
 def mol2svg(mol,
-            molSize=(200,200),
+            figSize=(200,200),
             kekulize=False, 
             index=True,
             atom_label=False,
             highlight=[],
             colors={},
             sizes={},
+            remove_H=False
            ):
 
-  mol = mol2rdk(mol, removeHs=True)
+  mol = mol2rdk(mol, removeHs=remove_H)
     
-  drawer = rdMolDraw2D.MolDraw2DSVG(molSize[0],molSize[1])
+  drawer = rdMolDraw2D.MolDraw2DSVG(figSize[0],figSize[1])
   opts = drawer.drawOptions()
   kw_drawing = {}
   
@@ -122,12 +133,6 @@ def mol2svg(mol,
 
 def show3D(mol, size=(400,400), background_color='0xeeeeee', confId=-1):
   rdm = mol2rdk(mol)
-  Chem.AssignAtomChiralTagsFromStructure(rdm)
-  AllChem.EmbedMolecule(
-    rdm,
-    useExpTorsionAnglePrefs=True,
-    useBasicKnowledge=True
-  )
   mb = Chem.MolToMolBlock(rdm,confId=confId)
   p = py3Dmol.view(width=size[0],height=size[1])
   p.removeAllModels()
