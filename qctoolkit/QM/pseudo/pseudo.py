@@ -6,6 +6,7 @@ import urllib2
 import bigdft
 import cpmd
 import espresso
+import ssl
 
 pp_setting = {
                'program': 'cpmd',
@@ -100,7 +101,8 @@ class PP(object):
         and qtk.setting.download_pp:
           if pp_file:
             new_pp = os.path.join(qtk.setting.cpmd_pp, pp_file_str)
-            pp_content = urllib2.urlopen(pp_file).read()
+            gcontext = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+            pp_content = urllib2.urlopen(pp_file, context=gcontext).read()
             qtk.report('PPCheck', 'pp file %s not found in %s, ' \
                        % (pp_file_str, qtk.setting.cpmd_pp) + \
                        'but found on internet, download now...')

@@ -29,7 +29,8 @@ def PPCheck(xc, pp_theory, pp_path, element):
       url = url_root + '%s/%s' % (pp_theory, element_str)
       page = False
       try:
-        page = urllib2.urlopen(url).readlines()
+        gcontext = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+        page = urllib2.urlopen(url, context=gcontext).readlines()
         pattern = re.compile(r'^.*</*pre>.*$')
         pp_se = filter(pattern.match, page)
         pp_start = page.index(pp_se[0])
@@ -41,7 +42,8 @@ def PPCheck(xc, pp_theory, pp_path, element):
       pp = ''.join(page)
     else:
       url = qtk.setting.bigdft_pp_nlcc_url
-      page = urllib2.urlopen(url).readlines()
+      gcontext = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+      page = urllib2.urlopen(url, context=gcontext).readlines()
       string = filter(lambda x: '"psppar.%s' % element in x, page)[-1]
       index = page.index(string) + 2
       pp = []
