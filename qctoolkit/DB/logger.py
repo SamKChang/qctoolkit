@@ -45,6 +45,8 @@ class Logger(object):
 
     if os.path.exists(path):
       qtk.progress('DB', 'loading existing database: %s' % path)
+    else:
+      qtk.progress('DB', 'creating database: %s' % path)
 
     Base.metadata.create_all(self.engine)
     self.session = self.get_session(new=True)

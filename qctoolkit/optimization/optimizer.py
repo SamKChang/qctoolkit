@@ -54,19 +54,15 @@ class Optimizer(object):
                max_step=1000,
                mode='minimize',
                distributed=False,
-               log='optimization.db',
-               new_run=True,
+               log_file='optimization.db',
                **kwargs):
 
     ################################
     # setting default setup values #
     ################################
     self.cutoff = cutoff
-    if os.path.exists(log):
-      if new_run:
-        os.remove(log)
     self.mode = mode
-    self.log = qtk.Logger(log)
+    self.log_file = log_file
     self.threads = threads
     self.target = target
     self.max_step = max_step
