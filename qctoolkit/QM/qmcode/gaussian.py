@@ -27,12 +27,12 @@ class inp(GaussianBasisInput):
     if 'gaussian_setting' not in self.setting:
       gaussian_setting = [
         'Scf(xqc,maxcycle=%d)' % self.setting['scf_step'],
-        '6d 10f',
+        #'6d 10f',
         'nosymm',
         'int(grid=ultrafine)',
         'IOp(2/12=3)', # allow atoms to be too near
-        'force', # print force, not single point anymore
-        'ExtraLinks=L608', # print energy components
+        #'force', # print force, not single point anymore
+        #'ExtraLinks=L608', # print energy components
       ]
       self.setting['gaussian_setting'] = gaussian_setting
 
@@ -149,6 +149,12 @@ class inp(GaussianBasisInput):
     if 'print_energy' in self.setting and self.setting['print_energy']:
       if 'ExtraLinks=L608' not in gaussian_setting:
         gaussian_setting.append('ExtraLinks=L608')
+    if 'print_force' in self.setting and self.setting['print_force']:
+      if 'force' not in gaussian_setting:
+        gaussian_setting.append('force')
+    if 'cartesian' in self.setting and self.setting['cartesian']:
+      if '6d 10f' not in gaussian_setting:
+        gaussian_setting.append('6d 10f')
     if 'mode' in self.setting and self.setting['mode'] == 'geopt':
       gaussian_setting.append('Opt')
     if type(basis) is str:
