@@ -185,15 +185,12 @@ def parallelize(target_function,
   for thread in jobs:
     thread.join()
 
-  print 'yo'
   # clean up queues
   while not qinp.empty():
     qinp.get()
-  print '1'
   if n_output > 0:
     while not qout.empty():
       qout.get()
-  print '2'
 
   if len(output_stack)>0:
     # sort/restructure output according to input order
