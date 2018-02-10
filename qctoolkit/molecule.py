@@ -1063,14 +1063,22 @@ class Molecule(object):
   def read(self, name, **kwargs):
     if os.path.exists(name):
       stem, extension = os.path.splitext(name)
-      if re.match('\.xyz', extension):
+      extension = extension.replace('.', '')
+      if extension == 'xyz':
         self.read_xyz(name, **kwargs)
-      elif re.match('\.ascii', extension):
+      elif extension == 'ascii':
         self.read_ascii(name, **kwargs)
-      elif re.match('\.cif', extension):
+      elif extension == 'cif':
         self.read_cif(name, **kwargs)
       else:
-        qtk.exit("suffix " + extension + " is not reconized")
+        qtk.warning("suffix " + extension + " is not supported, try obabel")
+        try:
+          cmd = 'obabel -i%s -oxyz %s > .tmp.xyz' % (extension, name)
+          os.system(cmd)
+          self.read_xyz('.tmp.xyz', **kwargs)
+          os.remove('.tmp.xyz')
+        except Exception as err:
+          qtk.exit('obabel failed for %s: %s' % (cmd, str(err)))
 
       self.string = ['' for _ in range(self.N)]
       self.name = qtk.fileStrip(stem)
