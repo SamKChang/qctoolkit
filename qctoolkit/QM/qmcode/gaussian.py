@@ -20,21 +20,50 @@ else:
 
 
 class inp(GaussianBasisInput):
-  def __init__(self, molecule, **kwargs):
+  def __init__(self, molecule, *args, **kwargs):
+
+#    def get_setting(input_str):
+#      sdict = {}
+#      settings = re.split(',| |, ', input_str)
+#      theory_lst = filter(lambda x: '/' in x and 'iop' not is x.lower(), settings)
+#      if len(theory_lst) == 1:
+#        sdict['theory'], sdict['basis_set'] = theory_lst[0].split('/')[:1]
+	
     GaussianBasisInput.__init__(self, molecule, **kwargs)
     self.setting.update(kwargs)
     self.backup()
+
     if 'gaussian_setting' not in self.setting:
-      gaussian_setting = [
-        'Scf(xqc,maxcycle=%d)' % self.setting['scf_step'],
-        #'6d 10f',
-        'nosymm',
-        'int(grid=ultrafine)',
-        'IOp(2/12=3)', # allow atoms to be too near
-        #'force', # print force, not single point anymore
-        #'ExtraLinks=L608', # print energy components
-      ]
-      self.setting['gaussian_setting'] = gaussian_setting
+      self.setting['gaussian_setting'] = []
+
+    for arg in args:
+      if '/' in arg and 'iop' not in arg.lower():
+        self.setting['theory'], self.setting['basis_set'] = arg.split('/')[:2]
+      else:
+        settings = re.split(r"\s+(?=[^()]*(?:\(|$))", arg)
+        for s in settings:
+          self.setting['gaussian_setting'].append(s.lower())
+
+    default_setting = [
+      'scf(xqc,maxcycle=%d)' % self.setting['scf_step'],
+      'nosymm',
+      'int(grid=ultrafine)',
+      'iop(2/12=3)', # allow atoms to be too near
+    ]
+    for s in default_setting:
+      print s
+      if '(' in s:
+        flag = s.split('(')[0]
+        print flag
+        self.set(s, flag)
+      else:
+        self.set(s)
+
+  def set(self, setting_str, flag=None):
+    if flag is None:
+      flag = setting_str
+    if len(filter(lambda x: flag not in x, self.setting['gaussian_setting'])):
+      self.setting['gaussian_setting'].append(setting_str)
 
   def run(self, name=None, **kwargs):
     self.setting.update(kwargs)

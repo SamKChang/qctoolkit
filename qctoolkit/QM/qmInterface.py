@@ -11,7 +11,7 @@ import qmcode.hortonInterface as horton
 import ofdft.main as ofdft
 import sys, os, copy
 
-def QMInp(molecule, **kwargs_in):
+def QMInp(molecule, *args, **kwargs_in):
   kwargs = copy.deepcopy(kwargs_in)
   inp_dict = {
     'cpmd': [cpmd.inp, 'inp'],
@@ -35,7 +35,7 @@ def QMInp(molecule, **kwargs_in):
   if 'charge' in kwargs:
     molecule.charge = kwargs['charge']
   kwargs['extension'] = inp_dict[p_str][1]
-  return p(molecule, **kwargs)
+  return p(molecule, *args, **kwargs)
 
 def QMOut(out=None, **kwargs):
   out_dict = {
