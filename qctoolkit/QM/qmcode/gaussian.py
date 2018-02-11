@@ -301,6 +301,7 @@ class out(GaussianBasisOutput):
     if qmout:
       outfile = open(qmout)
       data = outfile.readlines()
+      outfile.close()
 
       pattern = re.compile(" *R *M *S *D *=")
       try:
@@ -352,7 +353,7 @@ class out(GaussianBasisOutput):
                         qmout + " with error message %s" % str(e))
             self.energies[tags_dict[tag]] = np.nan
 
-      crdStr = filter(lambda x: 'Angstroms' in x, data)[-1]
+      crdStr = filter(lambda x: '(Angstroms)' in x, data)[-1]
       ind = len(data) - data[::-1].index(crdStr) + 2
       ZR = []
       while True:
@@ -555,7 +556,7 @@ class out(GaussianBasisOutput):
           blist = ['D0' for _ in range(l_max)]
           if not warned:
             qtk.warning("sp shell or spherical basis are used, " +\
-              "some functions will not work")
+              "some functions will not work, use as_horton interface insdtead")
             warned = True
  
       for l in range(l_max):
