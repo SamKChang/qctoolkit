@@ -20,6 +20,7 @@ required = [
   'pexpect',
   'beautifulsoup',
   'sqlalchemy',
+  'dill',
 ]
 
 # to enable openmp, use:
