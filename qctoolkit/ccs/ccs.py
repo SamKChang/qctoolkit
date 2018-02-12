@@ -58,6 +58,9 @@ class CCS(object):
 
   def report(self):
 
+    quiet = qtk.setting.quiet
+    qtk.setting.quiet = False
+
     MList = self.mutation_list
     _flatten = [item for sublist in MList for item in sublist]
     vlen = np.vectorize(len)
@@ -92,6 +95,8 @@ class CCS(object):
  
       qtk.status("ccs coordinate", self.coor)
       qtk.report('', "========= END ========", color=None)
+
+    qtk.setting.quiet = quiet
 
 
   # !!!!! TODO !!!!! #
@@ -651,12 +656,9 @@ class CCS(object):
                    + key)
       return child
 
-    print 'ccs_mate: getChild'
     child = getChild()
-    print 'ccs_mate: generate'
     child_structure = self.generate(**child)
     while not self.onManifold(child_structure):
-      print 'ccs_mate: onManifold, getChild, generate'
       child = getChild()
       child_structure = self.generate(**child)
     return child
