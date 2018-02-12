@@ -301,6 +301,10 @@ class CCS(object):
         if diff < 1E-5:
           mut_list[ind_j] = mol.Z[j]
     return coord
+
+  def random_coord(self):
+    """wrapper for GA optimizer"""
+    return self.random()[1]
     
   ##### END OF CCS COORDINATE EXTRACTION #####
 
