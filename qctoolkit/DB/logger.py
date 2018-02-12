@@ -42,31 +42,26 @@ class Logger(object):
     self.name = db_str
     self.path = path
     self._kwargs = kwargs
+    self.session = None
 
   def __enter__(self, **kwargs):
-    print 'constructed'
     self._kwargs.update(kwargs)
-    self = deepcopy(self)
-    self.engine = create_engine(self.name, **self._kwargs)
+    engine = create_engine(self.name, **self._kwargs)
     if os.path.exists(self.path):
       qtk.progress('DB', 'loading existing database: %s' % self.path)
     else:
       qtk.progress('DB', 'creating database: %s' % self.path)
 
-    Base.metadata.create_all(self.engine)
-    self.session = self.get_session(new=True)
+    Base.metadata.create_all(engine)
+    self.session = sessionmaker(bind=engine)()
     return self
 
   def __exit__(self, exc_type, exc_value, traceback):
-    print "to exit"
     if exc_type is not None:
       print exc_type, exc_value, traceback
       return False # uncomment to pass exception through
     else:
       self.session.close()
-      self.engine.dispose()
-      del self.engine
-      return self
 
 
   def __repr__(self):
@@ -99,6 +94,7 @@ class Logger(object):
     has_data=None, has_content=None, has_comment=None,
   ):
 
+
     if content:
       content_flag = r'%' + str(content) + r'%'
     else:
@@ -108,7 +104,6 @@ class Logger(object):
     else:
       comment_flag = r'%%'
 
-    print 'list: all'
     out = self.all(get_list = False)
 
     if date is not None:
@@ -116,6 +111,7 @@ class Logger(object):
         Entry.date <= date + dt,
         Entry.date >= date - dt,
       )
+
 
     if data is not None:
       out = out.filter(
@@ -140,7 +136,6 @@ class Logger(object):
     elif order == 'descent':
       out = out.order_by(Entry.data.desc())
 
-    print 'list: has_data'
     if has_data is not None:
       if has_data:
         out = out.filter(Entry.data != None)
@@ -159,9 +154,11 @@ class Logger(object):
       else:
         out = out.filter(Entry.comment == None)
 
-    print 'list: return'
     if get_list:
-      return out.all()
+      try:
+        return out.all()
+      except:
+        return []
     else:
       return out
 
@@ -175,9 +172,9 @@ class Logger(object):
     self.session.commit()
     self.session.close()
 
-  def get_session(self, new=False):
-    if not new:
-      return self.session
-    else:
-      session = sessionmaker(bind=self.engine)
-      return session()
+  #def get_session(self, new=False):
+  #  if not new:
+  #    return self.session
+  #  else:
+  #    session = sessionmaker(bind=self.engine)
+  #    return session()

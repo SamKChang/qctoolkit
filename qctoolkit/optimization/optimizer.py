@@ -90,42 +90,44 @@ class Optimizer(object):
     raise NotImplementedError("Please Implement run method")
 
   def repeated(self, inp):
-    print 'repeated: list'
-    q = self.log.list(str(inp))
-    if len(q) == 0:
-      return False
-    else:
-      return True
+    with qtk.Logger(self.log_file) as log:
+      q = log.list(str(inp))
+      if len(q) == 0:
+        return False
+      else:
+        return True
 
   def register(self, inp_list):
-    for inp in inp_list:
-      self.log.push(str(inp), data=None, comment='processing (%s)' \
-        % os.uname()[1]
-      )
+    with qtk.Logger(self.log_file) as log:
+      for inp in inp_list:
+        log.push(str(inp), data=None, comment='processing (%s)' \
+          % os.uname()[1]
+        )
 
   def update(self, inp_list, out_list, info_list):
-    for i in range(len(inp_list)):
-      content = str(inp_list[i])
-      comment = str(info_list[i])
-      data = out_list[i]
-      print 'update: list'
-      q = self.log.list(content)
-      if len(q) == 0:
-        qtk.warning("no entry found with %s" % content)
-        self.log.push(content, data, comment)
-      else:
-        if len(q) > 1:
-          qtk.warning("found multiple entry with %s" % content)
-        entry = q[-1]
-        entry.data = out_list[i]
-        entry.comment = info_list[i]
-        self.log.commit()
+    with qtk.Logger(self.log_file) as log:
+      for i in range(len(inp_list)):
+        content = str(inp_list[i])
+        comment = str(info_list[i])
+        data = out_list[i]
+        q = log.list(content)
+        if len(q) == 0:
+          qtk.warning("no entry found with %s" % content)
+          log.push(content, data, comment)
+        else:
+          if len(q) > 1:
+            qtk.warning("found multiple entry with %s" % content)
+          entry = q[-1]
+          entry.data = out_list[i]
+          entry.comment = info_list[i]
+          log.commit()
 
   # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   # flush penalty/coord list to log file
   def write_log(self):
-    content = str(self.coord[-1]) + ', ' + str(self.result[-1])
-    self.log.push(content, self.penalty[-1])
+    with qtk.Logger(self.log_file) as log:
+      content = str(self.coord[-1]) + ', ' + str(self.result[-1])
+      log.push(content, self.penalty[-1])
 
   # !!!!!!!!!!!!!!!!!!!!!!!!!!
   # update penalty/coord lists
