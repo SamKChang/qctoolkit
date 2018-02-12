@@ -69,6 +69,7 @@ class GeneticOptimizer(opt.Optimizer):
     if log_file is not None:
       self.log_file = log_file
     if new_run:
+      print 'yo'
       if os.path.exists(self.log_file):
         qtk.warning('remove old log file')
         os.remove(self.log_file)
@@ -94,5 +95,3 @@ class GeneticOptimizer(opt.Optimizer):
         qtk.setting.quiet = True
       except Exception as err:
         qtk.warning('something wrong during optimization, closing session...')
-        self.log.session.close()
-    self.log.session.close()
