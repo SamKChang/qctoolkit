@@ -8,6 +8,7 @@ import sys, os
 import shutil
 import subprocess as sp
 import pickle
+import dill
 
 def qmWriteAll(inp_list, root, overwrite=False, compress=False):
   if os.path.exists(root):
@@ -103,13 +104,9 @@ def parallelize(target_function,
     else:
       block_size = 1
 
-  try:
-    with open('_pickle_test.pkl', 'w') as _p:
-      pickle.dump(input_list[0], _p)
-    os.remove('_pickle_test.pkl')
-  except Exception as err:
-    qtk.warning("pickling failed, subprocess only works if pickle is possible")
-    qtk.exit(str(err))
+  for inp in input_list:
+    if not dill.pickles(inp):
+      qtk.exit("pickling failed, subprocess only works if pickle is possible")
 
   #############################################
   # runing target function of a single thread #
