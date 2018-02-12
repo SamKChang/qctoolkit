@@ -30,18 +30,25 @@ class GeneticOptimizer(opt.Optimizer):
     else:
       order = 'ascent'
       qtk.warning("mode %s not reconized, set to minimize" % self.mode)
+    print 'get_pop:list'
     old_list_db = self.log.list(order=order, has_data=True)[:size]
     old_list = [eval(q.content) for q in old_list_db]
+    print 'get_pop done and eval done'
     pop_list = []
     #for i in range(self.threads):
     while len(pop_list) < self.threads:
+      print 'len(old_list):', str(len(old_list))
       if len(old_list) > 2:
+        print 'sampling'
         parent1, parent2 = random.sample(old_list, 2)
+        print 'mate'
         pop = self.mating_function(parent1, parent2, self.mutation_rate)
+        print 'pop: repeated'
         if not self.repeated(pop):
           pop_list.append(pop)
       else:
         pop = self.getInput()
+        print 'pop: repeated'
         if not self.repeated(pop):
           pop_list.append(pop)
     return pop_list
@@ -73,25 +80,34 @@ class GeneticOptimizer(opt.Optimizer):
       if os.path.exists(self.log_file):
         qtk.warning('remove old log file')
         os.remove(self.log_file)
-    self.log = qtk.Logger(self.log_file)
 
-    step = 0
-    qtk.setting.quiet = True
-    while not self.converged() and step < self.max_step:
-      try:
-        if report_step:
-          if step % report_step == 0:
-            qtk.setting.quiet = False
-            qtk.progress('GA', '%d steps' % step)
-        pop = self.get_pop()
-        qtk.progress("Optimizer", "GE iteration with %d new points" % len(pop))
-        self.register(pop)
-        fit, info = self.fitness(pop)
-        step += 1
-        if type(fit) is list:
-          self.update(pop, fit, info)
-        else:
-          self.update(pop, [fit], [info])
-        qtk.setting.quiet = True
-      except Exception as err:
-        qtk.warning('something wrong during optimization, closing session...')
+    with qtk.Logger(self.log_file) as log:
+      self.log = log
+      #self.log = qtk.Logger(self.log_file)
+
+      step = 0
+      qtk.setting.quiet = True
+      while not self.converged() and step < self.max_step:
+        print step
+        try:
+          if report_step:
+            if step % report_step == 0:
+              qtk.setting.quiet = False
+              qtk.progress('GA', '%d steps' % step)
+          print 'get_pop'
+          pop = self.get_pop()
+          qtk.progress("Optimizer", "GE iteration with %d new points" % len(pop))
+          print 'register'
+          self.register(pop)
+          print 'fintess'
+          fit, info = self.fitness(pop)
+          step += 1
+          print 'update'
+          if type(fit) is list:
+            self.update(pop, fit, info)
+          else:
+            self.update(pop, [fit], [info])
+          qtk.setting.quiet = True
+        except Exception as err:
+          qtk.warning('something wrong during optimization, closing session...')
+      print "finished"

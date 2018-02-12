@@ -651,9 +651,12 @@ class CCS(object):
                    + key)
       return child
 
+    print 'ccs_mate: getChild'
     child = getChild()
+    print 'ccs_mate: generate'
     child_structure = self.generate(**child)
     while not self.onManifold(child_structure):
+      print 'ccs_mate: onManifold, getChild, generate'
       child = getChild()
       child_structure = self.generate(**child)
     return child

@@ -90,6 +90,7 @@ class Optimizer(object):
     raise NotImplementedError("Please Implement run method")
 
   def repeated(self, inp):
+    print 'repeated: list'
     q = self.log.list(str(inp))
     if len(q) == 0:
       return False
@@ -107,6 +108,7 @@ class Optimizer(object):
       content = str(inp_list[i])
       comment = str(info_list[i])
       data = out_list[i]
+      print 'update: list'
       q = self.log.list(content)
       if len(q) == 0:
         qtk.warning("no entry found with %s" % content)
