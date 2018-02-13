@@ -10,7 +10,13 @@ import subprocess as sp
 import pickle
 import dill
 
-def qmWriteAll(inp_list, root, overwrite=False, compress=False):
+# devide input_list into chunks according to block_size
+def chunks(_list, _size):
+  for i in range(0, len(_list), _size):
+    yield _list[i:i+_size]
+
+def qmWriteAll(inp_list, root, overwrite=False, 
+  compress=False, file_per_folder=0):
   if os.path.exists(root):
     if overwrite:
       qtk.warning("overwrite existing folder %s" % root)
@@ -23,8 +29,14 @@ def qmWriteAll(inp_list, root, overwrite=False, compress=False):
     os.makedirs(root)
   cwd = os.getcwd()
   os.chdir(root)
-  for inp in inp_list:
-    inp.write(inp.molecule.name)
+  if file_per_folder:
+    inp_grp = list(chunks(inp_list, file_per_folder))
+    n_digits = len(str(len(inp_grp)))
+    for i, inps in enumerate(inp_grp):
+      qmWriteAll(inps, 'jobs%s' % (str(i).zfill(n_digits)))
+  else:
+    for inp in inp_list:
+      inp.write(inp.molecule.name)
   os.chdir(cwd)
   if compress:
     cmd = 'tar -zcf %s %s' % (root + '.tar.gz', root)
@@ -34,7 +46,7 @@ def qmWriteAll(inp_list, root, overwrite=False, compress=False):
     run.wait()
     qtk.report("qmWriteAll", "compression completed")
 
-def qmRunAll(inp_list, root=None,**kwargs):
+def qmRunAll(inp_list, root=None, **kwargs):
   if 'block_size' not in kwargs:
     kwargs['block_size'] = 1
   job = []
@@ -132,10 +144,6 @@ def parallelize(target_function,
           q_out.put([np.nan, ind])
   ###### end of single thread definition ######
 
-  # devide input_list into chunks according to block_size
-  def chunks(_list, _size):
-    for i in range(0, len(_list), _size):
-      yield _list[i:i+_size]
   input_block = list(chunks(input_list, block_size))
 
   # setup empty queue
