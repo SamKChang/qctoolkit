@@ -8,6 +8,7 @@ from compiler.ast import flatten
 import xml.etree.ElementTree as ET
 import random
 import yaml
+import ast
 
 class CCS(object):
   def __init__(self, xyz_file, parameter_file, **kwargs):
@@ -282,6 +283,14 @@ class CCS(object):
   def _rotate(self, rotation):
     pass
   ##### END OF STRUCTURE GENERATION #####
+
+  def get_molecule(self, crd):
+    try:
+      return self.generate(**crd)
+    except TypeError as err:
+      return self.generate(**ast.literal_eval(crd))
+    except Exception as err:
+      qtk.exit('failed to geneate molecule: %s' % str(err))
 
   #########################################
   # EXTRACT CCS COORDINATE FROM STRUCTURE #
