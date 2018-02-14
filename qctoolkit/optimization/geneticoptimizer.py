@@ -36,7 +36,7 @@ class GeneticOptimizer(opt.Optimizer):
     #for i in range(self.threads):
     while len(pop_list) < self.threads:
       if len(old_list) > 2:
-        pop is None:
+        pop = None
         while pop is None:
           parent1, parent2 = random.sample(old_list, 2)
           pop = self.mating_function(parent1, parent2, self.mutation_rate)
