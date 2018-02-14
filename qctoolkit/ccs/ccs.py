@@ -570,8 +570,9 @@ class CCS(object):
               constraint_list.append(i_list)
               constraint_keys.append(elem)
 
-            # iterate until a valid child is found
-            while True:
+            # iterate 500 times for valid child
+            # there could be parents inconsistent with the constraints
+            for _ in range(500):
               selected_list = []
               selected_coord = {}
               consistant = True
@@ -672,9 +673,13 @@ class CCS(object):
 
     child = getChild()
     child_structure = self.generate(**child)
+    itr = 0
     while not self.onManifold(child_structure):
       child = getChild()
       child_structure = self.generate(**child)
+      itr += 1
+      if itr > 500:
+        return None
     return child
   
 

@@ -36,8 +36,10 @@ class GeneticOptimizer(opt.Optimizer):
     #for i in range(self.threads):
     while len(pop_list) < self.threads:
       if len(old_list) > 2:
-        parent1, parent2 = random.sample(old_list, 2)
-        pop = self.mating_function(parent1, parent2, self.mutation_rate)
+        pop is None:
+        while pop is None:
+          parent1, parent2 = random.sample(old_list, 2)
+          pop = self.mating_function(parent1, parent2, self.mutation_rate)
         if not self.repeated(pop):
           pop_list.append(pop)
       else:
