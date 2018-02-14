@@ -33,13 +33,17 @@ class GeneticOptimizer(opt.Optimizer):
     old_list_db = self.log.list(order=order, has_data=True)[:size]
     old_list = [eval(q.content) for q in old_list_db]
     pop_list = []
-    #for i in range(self.threads):
     while len(pop_list) < self.threads:
       if len(old_list) > 2:
+        parent1, parent2 = random.sample(old_list, 2)
         pop = None
-        while pop is None:
-          parent1, parent2 = random.sample(old_list, 2)
+        try:
           pop = self.mating_function(parent1, parent2, self.mutation_rate)
+          if pop is None:
+            pop = self.getInput()
+        except Exeption as err:
+          qtk.warning('mating failed. use random input: %s' % str(err))
+          pop = self.getInput()
         if not self.repeated(pop):
           pop_list.append(pop)
       else:

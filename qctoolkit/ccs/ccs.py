@@ -570,9 +570,9 @@ class CCS(object):
               constraint_list.append(i_list)
               constraint_keys.append(elem)
 
-            # iterate 500 times for valid child
+            # iterate 10 times for valid child
             # there could be parents inconsistent with the constraints
-            for _ in range(500):
+            for _ in range(10):
               selected_list = []
               selected_coord = {}
               consistant = True
@@ -678,7 +678,8 @@ class CCS(object):
       child = getChild()
       child_structure = self.generate(**child)
       itr += 1
-      if itr > 500:
+      # make 3 attempts to generate 
+      if itr > 3:
         return None
     return child
   
