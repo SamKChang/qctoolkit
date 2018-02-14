@@ -539,23 +539,29 @@ class CCS(object):
   #########################################
   def mate(self, parent1, parent2, mutation_rate):
 
+    #!!!!!!!!!!!!!!!!!!!!!!
+    # tool to constuct list
+    def _list_append(mcoord, i_list, Zc):
+      """to identify the index of constraint element in mutation coord"""
+      for g, grp in enumerate(mcoord):
+        for i, Z_p in enumerate(grp):
+          if Z_p == Zc:
+            i_list.append((g,i))
+
     def getChild():
       child = {}
       for key in parent1.iterkeys():
         if key == 'mutation':
+
           # implementation for element_count constraints
           if self.element_count:
+
+            # list of index list of each constraint element
             constraint_list = []
+            # each constraint element correspond to constraint_list
             constraint_keys = []
-            # tool to constuct list
-            def _list_append(mcoord, i_list, Zc):
-              for g in range(len(mcoord)):
-                grp = mcoord[g]
-                for i in range(len(grp)):
-                  Z_p = grp[i]
-                  if Z_p == Zc:
-                    i_list.append((g,i))
-            # construct mutation list
+
+            # construct constraint_list in parent mutation coord
             for elem in self.element_count.iterkeys():
               i_list = []
               _Z = qtk.n2Z(elem)
@@ -564,23 +570,23 @@ class CCS(object):
               constraint_list.append(i_list)
               constraint_keys.append(elem)
 
+            # iterate until a valid child is found
             while True:
               selected_list = []
               selected_coord = {}
               consistant = True
-              for i in range(len(constraint_list)):
-                ind_location = constraint_list[i]
-                random.shuffle(ind_location)
+              # loop through each constraint element
+              for i, ind_constraint in enumerate(constraint_list):
                 elem = qtk.n2Z(constraint_keys[i])
                 _count = self.element_count[constraint_keys[i]][0]
-                _end = _count
-                while len(set(ind_location[:_end])) < _count:
-                  _end += 1
-                _new = list(set(ind_location[:_end]))
+                # construct list of available mutation site
+                ind_location = [i_c for i_c in set(ind_constraint) \
+                                if i_c not in selected_list]
+                random.shuffle(ind_location)
+                _new = ind_location[:_count]
                 to_select = copy.deepcopy(selected_list)
                 to_select.extend(_new)
-                if len(set(to_select)) == \
-                len(selected_list) + len(_new):
+                if len(set(to_select)) == len(selected_list) + len(_new):
                   selected_list.extend(_new)
                   for coord in _new:
                     selected_coord.update({coord:elem})
