@@ -22,14 +22,14 @@ purpose chemistry tool kit.
 
 ## Dependency
 * [Anaconda](https://anaconda.org/)/[Miniconda](https://conda.io/miniconda.html) is recommended
-* ```conda install numpy scipy cython pandas matplotlib nose pip ipython jupyter```
-* ```pip install mdtraj crypto```
-* ```sudo apt-get update && sudo apt-get install -y gcc g++ gfortran liblapack-dev liblapack-doc-man liblapack-doc liblapack-pic liblapack3 liblapack-test liblapacke liblapacke-dev libgsl0-dev libatlas-base-dev build-essential libffi6 libffi-dev libssl-dev libyaml-dev libpython2.7-dev python-dev freetype* libpng12-dev```
+* `conda install numpy scipy cython pandas matplotlib nose pip ipython jupyter`
+* `pip install mdtraj crypto`
+* `sudo apt-get update && sudo apt-get install -y gcc g++ gfortran liblapack-dev liblapack-doc-man liblapack-doc liblapack-pic liblapack3 liblapack-test liblapacke liblapacke-dev libgsl0-dev libatlas-base-dev build-essential libffi6 libffi-dev libssl-dev libyaml-dev libpython2.7-dev python-dev freetype* libpng12-dev`
 
 ## Installation on Ubuntu 32/64 systems
-* __To install__: ```cd /path/to/qctoolkit && python setup.py install --user```, ```python setup.py develop``` 
-or install by pip using ```pip install qctoolkit --user```.
-* Because qctoolkit depends on it self, first execution of ```import qctoolkit``` will due to the absence of the pyc files. It should work once the pyc files are created.
+* __To install__: `cd /path/to/qctoolkit && python setup.py install --user`, `python setup.py develop`
+or install by pip using `pip install -e .`.
+* Because qctoolkit depends on it self, first execution of `import qctoolkit` will due to the absence of the pyc files. It should work once the pyc files are created.
 
 * __Install on Amazon Ec2__: It is tested and working on amazon Ec2 ubuntu instances. For a fresh install, all dependencies must be installed as described above.
 However, it might be necessary to create temperary swap if the memory run out:
@@ -38,7 +38,7 @@ sudo /bin/dd if=/dev/zero of=/var/swap.1 bs=1M count=1024
 sudo /sbin/mkswap /var/swap.1
 sudo /sbin/swapon /var/swap.1
 ```
-Then do pip install ```pip install qctoolkit --user```
+Then do pip install `pip install qctoolkit --user`
 If temerary swap is added, remove after installation:
 ```
 sudo swapoff /var/swap.1
@@ -46,8 +46,8 @@ sudo rm /var/swap.1
 ```
 * __Note__ that all code are writen with __2-space indentation__.
   To change it according to pep8 standard, use the following command:
-```cd /path/to/qctoolkit && find . -name "*.py"|xargs -n 1 autopep8 --in-place```
-  where ```autopep8``` can be installed simply via ```pip install autopep8 --user```
+`cd /path/to/qctoolkit && find . -name "*.py"|xargs -n 1 autopep8 --in-place`
+where `autopep8` can be installed simply via `pip install autopep8 --user`
 
 ## Dependent Python packages
 * numpy
