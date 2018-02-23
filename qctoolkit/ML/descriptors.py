@@ -4,6 +4,7 @@ import coulomb_matrix as cm
 import re
 
 class CoulombMatrix(object):
+  """ Deprecated: all C implementation """
   def __init__(self, *args, **kwargs):
     if len(args) == 1 and args[0] > 0:
       self.base_dim = args[0]
