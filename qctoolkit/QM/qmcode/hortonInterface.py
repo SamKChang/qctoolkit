@@ -109,6 +109,13 @@ class inp(GaussianBasisInput):
       GaussianBasisInput.__init__(self, molecule, **kwargs)
       mol = molecule
       obasis = self.ht_mol.obasis
+      self.mo_eigenvalues = self.ht_mol.orb_alpha.energies
+      try: 
+        exp_beta = self.ht_mol.orb_beta
+        self.mo_eigenvalues_beta = self.ht_mol.orb_beta.energies
+        self.setting['restricted'] = False
+      except:
+        self.setting['restricted'] = True
 
 
     try:
@@ -281,6 +288,13 @@ class inp(GaussianBasisInput):
     self.mov = exp_alpha.coeffs.__array__()
     self.initial_mov = C
     self.initial_dm = dm
+    if not self.setting['restricted']:
+      self.mov_beta = exp_beta.coeffs.__array__()
+      C_beta = copy.deepcopy(exp_beta.coeffs.__array__())
+      self.initial_mov_beta = C_beta
+      dm_beta = (C_beta * occ).dot(C_beta.T)
+      self.initial_dm_beta = dm_beta
+
     self.occ = occ
     self.occupation = 2*occ
     self.v_ext = self.na
@@ -354,6 +368,10 @@ class inp(GaussianBasisInput):
       self.mov = self.ht_exp_alpha.coeffs.__array__()
       self.mo_vectors = self.mov
       self.mo_eigenvalues = self.ht_exp_alpha.energies
+      if not self.setting['restricted']:
+        self.mov_beta = self.ht_exp_beta.coeffs.__array__()
+        self.mo_vectors_beta = self.mov_beta
+        self.mo_eigenvalues_beta = self.ht_exp_beta.energies
 
     except Exception as err:
       qtk.warning('SCF did not converged: %s' % err)
