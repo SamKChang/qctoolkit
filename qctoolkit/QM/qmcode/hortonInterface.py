@@ -77,10 +77,15 @@ class inp(GaussianBasisInput):
   
       if not found:
         qtk.exit("horton module not found.")
+
       if 'wf_convergence' not in kwargs:
         kwargs['wf_convergence'] = 1e-06
+
       if 'cholesky' not in kwargs:
-        kwargs['cholesky'] = True
+        kwargs['cholesky'] = False
+
+      if 'restricted' not in kwargs:
+        kwargs['restricted'] = True
 
   
       GaussianBasisInput.__init__(self, molecule, **kwargs)
@@ -118,7 +123,7 @@ class inp(GaussianBasisInput):
     olp = obasis.compute_overlap()
     kin = obasis.compute_kinetic()
     na = obasis.compute_nuclear_attraction(mol.coordinates, mol.pseudo_numbers)
-    if 'cholesk' in self.setting and self.setting['cholesky']:
+    if 'cholesky' in self.setting and self.setting['cholesky']:
       er = obasis.compute_electron_repulsion_cholesky()
     else:
       er = obasis.compute_electron_repulsion()
@@ -131,8 +136,12 @@ class inp(GaussianBasisInput):
         exp_alpha = orb_alpha = self.ht_mol.orb_alpha
       else:
         exp_alpha = orb_alpha = Orbitals(obasis.nbasis)
+        exp_beta = orb_beta = Orbitals(obasis.nbasis)
         # Initial guess
-        guess_core_hamiltonian(olp, kin + na, exp_alpha)
+        if self.setting['restricted']:
+          guess_core_hamiltonian(olp, kin + na, exp_alpha)
+        else:
+          guess_core_hamiltonian(olp, kin + na, exp_alpha, exp_beta)
   
       external = {'nn': compute_nucnuc(mol.coordinates, 
                                        mol.pseudo_numbers)}
@@ -141,55 +150,84 @@ class inp(GaussianBasisInput):
         self.xc = xc_info.xc_map[theory]
       else:
         self.xc = None
-  
+
+      if self.setting['restricted']:
+        TwoIndexTerm = RTwoIndexTerm
+        DirectTerm = RDirectTerm
+        ExchangeTerm = RExchangeTerm
+        LibXCGGA = RLibXCGGA
+        LibXCHybridGGA = RLibXCHybridGGA
+        LibXCMGGA = RLibXCMGGA
+        GridGroup = RGridGroup
+        EffHam = REffHam
+      else:
+        TwoIndexTerm = UTwoIndexTerm
+        DirectTerm = UDirectTerm
+        ExchangeTerm = UExchangeTerm
+        LibXCGGA = ULibXCGGA
+        LibXCHybridGGA = ULibXCHybridGGA
+        LibXCMGGA = ULibXCMGGA
+        GridGroup = UGridGroup
+        EffHam = UEffHam
+        
+
       terms = [
-         RTwoIndexTerm(kin, 'kin'),
-         RTwoIndexTerm(na, 'ne'),
-         RDirectTerm(er, 'hartree'),
+         TwoIndexTerm(kin, 'kin'),
+         TwoIndexTerm(na, 'ne'),
+         DirectTerm(er, 'hartree'),
       ]
       if self.setting['theory'] == 'hf':
-        terms.append(RExchangeTerm(er, 'x_hf'))
+        terms.append(ExchangeTerm(er, 'x_hf'))
       elif self.setting['theory'] == 'pbe':
         libxc_terms = [
-          RLibXCGGA('x_pbe'),
-          RLibXCGGA('c_pbe'),
+          LibXCGGA('x_pbe'),
+          LibXCGGA('c_pbe'),
         ]
-        terms.append(RGridGroup(obasis, grid, libxc_terms))
+        terms.append(GridGroup(obasis, grid, libxc_terms))
       elif self.setting['theory'] == 'blyp':
         libxc_terms = [
-          RLibXCGGA('x_b88'),
-          RLibXCGGA('c_lyp'),
+          LibXCGGA('x_b88'),
+          LibXCGGA('c_lyp'),
         ]
-        terms.append(RGridGroup(obasis, grid, libxc_terms))
+        terms.append(GridGroup(obasis, grid, libxc_terms))
       elif self.setting['theory'] == 'pbe0':
-        hyb_term = RLibXCHybridGGA('xc_pbeh')
-        terms.append(RGridGroup(obasis, grid, [hyb_term]))
-        terms.append(RExchangeTerm(er, 'x_hf', hyb_term.get_exx_fraction()))
+        hyb_term = LibXCHybridGGA('xc_pbeh')
+        terms.append(GridGroup(obasis, grid, [hyb_term]))
+        terms.append(ExchangeTerm(er, 'x_hf', hyb_term.get_exx_fraction()))
       elif self.setting['theory'] == 'b3lyp':
-        hyb_term = RLibXCHybridGGA('xc_b3lyp')
-        terms.append(RGridGroup(obasis, grid, [hyb_term]))
-        terms.append(RExchangeTerm(er, 'x_hf', hyb_term.get_exx_fraction()))
+        hyb_term = LibXCHybridGGA('xc_b3lyp')
+        terms.append(GridGroup(obasis, grid, [hyb_term]))
+        terms.append(ExchangeTerm(er, 'x_hf', hyb_term.get_exx_fraction()))
       elif self.setting['theory'] == 'hse06':
-        hyb_term = RLibXCHybridGGA('xc_hse06')
-        terms.append(RGridGroup(obasis, grid, [hyb_term]))
-        terms.append(RExchangeTerm(er, 'x_hf', hyb_term.get_exx_fraction()))
+        hyb_term = LibXCHybridGGA('xc_hse06')
+        terms.append(GridGroup(obasis, grid, [hyb_term]))
+        terms.append(ExchangeTerm(er, 'x_hf', hyb_term.get_exx_fraction()))
       elif self.setting['theory'] == 'tpss':
         libxc_terms = [
-          RLibXCMGGA('x_tpss'),
-          RLibXCMGGA('c_tpss'),
+          LibXCMGGA('x_tpss'),
+          LibXCMGGA('c_tpss'),
         ]
-        terms.append(RGridGroup(obasis, grid, libxc_terms))
+        terms.append(GridGroup(obasis, grid, libxc_terms))
       elif self.setting['theory'] == 'm05':
-        hyb_term = RLibXCHybridMGGA('xc_m05')
-        terms.append(RGridGroup(obasis, grid, [hyb_term]))
-        terms.append(RExchangeTerm(er, 'x_hf', hyb_term.get_exx_fraction()))
-      ham = REffHam(terms, external)
+        hyb_term = LibXCHybridMGGA('xc_m05')
+        terms.append(GridGroup(obasis, grid, [hyb_term]))
+        terms.append(ExchangeTerm(er, 'x_hf', hyb_term.get_exx_fraction()))
+      ham = EffHam(terms, external)
   
-      occ_model = AufbauOccModel(
-        int((sum(self.molecule.Z) - self.molecule.charge)/ 2.)
-      )
+      if self.setting['restricted']:
+        occ_model = AufbauOccModel(
+          int((sum(self.molecule.Z) - self.molecule.charge)/ 2.)
+        )
+      else:
+        occ_model = AufbauOccModel(
+          int(np.ceil((sum(self.molecule.Z) - self.molecule.charge)/ 2.)),
+          int(np.floor((sum(self.molecule.Z) - self.molecule.charge)/ 2.)),
+        )
       if not converged:
-        occ_model.assign(orb_alpha)
+        if self.setting['restricted']:
+          occ_model.assign(orb_alpha)
+        else:
+          occ_model.assign(orb_alpha, orb_beta)
   
     else:
       exp_alpha = self.ht_mol.orb_alpha
@@ -214,6 +252,8 @@ class inp(GaussianBasisInput):
         self.ht_external = external
         self.ht_exp_alpha = exp_alpha
         self.ht_dm_alpha = exp_alpha.to_dm()
+        self.ht_exp_beta = exp_beta
+        self.ht_dm_beta = exp_beta.to_dm()
         self.ht_terms = terms
         self.ht_ham = ham
         self.ht_occ_model = occ_model
@@ -254,9 +294,17 @@ class inp(GaussianBasisInput):
 
   def initialize(self):
     self.ht_exp_alpha = Orbitals(self.ht_obasis.nbasis)
-    guess_core_hamiltonian(self.olp, self.kin + self.na, self.ht_exp_alpha)
-    self.ht_occ_model.assign(self.ht_exp_alpha)
-    self.ht_dm_alpha = self.ht_exp_alpha.to_dm()
+    self.ht_exp_beta = Orbitals(self.ht_obasis.nbasis)
+    if self.setting['restricted']:
+      guess_core_hamiltonian(self.olp, self.kin + self.na, self.ht_exp_alpha)
+      self.ht_occ_model.assign(self.ht_exp_alpha)
+      self.ht_dm_alpha = self.ht_exp_alpha.to_dm()
+    else:
+      guess_core_hamiltonian(self.olp, self.kin + self.na, 
+                             self.ht_exp_alpha, self.ht_exp_beta)
+      self.ht_occ_model.assign(self.ht_exp_alpha, self.ht_exp_beta)
+      self.ht_dm_alpha = self.ht_exp_alpha.to_dm()
+      self.ht_dm_beta = self.ht_exp_beta.to_dm()
 
   def run(self, name=None, **kwargs):
 
@@ -277,6 +325,12 @@ class inp(GaussianBasisInput):
       opt_arg = [
         self.ht_ham, self.ht_olp, self.ht_occ_model, self.ht_dm_alpha
       ]
+
+    if not self.setting['restricted']:
+      if self.setting['theory'] in ['hf']:
+        opt_arg.append(self.ht_exp_beta)
+      else:
+        opt_arg.append(self.ht_dm_beta)
 
     scf_solver = optimizer(
       threshold=self.setting['wf_convergence'], 
@@ -339,8 +393,8 @@ class inp(GaussianBasisInput):
     rho = self.getRho(dm)
     return self.ht_grid.integrate(rho * exc)
 
-  def e_coulomb(self, C=None):
-    return self.ht_ham.cache['energy_hartree']
+#  def e_coulomb(self, C=None):
+#    return self.ht_ham.cache['energy_hartree']
 
   def e_coulomb(self, C=None):
     if len(self.U.shape) == 4:
