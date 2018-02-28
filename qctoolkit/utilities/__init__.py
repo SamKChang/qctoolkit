@@ -6,3 +6,4 @@ from tools import *
 from submit import *
 import rdkit_tools as rdk
 import ipy_tools
+import cp2k_parser
