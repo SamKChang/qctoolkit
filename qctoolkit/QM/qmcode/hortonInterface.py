@@ -259,8 +259,11 @@ class inp(GaussianBasisInput):
         self.ht_external = external
         self.ht_exp_alpha = exp_alpha
         self.ht_dm_alpha = exp_alpha.to_dm()
-        self.ht_exp_beta = exp_beta
-        self.ht_dm_beta = exp_beta.to_dm()
+        try:
+          self.ht_exp_beta = exp_beta
+          self.ht_dm_beta = exp_beta.to_dm()
+        except:
+          pass
         self.ht_terms = terms
         self.ht_ham = ham
         self.ht_occ_model = occ_model
