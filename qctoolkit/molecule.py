@@ -479,13 +479,13 @@ class Molecule(object):
     if type(targets) is not list:
       targets = [targets]
     direction = np.array([self.R[index] for index in direction_indices])
-    vector = direction[1] - direction[0]
-    vector = distance * vector/np.linalg.norm(vector)
+    vector_base = direction[1] - direction[0]
+    vector = distance * vector_base/np.linalg.norm(vector_base)
     template = np.zeros([self.N,1])
     template[targets] = 1
     ref = copy.deepcopy(self.R)
     ref[targets,:] = 0
-    shift = np.kron(vector, template)
+    shift = np.kron(vector - vector_base, template)
     self.R += shift
 
   def join(self, A1, B1, C1, other, C2, B2, A2, geopt=True, angle=0):
