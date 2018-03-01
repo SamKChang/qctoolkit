@@ -1298,6 +1298,12 @@ class Molecule(object):
 
     out = sys.stdout if not name else open(name,"w")
 
+    type_list = self.type_list
+    if 'write_string' in kwargs and kwargs['write_string']:
+      for I, s in enumerate(self.string):
+        if s:
+          type_list[I] = s
+
     if 'fractional' in kwargs and kwargs['fractional']:
       if self.celldm and self.scale:
         if 'comment' in kwargs:
@@ -1305,7 +1311,7 @@ class Molecule(object):
         else:
           out.write(str(self.N)+"\n\n")
         for I in xrange(0, self.N):
-          out.write("%-2s " % self.type_list[I])
+          out.write("%-2s " % type_list[I])
           out.write(" ".join("% 8.4f" % i \
             for i in self.R_scale[I][:]))
           out.write('\n')
@@ -1323,7 +1329,7 @@ class Molecule(object):
       else:
         out.write(str(self.N)+"\n\n")
       for I in xrange(0, self.N):
-        out.write("%-2s " % self.type_list[I])
+        out.write("%-2s " % type_list[I])
         out.write(" ".join("% 8.4f" % i for i in self.R[I][:]))
         out.write("\n")
   
