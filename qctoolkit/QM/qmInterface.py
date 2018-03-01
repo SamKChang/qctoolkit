@@ -43,6 +43,7 @@ def QMOut(out=None, **kwargs):
   out_dict = {
     'cpmd': cpmd.out,
     'vasp': vasp.out,
+    'cp2k': cp2k.out,
     'abinit': abinit.out,
     'espresso': espresso.out,
     'nwchem': nwchem.out,
