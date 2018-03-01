@@ -70,6 +70,10 @@ class inp(GaussianBasisInput):
       kwargs['becke_grid'] = 'fine'
     init_flag = True
 
+    if type(molecule) is str:
+      if os.path.splitext(molecule)[1].lower() == '.fchk':
+        molecule = IOData.from_file(molecule)
+
     converged = False
     if type(molecule) is not io.iodata.IOData:
       if 'theory' not in kwargs:

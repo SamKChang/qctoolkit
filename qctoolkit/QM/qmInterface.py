@@ -26,13 +26,16 @@ def QMInp(molecule, *args, **kwargs_in):
   }
 
   if type(molecule) is str:
-    molecule = qtk.Molecule(molecule, **kwargs)
+    if os.path.splitext(molecule)[1].lower() != '.fchk':
+      molecule = qtk.Molecule(molecule, **kwargs)
+    else:
+      kwargs['program'] = 'horton'
 
   if 'program' not in kwargs:
     kwargs['program'] = qtk.setting.qmcode
   p_str = kwargs['program'].lower()
   p = inp_dict[p_str][0]
-  if 'charge' in kwargs:
+  if 'charge' in kwargs and type(molecule) is qtk.Molecule:
     molecule.charge = kwargs['charge']
   kwargs['extension'] = inp_dict[p_str][1]
   return p(molecule, *args, **kwargs)
