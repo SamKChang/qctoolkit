@@ -2,7 +2,9 @@ import yaml, os, re
 import qctoolkit as qtk
 
 class Elements(object):
-  path = re.sub('py', 'yml', os.path.realpath(__file__))
+  path = re.sub('pyc', 'yml', os.path.realpath(__file__))
+  if not os.path.exists(path):
+    path = re.sub('py', 'yml', os.path.realpath(__file__))
   data = yaml.safe_load(open(path))
   def __init__(self):
     pass
