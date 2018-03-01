@@ -69,6 +69,8 @@ class inp(GaussianBasisInput):
     if 'becke_grid' not in kwargs:
       kwargs['becke_grid'] = 'fine'
     init_flag = True
+    if 'electron_repulsion' not in kwargs:
+      kwargs['electron_repulsion'] = True
 
     if type(molecule) is str:
       if os.path.splitext(molecule)[1].lower() in ['.fchk', '.h5']:
@@ -134,10 +136,11 @@ class inp(GaussianBasisInput):
     olp = obasis.compute_overlap()
     kin = obasis.compute_kinetic()
     na = obasis.compute_nuclear_attraction(mol.coordinates, mol.pseudo_numbers)
-    if 'cholesky' in self.setting and self.setting['cholesky']:
-      er = obasis.compute_electron_repulsion_cholesky()
-    else:
-      er = obasis.compute_electron_repulsion()
+    if self.setting['electron_repulsion']:
+      if 'cholesky' in self.setting and self.setting['cholesky']:
+        er = obasis.compute_electron_repulsion_cholesky()
+      else:
+        er = obasis.compute_electron_repulsion()
 
     occ = np.zeros(olp.shape[0])
     N = int(sum(self.molecule.Z) - self.molecule.charge)
@@ -292,7 +295,10 @@ class inp(GaussianBasisInput):
     except Exception as err:
       qtk.warning(err)
     self.na = na.__array__()
-    self.er = er.__array__()
+    try:
+      self.er = er.__array__()
+    except:
+      self.er = None
     self.U = self.er
     self.mov = exp_alpha.coeffs.__array__()
     self.initial_mov = C
@@ -332,6 +338,14 @@ class inp(GaussianBasisInput):
   def run(self, name=None, **kwargs):
 
     self.setting.update(kwargs)
+
+    if self.er is None:
+      if 'cholesky' in self.setting and self.setting['cholesky']:
+        er = obasis.compute_electron_repulsion_cholesky()
+      else:
+        er = obasis.compute_electron_repulsion()
+      self.er = er.__array__()
+      self.U = self.er
 
     if self.setting['theory'] in ['hf']:
       optimizer = PlainSCFSolver
@@ -464,14 +478,16 @@ class inp(GaussianBasisInput):
 
     return F
 
-  def cube_grid(self, margin=3, resolution=0.1):
+  def cube_grid(self, margin=3, resolution=0.1, R=None):
     if margin is None:
       margin = 3
     if resolution is None:
       resolution = 0.1
+    if R is None:
+      R = self.molecule.R
 
-    x_min, y_min, z_min = self.molecule.R.min(axis=0) - margin
-    x_max, y_max, z_max = self.molecule.R.max(axis=0) + margin
+    x_min, y_min, z_min = R.min(axis=0) - margin
+    x_max, y_max, z_max = R.max(axis=0) + margin
 
     X, Y, Z = np.meshgrid(
       np.arange(x_min, x_max, resolution),
@@ -665,17 +681,22 @@ class inp(GaussianBasisInput):
 
     return grad2_x + grad2_y + grad2_z
 
-  def getRhoCube(self, margin=3, resolution=0.1, dm=None):
+  def getRhoCube(self, margin=3, resolution=0.1, dm=None, grid_header_shape=None):
 
     if dm is None: dm = self.dm()
 
-    cube_grid, grid, shape = self.cube_grid(margin, resolution)
+    if grid_header_shape is None:
+      grid, header, shape = self.cube_grid(margin, resolution)
+    else:
+      grid, header, shape = grid_header_shape
 
-    cube_data_list = 2*self.ht_obasis.compute_grid_density_dm(dm, cube_grid)
+    header[0][0] = self.molecule.N
+
+    cube_data_list = 2*self.ht_obasis.compute_grid_density_dm(dm, grid)
     cube_data = cube_data_list.reshape(shape)
 
     q = qtk.CUBE()
-    q.build(self.molecule, grid, cube_data)
+    q.build(self.molecule, header, cube_data)
 
     return q
 
