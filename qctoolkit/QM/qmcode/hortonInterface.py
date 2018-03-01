@@ -71,7 +71,7 @@ class inp(GaussianBasisInput):
     init_flag = True
 
     if type(molecule) is str:
-      if os.path.splitext(molecule)[1].lower() == '.fchk':
+      if os.path.splitext(molecule)[1].lower() in ['.fchk', '.h5']:
         molecule = IOData.from_file(molecule)
 
     converged = False
@@ -243,13 +243,15 @@ class inp(GaussianBasisInput):
     else:
       exp_alpha = self.ht_mol.orb_alpha
       self.Et = self.ht_mol.energy
-      self.dipole = self.ht_mol.dipole_moment
-      qd = np.zeros((3,3))
-      hqd = self.ht_mol.quadrupole_moment
-      qd[np.triu_indices(3, 0)] = hqd
-      self.quadrupole = qd
+      try:
+        self.dipole = self.ht_mol.dipole_moment
+        qd = np.zeros((3,3))
+        hqd = self.ht_mol.quadrupole_moment
+        qd[np.triu_indices(3, 0)] = hqd
+        self.quadrupole = qd
+      except:
+        pass
       
-      self.ht_mol.quadrupole_moment
     C = copy.deepcopy(exp_alpha.coeffs.__array__())
     dm = (C * occ).dot(C.T)
    
@@ -396,7 +398,12 @@ class inp(GaussianBasisInput):
         setattr(out, attr, getattr(self, attr))
 
     return out
-    
+
+  def save(self, name=None):
+    if name is None:
+      name = self.molecule.name + '.h5'
+    self.ht_mol.to_file(name)
+
   def write(self, name=None, **kwargs):
     pass
 

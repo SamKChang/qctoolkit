@@ -26,7 +26,7 @@ def QMInp(molecule, *args, **kwargs_in):
   }
 
   if type(molecule) is str:
-    if os.path.splitext(molecule)[1].lower() != '.fchk':
+    if os.path.splitext(molecule)[1].lower() not in ['.fchk', '.h5']:
       molecule = qtk.Molecule(molecule, **kwargs)
     else:
       kwargs['program'] = 'horton'
