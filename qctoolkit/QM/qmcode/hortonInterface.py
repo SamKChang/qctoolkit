@@ -143,10 +143,7 @@ class inp(GaussianBasisInput):
     kin = obasis.compute_kinetic()
     na = obasis.compute_nuclear_attraction(mol.coordinates, mol.pseudo_numbers)
     if self.setting['electron_repulsion']:
-      if 'cholesky' in self.setting and self.setting['cholesky']:
-        er = obasis.compute_electron_repulsion_cholesky()
-      else:
-        er = obasis.compute_electron_repulsion()
+      er = self.get_U(True, self.setting['cholesky'], obasis)
 
     occ = np.zeros(olp.shape[0])
     N = int(sum(self.molecule.Z) - self.molecule.charge)
@@ -329,6 +326,24 @@ class inp(GaussianBasisInput):
       return str(self.Et)
     except:
       return self.molecule.name + ': horton'
+
+  def get_U(self, ht_type=False, cholesky=None, obasis=None):
+
+    if cholesky is None:
+      if 'cholesky' in self.setting and self.setting['cholesky']:
+        cholesky = True
+    if obasis is None:
+      obasis = self.ht_obasis
+
+    if cholesky:
+      er = obasis.compute_electron_repulsion_cholesky()
+    else:
+      er = obasis.compute_electron_repulsion()
+
+    if ht_type:
+      return er
+    else:
+      return er.__array__()
 
   def initialize(self):
     self.ht_exp_alpha = Orbitals(self.ht_obasis.nbasis)
