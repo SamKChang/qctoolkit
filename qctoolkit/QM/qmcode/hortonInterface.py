@@ -73,8 +73,10 @@ class inp(GaussianBasisInput):
       kwargs['electron_repulsion'] = True
 
     if type(molecule) is str:
-      if os.path.splitext(molecule)[1].lower() in ['.fchk', '.h5']:
+      name, ext = os.path.splitext(molecule)
+      if ext.lower() in ['.fchk', '.h5']:
         molecule = IOData.from_file(molecule)
+        self.name = name
 
     converged = False
     if type(molecule) is not io.iodata.IOData:
@@ -101,6 +103,10 @@ class inp(GaussianBasisInput):
       coord = molecule.R * qtk.setting.a2b
       inp.ht = ht
       mol = IOData(coordinates=coord, numbers=molecule.Z)
+      basis = self.setting['basis_set']
+      if type(basis) is str and os.path.exists(basis):
+        self.setting['basis_set'] = GOBasisFamily(
+          'custom basis', filename=basis)
       obasis = get_gobasis(mol.coordinates, mol.numbers,
                            self.setting['basis_set'])
     else:
@@ -260,6 +266,9 @@ class inp(GaussianBasisInput):
    
     if 'save_c_type' in self.setting and self.setting['save_c_type']:
       self.ht_mol = mol
+      self.ht_mol.grid = grid
+      self.ht_mol.obasis = obasis
+      self.ht_mol.orb_alpha = exp_alpha
       self.ht_grid = grid
       self.grid = grid
       self.ht_obasis = obasis
@@ -411,6 +420,7 @@ class inp(GaussianBasisInput):
       if not attr.startswith('_'):
         setattr(out, attr, getattr(self, attr))
 
+    self.ht_mol.energy = self.Et
     return out
 
   def save(self, name=None):
