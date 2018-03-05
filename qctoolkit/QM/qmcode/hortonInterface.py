@@ -717,8 +717,11 @@ class inp(GaussianBasisInput):
 
     header[0][0] = self.molecule.N
 
-    cube_data_list = 2*self.ht_obasis.compute_grid_density_dm(dm, grid)
+    cube_data_list = 2*self.ht_obasis.compute_grid_density_dm(
+      dm, grid * qtk.setting.a2b
+    )
     cube_data = cube_data_list.reshape(shape)
+    header[:, 1:] = header[:, 1:] * qtk.setting.a2b
 
     q = qtk.CUBE()
     q.build(self.molecule, header, cube_data)
