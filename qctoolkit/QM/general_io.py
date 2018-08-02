@@ -221,11 +221,7 @@ class GenericQMInput(object):
   """
   def __init__(self, molecule, **kwargs):
 
-    self.setting = copy.deepcopy(kwargs)
-    try:
-      self.molecule = copy.deepcopy(molecule)
-    except Exception as err:
-      qtk.warning("backup molecule failed with err: %s. try horton" % str(err))
+    def parse_ht_mol(molecule):
       self.molecule = qtk.Molecule()
       try:
         self.ht_mol = molecule
@@ -234,8 +230,18 @@ class GenericQMInput(object):
         ZR = np.hstack([Z[:, np.newaxis], R])
         self.molecule.build(ZR)
         molecule = copy.deepcopy(self.molecule)
+        return molecule
       except Exception as err:
         qtk.warning("horton failed with err: %s." % str(err))
+
+    self.setting = copy.deepcopy(kwargs)
+    try:
+      self.molecule = copy.deepcopy(molecule)
+    except Exception as err:
+      molecule = parse_ht_mol(molecule)
+
+    if type(molecule) is not qtk.Molecule:
+      molecule = parse_ht_mol(molecule)
 
     # local variable to construct 'setting' for parsing
     setup = copy.deepcopy(qtk.setting.qm_setup)

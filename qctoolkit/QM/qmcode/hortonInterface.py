@@ -73,8 +73,10 @@ class inp(GaussianBasisInput):
       kwargs['electron_repulsion'] = True
 
     if type(molecule) is str:
-      if os.path.splitext(molecule)[1].lower() in ['.fchk', '.h5']:
+      name, ext = os.path.splitext(molecule)
+      if ext.lower() in ['.fchk', '.h5']:
         molecule = IOData.from_file(molecule)
+        self.name = name
 
     converged = False
     if type(molecule) is not io.iodata.IOData:
@@ -101,6 +103,10 @@ class inp(GaussianBasisInput):
       coord = molecule.R * qtk.setting.a2b
       inp.ht = ht
       mol = IOData(coordinates=coord, numbers=molecule.Z)
+      basis = self.setting['basis_set']
+      if type(basis) is str and os.path.exists(basis):
+        self.setting['basis_set'] = GOBasisFamily(
+          'custom basis', filename=basis)
       obasis = get_gobasis(mol.coordinates, mol.numbers,
                            self.setting['basis_set'])
     else:
@@ -137,10 +143,7 @@ class inp(GaussianBasisInput):
     kin = obasis.compute_kinetic()
     na = obasis.compute_nuclear_attraction(mol.coordinates, mol.pseudo_numbers)
     if self.setting['electron_repulsion']:
-      if 'cholesky' in self.setting and self.setting['cholesky']:
-        er = obasis.compute_electron_repulsion_cholesky()
-      else:
-        er = obasis.compute_electron_repulsion()
+      er = self.get_U(True, self.setting['cholesky'], obasis)
 
     occ = np.zeros(olp.shape[0])
     N = int(sum(self.molecule.Z) - self.molecule.charge)
@@ -260,6 +263,9 @@ class inp(GaussianBasisInput):
    
     if 'save_c_type' in self.setting and self.setting['save_c_type']:
       self.ht_mol = mol
+      self.ht_mol.grid = grid
+      self.ht_mol.obasis = obasis
+      self.ht_mol.orb_alpha = exp_alpha
       self.ht_grid = grid
       self.grid = grid
       self.ht_obasis = obasis
@@ -320,6 +326,24 @@ class inp(GaussianBasisInput):
       return str(self.Et)
     except:
       return self.molecule.name + ': horton'
+
+  def get_U(self, ht_type=False, cholesky=None, obasis=None):
+
+    if cholesky is None:
+      if 'cholesky' in self.setting and self.setting['cholesky']:
+        cholesky = True
+    if obasis is None:
+      obasis = self.ht_obasis
+
+    if cholesky:
+      er = obasis.compute_electron_repulsion_cholesky()
+    else:
+      er = obasis.compute_electron_repulsion()
+
+    if ht_type:
+      return er
+    else:
+      return er.__array__()
 
   def initialize(self):
     self.ht_exp_alpha = Orbitals(self.ht_obasis.nbasis)
@@ -411,6 +435,7 @@ class inp(GaussianBasisInput):
       if not attr.startswith('_'):
         setattr(out, attr, getattr(self, attr))
 
+    self.ht_mol.energy = self.Et
     return out
 
   def save(self, name=None):
@@ -692,8 +717,11 @@ class inp(GaussianBasisInput):
 
     header[0][0] = self.molecule.N
 
-    cube_data_list = 2*self.ht_obasis.compute_grid_density_dm(dm, grid)
+    cube_data_list = 2*self.ht_obasis.compute_grid_density_dm(
+      dm, grid * qtk.setting.a2b
+    )
     cube_data = cube_data_list.reshape(shape)
+    header[:, 1:] = header[:, 1:] * qtk.setting.a2b
 
     q = qtk.CUBE()
     q.build(self.molecule, header, cube_data)

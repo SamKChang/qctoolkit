@@ -99,6 +99,10 @@ class inp(GaussianBasisInput):
         ind = self.setting['gaussian_setting'].index('force')
         del self.setting['gaussian_setting'][ind]
     basis = self.setting['basis_set']
+    if type(basis) is str and os.path.exists(basis):
+      with open(basis) as f:
+        basis = f.readlines()
+
     if type(basis) is str:
       if 'def2' in basis.lower():
         basis = basis.replace('-', '')
