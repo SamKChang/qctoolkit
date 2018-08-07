@@ -4,7 +4,6 @@ import urllib2
 import datetime
 import numpy as np
 from qctoolkit.QM.general_io import InpContent
-import ssl
 
 type_dict = {
               'goedecker': 10,
@@ -22,8 +21,7 @@ xc_dict = {
 
 def read(self, path):
   try:
-    gcontext = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
-    pp_file = urllib2.urlopen(path, context=gcontext).readlines()
+    pp_file = urllib2.urlopen(path).readlines()
   except:
     pp_file = open(path)
   pp = pp_file.readlines()

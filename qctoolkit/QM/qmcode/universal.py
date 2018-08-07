@@ -1,6 +1,5 @@
 import qctoolkit as qtk
 import os, re, glob
-import ssl
 
 def runCode(self, parrent, name, **kwargs):
   worker, name = \
@@ -55,8 +54,7 @@ def PPCheck(xc, element, pp_file_str, **kwargs):
     if not os.path.exists(saved_pp_path) and qtk.setting.download_pp:
       if pp_file:
         new_pp = os.path.join(qtk.setting.cpmd_pp, pp_file_str)
-        gcontext = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
-        pp_content = urllib2.urlopen(pp_file, context=gcontext).read()
+        pp_content = urllib2.urlopen(pp_file).read()
         qtk.report('', 'pp file %s not found in %s. ' \
                    % (pp_file_str, qtk.setting.cpmd_pp) + \
                    'but found in cp2k page, download now...')

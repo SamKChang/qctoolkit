@@ -8,7 +8,6 @@ import numpy as np
 import universal as univ
 import yaml
 import urllib2
-import ssl
 
 def PPCheck(xc, pp_theory, pp_path, element):
 
@@ -33,8 +32,7 @@ def PPCheck(xc, pp_theory, pp_path, element):
       url = url_root + '%s/%s' % (pp_theory, element_str)
       page = False
       try:
-        gcontext = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
-        page = urllib2.urlopen(url, context=gcontext).readlines()
+        page = urllib2.urlopen(url).readlines()
         pattern = re.compile(r'^.*</*pre>.*$')
         pp_se = filter(pattern.match, page)
         pp_start = page.index(pp_se[0])
@@ -46,8 +44,7 @@ def PPCheck(xc, pp_theory, pp_path, element):
       pp = ''.join(page)
     else:
       url = qtk.setting.bigdft_pp_nlcc_url
-      gcontext = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
-      page = urllib2.urlopen(url, context=gcontext).readlines()
+      page = urllib2.urlopen(url).readlines()
       string = filter(lambda x: '"psppar.%s' % element in x, page)[-1]
       index = page.index(string) + 2
       pp = []
