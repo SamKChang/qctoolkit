@@ -40,6 +40,8 @@ class PP(object):
         self.get(path)
       else:
         self.read(path)
+    elif 'size' in kwargs:
+      self.new(kwargs['size'])
     # sizes of projector matrix
     self.dim = self.getDim()
 
@@ -136,6 +138,32 @@ class PP(object):
       qtk.exit('program %s is not implemented for PP'\
         % self.setting['program'])
     return self
+
+  def new(self, size):
+    nc, nh = size
+    self.param['Cn'], self.param['l_max'] = size
+    self.param['Ci'] = np.zeros(nc)
+    self.param['h_ij'] = []
+    for i in range(nh):
+      dim = nh - i
+      self.param['h_ij'].append(np.zeros([dim, dim]))
+    self.param['r_nl'] = np.zeros(nh)
+
+  def FDVect(self, delta=None):
+    if delta is None:
+      delta = min(abs(self.vectorize()[0][1:])) / 10.
+    p, n, s = self.vectorize()
+    dim = len(p) - 1
+    D = np.hstack([
+      p[0] * np.ones(dim)[:, np.newaxis], 
+      delta * np.diag(np.ones(dim))
+    ])
+    out = []
+    for d in D:
+      new_pp = 0 * self
+      new_pp.unvectorize(d, n, s)
+      out.append(new_pp)
+    return out
 
   def write(self, name=None, **kwargs):
     if 'inplace' not in kwargs:
@@ -304,3 +332,6 @@ class PP(object):
     out.param['ZV'] = self.param['ZV'] * other
 
     return out
+
+  def __rmul__(self, other):
+    return self.__mul__(other)
