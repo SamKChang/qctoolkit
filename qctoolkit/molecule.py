@@ -991,7 +991,10 @@ class Molecule(object):
       type_list = []
       self.index = []
       for i in range(self.N):
-        Zn = self.type_list[i]
+        if self.string[i]:
+          Zn = self.string[i]
+        else:
+          Zn = self.type_list[i] 
         if Zn not in type_list:
           type_list.append(Zn)
           self.index.append(i)
