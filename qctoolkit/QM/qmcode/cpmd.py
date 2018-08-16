@@ -197,7 +197,10 @@ class inp(PlanewaveInput):
       inp.write('&END\n')
 
       for pp in self.pp_files:
-        pp_file = os.path.join(qtk.setting.cpmd_pp, pp)
+        if type(pp) is str:
+          pp_file = os.path.join(qtk.setting.cpmd_pp, pp)
+        else:
+          pp_file = pp
         inp.dependent_files.append(pp_file)
   
       if 'no_cleanup' in setting and setting['no_cleanup']:
@@ -378,7 +381,11 @@ def PPString(inp, mol, i, n, outFile):
   append PP file names to inp.pp_files
   """
   alchemy = re.compile('^\w*2\w*_\d\d\d$')
-  ppstr = re.sub('\*', '', mol.string[i])
+
+  try:
+    ppstr = re.sub('\*', '', mol.string[i])
+  except:
+    ppstr = mol.string[i].name
   dcacp_flag = False
   if ppstr:
     PPStr = '*' + ppstr
@@ -408,14 +415,17 @@ def PPString(inp, mol, i, n, outFile):
   if not mol.string[i]:
     PPCheck(xc, mol.type_list[i].title(), pp_file_str, 
       dcacp=dcacp_flag, pp_type = inp.setting['pp_type'])
-  elif alchemy.match(mol.string[i]):
+  elif type(mol.string[i]) is str and alchemy.match(mol.string[i]):
     alchemyPP(xc, pp_file_str)
   pp_file = os.path.join(qtk.setting.cpmd_pp, pp_file_str)
 
   if inp.setting['pp_type'].title() == 'Goedecker':
     lmax = 'F'
   outFile.write(' LMAX=%s\n %3d\n' % (lmax, n))
-  inp.pp_files.append(re.sub('\*', '', PPStr))
+  if type(mol.string[i]) is type(qtk.PP()):
+    inp.pp_files.append(mol.string[i])
+  elif type(mol.string[i]) is str:
+    inp.pp_files.append(re.sub('\*', '', PPStr))
 
 # not used by PP object but by QMInp cpmd parts
 def PPCheck(xc, element, pp_file_str, **kwargs):

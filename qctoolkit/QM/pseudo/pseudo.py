@@ -29,6 +29,7 @@ class PP(object):
     self.param = copy.deepcopy(param)
     self.setting = kwargs
     self.info = ''
+    self.name = ''
 
     for key, value in pp_setting.iteritems():
       if key in kwargs:
@@ -40,7 +41,9 @@ class PP(object):
         self.get(path)
       else:
         self.read(path)
-    elif 'size' in kwargs:
+      if 'size' in kwargs and kwargs['size'] is not None:
+        self.resize(*kwargs['size'])
+    elif 'size' in kwargs and kwargs['size'] is not None:
       self.new(kwargs['size'])
     # sizes of projector matrix
     self.dim = self.getDim()
@@ -82,45 +85,21 @@ class PP(object):
         self.setting['xc'].lower() + '.psp'
       return PPStr, element
 
-    def PPCheck(xc, element, pp_file_str, **kwargs):
-      if xc == 'lda':
-        xc = 'pade'
-      ne = qtk.n2ve(element)
-      try:
-        if 'dcacp' in kwargs and kwargs['dcacp']:
-          pp_path = os.path.join(xc.upper(), "%s_DCACP_%s" %\
-                    (element, xc.upper()))
-          if element in qtk.setting.dcacp_dict:
-            pp_path = pp_path + "_%s" % qtk.setting.dcacp_dict[element]
-          pp_file = os.path.join(qtk.setting.cpmd_dcacp_url, pp_path)
-        else:
-          pp_path = os.path.join(xc,
-            element + '-q' + str(qtk.n2ve(element)))
-          pp_file = os.path.join(qtk.setting.cpmd_pp_url, pp_path)
-        saved_pp_path = os.path.join(qtk.setting.cpmd_pp, pp_file_str)
-        if not os.path.exists(saved_pp_path) \
-        and qtk.setting.download_pp:
-          if pp_file:
-            new_pp = os.path.join(qtk.setting.cpmd_pp, pp_file_str)
-            pp_content = urllib2.urlopen(pp_file).read()
-            qtk.report('PPCheck', 'pp file %s not found in %s, ' \
-                       % (pp_file_str, qtk.setting.cpmd_pp) + \
-                       'but found on internet, download now...')
-            new_pp_file = open(new_pp, 'w')
-            new_pp_file.write(pp_content)
-            new_pp_file.close()
-            pp_file = new_pp
-        return saved_pp_path
-      except:
-        qtk.warning('something wrong with pseudopotential')
-
     kwargs['element'] = element
     file_name, element = PPName(**kwargs)
     if 'vdw' in kwargs and kwargs['vdw'].lower() == 'dcacp':
       dcacp_flag = True
     else:
       dcacp_flag = False
-    pp_file = PPCheck(self.setting['xc'], 
+    # reuse cpmd format
+
+    ########
+    # TODO #
+    ########
+    # change all PP download code here and export back to cpmd module
+    # also implement format conversion between different code
+    # such that the code can be easily reused
+    pp_file = qtk.QM.qmcode.cpmd.PPCheck(self.setting['xc'], 
               element, 
               file_name, 
               dcacp=dcacp_flag)
@@ -149,20 +128,23 @@ class PP(object):
       self.param['h_ij'].append(np.zeros([dim, dim]))
     self.param['r_nl'] = np.zeros(nh)
 
-  def FDVect(self, delta=None):
+  def FDVect(self, delta=None, order=1):
     if delta is None:
       delta = min(abs(self.vectorize()[0][1:])) / 10.
     p, n, s = self.vectorize()
     dim = len(p) - 1
-    D = np.hstack([
-      p[0] * np.ones(dim)[:, np.newaxis], 
-      delta * np.diag(np.ones(dim))
-    ])
-    out = []
-    for d in D:
-      new_pp = 0 * self
-      new_pp.unvectorize(d, n, s)
-      out.append(new_pp)
+    if order == 1:
+      D = np.hstack([
+        p[0] * np.ones(dim)[:, np.newaxis], 
+        delta * np.diag(np.ones(dim))
+      ])
+      out = []
+      for d in D:
+        new_pp = (0 * self).unvectorize(d, n, s)
+        out.append(new_pp)
+    elif order == 2:
+      # not done yet...
+      return None
     return out
 
   def write(self, name=None, **kwargs):
@@ -206,6 +188,7 @@ class PP(object):
 
   def resize(self, cn, hn):
     too_small = False
+    if type(hn) is int: hn = range(hn, 0, -1)
     if cn < self.param['Cn']:
       too_small = True
     else:
@@ -256,7 +239,10 @@ class PP(object):
       else:
         return 0.
 
-    self['ZV'] = nonZero(param[0])
+    if 'charge' in kwargs:
+      self['ZV'] = kwargs['charge']
+    else:
+      self['ZV'] = nonZero(param[0])
     self['r_loc'] = nonZero(param[1])
     self['Ci'] = []
     for i in range(Cn):
@@ -281,6 +267,9 @@ class PP(object):
       h_ij = h_ij + h_ij.T - diag
       self['h_ij'].append(h_ij)
     return self
+
+  def copy(self):
+    return copy.deepcopy(self)
 
   def __add__(self, other):
     assert type(other) is type(self)

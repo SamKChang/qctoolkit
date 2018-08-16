@@ -116,48 +116,53 @@ class InpContent(object):
         if 'dependent_files' in kwargs:
           self.dependent_files.extend(kwargs['dependent_files'])
         for dep_entry in self.dependent_files:
-          if type(dep_entry) is str:
-            # copy file directly
+          if type(dep_entry) is type(qtk.PP()):
             dep = dep_entry
-            dep_name = os.path.split(dep)[1]
-            dep_src = os.path.abspath(dep)
-            dep_tar = os.path.join(full_dir_path, dep_name)
-          elif type(dep_entry) is list:
-            # copy file to different name [src, name]
-            dep = dep_entry[1]
-            dep_name = os.path.split(dep)[1]
-            dep_src = os.path.abspath(dep_entry[0])
-            #dep_src = os.path.join(dep_src, dep_name)
-            dep_tar = os.path.join(full_dir_path, dep_name)
-          elif type(dep_entry) is dict:
-            # copy file to different path/name {src: path/name}
-            dep = dep_entry.keys()[0]
-            dep_name = os.path.split(dep)[1]
-            dep_src = os.path.abspath(dep)
-            dep_tar = os.path.join(full_dir_path, dep_entry[dep])
-          if os.path.exists(dep_src):
-            try:
-              shutil.copytree(dep_src, dep_tar)
-            except OSError:
-              if hasattr(self, 'link_dep') and self.link_dep:
-                try:
-                  os.link(dep_src, dep_tar)
-                  qtk.progress('QMInp', '%s is linked\n' % \
-                    os.path.split(dep_tar)[-1])
-                except Exception as err:
-                  qtk.warning('error when linking %s, ' \
-                    % os.path.split(dep_tar)[-1]\
-                    + 'attempt to copy...')
-                  try:
-                    shutil.copy(dep_src, dep_tar)
-                    qtk.progess('QMInp', 'done.')
-                  except Exception as err:
-                    qtk.warning('failed! skipping %s' % \
-                      os.path.split(dep_tar)[-1])
-              else:
-                shutil.copy(dep_src, dep_tar)
+            dep_tar = os.path.join(full_dir_path, dep.name)
+            dep.write(dep_tar)
           else:
-            qtk.warning('dependent file: %s not found' % dep)
+            if type(dep_entry) is str:
+              # copy file directly
+              dep = dep_entry
+              dep_name = os.path.split(dep)[1]
+              dep_src = os.path.abspath(dep)
+              dep_tar = os.path.join(full_dir_path, dep_name)
+            elif type(dep_entry) is list:
+              # copy file to different name [src, name]
+              dep = dep_entry[1]
+              dep_name = os.path.split(dep)[1]
+              dep_src = os.path.abspath(dep_entry[0])
+              #dep_src = os.path.join(dep_src, dep_name)
+              dep_tar = os.path.join(full_dir_path, dep_name)
+            elif type(dep_entry) is dict:
+              # copy file to different path/name {src: path/name}
+              dep = dep_entry.keys()[0]
+              dep_name = os.path.split(dep)[1]
+              dep_src = os.path.abspath(dep)
+              dep_tar = os.path.join(full_dir_path, dep_entry[dep])
+            if os.path.exists(dep_src):
+              try:
+                shutil.copytree(dep_src, dep_tar)
+              except OSError:
+                if hasattr(self, 'link_dep') and self.link_dep:
+                  try:
+                    os.link(dep_src, dep_tar)
+                    qtk.progress('QMInp', '%s is linked\n' % \
+                      os.path.split(dep_tar)[-1])
+                  except Exception as err:
+                    qtk.warning('error when linking %s, ' \
+                      % os.path.split(dep_tar)[-1]\
+                      + 'attempt to copy...')
+                    try:
+                      shutil.copy(dep_src, dep_tar)
+                      qtk.progess('QMInp', 'done.')
+                    except Exception as err:
+                      qtk.warning('failed! skipping %s' % \
+                        os.path.split(dep_tar)[-1])
+                else:
+                  shutil.copy(dep_src, dep_tar)
+            else:
+              qtk.warning('dependent file: %s not found' % dep)
 
     inp = sys.stdout if not self.output else open(full_path, 'w')
     for string in self.content:
