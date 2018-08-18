@@ -424,7 +424,7 @@ def PPString(inp, mol, i, n, outFile):
   outFile.write(' LMAX=%s\n %3d\n' % (lmax, n))
   if type(mol.string[i]) is type(qtk.PP()):
     inp.pp_files.append(mol.string[i])
-  elif type(mol.string[i]) is str:
+  else:
     inp.pp_files.append(re.sub('\*', '', PPStr))
 
 # not used by PP object but by QMInp cpmd parts
